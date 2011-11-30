@@ -46,9 +46,11 @@ void get_sieie_template::Loop()
       if (jentry%100000==0) std::cout << "Processing entry " << jentry << std::endl;
 
       bool badevent=false;
+
+      if (pholead_pt<40 || photrail_pt<30 || dipho_mgg_photon<80) badevent=true;
+
       if ((sideband) && (Cut_egm_10_006_sieierelaxed_sideband(ientry) < 0)) badevent=true;
       if ((!sideband) && (Cut_egm_10_006_sieierelaxed(ientry) < 0)) badevent=true;
-
       
       if (barrel) if (fabs(pholead_eta)>1.4442 || fabs(photrail_eta)>1.4442) badevent=true;
       if (!barrel) if (fabs(pholead_eta)<1.56 || fabs(photrail_eta)<1.56) badevent=true;

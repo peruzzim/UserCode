@@ -24,6 +24,8 @@ void compare_sidebands(){
   datahist_side->plotOn(sieievarframe,LineColor(kBlue),DrawOption("L"),Rescale(1.0/datahist_side->sum(kTRUE)));
   mchist_noside_bkg->plotOn(sieievarframe,LineColor(kGreen),DrawOption("L"),Rescale(1.0/mchist_noside_bkg->sum(kTRUE)));
  
+  std::cout << mchist_side_all->sum(kFALSE) << " " << datahist_side->sum(kFALSE) << " " << mchist_noside_bkg->sum(kFALSE) << std::endl;
+
   sieievarframe->Draw();
 
 }
