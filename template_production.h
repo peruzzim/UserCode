@@ -483,6 +483,7 @@ public :
 
    TString get_roohist_name(TString varname, TString st, TString reg, TString count);
    TString get_roodset_name(TString varname, TString reg);
+   TString get_roovar_name(TString _varname, int i, int j);
 
 };
 
@@ -857,6 +858,7 @@ void template_production::Show(Long64_t entry)
 void template_production::WriteOutput(const char* filename){
   TFile *out = TFile::Open(filename,"recreate");
    out->cd();
+   for (int j=0;j<2;j++) for (int k=0;k<2;k++) roovar[j][k]->Write();
    for (int i=0; i<3; i++) for (int j=0;j<2;j++) for (int k=0;k<2;k++) roohist[i][j][k]->Write();
    for (int i=0; i<3; i++) for (int j=0;j<2;j++) templatehist[i][j]->Write();
    for (int i=0; i<3; i++) roodset[i]->Write();
@@ -879,6 +881,12 @@ TString template_production::get_roodset_name(TString _varname, TString _reg){
   return a;
 };
 
+TString template_production::get_roovar_name(TString _varname, int i, int j){
+      TString t=_varname;
+      if (i==0) t.Append("_EB"); else t.Append("_EE");
+      if (j==0) t.Append("_1"); else t.Append("_2");
+      return t;
+};
 #endif // #ifdef template_production_cxx
 
 
