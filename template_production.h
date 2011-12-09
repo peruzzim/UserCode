@@ -14,6 +14,7 @@
 #include <iostream>
 #include "RooPlot.h"
 #include "RooDataHist.h"
+#include "RooDataSet.h"
 #include "TRandom3.h"
 #include "RooArgSet.h"
 #include "RooRealVar.h"
@@ -450,13 +451,16 @@ public :
    virtual void     Show(Long64_t entry = -1);
 
    void     WriteOutput(const char* filename);
-   void     ShowHistogram(int i, int j);
+   void     ShowHistogram(int i, int j, int k);
 
    void Setup(TString _varname, Float_t _leftrange, Float_t _rightrange, Int_t _nbins, Bool_t _isdata, TString _sidebandoption="");
 
    TRandom3 *randomgen;
-   RooRealVar *outroovar;
-   RooDataHist *roohout[2][3];
+
+   RooRealVar *roovar[2][2];
+   RooDataHist *roohist[3][2][2];
+   TH1F *templatehist[3][2];
+   RooDataSet *roodset[3];
 
    TBranch *b_pholead_outvar;
    Float_t pholead_outvar;
@@ -477,6 +481,8 @@ public :
    Int_t Cut_egm_10_006_sieierelaxed();
    Int_t Cut_egm_10_006_sieierelaxed_sideband();
 
+   TString get_roohist_name(TString varname, TString st, TString reg, TString count);
+   TString get_roodset_name(TString varname, TString reg);
 
 };
 
@@ -515,21 +521,57 @@ void template_production::Setup(TString _varname, Float_t _leftrange, Float_t _r
 
   Init();
 
-  outroovar = new RooRealVar(varname.Data(),varname.Data(),leftrange,rightrange);
-  outroovar->setBins(nbins);
+  // roovar[EB,EE][1,2]
+  for (int i=0; i<2; i++) for (int j=0; j<2; j++) {
+      TString t=varname;
+      if (i==0) t.Append("_EB"); else t.Append("_EE");
+      if (j==0) t.Append("_1"); else t.Append("_2");
+      roovar[i][j] = new RooRealVar(t.Data(),t.Data(),leftrange,rightrange);
+      roovar[i][j]->setBins(nbins);
+    }
+
    
   randomgen = new TRandom3(0);
   
-  // EBEB or EEEE
-  // bkg, sig, all
-  for (int i=0; i<2; i++) {
-    for (int j=0;j<3;j++){
-      TString reg;
-      if (i==0) reg="EE"; else if (i==1) reg="EB";
-      TString st;
-      if (j==0) st="bkg"; else if (j==1) st="sig"; else if (j==2) st="all";
-      roohout[i][j] = new RooDataHist(Form("%s_%s_%s",varname.Data(),st.Data(),reg.Data()),Form("%s_%s_%s",varname.Data(),st.Data(),reg.Data()),*outroovar);
+  // roohist[sig,bkg,all][EB,EE][1,2]
+  for (int i=0; i<3; i++) {
+    for (int j=0;j<2;j++) {
+      for (int k=0; k<2; k++){
+	TString st;
+	if (i==0) st="sig"; else if (i==1) st="bkg"; else if (i==2) st="all";
+	TString reg;
+	if (j==0) reg="EB"; else if (j==1) reg="EE";
+	TString count;
+	if (k==0) count="1"; else count="2";
+	TString t=Form("dhist_%s_%s_%s_%s",varname.Data(),st.Data(),reg.Data(),count.Data());
+	roohist[i][j][k] = new RooDataHist(t.Data(),t.Data(),*(roovar[j][k]));
+      }
     }
+  }
+
+  // templatehist[sig,bkg,all][EB,EE]
+  for (int i=0; i<3; i++) {
+    for (int j=0;j<2;j++) {
+	TString st;
+	if (i==0) st="sig"; else if (i==1) st="bkg"; else if (i==2) st="all";
+	TString reg;
+	if (j==0) reg="EB"; else if (j==1) reg="EE";
+	TString t=Form("templatehist_%s_%s_%s",varname.Data(),st.Data(),reg.Data());
+	templatehist[i][j] = new TH1F(t.Data(),t.Data(),nbins,leftrange,rightrange);
+      }
+    }
+
+
+  // roodataset[EBEB,EBEE,EEEE]
+  for (int i=0; i<3; i++){
+    TString reg;
+    if (i==0) reg="EBEB"; else if (i==1) reg="EBEE"; else if (i==2) reg="EEEE";
+    TString t=Form("dset_%s_%s",varname.Data(),reg.Data());
+    RooArgSet vars;
+    if (i==0) { vars.add(*(roovar[0][0])); vars.add(*(roovar[0][1])); }
+    else if (i==1) { vars.add(*(roovar[0][0])); vars.add(*(roovar[1][1])); }
+    else if (i==2) { vars.add(*(roovar[1][0])); vars.add(*(roovar[1][1])); }
+    roodset[i] = new RooDataSet(t.Data(),t.Data(),vars);
   }
   
   initialized=true;
@@ -541,8 +583,6 @@ template_production::~template_production()
    if (!fChain) return;
    delete fChain->GetCurrentFile();
    delete randomgen;
-   delete outroovar;
-   for (int i=0; i<2; i++) for (int j=0;j<3;j++) delete roohout[i][j];
 }
 
 Int_t template_production::GetEntry(Long64_t entry)
@@ -817,15 +857,28 @@ void template_production::Show(Long64_t entry)
 void template_production::WriteOutput(const char* filename){
   TFile *out = TFile::Open(filename,"recreate");
    out->cd();
-   for (int i=0; i<2; i++) for (int j=0;j<3;j++) roohout[i][j]->Write();
+   for (int i=0; i<3; i++) for (int j=0;j<2;j++) for (int k=0;k<2;k++) roohist[i][j][k]->Write();
+   for (int i=0; i<3; i++) for (int j=0;j<2;j++) templatehist[i][j]->Write();
+   for (int i=0; i<3; i++) roodset[i]->Write();
    out->Close();
 };
 
-void template_production::ShowHistogram(int i, int j){
-  RooPlot *outroovarframe = outroovar->frame(Name(varname.Data()),Title(varname.Data()));
-  roohout[i][j]->plotOn(outroovarframe);
+void template_production::ShowHistogram(int i, int j, int k){
+  RooPlot *outroovarframe = roovar[j][k]->frame(Name(varname.Data()),Title(varname.Data()));
+  roohist[i][j][k]->plotOn(outroovarframe);
   outroovarframe->Draw();
 };
+
+TString template_production::get_roohist_name(TString _varname, TString _st, TString _reg, TString _count){
+  TString a(Form("dhist_%s_%s_%s_%s",_varname.Data(),_st.Data(),_reg.Data(),_count.Data()));
+  return a;
+};
+
+TString template_production::get_roodset_name(TString _varname, TString _reg){
+  TString a(Form("dset_%s_%s",_varname.Data(),_reg.Data()));
+  return a;
+};
+
 #endif // #ifdef template_production_cxx
 
 
