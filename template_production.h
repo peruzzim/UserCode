@@ -21,6 +21,8 @@
 #include <TH2.h>
 #include <TStyle.h>
 #include <TCanvas.h>
+#include "TProfile.h"
+#include "TF1.h"
 
 using namespace std;
 using namespace RooFit;
@@ -450,10 +452,12 @@ public :
    virtual Bool_t   Notify();
    virtual void     Show(Long64_t entry = -1);
 
-   void     WriteOutput(const char* filename);
+   void     WriteOutput(const char* filename, const bool isdata, const TString dirname);
    void     ShowHistogram(int i, int j, int k);
 
-   void Setup(TString _varname, Float_t _leftrange, Float_t _rightrange, Int_t _nbins, Bool_t _isdata, TString _sidebandoption="");
+   void Setup(TString _varname, Float_t _leftrange, Float_t _rightrange, Int_t _nbins, Bool_t _isdata);
+
+   TProfile** GetPUScaling();
 
    TRandom3 *randomgen;
 
@@ -472,14 +476,14 @@ public :
 
    Bool_t isdata;
 
+   Bool_t doabsolute;
+   Bool_t dopucorr;
+
    Float_t leftrange, rightrange;
    Int_t nbins;
 
    TString varname;
    TString sidebandoption;
-
-   Int_t Cut_egm_10_006_sieierelaxed();
-   Int_t Cut_egm_10_006_sieierelaxed_sideband();
 
    TString get_roohist_name(TString varname, TString st, TString reg, TString count);
    TString get_roodset_name(TString varname, TString reg);
@@ -511,14 +515,25 @@ template_production::template_production(TTree *tree)
 
 }
 
-void template_production::Setup(TString _varname, Float_t _leftrange, Float_t _rightrange, Int_t _nbins, Bool_t _isdata, TString _sidebandoption){
+void template_production::Setup(TString _varname, Float_t _leftrange, Float_t _rightrange, Int_t _nbins, Bool_t _isdata){
 
   varname=_varname;
   leftrange=_leftrange;
   rightrange=_rightrange;
   nbins=_nbins;
-  sidebandoption=_sidebandoption;
   isdata=_isdata;
+
+  doabsolute=false;
+  if (varname=="PhoIso04"){
+     std::cout << "Building templates for absolute isolation" << std::endl;
+     doabsolute=true;
+  }
+
+  dopucorr=false;
+  if (varname=="PhoIso04"){
+    std::cout << "Applying PU correction" << std::endl;
+    dopucorr=true;
+  }
 
   Init();
 
@@ -544,7 +559,7 @@ void template_production::Setup(TString _varname, Float_t _leftrange, Float_t _r
 	if (j==0) reg="EB"; else if (j==1) reg="EE";
 	TString count;
 	if (k==0) count="1"; else count="2";
-	TString t=Form("dhist_%s_%s_%s_%s",varname.Data(),st.Data(),reg.Data(),count.Data());
+	TString t=Form("roohist_%s_%s_%s_%s",varname.Data(),st.Data(),reg.Data(),count.Data());
 	roohist[i][j][k] = new RooDataHist(t.Data(),t.Data(),*(roovar[j][k]));
       }
     }
@@ -563,15 +578,16 @@ void template_production::Setup(TString _varname, Float_t _leftrange, Float_t _r
     }
 
 
-  // roodataset[EBEB,EBEE,EEEE]
-  for (int i=0; i<3; i++){
+  // roodataset[EBEB,EBEE,EEEB,EEEE]
+  for (int i=0; i<4; i++){
     TString reg;
-    if (i==0) reg="EBEB"; else if (i==1) reg="EBEE"; else if (i==2) reg="EEEE";
-    TString t=Form("dset_%s_%s",varname.Data(),reg.Data());
+    if (i==0) reg="EBEB"; else if (i==1) reg="EBEE"; else if (i==2) reg="EEEB"; else if (i==3) reg="EEEE";
+    TString t=Form("roodataset_%s_%s",varname.Data(),reg.Data());
     RooArgSet vars;
     if (i==0) { vars.add(*(roovar[0][0])); vars.add(*(roovar[0][1])); }
     else if (i==1) { vars.add(*(roovar[0][0])); vars.add(*(roovar[1][1])); }
-    else if (i==2) { vars.add(*(roovar[1][0])); vars.add(*(roovar[1][1])); }
+    else if (i==2) { vars.add(*(roovar[1][0])); vars.add(*(roovar[0][1])); }
+    else if (i==3) { vars.add(*(roovar[1][0])); vars.add(*(roovar[1][1])); }
     roodset[i] = new RooDataSet(t.Data(),t.Data(),vars);
   }
   
@@ -584,6 +600,12 @@ template_production::~template_production()
    if (!fChain) return;
    delete fChain->GetCurrentFile();
    delete randomgen;
+
+   for (int j=0;j<2;j++) for (int k=0;k<2;k++) delete roovar[j][k];
+   for (int i=0; i<3; i++) for (int j=0;j<2;j++) for (int k=0;k<2;k++) delete roohist[i][j][k];
+   for (int i=0; i<3; i++) for (int j=0;j<2;j++) delete templatehist[i][j];
+   for (int i=0; i<4; i++) delete roodset[i];
+
 }
 
 Int_t template_production::GetEntry(Long64_t entry)
@@ -592,6 +614,7 @@ Int_t template_production::GetEntry(Long64_t entry)
    if (!fChain) return 0;
    return fChain->GetEntry(entry);
 }
+
 Long64_t template_production::LoadTree(Long64_t entry)
 {
 // Set the environment to read one entry
@@ -824,9 +847,6 @@ void template_production::Init()
    fChain->SetBranchAddress("photrail_PhoMCmatchindex", &photrail_PhoMCmatchindex, &b_photrail_PhoMCmatchindex);
    fChain->SetBranchAddress("photrail_PhoMCmatchexitcode", &photrail_PhoMCmatchexitcode, &b_photrail_PhoMCmatchexitcode);
 
-   fChain->SetBranchAddress(Form("pholead_%s",varname.Data()), &pholead_outvar, &b_pholead_outvar);
-   fChain->SetBranchAddress(Form("photrail_%s",varname.Data()), &photrail_outvar, &b_photrail_outvar);
-
    Notify();
 }
 
@@ -855,14 +875,18 @@ void template_production::Show(Long64_t entry)
 /* // returns -1 otherwise. */
 /*    return 1; */
 /* } */
-void template_production::WriteOutput(const char* filename){
-  TFile *out = TFile::Open(filename,"recreate");
-   out->cd();
-   for (int j=0;j<2;j++) for (int k=0;k<2;k++) roovar[j][k]->Write();
-   for (int i=0; i<3; i++) for (int j=0;j<2;j++) for (int k=0;k<2;k++) roohist[i][j][k]->Write();
-   for (int i=0; i<3; i++) for (int j=0;j<2;j++) templatehist[i][j]->Write();
-   for (int i=0; i<3; i++) roodset[i]->Write();
-   out->Close();
+void template_production::WriteOutput(const char* filename, const bool _isdata, const TString _dirname){
+  TFile *out = TFile::Open(filename,"update");
+  TString dirname("");
+  if (_isdata) dirname.Append("data_"); else dirname.Append("mc_");
+  dirname.Append(_dirname.Data());
+  out->mkdir(dirname.Data());
+  out->cd(dirname.Data());
+  for (int j=0;j<2;j++) for (int k=0;k<2;k++) roovar[j][k]->Write();
+  for (int i=0; i<3; i++) for (int j=0;j<2;j++) for (int k=0;k<2;k++) roohist[i][j][k]->Write();
+  for (int i=0; i<3; i++) for (int j=0;j<2;j++) templatehist[i][j]->Write();
+  for (int i=0; i<4; i++) roodset[i]->Write();
+  out->Close();
 };
 
 void template_production::ShowHistogram(int i, int j, int k){
@@ -872,12 +896,12 @@ void template_production::ShowHistogram(int i, int j, int k){
 };
 
 TString template_production::get_roohist_name(TString _varname, TString _st, TString _reg, TString _count){
-  TString a(Form("dhist_%s_%s_%s_%s",_varname.Data(),_st.Data(),_reg.Data(),_count.Data()));
+  TString a(Form("roohist_%s_%s_%s_%s",_varname.Data(),_st.Data(),_reg.Data(),_count.Data()));
   return a;
 };
 
 TString template_production::get_roodset_name(TString _varname, TString _reg){
-  TString a(Form("dset_%s_%s",_varname.Data(),_reg.Data()));
+  TString a(Form("roodataset_%s_%s",_varname.Data(),_reg.Data()));
   return a;
 };
 

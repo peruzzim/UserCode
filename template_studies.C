@@ -64,6 +64,14 @@ void fit_dataset(const char* datafilename, const char* sigfilename, const char* 
       bkgfile->GetObject(helper.get_roohist_name(varname,TString("bkg"),TString("EB"),TString("1")).Data(),roohist[1][0]);
       bkgfile->GetObject(helper.get_roohist_name(varname,TString("bkg"),TString("EE"),TString("2")).Data(),roohist[1][1]);
     }
+    else if (splitting=="EEEB"){
+      datafile->GetObject(helper.get_roovar_name(varname,1,0),roovar[0]);
+      datafile->GetObject(helper.get_roovar_name(varname,0,1),roovar[1]);
+      sigfile->GetObject(helper.get_roohist_name(varname,TString("sig"),TString("EE"),TString("1")).Data(),roohist[0][0]);
+      sigfile->GetObject(helper.get_roohist_name(varname,TString("sig"),TString("EB"),TString("2")).Data(),roohist[0][1]);
+      bkgfile->GetObject(helper.get_roohist_name(varname,TString("bkg"),TString("EE"),TString("1")).Data(),roohist[1][0]);
+      bkgfile->GetObject(helper.get_roohist_name(varname,TString("bkg"),TString("EB"),TString("2")).Data(),roohist[1][1]);
+    }
     else if (splitting=="EEEE"){
       datafile->GetObject(helper.get_roovar_name(varname,1,0),roovar[0]);
       datafile->GetObject(helper.get_roovar_name(varname,1,1),roovar[1]);
