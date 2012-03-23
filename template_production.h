@@ -486,11 +486,11 @@ public :
 
    TString varname;
    TString sidebandoption;
-   /*
-   TString get_roohist_name(TString varname, TString st, TString reg, TString count, int template);
-   TString get_roodset_name(TString varname, TString reg, int template);
+
+   TString get_roohist_name(TString varname, TString st, TString reg, TString count, int _binnumber);
+   TString get_roodset_name(TString varname, TString reg, int _binnumber);
    TString get_roovar_name(TString _varname, int i, int j);
-   */
+
    Int_t Choose_bin_invmass(float invmass);
 
 };
@@ -910,14 +910,14 @@ void template_production::ShowHistogram(int i, int j, int k, int l){
   roohist[i][j][k][l]->plotOn(outroovarframe);
   outroovarframe->Draw();
 };
-/*
-TString template_production::get_roohist_name(TString _varname, TString _st, TString _reg, TString _count, int template){
-  TString a(Form("roohist_%s_%s_%s_%s_b%d",_varname.Data(),_st.Data(),_reg.Data(),_count.Data(),template));
+
+TString template_production::get_roohist_name(TString _varname, TString _st, TString _reg, TString _count, int _binnumber){
+  TString a(Form("roohist_%s_%s_%s_%s_b%d",_varname.Data(),_st.Data(),_reg.Data(),_count.Data(),_binnumber));
   return a;
 };
 
-TString template_production::get_roodset_name(TString _varname, TString _reg, int template){
-  TString a(Form("roodataset_%s_%s_b%d",_varname.Data(),_reg.Data(),template));
+TString template_production::get_roodset_name(TString _varname, TString _reg, int _binnumber){
+  TString a(Form("roodataset_%s_%s_b%d",_varname.Data(),_reg.Data(),_binnumber));
   return a;
 };
 
@@ -927,7 +927,7 @@ TString template_production::get_roovar_name(TString _varname, int i, int j){
       if (j==0) t.Append("_1"); else t.Append("_2");
       return t;
 };
-*/
+
 Int_t template_production::Choose_bin_invmass(float invmass){
 
   const float cuts[n_templates+1] = {80,120,160,9999};
