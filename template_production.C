@@ -96,6 +96,7 @@ void template_production::Loop()
     Float_t weight=event_luminormfactor*event_Kfactor*event_weight;
 
 
+    Int_t bin = Choose_bin_invmass(dipho_mgg_photon);
 
 
     if (event_ok_for_templates==0 || event_ok_for_templates==1){ // 0:EB, 1:EE
@@ -105,23 +106,23 @@ void template_production::Loop()
       roovar[event_ok_for_templates][0]->setVal(pholead_outvar);
       roovar[event_ok_for_templates][1]->setVal(photrail_outvar);
 
-      roohist[2][event_ok_for_templates][0]->add(*(roovar[event_ok_for_templates][0]),weight);
-      roohist[2][event_ok_for_templates][1]->add(*(roovar[event_ok_for_templates][1]),weight);
+      roohist[2][event_ok_for_templates][0][bin]->add(*(roovar[event_ok_for_templates][0]),weight);
+      roohist[2][event_ok_for_templates][1][bin]->add(*(roovar[event_ok_for_templates][1]),weight);
 
-      templatehist[2][event_ok_for_templates]->Fill(pholead_outvar,weight/2);
-      templatehist[2][event_ok_for_templates]->Fill(photrail_outvar,weight/2);
+      templatehist[2][event_ok_for_templates][bin]->Fill(pholead_outvar,weight/2);
+      templatehist[2][event_ok_for_templates][bin]->Fill(photrail_outvar,weight/2);
 
       if (!isdata) {
 	if (pholead_PhoMCmatchexitcode==1 || pholead_PhoMCmatchexitcode==2) indsignal=0; else indsignal=1;
-	roohist[indsignal][event_ok_for_templates][0]->add(*(roovar[event_ok_for_templates][0]),weight);
-	roohist[indsignal][event_ok_for_templates][1]->add(*(roovar[event_ok_for_templates][1]),weight);
-	templatehist[indsignal][event_ok_for_templates]->Fill(pholead_outvar,weight/2);
-	templatehist[indsignal][event_ok_for_templates]->Fill(photrail_outvar,weight/2);
+	roohist[indsignal][event_ok_for_templates][0][bin]->add(*(roovar[event_ok_for_templates][0]),weight);
+	roohist[indsignal][event_ok_for_templates][1][bin]->add(*(roovar[event_ok_for_templates][1]),weight);
+	templatehist[indsignal][event_ok_for_templates][bin]->Fill(pholead_outvar,weight/2);
+	templatehist[indsignal][event_ok_for_templates][bin]->Fill(photrail_outvar,weight/2);
       }
     
     }
 
-
+    //    std::cout << "filled histos" << std::endl;
 
 
 
@@ -171,12 +172,14 @@ void template_production::Loop()
 	filln=1;
       }
 
-      roodset[filln]->add(list,weight);
+      //      std::cout << "fill roodset" << std::endl;
+      roodset[filln][bin]->add(list,weight);
 
     }
 
 
   } // end event loop
+  std::cout << "ended event loop" << std::endl;
 };
 
 
@@ -221,7 +224,9 @@ void gen_templates(TString varname, Float_t leftrange, Float_t rightrange, Int_t
       template_production *temp = new template_production(t);
       temp->Setup(varname,leftrange,rightrange,nbins,isdata,dopucorr);
       temp->Loop();
+      std::cout << "exited from event loop" << std::endl;
       temp->WriteOutput(outfile,isdata,treename[sel_cat].Data());
+      std::cout << "written output" << std::endl;
       //      delete temp;
     }
   }

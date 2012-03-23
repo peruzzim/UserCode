@@ -453,18 +453,20 @@ public :
    virtual void     Show(Long64_t entry = -1);
 
    void     WriteOutput(const char* filename, const bool isdata, const TString dirname);
-   void     ShowHistogram(int i, int j, int k);
+   void     ShowHistogram(int i, int j, int k, int l);
 
-   void Setup(TString _varname, Float_t _leftrange, Float_t _rightrange, Int_t _nbins, Bool_t _isdata);
+   void Setup(TString _varname, Float_t _leftrange, Float_t _rightrange, Int_t _nbins, Bool_t _isdata, Bool_t _dopucorr);
 
    TProfile** GetPUScaling();
 
    TRandom3 *randomgen;
 
+   static const int n_templates=3;
+
    RooRealVar *roovar[2][2];
-   RooDataHist *roohist[3][2][2];
-   TH1F *templatehist[3][2];
-   RooDataSet *roodset[3];
+   RooDataHist *roohist[3][2][2][n_templates];
+   TH1F *templatehist[3][2][n_templates];
+   RooDataSet *roodset[3][n_templates];
 
    TBranch *b_pholead_outvar;
    Float_t pholead_outvar;
@@ -484,10 +486,12 @@ public :
 
    TString varname;
    TString sidebandoption;
-
-   TString get_roohist_name(TString varname, TString st, TString reg, TString count);
-   TString get_roodset_name(TString varname, TString reg);
+   /*
+   TString get_roohist_name(TString varname, TString st, TString reg, TString count, int template);
+   TString get_roodset_name(TString varname, TString reg, int template);
    TString get_roovar_name(TString _varname, int i, int j);
+   */
+   Int_t Choose_bin_invmass(float invmass);
 
 };
 
@@ -498,14 +502,15 @@ template_production::template_production(TTree *tree)
 {
 // if parameter tree is not specified (or zero), connect the file
 // used to generate this class and read the Tree.
-   if (tree == 0) {
-      TFile *f = (TFile*)gROOT->GetListOfFiles()->FindObject("mc_inclusive.root");
-      if (!f || !f->IsOpen()) {
-         f = new TFile("mc_inclusive.root");
-      }
-      f->GetObject("Tree",tree);
 
-   }
+//   if (tree == 0) {
+//      TFile *f = (TFile*)gROOT->GetListOfFiles()->FindObject("mc_inclusive.root");
+//      if (!f || !f->IsOpen()) {
+//         f = new TFile("mc_inclusive.root");
+//      }
+//      f->GetObject("Tree",tree);
+//
+//   }
 
    if (tree==0) std::cout << "Tree not ready!" << std::endl;
    if (!tree) return;
@@ -515,7 +520,7 @@ template_production::template_production(TTree *tree)
 
 }
 
-void template_production::Setup(TString _varname, Float_t _leftrange, Float_t _rightrange, Int_t _nbins, Bool_t _isdata){
+void template_production::Setup(TString _varname, Float_t _leftrange, Float_t _rightrange, Int_t _nbins, Bool_t _isdata, Bool_t _dopucorr){
 
   varname=_varname;
   leftrange=_leftrange;
@@ -529,11 +534,13 @@ void template_production::Setup(TString _varname, Float_t _leftrange, Float_t _r
      doabsolute=true;
   }
 
-  dopucorr=false;
-  if (varname=="PhoIso04"){
-    std::cout << "Applying PU correction" << std::endl;
-    dopucorr=true;
+  dopucorr=_dopucorr;
+  if (varname!="PhoIso04") {
+    dopucorr=false;
+    std::cout << "WARNING: NOT applying PU correction for this unknown variable" << std::endl;
   }
+  if (dopucorr) std::cout << "Applying PU correction" << std::endl;
+
 
   Init();
 
@@ -549,48 +556,54 @@ void template_production::Setup(TString _varname, Float_t _leftrange, Float_t _r
    
   randomgen = new TRandom3(0);
   
-  // roohist[sig,bkg,all][EB,EE][1,2]
+  // roohist[sig,bkg,all][EB,EE][1,2][n_templates]
   for (int i=0; i<3; i++) {
     for (int j=0;j<2;j++) {
       for (int k=0; k<2; k++){
-	TString st;
-	if (i==0) st="sig"; else if (i==1) st="bkg"; else if (i==2) st="all";
-	TString reg;
-	if (j==0) reg="EB"; else if (j==1) reg="EE";
-	TString count;
-	if (k==0) count="1"; else count="2";
-	TString t=Form("roohist_%s_%s_%s_%s",varname.Data(),st.Data(),reg.Data(),count.Data());
-	roohist[i][j][k] = new RooDataHist(t.Data(),t.Data(),*(roovar[j][k]));
+	for (int l=0; l<n_templates; l++){
+	  TString st;
+	  if (i==0) st="sig"; else if (i==1) st="bkg"; else if (i==2) st="all";
+	  TString reg;
+	  if (j==0) reg="EB"; else if (j==1) reg="EE";
+	  TString count;
+	  if (k==0) count="1"; else count="2";
+	  TString t=Form("roohist_%s_%s_%s_%s_b%d",varname.Data(),st.Data(),reg.Data(),count.Data(),l);
+	  roohist[i][j][k][l] = new RooDataHist(t.Data(),t.Data(),*(roovar[j][k]));
+	}
       }
     }
   }
 
-  // templatehist[sig,bkg,all][EB,EE]
+  // templatehist[sig,bkg,all][EB,EE][n_templates]
   for (int i=0; i<3; i++) {
     for (int j=0;j<2;j++) {
+      for (int l=0; l<n_templates; l++){
 	TString st;
 	if (i==0) st="sig"; else if (i==1) st="bkg"; else if (i==2) st="all";
 	TString reg;
 	if (j==0) reg="EB"; else if (j==1) reg="EE";
-	TString t=Form("templatehist_%s_%s_%s",varname.Data(),st.Data(),reg.Data());
-	templatehist[i][j] = new TH1F(t.Data(),t.Data(),nbins,leftrange,rightrange);
+	TString t=Form("templatehist_%s_%s_%s_b%d",varname.Data(),st.Data(),reg.Data(),l);
+	templatehist[i][j][l] = new TH1F(t.Data(),t.Data(),nbins,leftrange,rightrange);
       }
     }
-
-
-  // roodataset[EBEB,EBEE,EEEB,EEEE]
-  for (int i=0; i<4; i++){
-    TString reg;
-    if (i==0) reg="EBEB"; else if (i==1) reg="EBEE"; else if (i==2) reg="EEEB"; else if (i==3) reg="EEEE";
-    TString t=Form("roodataset_%s_%s",varname.Data(),reg.Data());
-    RooArgSet vars;
-    if (i==0) { vars.add(*(roovar[0][0])); vars.add(*(roovar[0][1])); }
-    else if (i==1) { vars.add(*(roovar[0][0])); vars.add(*(roovar[1][1])); }
-    else if (i==2) { vars.add(*(roovar[1][0])); vars.add(*(roovar[0][1])); }
-    else if (i==3) { vars.add(*(roovar[1][0])); vars.add(*(roovar[1][1])); }
-    roodset[i] = new RooDataSet(t.Data(),t.Data(),vars);
   }
-  
+
+
+  // roodataset[EBEB,EBEE,EEEB,EEEE][n_templates]
+  for (int i=0; i<4; i++){
+    for (int l=0; l<n_templates; l++){
+      TString reg;
+      if (i==0) reg="EBEB"; else if (i==1) reg="EBEE"; else if (i==2) reg="EEEB"; else if (i==3) reg="EEEE";
+      TString t=Form("roodataset_%s_%s_b%d",varname.Data(),reg.Data(),l);
+      RooArgSet vars;
+      if (i==0) { vars.add(*(roovar[0][0])); vars.add(*(roovar[0][1])); }
+      else if (i==1) { vars.add(*(roovar[0][0])); vars.add(*(roovar[1][1])); }
+      else if (i==2) { vars.add(*(roovar[1][0])); vars.add(*(roovar[0][1])); }
+      else if (i==3) { vars.add(*(roovar[1][0])); vars.add(*(roovar[1][1])); }
+      roodset[i][l] = new RooDataSet(t.Data(),t.Data(),vars);
+    }
+  }
+
   initialized=true;
   
 };
@@ -602,9 +615,9 @@ template_production::~template_production()
    delete randomgen;
 
    for (int j=0;j<2;j++) for (int k=0;k<2;k++) delete roovar[j][k];
-   for (int i=0; i<3; i++) for (int j=0;j<2;j++) for (int k=0;k<2;k++) delete roohist[i][j][k];
-   for (int i=0; i<3; i++) for (int j=0;j<2;j++) delete templatehist[i][j];
-   for (int i=0; i<4; i++) delete roodset[i];
+   for (int l=0; l<n_templates; l++) for (int i=0; i<3; i++) for (int j=0;j<2;j++) for (int k=0;k<2;k++) delete roohist[i][j][k][l];
+   for (int l=0; l<n_templates; l++) for (int i=0; i<3; i++) for (int j=0;j<2;j++) delete templatehist[i][j][l];
+   for (int l=0; l<n_templates; l++) for (int i=0; i<4; i++) delete roodset[i][l];
 
 }
 
@@ -883,25 +896,28 @@ void template_production::WriteOutput(const char* filename, const bool _isdata, 
   out->mkdir(dirname.Data());
   out->cd(dirname.Data());
   for (int j=0;j<2;j++) for (int k=0;k<2;k++) roovar[j][k]->Write();
-  for (int i=0; i<3; i++) for (int j=0;j<2;j++) for (int k=0;k<2;k++) roohist[i][j][k]->Write();
-  for (int i=0; i<3; i++) for (int j=0;j<2;j++) templatehist[i][j]->Write();
-  for (int i=0; i<4; i++) roodset[i]->Write();
+  for (int l=0; l<n_templates; l++) for (int i=0; i<3; i++) for (int j=0;j<2;j++) for (int k=0;k<2;k++) roohist[i][j][k][l]->Write();
+  std::cout << "written roohist" << std::endl;
+  for (int l=0; l<n_templates; l++) for (int i=0; i<3; i++) for (int j=0;j<2;j++) templatehist[i][j][l]->Write();
+  std::cout << "written templatehist" << std::endl;
+  for (int l=0; l<n_templates; l++) for (int i=0; i<3; i++) roodset[i][l]->Write();
+  std::cout << "written roodset" << std::endl;
   out->Close();
 };
 
-void template_production::ShowHistogram(int i, int j, int k){
+void template_production::ShowHistogram(int i, int j, int k, int l){
   RooPlot *outroovarframe = roovar[j][k]->frame(Name(varname.Data()),Title(varname.Data()));
-  roohist[i][j][k]->plotOn(outroovarframe);
+  roohist[i][j][k][l]->plotOn(outroovarframe);
   outroovarframe->Draw();
 };
-
-TString template_production::get_roohist_name(TString _varname, TString _st, TString _reg, TString _count){
-  TString a(Form("roohist_%s_%s_%s_%s",_varname.Data(),_st.Data(),_reg.Data(),_count.Data()));
+/*
+TString template_production::get_roohist_name(TString _varname, TString _st, TString _reg, TString _count, int template){
+  TString a(Form("roohist_%s_%s_%s_%s_b%d",_varname.Data(),_st.Data(),_reg.Data(),_count.Data(),template));
   return a;
 };
 
-TString template_production::get_roodset_name(TString _varname, TString _reg){
-  TString a(Form("roodataset_%s_%s",_varname.Data(),_reg.Data()));
+TString template_production::get_roodset_name(TString _varname, TString _reg, int template){
+  TString a(Form("roodataset_%s_%s_b%d",_varname.Data(),_reg.Data(),template));
   return a;
 };
 
@@ -911,6 +927,24 @@ TString template_production::get_roovar_name(TString _varname, int i, int j){
       if (j==0) t.Append("_1"); else t.Append("_2");
       return t;
 };
+*/
+Int_t template_production::Choose_bin_invmass(float invmass){
+
+  const float cuts[n_templates+1] = {80,120,160,9999};
+
+  if (invmass<cuts[0]){
+    std::cout << "WARNING: called bin choice for out-of-range value " << invmass << std::endl;
+    return -999;
+  }
+
+  for (int i=0; i<n_templates; i++) if ((invmass>=cuts[i]) && (invmass<cuts[i+1])) return i;
+  
+  std::cout << "WARNING: called bin choice for out-of-range value " << invmass << std::endl;
+  return -999;
+
+
+};
+
 #endif // #ifdef template_production_cxx
 
 
