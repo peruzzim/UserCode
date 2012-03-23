@@ -65,6 +65,9 @@ void template_production::Loop()
     // initial kinematic selection
     if (pholead_pt<40 || photrail_pt<30 || dipho_mgg_photon<80) continue;
 
+    if (pholead_outvar>rightrange || pholead_outvar<leftrange) continue;
+    if (photrail_outvar>rightrange || photrail_outvar<leftrange) continue;
+
     Int_t event_ok_for_templates=-1;
     Int_t event_ok_for_dataset=-1;
 
@@ -179,7 +182,7 @@ void template_production::Loop()
 
 #endif
 
-void gen_templates(TString varname, Float_t leftrange, Float_t rightrange, Int_t nbins, const char* outfile="out.root"){
+void gen_templates(TString varname, Float_t leftrange, Float_t rightrange, Int_t nbins, const char* outfile="out.root",bool dopucorr=false){
   
   TFile *outF = TFile::Open(outfile,"recreate");
   outF->Close();
@@ -216,7 +219,7 @@ void gen_templates(TString varname, Float_t leftrange, Float_t rightrange, Int_t
       std::cout << "Processing isdata=" << isdata << " selection " << treename[sel_cat].Data() << std::endl;
       file[isdata]->GetObject(treename[sel_cat].Data(),t);
       template_production *temp = new template_production(t);
-      temp->Setup(varname,leftrange,rightrange,nbins,isdata);
+      temp->Setup(varname,leftrange,rightrange,nbins,isdata,dopucorr);
       temp->Loop();
       temp->WriteOutput(outfile,isdata,treename[sel_cat].Data());
       //      delete temp;
@@ -259,20 +262,24 @@ void get_eff_area(){
 
   output[0]->Print();
   output[1]->Print();
+  output[2]->Print();
 
   TF1 *f_iso = new TF1("f_iso","pol1(0)",0,30);
   TF1 *f_rho = new TF1("f_rho","pol1(0)",0,30);
+  TF1 *f_iso_pu = new TF1("f_iso_pu","pol1(0)",0,30);
 
   output[0]->Fit(f_iso);
   output[1]->Fit(f_rho);
+  output[2]->Fit(f_iso_pu);
 
  
   outF->cd();
   output[0]->Write();
   output[1]->Write();
+  output[2]->Write();
   f_iso->Write();
   f_rho->Write();
-
+  f_iso_pu->Write();
 
   file[0]->Close();
 
@@ -284,8 +291,10 @@ TProfile** template_production::GetPUScaling(){
 
   TProfile *prof_iso = new TProfile("prof_iso","prof_iso",30,0,30);
   TProfile *prof_rho = new TProfile("prof_rho","prof_rho",30,0,30);
+  TProfile *prof_iso_pu = new TProfile("prof_iso_pu","prof_iso_pu",30,0,30);
 
   prof_rho->SetLineColor(kRed);
+  prof_iso_pu->SetLineColor(kBlue);
 
   Init();
 
@@ -322,18 +331,29 @@ TProfile** template_production::GetPUScaling(){
     prof_iso->Fill(event_nRecVtx,pholead_outvar,weight/2);
     prof_iso->Fill(event_nRecVtx,photrail_outvar,weight/2);
 
+    const float eff_area_fraction=0.564;
+    const float dR=0.4;
+    pholead_outvar-=eff_area_fraction*event_rho*3.14*dR*dR;
+    photrail_outvar-=eff_area_fraction*event_rho*3.14*dR*dR;
+    
+    prof_iso_pu->Fill(event_nRecVtx,pholead_outvar,weight/2);
+    prof_iso_pu->Fill(event_nRecVtx,photrail_outvar,weight/2);
+
+
     prof_rho->Fill(event_nRecVtx,event_rho*3.14*0.4*0.4,weight);
 
     
 
   }
 
-  TProfile** out = new TProfile*[2];
+  TProfile** out = new TProfile*[3];
   out[0]=prof_iso;
   out[1]=prof_rho;
+  out[2]=prof_iso_pu;
 
   prof_iso->Print();
   prof_rho->Print();
+  prof_iso_pu->Print();
 
   return out;
 
