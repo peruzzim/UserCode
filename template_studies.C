@@ -10,6 +10,8 @@ void fit_dataset(const char* _varname, const char* inputfilename, TString splitt
   RooDataHist *roohist[2][2]; // roohist[sig,bkg][x,y]
   RooDataSet *roodset;
 
+  RooFormulaVar *cut[2];      
+
   roodset=NULL;
   for (int i=0; i<2; i++){
     roovar[i]=NULL;
@@ -33,8 +35,6 @@ void fit_dataset(const char* _varname, const char* inputfilename, TString splitt
   int bin=0;
 
   {
-
-
     if (splitting=="EBEB") {
       inputfile->GetObject(TString(data_dir).Append(helper->get_roovar_name(varname,0,0).Data()),roovar[0]);
       inputfile->GetObject(TString(data_dir).Append(helper->get_roovar_name(varname,0,1).Data()),roovar[1]);
@@ -68,8 +68,20 @@ void fit_dataset(const char* _varname, const char* inputfilename, TString splitt
       inputfile->GetObject(TString(mc_dir).Append(helper->get_roohist_name(varname,TString("bkg"),TString("EE"),TString("2"),bin).Data()),roohist[1][1]);
     }
 
+      cut[0] = new RooFormulaVar("cut_0","cut_0", Form("((%s>%f) && (%s<%f))",roovar[0]->getTitle().Data(),leftrange,roovar[0]->getTitle().Data(),rightrange), RooArgList(*(roovar[0])));
+      cut[1] = new RooFormulaVar("cut_1","cut_1", Form("((%s>%f) && (%s<%f))",roovar[1]->getTitle().Data(),leftrange,roovar[1]->getTitle().Data(),rightrange), RooArgList(*(roovar[1])));
+      std::cout << "Using cuts: " << std::endl;
+      cut[0]->Print();
+      cut[1]->Print();
+
     inputfile->GetObject(TString(data_dir).Append(helper->get_roodset_name(varname,splitting,bin).Data()),roodset);
     cout << "using dset " << TString(data_dir).Append(helper->get_roodset_name(varname,splitting,bin).Data()) << endl;
+
+    RooFormulaVar *bothcut = new RooFormulaVar("bothcut","bothcut","cut_0 && cut_1",RooArgList(*(cut[0]),*(cut[1])));
+    roodset=(RooDataSet*)(roodset->reduce(Cut(*bothcut)));
+    for (int i=0; i<2; i++)
+      for (int j=0; j<2; j++)
+	roohist[i][j]=(RooDataHist*)(roohist[i][j]->reduce(Cut(*bothcut)));
 
     bool wrong=false;
 
@@ -88,8 +100,10 @@ void fit_dataset(const char* _varname, const char* inputfilename, TString splitt
 
   }
 
-  roovar[0]->setRange(leftrange,rightrange);
-  roovar[1]->setRange(leftrange,rightrange);
+  roovar[0]->setBins(50);
+  roovar[1]->setBins(50);
+
+
 
 
   RooHistPdf sig1pdf("sig1pdf","sig1pdf",*(roovar[0]),*(roohist[0][0]));
@@ -101,27 +115,44 @@ void fit_dataset(const char* _varname, const char* inputfilename, TString splitt
   RooProdPdf sigbkgpdf("sigbkgpdf","sigbkgpdf",RooArgList(sig1pdf,bkg2pdf));
   RooProdPdf bkgsigpdf("bkgsigpdf","bkgsigpdf",RooArgList(bkg1pdf,sig2pdf));
   RooProdPdf bkgbkgpdf("bkgbkgpdf","bkgbkgpdf",RooArgList(bkg1pdf,bkg2pdf));
+
+
+  RooRealVar rf1("rf1","rf1",1e-1,0,1);
+  RooRealVar rf2("rf2","rf2",1e-1,0,1);
+  RooRealVar rf3("rf3","rf3",1e-1,0,1);
+
   
-  RooRealVar nsigsig("nsigsig","nsigsig",100,0,100000);
-  RooRealVar nsigbkg("nsigbkg","nsigbkg",100,0,100000);
-  RooRealVar nbkgsig("nbkgsig","nbkgsig",100,0,100000);
-  RooRealVar nbkgbkg("nbkgbkg","nbkgbkg",100,0,100000);
+  RooFormulaVar fsigsig("fsigsig","fsigsig","rf1",RooArgList(rf1));
+  RooFormulaVar fsigbkg("fsigbkg","fsigbkg","(1-rf1)*rf2",RooArgList(rf1,rf2));
+  RooFormulaVar fbkgsig("fbkgsig","fbkgsig","(1-rf1)*(1-rf2)*rf3",RooArgList(rf1,rf2,rf3));
 
-  RooAddPdf model("model","model",RooArgList(sigsigpdf,sigbkgpdf,bkgsigpdf,bkgbkgpdf),RooArgList(nsigsig,nsigbkg,nbkgsig,nbkgbkg));
+  RooFormulaVar fbkgbkg("fbkgbkg","fbkgbkg","1-fsigsig-fsigbkg-fbkgsig",RooArgList(fsigsig,fsigbkg,fbkgsig));
+  RooFormulaVar fsigbkg_noorder("fsigbkg_noorder","fsigbkg_noorder","fsigbkg+fbkgsig",RooArgList(fsigbkg,fbkgsig));
 
-  RooFitResult *fitres = model.fitTo(*roodset);
+  RooAddPdf model("model","model",RooArgList(sigsigpdf,sigbkgpdf,bkgsigpdf,bkgbkgpdf),RooArgList(rf1,rf2,rf3),kTRUE);
+
+  RooFitResult *fitres = model.fitTo(*roodset,Save());
 
   model.Print();
 
-  Float_t ntot=nsigsig.getVal()+nsigbkg.getVal()+nbkgsig.getVal()+nbkgbkg.getVal();
-  cout << "sigsig: " << nsigsig.getVal()/ntot << endl;
-  cout << "bkgsig: " << nbkgsig.getVal()/ntot << endl;
-  cout << "sigbkg: " << nsigbkg.getVal()/ntot << endl;
-  cout << "bkgbkg: " << nbkgbkg.getVal()/ntot << endl;
+  cout << "sigsig: " << fsigsig.getVal() << " +/- " << fsigsig.getPropagatedError(*fitres) << endl;
+  cout << "sigbkg_noorder: " << fsigbkg_noorder.getVal() << " +/- " << fsigbkg_noorder.getPropagatedError(*fitres) << endl;
+  cout << "bkgbkg: " << fbkgbkg.getVal() << " +/- " << fbkgbkg.getPropagatedError(*fitres) << endl;
+  cout << endl;
+  cout << "bkgsig: " << fbkgsig.getVal() << " +/- " << fbkgsig.getPropagatedError(*fitres) << endl;
+  cout << "sigbkg: " << fsigbkg.getVal() << " +/- " << fsigbkg.getPropagatedError(*fitres) << endl;
+
+
+
 
   RooPlot *varframe[2];
   varframe[0] = roovar[0]->frame("","");
-  sigsigpdf.plotOn(varframe[0]);
+  roodset->plotOn(varframe[0]);
+  model.plotOn(varframe[0]);
+  model.plotOn(varframe[0],Components("sigsigpdf"),LineStyle(kDashed),LineColor(kRed));
+  model.plotOn(varframe[0],Components("sigbkgpdf"),LineStyle(kDashed),LineColor(kGreen));
+  model.plotOn(varframe[0],Components("bkgsigpdf"),LineStyle(kDashed),LineColor(kBlue));
+  model.plotOn(varframe[0],Components("bkgbkgpdf"),LineStyle(kDashed),LineColor(kBlack));
   varframe[0]->Draw();
 
 
