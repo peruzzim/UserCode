@@ -1,8 +1,54 @@
 using namespace std;
 using namespace RooFit;
 
+void run_fits(){
+  TString varname("PhoIso04");
+  TString inputfilename("test.root");
 
-void fit_dataset(const char* _varname, const char* inputfilename, TString splitting, float leftrange, float rightrange){
+  const int n_bins=3;
+
+  RooFitResult *fr[n_bins];
+
+  TGraphErrors *out = new TGraphErrors(n_bins);
+  out->SetMarkerStyle(20);
+  out->SetMarkerColor(kRed);
+  out->SetLineColor(kRed);
+  out->SetLineWidth(2);
+
+  TCanvas *fits_canv = new TCanvas("fits","fits");
+  fits_canv->Divide(2,3);
+
+  RooRealVar *rf1;
+  RooRealVar *rf2;
+  RooRealVar *rf3;
+
+  for (int bin=0; bin<n_bins; bin++) {
+    fr[bin]=fit_dataset(varname.Data(),inputfilename.Data(),"EBEB",-2,5,bin,fits_canv);
+    rf1=(RooRealVar*)(fr[bin]->floatParsFinal().find("rf1"));
+    rf2=(RooRealVar*)(fr[bin]->floatParsFinal().find("rf2"));
+    rf3=(RooRealVar*)(fr[bin]->floatParsFinal().find("rf3"));
+    RooFormulaVar fsigsig("fsigsig","fsigsig","rf1",RooArgList(*rf1));
+    RooFormulaVar fsigbkg("fsigbkg","fsigbkg","(1-rf1)*rf2",RooArgList(*rf1,*rf2));
+    RooFormulaVar fbkgsig("fbkgsig","fbkgsig","(1-rf1)*(1-rf2)*rf3",RooArgList(*rf1,*rf2,*rf3));
+    RooFormulaVar fbkgbkg("fbkgbkg","fbkgbkg","1-fsigsig-fsigbkg-fbkgsig",RooArgList(fsigsig,fsigbkg,fbkgsig));
+    RooFormulaVar fsigbkg_noorder("fsigbkg_noorder","fsigbkg_noorder","fsigbkg+fbkgsig",RooArgList(fsigbkg,fbkgsig));
+     out->SetPoint(bin,bin,fsigsig.getVal());
+     out->SetPointError(bin,0,fsigsig.getPropagatedError(*(fr[bin])));
+  }
+
+  fits_canv->Update();
+
+  TCanvas *output_canv = new TCanvas("output_canv","output_canv");
+  output_canv->cd();
+  out->Draw("AP");
+  output_canv->Update();
+
+		
+
+};
+
+
+RooFitResult* fit_dataset(const char* _varname, const char* inputfilename, TString splitting, float leftrange, float rightrange, int bin, TCanvas *canv=NULL){
 
   TString varname(_varname);
 
@@ -11,6 +57,8 @@ void fit_dataset(const char* _varname, const char* inputfilename, TString splitt
   RooDataSet *roodset;
 
   RooFormulaVar *cut[2];      
+
+
 
   roodset=NULL;
   for (int i=0; i<2; i++){
@@ -31,8 +79,6 @@ void fit_dataset(const char* _varname, const char* inputfilename, TString splitt
   TString mc_dir("mc_Tree_standard_sel/");
 
   template_production *helper = new template_production(NULL);
-
-  int bin=0;
 
   {
     if (splitting=="EBEB") {
@@ -100,11 +146,14 @@ void fit_dataset(const char* _varname, const char* inputfilename, TString splitt
 
   }
 
-  roovar[0]->setBins(50);
-  roovar[1]->setBins(50);
 
 
+  roovar[0]->setRange(leftrange,rightrange);
+  roovar[1]->setRange(leftrange,rightrange);
 
+//  const int n_variable_bins=25;
+//  roovar[0]->setBins(n_variable_bins);
+//  roovar[1]->setBins(n_variable_bins);
 
   RooHistPdf sig1pdf("sig1pdf","sig1pdf",*(roovar[0]),*(roohist[0][0]));
   RooHistPdf sig2pdf("sig2pdf","sig2pdf",*(roovar[1]),*(roohist[0][1]));
@@ -143,50 +192,22 @@ void fit_dataset(const char* _varname, const char* inputfilename, TString splitt
   cout << "sigbkg: " << fsigbkg.getVal() << " +/- " << fsigbkg.getPropagatedError(*fitres) << endl;
 
 
-
-
-  RooPlot *varframe[2];
-  varframe[0] = roovar[0]->frame("","");
-  roodset->plotOn(varframe[0]);
-  model.plotOn(varframe[0]);
-  model.plotOn(varframe[0],Components("sigsigpdf"),LineStyle(kDashed),LineColor(kRed));
-  model.plotOn(varframe[0],Components("sigbkgpdf"),LineStyle(kDashed),LineColor(kGreen));
-  model.plotOn(varframe[0],Components("bkgsigpdf"),LineStyle(kDashed),LineColor(kBlue));
-  model.plotOn(varframe[0],Components("bkgbkgpdf"),LineStyle(kDashed),LineColor(kBlack));
-  varframe[0]->Draw();
-
-
-  return;
-
-
-
-
-  for (int i=0; i<2; i++){
-    varframe[i] = roovar[i]->frame("","");
-    roodset->plotOn(varframe[i]);
-    model.plotOn(varframe[i],LineColor(kBlue));
-    if (i==0){
-      sig1pdf.plotOn(varframe[i],LineColor(kRed),Normalization(nsigsig.getVal()+nsigbkg.getVal(),RooAbsReal::NumEvent));
-      bkg1pdf.plotOn(varframe[i],LineColor(kGreen),Normalization(nbkgbkg.getVal()+nbkgsig.getVal(),RooAbsReal::NumEvent));
+  if (canv!=NULL){
+    RooPlot *varframe[2];
+    for (int i=0; i<2; i++){
+      varframe[i] = roovar[i]->frame("","");
+      roodset->plotOn(varframe[i]);
+      model.plotOn(varframe[i]);
+      model.plotOn(varframe[i],Components("sigsigpdf"),LineStyle(kDashed),LineColor(kRed));
+      model.plotOn(varframe[i],Components("sigbkgpdf"),LineStyle(kDashed),LineColor(kGreen));
+      model.plotOn(varframe[i],Components("bkgsigpdf"),LineStyle(kDashed),LineColor(kBlue));
+      model.plotOn(varframe[i],Components("bkgbkgpdf"),LineStyle(kDashed),LineColor(kBlack));
+      canv->cd(2*bin+i+1);
+      varframe[i]->Draw();
     }
-    else if (i==1){
-    sig2pdf.plotOn(varframe[i],LineColor(kRed),Normalization(nsigsig.getVal()+nbkgsig.getVal(),RooAbsReal::NumEvent));
-    bkg2pdf.plotOn(varframe[i],LineColor(kGreen),Normalization(nbkgbkg.getVal()+nsigbkg.getVal(),RooAbsReal::NumEvent));
-    }
-    
   }
 
-
-  TCanvas *c1[2];
-  for (int i=0; i<2; i++){
-    c1[i] = new TCanvas();
-    c1[i]->cd();
-    varframe[i]->Draw();
-    c1[i]->SaveAs(Form("fit_%d.png",i));
-    c1[i]->Close();
-  }
-
-
+  return fitres;
 
 };
 
