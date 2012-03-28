@@ -453,7 +453,7 @@ public :
    virtual void     Show(Long64_t entry = -1);
 
    void     WriteOutput(const char* filename, const bool isdata, const TString dirname);
-   void     ShowHistogram(int i, int j, int k, int l);
+   void     ShowHistogram(int i, int j, int k, int l, int m);
 
    void Setup(TString _varname, Float_t _leftrange, Float_t _rightrange, Int_t _nbins, Bool_t _isdata, Bool_t _dopucorr);
 
@@ -463,10 +463,11 @@ public :
 
    static const int n_templates=3;
 
-   RooRealVar *roovar[2][2];
-   RooDataHist *roohist[3][2][2][n_templates];
+   RooRealVar *roovar[2][3][2];
+   RooDataHist *roohist[3][2][3][n_templates][2];
    TH1F *templatehist[3][2][n_templates];
-   RooDataSet *roodset[3][n_templates];
+   RooDataSet *roodset[4][n_templates][2];
+   RooDataSet *roodset_single[2][n_templates];
 
    TBranch *b_pholead_outvar;
    Float_t pholead_outvar;
@@ -487,9 +488,9 @@ public :
    TString varname;
    TString sidebandoption;
 
-   TString get_roohist_name(TString varname, TString st, TString reg, TString count, int _binnumber);
-   TString get_roodset_name(TString varname, TString reg, int _binnumber);
-   TString get_roovar_name(TString _varname, int i, int j);
+   TString get_roohist_name(TString varname, TString st, TString reg, TString count, int _binnumber,TString _ord);
+   TString get_roodset_name(TString varname, TString reg, int _binnumber, TString _ord);
+   TString get_roovar_name(TString _varname, int i, int j, TString _ord);
 
    Int_t Choose_bin_invmass(float invmass);
 
@@ -544,36 +545,44 @@ void template_production::Setup(TString _varname, Float_t _leftrange, Float_t _r
 
   Init();
 
-  // roovar[EB,EE][1,2]
-  for (int i=0; i<2; i++) for (int j=0; j<2; j++) {
-      TString t=varname;
-      if (i==0) t.Append("_EB"); else t.Append("_EE");
-      if (j==0) t.Append("_1"); else t.Append("_2");
-      roovar[i][j] = new RooRealVar(t.Data(),t.Data(),leftrange,rightrange);
-      roovar[i][j]->setBins(nbins);
-    }
+  // roovar[EB,EE][1,2_both][noorder,order]
+  for (int i=0; i<2; i++) for (int j=0; j<3; j++) for (int k=0; k<2; k++) {
+	TString t=varname;
+	if (i==0) t.Append("_EB"); else t.Append("_EE");
+	if (j==0) t.Append("_1"); else if (j==1) t.Append("_2"); else t.Append("_both");
+	if (k==0) t.Append("_noorder"); else t.Append("_order");
+	roovar[i][j][k] = new RooRealVar(t.Data(),t.Data(),leftrange,rightrange);
+	roovar[i][j][k]->setBins(nbins);
+	std::cout << t.Data() << std::endl;
+      }
 
    
   randomgen = new TRandom3(0);
   
-  // roohist[sig,bkg,all][EB,EE][1,2][n_templates]
+  
+  // roohist[sig,bkg,all][EB,EE][1,2,both][n_templates][noorder,order]
   for (int i=0; i<3; i++) {
-    for (int j=0;j<2;j++) {
-      for (int k=0; k<2; k++){
+    for (int j=0; j<2; j++) {
+      for (int k=0; k<3; k++) {
 	for (int l=0; l<n_templates; l++){
-	  TString st;
-	  if (i==0) st="sig"; else if (i==1) st="bkg"; else if (i==2) st="all";
-	  TString reg;
-	  if (j==0) reg="EB"; else if (j==1) reg="EE";
-	  TString count;
-	  if (k==0) count="1"; else count="2";
-	  TString t=Form("roohist_%s_%s_%s_%s_b%d",varname.Data(),st.Data(),reg.Data(),count.Data(),l);
-	  roohist[i][j][k][l] = new RooDataHist(t.Data(),t.Data(),*(roovar[j][k]));
+	  for (int m=0; m<2; m++){
+	    TString st;
+	    if (i==0) st="sig"; else if (i==1) st="bkg"; else if (i==2) st="all";
+	    TString reg;
+	    if (j==0) reg="EB"; else if (j==1) reg="EE";
+	    TString count;
+	    if (k==0) count="1"; else if (k==1) count="2"; else count="both";
+	    TString ord;
+	    if (m==0) ord="noorder"; else ord="order";
+	    TString t=Form("roohist_%s_%s_%s_%s_b%d_%s",varname.Data(),st.Data(),reg.Data(),count.Data(),l,ord.Data());
+	    std::cout << t.Data() << " " << roovar[j][k][m]->getTitle().Data() << std::endl;
+	    roohist[i][j][k][l][m] = new RooDataHist(t.Data(),t.Data(),RooArgSet(*(roovar[j][k][m])));
+	  }
 	}
       }
     }
   }
-
+  
   // templatehist[sig,bkg,all][EB,EE][n_templates]
   for (int i=0; i<3; i++) {
     for (int j=0;j<2;j++) {
@@ -587,22 +596,34 @@ void template_production::Setup(TString _varname, Float_t _leftrange, Float_t _r
       }
     }
   }
-
-
-  // roodataset[EBEB,EBEE,EEEB,EEEE][n_templates]
+  
+  
+  // roodataset[EBEB,EBEE,EEEE,EEEB][n_templates][noorder,order]
   for (int i=0; i<4; i++){
     for (int l=0; l<n_templates; l++){
-      TString reg;
-      if (i==0) reg="EBEB"; else if (i==1) reg="EBEE"; else if (i==2) reg="EEEB"; else if (i==3) reg="EEEE";
-      TString t=Form("roodataset_%s_%s_b%d",varname.Data(),reg.Data(),l);
-      RooArgSet vars;
-      if (i==0) { vars.add(*(roovar[0][0])); vars.add(*(roovar[0][1])); }
-      else if (i==1) { vars.add(*(roovar[0][0])); vars.add(*(roovar[1][1])); }
-      else if (i==2) { vars.add(*(roovar[1][0])); vars.add(*(roovar[0][1])); }
-      else if (i==3) { vars.add(*(roovar[1][0])); vars.add(*(roovar[1][1])); }
-      roodset[i][l] = new RooDataSet(t.Data(),t.Data(),vars);
+      for (int m=0; m<2; m++){
+	TString reg;
+	if (i==0) reg="EBEB"; else if (i==1) reg="EBEE"; else if (i==2) reg="EEEE"; else if (i==3) reg="EEEB";
+	TString ord;
+	if (m==0) ord="noorder"; else ord="order";
+	TString t=Form("roodataset_%s_%s_b%d_%s",varname.Data(),reg.Data(),l,ord.Data());
+	RooArgSet vars;
+	if (i==0) { vars.add(*(roovar[0][0][m])); vars.add(*(roovar[0][1][m])); }
+	if (i==2) { vars.add(*(roovar[1][0][m])); vars.add(*(roovar[1][1][m])); }
+	if ((i==1 || i==3) && m==0) { vars.add(*(roovar[0][2][0])); vars.add(*(roovar[1][2][0])); }
+	if (i==1 && m==1) { vars.add(*(roovar[0][0][1])); vars.add(*(roovar[1][1][1])); }
+	if (i==3 && m==1) { vars.add(*(roovar[1][0][1])); vars.add(*(roovar[0][1][1])); }
+	roodset[i][l][m] = new RooDataSet(t.Data(),t.Data(),vars);
+      }
     }
   }
+  
+  // roodataset_single[EB,EE][bin]
+  for (int i=0; i<2; i++) for (int j=0; j<n_templates; j++) {
+      TString reg; if (i==0) reg="EB"; else reg="EE";
+      TString t=Form("roodataset_single_%s_b%d",reg.Data(),j);
+      roodset_single[i][j] = new RooDataSet(t.Data(),t.Data(),RooArgList(*roovar[i][2][0]));
+    }
 
   initialized=true;
   
@@ -614,10 +635,11 @@ template_production::~template_production()
    delete fChain->GetCurrentFile();
    delete randomgen;
 
-   for (int j=0;j<2;j++) for (int k=0;k<2;k++) delete roovar[j][k];
-   for (int l=0; l<n_templates; l++) for (int i=0; i<3; i++) for (int j=0;j<2;j++) for (int k=0;k<2;k++) delete roohist[i][j][k][l];
+   for (int m=0; m<2; m++) for (int j=0;j<2;j++) for (int k=0;k<3;k++) delete roovar[j][k][m];
+   for (int m=0; m<2; m++) for (int l=0; l<n_templates; l++) for (int i=0; i<3; i++) for (int j=0;j<2;j++) for (int k=0;k<3;k++) delete roohist[i][j][k][l][m];
    for (int l=0; l<n_templates; l++) for (int i=0; i<3; i++) for (int j=0;j<2;j++) delete templatehist[i][j][l];
-   for (int l=0; l<n_templates; l++) for (int i=0; i<4; i++) delete roodset[i][l];
+   for (int m=0; m<2; m++) for (int l=0; l<n_templates; l++) for (int i=0; i<4; i++) delete roodset[i][l][m];
+   for (int l=0; l<n_templates; l++) for (int i=0; i<2; i++) delete roodset_single[i][l];
 
 }
 
@@ -895,36 +917,40 @@ void template_production::WriteOutput(const char* filename, const bool _isdata, 
   dirname.Append(_dirname.Data());
   out->mkdir(dirname.Data());
   out->cd(dirname.Data());
-  for (int j=0;j<2;j++) for (int k=0;k<2;k++) roovar[j][k]->Write();
-  for (int l=0; l<n_templates; l++) for (int i=0; i<3; i++) for (int j=0;j<2;j++) for (int k=0;k<2;k++) roohist[i][j][k][l]->Write();
-  std::cout << "written roohist" << std::endl;
-  for (int l=0; l<n_templates; l++) for (int i=0; i<3; i++) for (int j=0;j<2;j++) templatehist[i][j][l]->Write();
-  std::cout << "written templatehist" << std::endl;
-  for (int l=0; l<n_templates; l++) for (int i=0; i<3; i++) roodset[i][l]->Write();
-  std::cout << "written roodset" << std::endl;
+
+  for (int m=0; m<2; m++) for (int j=0;j<2;j++) for (int k=0;k<3;k++)  roovar[j][k][m]->Write();
+  for (int m=0; m<2; m++) for (int l=0; l<n_templates; l++) for (int i=0; i<3; i++) for (int j=0;j<2;j++) for (int k=0;k<3;k++)  roohist[i][j][k][l][m]->Write();
+  for (int l=0; l<n_templates; l++) for (int i=0; i<3; i++) for (int j=0;j<2;j++)  templatehist[i][j][l]->Write();
+  for (int m=0; m<2; m++) for (int l=0; l<n_templates; l++) for (int i=0; i<4; i++)  roodset[i][l][m]->Write();
+  for (int l=0; l<n_templates; l++) for (int i=0; i<2; i++)  roodset_single[i][l]->Write();
+
+  std::cout << "output written" << std::endl;
+
   out->Close();
 };
 
-void template_production::ShowHistogram(int i, int j, int k, int l){
-  RooPlot *outroovarframe = roovar[j][k]->frame(Name(varname.Data()),Title(varname.Data()));
-  roohist[i][j][k][l]->plotOn(outroovarframe);
+void template_production::ShowHistogram(int i, int j, int k, int l, int m){
+  RooPlot *outroovarframe = roovar[j][k][m]->frame(Name(varname.Data()),Title(varname.Data()));
+  roohist[i][j][k][l][m]->plotOn(outroovarframe);
   outroovarframe->Draw();
 };
 
-TString template_production::get_roohist_name(TString _varname, TString _st, TString _reg, TString _count, int _binnumber){
-  TString a(Form("roohist_%s_%s_%s_%s_b%d",_varname.Data(),_st.Data(),_reg.Data(),_count.Data(),_binnumber));
+TString template_production::get_roohist_name(TString _varname, TString _st, TString _reg, TString _count, int _binnumber, TString _ord){
+  TString a(Form("roohist_%s_%s_%s_%s_b%d_%s",_varname.Data(),_st.Data(),_reg.Data(),_count.Data(),_binnumber,_ord.Data()));
   return a;
 };
 
-TString template_production::get_roodset_name(TString _varname, TString _reg, int _binnumber){
-  TString a(Form("roodataset_%s_%s_b%d",_varname.Data(),_reg.Data(),_binnumber));
+TString template_production::get_roodset_name(TString _varname, TString _reg, int _binnumber, TString _ord){
+  TString a(Form("roodataset_%s_%s_b%d_%s",_varname.Data(),_reg.Data(),_binnumber,_ord.Data()));
   return a;
 };
 
-TString template_production::get_roovar_name(TString _varname, int i, int j){
+TString template_production::get_roovar_name(TString _varname, int i, int j, TString _ord){
       TString t=_varname;
       if (i==0) t.Append("_EB"); else t.Append("_EE");
       if (j==0) t.Append("_1"); else t.Append("_2");
+      t.Append("_");
+      t.Append(_ord);
       return t;
 };
 
