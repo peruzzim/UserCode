@@ -23,6 +23,7 @@
 #include <TCanvas.h>
 #include "TProfile.h"
 #include "TF1.h"
+#include "RooBinning.h"
 
 using namespace std;
 using namespace RooFit;
@@ -553,7 +554,7 @@ void template_production::Setup(TString _varname, Float_t _leftrange, Float_t _r
 	if (j==0) t.Append("_1"); else if (j==1) t.Append("_2"); else t.Append("_both");
 	if (k==0) t.Append("_noorder"); else t.Append("_order");
 	roovar[i][j][k] = new RooRealVar(t.Data(),t.Data(),leftrange,rightrange);
-	roovar[i][j][k]->setBins(nbins);
+	roovar[i][j][k]->setBinning(RooBinning(nbins,leftrange,rightrange));
 	std::cout << t.Data() << std::endl;
       }
 
@@ -611,9 +612,8 @@ void template_production::Setup(TString _varname, Float_t _leftrange, Float_t _r
 	RooArgSet vars;
 	if (i==0) { vars.add(*(roovar[0][0][m])); vars.add(*(roovar[0][1][m])); }
 	if (i==2) { vars.add(*(roovar[1][0][m])); vars.add(*(roovar[1][1][m])); }
-	if ((i==1 || i==3) && m==0) { vars.add(*(roovar[0][2][0])); vars.add(*(roovar[1][2][0])); }
-	if (i==1 && m==1) { vars.add(*(roovar[0][0][1])); vars.add(*(roovar[1][1][1])); }
-	if (i==3 && m==1) { vars.add(*(roovar[1][0][1])); vars.add(*(roovar[0][1][1])); }
+	if (i==1) { vars.add(*(roovar[0][0][0])); vars.add(*(roovar[1][1][0])); }
+	if (i==3) { vars.add(*(roovar[1][0][0])); vars.add(*(roovar[0][1][0])); }
 	roodset[i][l][m] = new RooDataSet(t.Data(),t.Data(),vars);
       }
     }
@@ -962,7 +962,7 @@ TString template_production::get_roovar_name(TString _varname, int i, int j, TSt
 
 Int_t template_production::Choose_bin_invmass(float invmass){
 
-  const float cuts[n_templates+1] = {80,120,160,9999};
+  const float cuts[n_templates+1] = {80,100,120,9999};
 
   if (invmass<cuts[0]){
     std::cout << "WARNING: called bin choice for out-of-range value " << invmass << std::endl;

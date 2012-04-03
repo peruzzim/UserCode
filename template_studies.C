@@ -3,7 +3,7 @@
 using namespace std;
 using namespace RooFit;
 
-void run_fits(bool single_gamma=false){
+void run_fits(TString splitting, bool single_gamma=false){
   TString varname("PhoIso04");
   TString inputfilename("out_NEW.root");
 
@@ -25,21 +25,22 @@ void run_fits(bool single_gamma=false){
   RooRealVar *rf3;
 
   for (int bin=0; bin<n_bins; bin++) {
-    if (!single_gamma) fr[bin]=fit_dataset(varname.Data(),inputfilename.Data(),"EBEB",-2,5,bin,fits_canv,false,false);
-    if (single_gamma) fr[bin]=fit_dataset(varname.Data(),inputfilename.Data(),"EB",-2,5,bin,fits_canv,true,false);
-    rf1=(RooRealVar*)(fr[bin]->floatParsFinal().find("rf1"));
+    if (!single_gamma) fr[bin]=fit_dataset(varname.Data(),inputfilename.Data(),splitting.Data(),-1,5,bin,fits_canv,false,false);
+    if (single_gamma) fr[bin]=fit_dataset(varname.Data(),inputfilename.Data(),splitting.Data(),-1,5,bin,fits_canv,true,false);
+
     if (!single_gamma){  
+      rf1=(RooRealVar*)(fr[bin]->floatParsFinal().find("rf1"));
       rf2=(RooRealVar*)(fr[bin]->floatParsFinal().find("rf2"));
-      rf3=(RooRealVar*)(fr[bin]->floatParsFinal().find("rf3"));
       RooFormulaVar fsigsig("fsigsig","fsigsig","rf1",RooArgList(*rf1));
       RooFormulaVar fsigbkg("fsigbkg","fsigbkg","(1-rf1)*rf2",RooArgList(*rf1,*rf2));
-      RooFormulaVar fbkgsig("fbkgsig","fbkgsig","(1-rf1)*(1-rf2)*rf3",RooArgList(*rf1,*rf2,*rf3));
-      RooFormulaVar fbkgbkg("fbkgbkg","fbkgbkg","1-fsigsig-fsigbkg-fbkgsig",RooArgList(fsigsig,fsigbkg,fbkgsig));
-      RooFormulaVar fsigbkg_noorder("fsigbkg_noorder","fsigbkg_noorder","fsigbkg+fbkgsig",RooArgList(fsigbkg,fbkgsig));
+      RooFormulaVar fbkgbkg("fbkgbkg","fbkgbkg","1-fsigsig-fsigbkg",RooArgList(fsigsig,fsigbkg));
+      std::cout << bin << " " << fsigsig.getVal() << " " << fsigbkg.getVal() << " " << fbkgbkg.getVal() << std::endl;
       out->SetPoint(bin,bin,fsigsig.getVal());
       out->SetPointError(bin,0,fsigsig.getPropagatedError(*(fr[bin])));
     }
+
     if (single_gamma){
+      rf1=(RooRealVar*)(fr[bin]->floatParsFinal().find("rf1"));
       RooFormulaVar fsig("fsig","fsig","rf1",RooArgList(*rf1));
       RooFormulaVar fbkg("fbkg","fbkg","1-rf1",RooArgList(*rf1));
       out->SetPoint(bin,bin,fsig.getVal());
@@ -278,12 +279,14 @@ fbkg = new RooFormulaVar("fbkg","fbkg","1-rf1",RooArgList(rf1));
   RooAddPdf *model;
 
   if (single_gamma) model = new RooAddPdf("model","model",RooArgList(*sigpdf,*bkgpdf),RooArgList(rf1),kTRUE);
-  if (!single_gamma) model = new RooAddPdf("model","model",RooArgList(*sigsigpdf,*sigbkgpdf,*bkgsigpdf,*bkgbkgpdf),RooArgList(rf1,rf2,rf3),kTRUE);
+  if (!single_gamma && do_order) model = new RooAddPdf("model","model",RooArgList(*sigsigpdf,*sigbkgpdf,*bkgsigpdf,*bkgbkgpdf),RooArgList(rf1,rf2,rf3),kTRUE);
+  if (!single_gamma && !do_order) model = new RooAddPdf("model","model",RooArgList(*sigsigpdf,*sigbkgpdf,*bkgbkgpdf),RooArgList(rf1,rf2),kTRUE);
 
   RooFitResult *fitres = model->fitTo(*roodset,Save());
 
   model->Print();
 
+  /*
   if (!single_gamma){
   cout << "sigsig: " << fsigsig->getVal() << " +/- " << fsigsig->getPropagatedError(*fitres) << endl;
   cout << "sigbkg_noorder: " << fsigbkg_noorder->getVal() << " +/- " << fsigbkg_noorder->getPropagatedError(*fitres) << endl;
@@ -292,6 +295,7 @@ fbkg = new RooFormulaVar("fbkg","fbkg","1-rf1",RooArgList(rf1));
   cout << "bkgsig: " << fbkgsig->getVal() << " +/- " << fbkgsig->getPropagatedError(*fitres) << endl;
   cout << "sigbkg: " << fsigbkg->getVal() << " +/- " << fsigbkg->getPropagatedError(*fitres) << endl;
   }
+  */
 
   if (canv!=NULL){
     RooPlot *varframe[2];
