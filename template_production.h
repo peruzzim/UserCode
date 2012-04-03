@@ -490,6 +490,7 @@ public :
 
    TString get_roohist_name(TString varname, TString st, TString reg, TString count, int _binnumber,TString _ord);
    TString get_roodset_name(TString varname, TString reg, int _binnumber, TString _ord);
+   TString get_roodset_name_single(TString _varname, TString _reg, int _binnumber);
    TString get_roovar_name(TString _varname, int i, int j, TString _ord);
 
    Int_t Choose_bin_invmass(float invmass);
@@ -621,7 +622,7 @@ void template_production::Setup(TString _varname, Float_t _leftrange, Float_t _r
   // roodataset_single[EB,EE][bin]
   for (int i=0; i<2; i++) for (int j=0; j<n_templates; j++) {
       TString reg; if (i==0) reg="EB"; else reg="EE";
-      TString t=Form("roodataset_single_%s_b%d",reg.Data(),j);
+      TString t=Form("roodataset_single_%s_%s_b%d",varname.Data(),reg.Data(),j);
       roodset_single[i][j] = new RooDataSet(t.Data(),t.Data(),RooArgList(*roovar[i][2][0]));
     }
 
@@ -945,10 +946,15 @@ TString template_production::get_roodset_name(TString _varname, TString _reg, in
   return a;
 };
 
+TString template_production::get_roodset_name_single(TString _varname, TString _reg, int _binnumber){
+  TString a(Form("roodataset_single_%s_%s_b%d",_varname.Data(),_reg.Data(),_binnumber));
+  return a;
+};
+
 TString template_production::get_roovar_name(TString _varname, int i, int j, TString _ord){
       TString t=_varname;
       if (i==0) t.Append("_EB"); else t.Append("_EE");
-      if (j==0) t.Append("_1"); else t.Append("_2");
+      if (j==0) t.Append("_1"); else if (j==1) t.Append("_2"); else t.Append("_both");
       t.Append("_");
       t.Append(_ord);
       return t;
