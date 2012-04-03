@@ -545,7 +545,7 @@ void template_production::Setup(TString _varname, Float_t _leftrange, Float_t _r
 
   Init();
 
-  // roovar[EB,EE][1,2_both][noorder,order]
+  // roovar[EB,EE][1,2,both][noorder,order]
   for (int i=0; i<2; i++) for (int j=0; j<3; j++) for (int k=0; k<2; k++) {
 	TString t=varname;
 	if (i==0) t.Append("_EB"); else t.Append("_EE");

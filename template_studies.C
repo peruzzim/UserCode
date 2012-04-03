@@ -1,9 +1,11 @@
+#include <assert.h>
+
 using namespace std;
 using namespace RooFit;
 
 void run_fits(){
   TString varname("PhoIso04");
-  TString inputfilename("test.root");
+  TString inputfilename("out_NEW.root");
 
   const int n_bins=3;
 
@@ -32,8 +34,8 @@ void run_fits(){
     RooFormulaVar fbkgsig("fbkgsig","fbkgsig","(1-rf1)*(1-rf2)*rf3",RooArgList(*rf1,*rf2,*rf3));
     RooFormulaVar fbkgbkg("fbkgbkg","fbkgbkg","1-fsigsig-fsigbkg-fbkgsig",RooArgList(fsigsig,fsigbkg,fbkgsig));
     RooFormulaVar fsigbkg_noorder("fsigbkg_noorder","fsigbkg_noorder","fsigbkg+fbkgsig",RooArgList(fsigbkg,fbkgsig));
-     out->SetPoint(bin,bin,fsigsig.getVal());
-     out->SetPointError(bin,0,fsigsig.getPropagatedError(*(fr[bin])));
+    out->SetPoint(bin,bin,fsigsig.getVal());
+    out->SetPointError(bin,0,fsigsig.getPropagatedError(*(fr[bin])));
   }
 
   fits_canv->Update();
@@ -68,10 +70,10 @@ RooFitResult* fit_dataset(const char* _varname, const char* inputfilename, TStri
     }
   }
 
-  // roovar[EB,EE][1,2]
-  // roohist[sig,bkg,all][EB,EE][1,2]
-  // templatehist[sig,bkg,all][EB,EE]
-  // roodataset[EBEB,EBEE,EEEB,EEEE]
+  // roovar[EB,EE][1,2][no,ord]
+  // roohist[sig,bkg,all][EB,EE][1,2][temp][no,ord]
+  // templatehist[sig,bkg,all][EB,EE][temp]
+  // roodataset[EBEB,EBEE,EEEB,EEEE][temp][no,ord]
 
   TFile *inputfile = TFile::Open(inputfilename);
 
@@ -80,38 +82,47 @@ RooFitResult* fit_dataset(const char* _varname, const char* inputfilename, TStri
 
   template_production *helper = new template_production(NULL);
 
+  TString ord="noorder";
+
   {
     if (splitting=="EBEB") {
-      inputfile->GetObject(TString(data_dir).Append(helper->get_roovar_name(varname,0,0).Data()),roovar[0]);
-      inputfile->GetObject(TString(data_dir).Append(helper->get_roovar_name(varname,0,1).Data()),roovar[1]);
-      inputfile->GetObject(TString(mc_dir).Append(helper->get_roohist_name(varname,TString("sig"),TString("EB"),TString("1"),bin).Data()),roohist[0][0]);
-      inputfile->GetObject(TString(mc_dir).Append(helper->get_roohist_name(varname,TString("sig"),TString("EB"),TString("2"),bin).Data()),roohist[0][1]);
-      inputfile->GetObject(TString(mc_dir).Append(helper->get_roohist_name(varname,TString("bkg"),TString("EB"),TString("1"),bin).Data()),roohist[1][0]);
-      inputfile->GetObject(TString(mc_dir).Append(helper->get_roohist_name(varname,TString("bkg"),TString("EB"),TString("2"),bin).Data()),roohist[1][1]);
+      inputfile->GetObject(TString(data_dir).Append(helper->get_roovar_name(varname,0,0,ord).Data()),roovar[0]);
+      inputfile->GetObject(TString(data_dir).Append(helper->get_roovar_name(varname,0,1,ord).Data()),roovar[1]);
+      inputfile->GetObject(TString(mc_dir).Append(helper->get_roohist_name(varname,TString("sig"),TString("EB"),TString("1"),bin,ord).Data()),roohist[0][0]);
+      inputfile->GetObject(TString(mc_dir).Append(helper->get_roohist_name(varname,TString("sig"),TString("EB"),TString("2"),bin,ord).Data()),roohist[0][1]);
+      inputfile->GetObject(TString(mc_dir).Append(helper->get_roohist_name(varname,TString("bkg"),TString("EB"),TString("1"),bin,ord).Data()),roohist[1][0]);
+      inputfile->GetObject(TString(mc_dir).Append(helper->get_roohist_name(varname,TString("bkg"),TString("EB"),TString("2"),bin,ord).Data()),roohist[1][1]);
     }
     else if (splitting=="EBEE"){
-      inputfile->GetObject(TString(data_dir).Append(helper->get_roovar_name(varname,0,0).Data()),roovar[0]);
-      inputfile->GetObject(TString(data_dir).Append(helper->get_roovar_name(varname,1,1).Data()),roovar[1]);
-      inputfile->GetObject(TString(mc_dir).Append(helper->get_roohist_name(varname,TString("sig"),TString("EB"),TString("1"),bin).Data()),roohist[0][0]);
-      inputfile->GetObject(TString(mc_dir).Append(helper->get_roohist_name(varname,TString("sig"),TString("EE"),TString("2"),bin).Data()),roohist[0][1]);
-      inputfile->GetObject(TString(mc_dir).Append(helper->get_roohist_name(varname,TString("bkg"),TString("EB"),TString("1"),bin).Data()),roohist[1][0]);
-      inputfile->GetObject(TString(mc_dir).Append(helper->get_roohist_name(varname,TString("bkg"),TString("EE"),TString("2"),bin).Data()),roohist[1][1]);
+      inputfile->GetObject(TString(data_dir).Append(helper->get_roovar_name(varname,0,0,ord).Data()),roovar[0]);
+      inputfile->GetObject(TString(data_dir).Append(helper->get_roovar_name(varname,1,1,ord).Data()),roovar[1]);
+      inputfile->GetObject(TString(mc_dir).Append(helper->get_roohist_name(varname,TString("sig"),TString("EB"),TString("1"),bin,ord).Data()),roohist[0][0]);
+      inputfile->GetObject(TString(mc_dir).Append(helper->get_roohist_name(varname,TString("sig"),TString("EE"),TString("2"),bin,ord).Data()),roohist[0][1]);
+      inputfile->GetObject(TString(mc_dir).Append(helper->get_roohist_name(varname,TString("bkg"),TString("EB"),TString("1"),bin,ord).Data()),roohist[1][0]);
+      inputfile->GetObject(TString(mc_dir).Append(helper->get_roohist_name(varname,TString("bkg"),TString("EE"),TString("2"),bin,ord).Data()),roohist[1][1]);
     }
     else if (splitting=="EEEB"){
-      inputfile->GetObject(TString(data_dir).Append(helper->get_roovar_name(varname,1,0).Data()),roovar[0]);
-      inputfile->GetObject(TString(data_dir).Append(helper->get_roovar_name(varname,0,1).Data()),roovar[1]);
-      inputfile->GetObject(TString(mc_dir).Append(helper->get_roohist_name(varname,TString("sig"),TString("EE"),TString("1"),bin).Data()),roohist[0][0]);
-      inputfile->GetObject(TString(mc_dir).Append(helper->get_roohist_name(varname,TString("sig"),TString("EB"),TString("2"),bin).Data()),roohist[0][1]);
-      inputfile->GetObject(TString(mc_dir).Append(helper->get_roohist_name(varname,TString("bkg"),TString("EE"),TString("1"),bin).Data()),roohist[1][0]);
-      inputfile->GetObject(TString(mc_dir).Append(helper->get_roohist_name(varname,TString("bkg"),TString("EB"),TString("2"),bin).Data()),roohist[1][1]);
+      inputfile->GetObject(TString(data_dir).Append(helper->get_roovar_name(varname,1,0,ord).Data()),roovar[0]);
+      inputfile->GetObject(TString(data_dir).Append(helper->get_roovar_name(varname,0,1,ord).Data()),roovar[1]);
+      inputfile->GetObject(TString(mc_dir).Append(helper->get_roohist_name(varname,TString("sig"),TString("EE"),TString("1"),bin,ord).Data()),roohist[0][0]);
+      inputfile->GetObject(TString(mc_dir).Append(helper->get_roohist_name(varname,TString("sig"),TString("EB"),TString("2"),bin,ord).Data()),roohist[0][1]);
+      inputfile->GetObject(TString(mc_dir).Append(helper->get_roohist_name(varname,TString("bkg"),TString("EE"),TString("1"),bin,ord).Data()),roohist[1][0]);
+      inputfile->GetObject(TString(mc_dir).Append(helper->get_roohist_name(varname,TString("bkg"),TString("EB"),TString("2"),bin,ord).Data()),roohist[1][1]);
     }
     else if (splitting=="EEEE"){
-      inputfile->GetObject(TString(data_dir).Append(helper->get_roovar_name(varname,1,0).Data()),roovar[0]);
-      inputfile->GetObject(TString(data_dir).Append(helper->get_roovar_name(varname,1,1).Data()),roovar[1]);
-      inputfile->GetObject(TString(mc_dir).Append(helper->get_roohist_name(varname,TString("sig"),TString("EE"),TString("1"),bin).Data()),roohist[0][0]);
-      inputfile->GetObject(TString(mc_dir).Append(helper->get_roohist_name(varname,TString("sig"),TString("EE"),TString("2"),bin).Data()),roohist[0][1]);
-      inputfile->GetObject(TString(mc_dir).Append(helper->get_roohist_name(varname,TString("bkg"),TString("EE"),TString("1"),bin).Data()),roohist[1][0]);
-      inputfile->GetObject(TString(mc_dir).Append(helper->get_roohist_name(varname,TString("bkg"),TString("EE"),TString("2"),bin).Data()),roohist[1][1]);
+      inputfile->GetObject(TString(data_dir).Append(helper->get_roovar_name(varname,1,0,ord).Data()),roovar[0]);
+      inputfile->GetObject(TString(data_dir).Append(helper->get_roovar_name(varname,1,1,ord).Data()),roovar[1]);
+      inputfile->GetObject(TString(mc_dir).Append(helper->get_roohist_name(varname,TString("sig"),TString("EE"),TString("1"),bin,ord).Data()),roohist[0][0]);
+      inputfile->GetObject(TString(mc_dir).Append(helper->get_roohist_name(varname,TString("sig"),TString("EE"),TString("2"),bin,ord).Data()),roohist[0][1]);
+      inputfile->GetObject(TString(mc_dir).Append(helper->get_roohist_name(varname,TString("bkg"),TString("EE"),TString("1"),bin,ord).Data()),roohist[1][0]);
+      inputfile->GetObject(TString(mc_dir).Append(helper->get_roohist_name(varname,TString("bkg"),TString("EE"),TString("2"),bin,ord).Data()),roohist[1][1]);
+    }
+
+    for (int i=0; i<2; i++){
+      assert (roovar[i]!=NULL);
+          for (int j=0; j<2; j++){
+	    assert (roohist[i][j]!=NULL);
+	  }
     }
 
       cut[0] = new RooFormulaVar("cut_0","cut_0", Form("((%s>%f) && (%s<%f))",roovar[0]->getTitle().Data(),leftrange,roovar[0]->getTitle().Data(),rightrange), RooArgList(*(roovar[0])));
@@ -120,14 +131,14 @@ RooFitResult* fit_dataset(const char* _varname, const char* inputfilename, TStri
       cut[0]->Print();
       cut[1]->Print();
 
-    inputfile->GetObject(TString(data_dir).Append(helper->get_roodset_name(varname,splitting,bin).Data()),roodset);
-    cout << "using dset " << TString(data_dir).Append(helper->get_roodset_name(varname,splitting,bin).Data()) << endl;
+      inputfile->GetObject(TString(data_dir).Append(helper->get_roodset_name(varname,splitting,bin,ord).Data()),roodset);
+      cout << "using dset " << TString(data_dir).Append(helper->get_roodset_name(varname,splitting,bin,ord).Data()) << endl;
 
     RooFormulaVar *bothcut = new RooFormulaVar("bothcut","bothcut","cut_0 && cut_1",RooArgList(*(cut[0]),*(cut[1])));
     roodset=(RooDataSet*)(roodset->reduce(Cut(*bothcut)));
     for (int i=0; i<2; i++)
       for (int j=0; j<2; j++)
-	roohist[i][j]=(RooDataHist*)(roohist[i][j]->reduce(Cut(*bothcut)));
+	roohist[i][j]=(RooDataHist*)(roohist[i][j]->reduce(Cut(*(cut[j]))));
 
     bool wrong=false;
 
@@ -144,7 +155,19 @@ RooFitResult* fit_dataset(const char* _varname, const char* inputfilename, TStri
       return;
     }
 
+
+    for (int i=0; i<2; i++){
+      roovar[i]->Print();
+      for (int j=0; j<2; j++){
+	roohist[i][j]->Print();
+      }
+    }
+    roodset->Print();
+
+
+
   }
+
 
 
 
@@ -180,6 +203,7 @@ RooFitResult* fit_dataset(const char* _varname, const char* inputfilename, TStri
 
   RooAddPdf model("model","model",RooArgList(sigsigpdf,sigbkgpdf,bkgsigpdf,bkgbkgpdf),RooArgList(rf1,rf2,rf3),kTRUE);
 
+
   RooFitResult *fitres = model.fitTo(*roodset,Save());
 
   model.Print();
@@ -208,7 +232,7 @@ RooFitResult* fit_dataset(const char* _varname, const char* inputfilename, TStri
   }
 
   return fitres;
-
+  
 };
 
 
