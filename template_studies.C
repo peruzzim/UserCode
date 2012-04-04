@@ -3,11 +3,12 @@
 using namespace std;
 using namespace RooFit;
 
-void run_fits(TString splitting, bool single_gamma=false, bool do_order=false){
-  TString varname("PhoIso04");
-  TString inputfilename("out_NEW.root");
+  bool study_templates=false;
+
+void run_fits(TString varname="PhoIso04", TString inputfilename="out_NEW.root", TString splitting, bool single_gamma=false, bool do_order=false, float leftrange=-1, float rightrange=5){
 
   const int n_bins=3;
+
 
   RooFitResult *fr[n_bins];
 
@@ -25,7 +26,7 @@ void run_fits(TString splitting, bool single_gamma=false, bool do_order=false){
   RooRealVar *rf3;
 
   for (int bin=0; bin<n_bins; bin++) {
-    fr[bin]=fit_dataset(varname.Data(),inputfilename.Data(),splitting.Data(),-1,5,bin,fits_canv,single_gamma,do_order);
+    fr[bin]=fit_dataset(varname.Data(),inputfilename.Data(),splitting.Data(),leftrange,rightrange,bin,fits_canv,single_gamma,do_order);
 
     if (!single_gamma){  
       rf1=(RooRealVar*)(fr[bin]->floatParsFinal().find("rf1"));
@@ -49,11 +50,12 @@ void run_fits(TString splitting, bool single_gamma=false, bool do_order=false){
 
   fits_canv->Update();
 
+  if (!study_templates){
   TCanvas *output_canv = new TCanvas("output_canv","output_canv");
   output_canv->cd();
   out->Draw("AP");
   output_canv->Update();
-
+  }
 		
 
 };
@@ -86,13 +88,13 @@ RooFitResult* fit_dataset(const char* _varname, const char* inputfilename, TStri
 
   TFile *inputfile = TFile::Open(inputfilename);
 
+  //TString data_dir("mc_Tree_standard_sel/");
   TString data_dir("data_Tree_standard_sel/");
   TString mc_dir("mc_Tree_standard_sel/");
 
   template_production *helper = new template_production(NULL);
 
   TString ord= (do_order) ? "order" : "noorder";
-
   if (single_gamma) ord="noorder";
 
   if (single_gamma){
@@ -154,8 +156,10 @@ RooFitResult* fit_dataset(const char* _varname, const char* inputfilename, TStri
 
     for (int i=0; i<2; i++){
       assert (roovar[i]!=NULL);
+      std::cout << "using roovar named " << roovar[i]->getTitle().Data() << std::endl; 
           for (int j=0; j<2; j++){
 	    assert (roohist[i][j]!=NULL);
+	    std::cout << "using roohist named " << roohist[i][j]->GetTitle() << std::endl; 
 	  }
     }
 
@@ -233,9 +237,21 @@ RooFitResult* fit_dataset(const char* _varname, const char* inputfilename, TStri
 //  roovar[0]->setBins(n_variable_bins);
 //  roovar[1]->setBins(n_variable_bins);
 
-  RooRealVar rf1("rf1","rf1",1e-1,0,1);
-  RooRealVar rf2("rf2","rf2",1e-1,0,1);
-  RooRealVar rf3("rf3","rf3",1e-1,0,1);
+  RooRealVar rf1("rf1","rf1",0.5,0,1);
+  RooRealVar rf2("rf2","rf2",0.5,0,1);
+  RooRealVar rf3("rf3","rf3",0.5,0,1);
+
+  if (!single_gamma){
+    if (do_order) {
+      rf1.setVal(1./4);
+      rf2.setVal(1./3);
+      rf3.setVal(1./2);
+    }
+    if (!do_order) {
+      rf1.setVal(1./3);
+      rf2.setVal(1./2);
+    }
+  }
 
     RooHistPdf *sig1pdf;
     RooHistPdf *sig2pdf;
@@ -244,31 +260,49 @@ RooFitResult* fit_dataset(const char* _varname, const char* inputfilename, TStri
     RooProdPdf *sigsigpdf;
     RooProdPdf *sigbkgpdf;
     RooProdPdf *bkgsigpdf;
+    RooProdPdf *sigbkgpdf_order;
+    RooProdPdf *bkgsigpdf_order;
+    RooAddPdf *sigbkgpdf_noorder;
     RooProdPdf *bkgbkgpdf;
     RooFormulaVar *fsigsig;
     RooFormulaVar *fsigbkg;
     RooFormulaVar *fbkgsig;
     RooFormulaVar *fbkgbkg;
-    RooFormulaVar *fsigbkg_noorder;
+
     RooHistPdf *sigpdf;
     RooHistPdf *bkgpdf;
     RooFormulaVar *fsig;
     RooFormulaVar *fbkg;
 
   if (!single_gamma){
+
 sig1pdf = new RooHistPdf("sig1pdf","sig1pdf",*(roovar[0]),*(roohist[0][0]));
 sig2pdf = new RooHistPdf("sig2pdf","sig2pdf",*(roovar[1]),*(roohist[0][1]));
 bkg1pdf = new RooHistPdf("bkg1pdf","bkg1pdf",*(roovar[0]),*(roohist[1][0]));
 bkg2pdf = new RooHistPdf("bkg2pdf","bkg2pdf",*(roovar[1]),*(roohist[1][1]));
-sigsigpdf = new RooProdPdf("sigsigpdf","sigsigpdf",RooArgList(*sig1pdf,*sig2pdf));
-sigbkgpdf = new RooProdPdf("sigbkgpdf","sigbkgpdf",RooArgList(*sig1pdf,*bkg2pdf));
-bkgsigpdf = new RooProdPdf("bkgsigpdf","bkgsigpdf",RooArgList(*bkg1pdf,*sig2pdf));
-bkgbkgpdf = new RooProdPdf("bkgbkgpdf","bkgbkgpdf",RooArgList(*bkg1pdf,*bkg2pdf));
+
+ sigsigpdf = new RooProdPdf("sigsigpdf","sigsigpdf",RooArgList(*sig1pdf,*sig2pdf));
+ bkgbkgpdf = new RooProdPdf("bkgbkgpdf","bkgbkgpdf",RooArgList(*bkg1pdf,*bkg2pdf));
+
 fsigsig = new RooFormulaVar("fsigsig","fsigsig","rf1",RooArgList(rf1));
-fsigbkg = new RooFormulaVar("fsigbkg","fsigbkg","(1-rf1)*rf2",RooArgList(rf1,rf2));
-fbkgsig = new RooFormulaVar("fbkgsig","fbkgsig","(1-rf1)*(1-rf2)*rf3",RooArgList(rf1,rf2,rf3));
-fbkgbkg = new RooFormulaVar("fbkgbkg","fbkgbkg","1-fsigsig-fsigbkg-fbkgsig",RooArgList(*fsigsig,*fsigbkg,*fbkgsig));
-fsigbkg_noorder = new RooFormulaVar("fsigbkg_noorder","fsigbkg_noorder","fsigbkg+fbkgsig",RooArgList(*fsigbkg,*fbkgsig));
+
+ if (do_order) {
+   sigbkgpdf = new RooProdPdf("sigbkgpdf","sigbkgpdf",RooArgList(*sig1pdf,*bkg2pdf));
+   bkgsigpdf = new RooProdPdf("bkgsigpdf","bkgsigpdf",RooArgList(*bkg1pdf,*sig2pdf));
+   fsigbkg = new RooFormulaVar("fsigbkg","fsigbkg","(1-rf1)*rf2",RooArgList(rf1,rf2));
+   fbkgsig = new RooFormulaVar("fbkgsig","fbkgsig","(1-rf1)*(1-rf2)*rf3",RooArgList(rf1,rf2,rf3));
+   fbkgbkg = new RooFormulaVar("fbkgbkg","fbkgbkg","1-fsigsig-fsigbkg-fbkgsig",RooArgList(*fsigsig,*fsigbkg,*fbkgsig));
+ }
+ if (!do_order){
+   sigbkgpdf_order = new RooProdPdf("sigbkgpdf_order","sigbkgpdf_order",RooArgList(*sig1pdf,*bkg2pdf));
+   bkgsigpdf_order = new RooProdPdf("bkgsigpdf_order","bkgsigpdf_order",RooArgList(*bkg1pdf,*sig2pdf));
+   sigbkgpdf_noorder = new RooAddPdf("sigbkgpdf","sigbkgpdf",RooArgList(*sigbkgpdf_order,*bkgsigpdf_order),RooArgList(RooRealConstant::value(0.5),RooRealConstant::value(0.5)));
+   fsigbkg = new RooFormulaVar("fsigbkg","fsigbkg","(1-rf1)*rf2",RooArgList(rf1,rf2));
+   fbkgbkg = new RooFormulaVar("fbkgbkg","fbkgbkg","1-fsigsig-fsigbkg",RooArgList(*fsigsig,*fsigbkg));
+ }
+
+
+
   }
 
   if (single_gamma){
@@ -282,22 +316,23 @@ fbkg = new RooFormulaVar("fbkg","fbkg","1-rf1",RooArgList(rf1));
 
   if (single_gamma) model = new RooAddPdf("model","model",RooArgList(*sigpdf,*bkgpdf),RooArgList(rf1),kTRUE);
   if (!single_gamma && do_order) model = new RooAddPdf("model","model",RooArgList(*sigsigpdf,*sigbkgpdf,*bkgsigpdf,*bkgbkgpdf),RooArgList(rf1,rf2,rf3),kTRUE);
-  if (!single_gamma && !do_order) model = new RooAddPdf("model","model",RooArgList(*sigsigpdf,*sigbkgpdf,*bkgbkgpdf),RooArgList(rf1,rf2),kTRUE);
+  if (!single_gamma && !do_order) model = new RooAddPdf("model","model",RooArgList(*sigsigpdf,*sigbkgpdf_noorder,*bkgbkgpdf),RooArgList(rf1,rf2),kTRUE);
+
+
+
+  if (study_templates){
+    RooDataSet *roodset_toy = model->generate(RooArgList(*(roovar[0]),*(roovar[1])),Name("toy_model"),NumEvents(1000000),AutoBinned(kTRUE));
+    roodset=roodset_toy;
+  }
 
   RooFitResult *fitres = model->fitTo(*roodset,Save());
 
+
+
+
+
   model->Print();
 
-  /*
-  if (!single_gamma){
-  cout << "sigsig: " << fsigsig->getVal() << " +/- " << fsigsig->getPropagatedError(*fitres) << endl;
-  cout << "sigbkg_noorder: " << fsigbkg_noorder->getVal() << " +/- " << fsigbkg_noorder->getPropagatedError(*fitres) << endl;
-  cout << "bkgbkg: " << fbkgbkg->getVal() << " +/- " << fbkgbkg->getPropagatedError(*fitres) << endl;
-  cout << endl;
-  cout << "bkgsig: " << fbkgsig->getVal() << " +/- " << fbkgsig->getPropagatedError(*fitres) << endl;
-  cout << "sigbkg: " << fsigbkg->getVal() << " +/- " << fsigbkg->getPropagatedError(*fitres) << endl;
-  }
-  */
 
   if (canv!=NULL){
     RooPlot *varframe[2];
@@ -305,12 +340,14 @@ fbkg = new RooFormulaVar("fbkg","fbkg","1-rf1",RooArgList(rf1));
     if (single_gamma) a=1; else a=2;
     for (int i=0; i<a; i++){
       varframe[i] = roovar[i]->frame("","");
+      if(!study_templates){
       roodset->plotOn(varframe[i]);
       model->plotOn(varframe[i]);
+      }
       if (!single_gamma){
       model->plotOn(varframe[i],Components("sigsigpdf"),LineStyle(kDashed),LineColor(kRed));
       model->plotOn(varframe[i],Components("sigbkgpdf"),LineStyle(kDashed),LineColor(kGreen));
-      model->plotOn(varframe[i],Components("bkgsigpdf"),LineStyle(kDashed),LineColor(kBlue));
+      if (do_order) model->plotOn(varframe[i],Components("bkgsigpdf"),LineStyle(kDashed),LineColor(kBlue));
       model->plotOn(varframe[i],Components("bkgbkgpdf"),LineStyle(kDashed),LineColor(kBlack));
       }
       if (single_gamma){

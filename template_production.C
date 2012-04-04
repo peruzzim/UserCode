@@ -52,6 +52,7 @@ void template_production::Loop()
      photrail_outvar*=photrail_pt;
    }
 
+   //   DO_SEP_EB_EE;
    // pu subtraction
    if (dopucorr){
      float eff_area_fraction=0.564;
