@@ -203,7 +203,7 @@ void template_production::Loop()
 	roovar[0][0][0]->setVal(pholead_outvar);
 	roovar[1][1][0]->setVal(photrail_outvar);
 	roodset[1][bin][0]->add(RooArgList(*roovar[0][0][0],*roovar[1][1][0]),weight);
-	roodset[3][bin][0]->add(RooArgList(*roovar[0][0][0],*roovar[1][1][0]),weight);
+	// for the non-ordered, roodset[1][bin][0] is both EBEE and EEEB, leading on place 1 and trailing on place 2
 
 	roovar[0][0][1]->setVal(pholead_outvar);
 	roovar[1][1][1]->setVal(photrail_outvar);
@@ -215,14 +215,14 @@ void template_production::Loop()
 	roodset_single[1][bin]->add(RooArgList(*roovar[1][2][0]),weight);
       }
       else if (event_ok_for_dataset==4){ // EEEB
-	roovar[1][0][0]->setVal(photrail_outvar);
-	roovar[0][1][0]->setVal(pholead_outvar);
-	roodset[1][bin][0]->add(RooArgList(*roovar[1][0][0],*roovar[1][0][0]),weight);
-	roodset[3][bin][0]->add(RooArgList(*roovar[0][1][0],*roovar[0][1][0]),weight);
+	roovar[0][0][0]->setVal(photrail_outvar);
+	roovar[1][1][0]->setVal(pholead_outvar);
+	roodset[1][bin][0]->add(RooArgList(*roovar[0][0][0],*roovar[1][1][0]),weight);
+	// for the non-ordered, roodset[1][bin][0] is both EBEE and EEEB, leading on place 1 and trailing on place 2
 
 	roovar[1][0][1]->setVal(pholead_outvar);
 	roovar[0][1][1]->setVal(photrail_outvar);
-	roodset[1][bin][1]->add(RooArgList(*roovar[1][0][1],*roovar[0][1][1]),weight);
+	roodset[3][bin][1]->add(RooArgList(*roovar[1][0][1],*roovar[0][1][1]),weight);
 
 	roovar[1][2][0]->setVal(pholead_outvar);
 	roodset_single[1][bin]->add(RooArgList(*roovar[1][2][0]),weight);

@@ -612,8 +612,8 @@ void template_production::Setup(TString _varname, Float_t _leftrange, Float_t _r
 	RooArgSet vars;
 	if (i==0) { vars.add(*(roovar[0][0][m])); vars.add(*(roovar[0][1][m])); }
 	if (i==2) { vars.add(*(roovar[1][0][m])); vars.add(*(roovar[1][1][m])); }
-	if (i==1) { vars.add(*(roovar[0][0][0])); vars.add(*(roovar[1][1][0])); }
-	if (i==3) { vars.add(*(roovar[1][0][0])); vars.add(*(roovar[0][1][0])); }
+	if (i==1) { vars.add(*(roovar[0][0][m])); vars.add(*(roovar[1][1][m])); }
+	if (i==3) { vars.add(*(roovar[1][0][m])); vars.add(*(roovar[0][1][m])); }
 	roodset[i][l][m] = new RooDataSet(t.Data(),t.Data(),vars);
       }
     }

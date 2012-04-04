@@ -3,7 +3,7 @@
 using namespace std;
 using namespace RooFit;
 
-void run_fits(TString splitting, bool single_gamma=false){
+void run_fits(TString splitting, bool single_gamma=false, bool do_order=false){
   TString varname("PhoIso04");
   TString inputfilename("out_NEW.root");
 
@@ -25,8 +25,7 @@ void run_fits(TString splitting, bool single_gamma=false){
   RooRealVar *rf3;
 
   for (int bin=0; bin<n_bins; bin++) {
-    if (!single_gamma) fr[bin]=fit_dataset(varname.Data(),inputfilename.Data(),splitting.Data(),-1,5,bin,fits_canv,false,false);
-    if (single_gamma) fr[bin]=fit_dataset(varname.Data(),inputfilename.Data(),splitting.Data(),-1,5,bin,fits_canv,true,false);
+    fr[bin]=fit_dataset(varname.Data(),inputfilename.Data(),splitting.Data(),-1,5,bin,fits_canv,single_gamma,do_order);
 
     if (!single_gamma){  
       rf1=(RooRealVar*)(fr[bin]->floatParsFinal().find("rf1"));
@@ -115,6 +114,8 @@ RooFitResult* fit_dataset(const char* _varname, const char* inputfilename, TStri
 
   }
 
+  if (!single_gamma && !do_order && splitting=="EEEB") splitting="EBEE";
+
   if (!single_gamma){
   
     if (splitting=="EBEB") {
@@ -124,6 +125,14 @@ RooFitResult* fit_dataset(const char* _varname, const char* inputfilename, TStri
       inputfile->GetObject(TString(mc_dir).Append(helper->get_roohist_name(varname,TString("sig"),TString("EB"),TString("2"),bin,ord).Data()),roohist[0][1]);
       inputfile->GetObject(TString(mc_dir).Append(helper->get_roohist_name(varname,TString("bkg"),TString("EB"),TString("1"),bin,ord).Data()),roohist[1][0]);
       inputfile->GetObject(TString(mc_dir).Append(helper->get_roohist_name(varname,TString("bkg"),TString("EB"),TString("2"),bin,ord).Data()),roohist[1][1]);
+    }
+    else if (splitting=="EEEE"){
+      inputfile->GetObject(TString(data_dir).Append(helper->get_roovar_name(varname,1,0,ord).Data()),roovar[0]);
+      inputfile->GetObject(TString(data_dir).Append(helper->get_roovar_name(varname,1,1,ord).Data()),roovar[1]);
+      inputfile->GetObject(TString(mc_dir).Append(helper->get_roohist_name(varname,TString("sig"),TString("EE"),TString("1"),bin,ord).Data()),roohist[0][0]);
+      inputfile->GetObject(TString(mc_dir).Append(helper->get_roohist_name(varname,TString("sig"),TString("EE"),TString("2"),bin,ord).Data()),roohist[0][1]);
+      inputfile->GetObject(TString(mc_dir).Append(helper->get_roohist_name(varname,TString("bkg"),TString("EE"),TString("1"),bin,ord).Data()),roohist[1][0]);
+      inputfile->GetObject(TString(mc_dir).Append(helper->get_roohist_name(varname,TString("bkg"),TString("EE"),TString("2"),bin,ord).Data()),roohist[1][1]);
     }
     else if (splitting=="EBEE"){
       inputfile->GetObject(TString(data_dir).Append(helper->get_roovar_name(varname,0,0,ord).Data()),roovar[0]);
@@ -141,14 +150,7 @@ RooFitResult* fit_dataset(const char* _varname, const char* inputfilename, TStri
       inputfile->GetObject(TString(mc_dir).Append(helper->get_roohist_name(varname,TString("bkg"),TString("EE"),TString("1"),bin,ord).Data()),roohist[1][0]);
       inputfile->GetObject(TString(mc_dir).Append(helper->get_roohist_name(varname,TString("bkg"),TString("EB"),TString("2"),bin,ord).Data()),roohist[1][1]);
     }
-    else if (splitting=="EEEE"){
-      inputfile->GetObject(TString(data_dir).Append(helper->get_roovar_name(varname,1,0,ord).Data()),roovar[0]);
-      inputfile->GetObject(TString(data_dir).Append(helper->get_roovar_name(varname,1,1,ord).Data()),roovar[1]);
-      inputfile->GetObject(TString(mc_dir).Append(helper->get_roohist_name(varname,TString("sig"),TString("EE"),TString("1"),bin,ord).Data()),roohist[0][0]);
-      inputfile->GetObject(TString(mc_dir).Append(helper->get_roohist_name(varname,TString("sig"),TString("EE"),TString("2"),bin,ord).Data()),roohist[0][1]);
-      inputfile->GetObject(TString(mc_dir).Append(helper->get_roohist_name(varname,TString("bkg"),TString("EE"),TString("1"),bin,ord).Data()),roohist[1][0]);
-      inputfile->GetObject(TString(mc_dir).Append(helper->get_roohist_name(varname,TString("bkg"),TString("EE"),TString("2"),bin,ord).Data()),roohist[1][1]);
-    }
+
 
     for (int i=0; i<2; i++){
       assert (roovar[i]!=NULL);
