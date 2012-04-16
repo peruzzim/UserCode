@@ -3,14 +3,20 @@
 using namespace std;
 using namespace RooFit;
 
+typedef struct {
+  RooFitResult *fr;
+  float purity;
+  float purity5;
+} fit_output; 
+
   bool study_templates=false;
 
-void run_fits(TString varname="PhoIso04", TString inputfilename="out_NEW.root", TString splitting, bool single_gamma=false, bool do_order=false, float leftrange=-1, float rightrange=5){
+void run_fits(TString varname="PhoIso04", TString inputfilename="out_NEW.root", TString splitting, bool single_gamma=false, bool do_order=false, float leftrange=-5, float rightrange=25){
 
   const int n_bins=3;
 
 
-  RooFitResult *fr[n_bins];
+  fit_output *fr[n_bins];
 
   TGraphErrors *out = new TGraphErrors(n_bins);
   out->SetMarkerStyle(20);
@@ -29,22 +35,23 @@ void run_fits(TString varname="PhoIso04", TString inputfilename="out_NEW.root", 
     fr[bin]=fit_dataset(varname.Data(),inputfilename.Data(),splitting.Data(),leftrange,rightrange,bin,fits_canv,single_gamma,do_order);
 
     if (!single_gamma){  
-      rf1=(RooRealVar*)(fr[bin]->floatParsFinal().find("rf1"));
-      rf2=(RooRealVar*)(fr[bin]->floatParsFinal().find("rf2"));
+      rf1=(RooRealVar*)(fr[bin]->fr->floatParsFinal().find("rf1"));
+      rf2=(RooRealVar*)(fr[bin]->fr->floatParsFinal().find("rf2"));
       RooFormulaVar fsigsig("fsigsig","fsigsig","rf1",RooArgList(*rf1));
       RooFormulaVar fsigbkg("fsigbkg","fsigbkg","(1-rf1)*rf2",RooArgList(*rf1,*rf2));
       RooFormulaVar fbkgbkg("fbkgbkg","fbkgbkg","1-fsigsig-fsigbkg",RooArgList(fsigsig,fsigbkg));
       std::cout << bin << " " << fsigsig.getVal() << " " << fsigbkg.getVal() << " " << fbkgbkg.getVal() << std::endl;
       out->SetPoint(bin,bin,fsigsig.getVal());
-      out->SetPointError(bin,0,fsigsig.getPropagatedError(*(fr[bin])));
+      out->SetPointError(bin,0,fsigsig.getPropagatedError(*(fr[bin]->fr)));
     }
 
     if (single_gamma){
-      rf1=(RooRealVar*)(fr[bin]->floatParsFinal().find("rf1"));
+      rf1=(RooRealVar*)(fr[bin]->fr->floatParsFinal().find("rf1"));
       RooFormulaVar fsig("fsig","fsig","rf1",RooArgList(*rf1));
       RooFormulaVar fbkg("fbkg","fbkg","1-rf1",RooArgList(*rf1));
       out->SetPoint(bin,bin,fsig.getVal());
-      out->SetPointError(bin,0,fsig.getPropagatedError(*(fr[bin])));
+      //      out->SetPoint(bin,bin,fr[bin]->purity5);
+      out->SetPointError(bin,0,fsig.getPropagatedError(*(fr[bin]->fr)));
     }
   }
 
@@ -61,8 +68,10 @@ void run_fits(TString varname="PhoIso04", TString inputfilename="out_NEW.root", 
 };
 
 
-RooFitResult* fit_dataset(const char* _varname, const char* inputfilename, TString splitting, float leftrange, float rightrange, int bin, TCanvas *canv=NULL, bool single_gamma=false, bool do_order=false){
+fit_output* fit_dataset(const char* _varname, const char* inputfilename, TString splitting, float leftrange, float rightrange, int bin, TCanvas *canv=NULL, bool single_gamma=false, bool do_order=false){
  
+  fit_output *out = new fit_output();
+
   TString varname(_varname);
 
   RooRealVar *roovar[2];
@@ -327,9 +336,16 @@ fbkg = new RooFormulaVar("fbkg","fbkg","1-rf1",RooArgList(rf1));
 
   RooFitResult *fitres = model->fitTo(*roodset,Save());
 
-
-
-
+  out->fr=fitres;
+  out->purity=rf1.getVal();
+  if (single_gamma){
+    roovar[0]->setRange("range5",-1,5);
+  float integral5_tot=model->createIntegral(RooArgSet(*(roovar[0])),Range("range5"))->getVal();
+  float integral5_sig=sigpdf->createIntegral(RooArgSet(*(roovar[0])),Range("range5"))->getVal()*(rf1.getVal());
+  out->purity5=integral5_sig/integral5_tot;
+  cout << "blablabla" << endl;
+  cout << integral5_sig << " " << integral5_tot << " " << out->purity5 << " " << out->purity << endl;
+  }
 
   model->Print();
 
@@ -359,7 +375,9 @@ fbkg = new RooFormulaVar("fbkg","fbkg","1-rf1",RooArgList(rf1));
     }
   }
 
-  return fitres;
+
+
+  return out;
   
 };
 

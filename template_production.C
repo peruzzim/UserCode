@@ -103,7 +103,11 @@ void template_production::Loop()
     Float_t weight=event_luminormfactor*event_Kfactor*event_weight;
 
 
-    Int_t bin = Choose_bin_invmass(dipho_mgg_photon);
+    Int_t bin_lead = Choose_bin_pt(pholead_pt);
+    Int_t bin_trail = Choose_bin_pt(photrail_pt);
+
+    //    Int_t bin_lead = Choose_bin_invmass(dipho_mgg_photon);
+    //    Int_t bin_trail = Choose_bin_invmass(dipho_mgg_photon);
 
 
     if (true) { // fill templates
@@ -114,18 +118,18 @@ void template_production::Loop()
       // noorder, all
       for (int i=0; i<3; i++){
 	roovar[reg_lead][i][0]->setVal(pholead_outvar);
-	roohist[2][reg_lead][i][bin][0]->add(*(roovar[reg_lead][i][0]),weight);
+	roohist[2][reg_lead][i][bin_lead][0]->add(*(roovar[reg_lead][i][0]),weight);
 	roovar[reg_trail][i][0]->setVal(photrail_outvar);
-	roohist[2][reg_trail][i][bin][0]->add(*(roovar[reg_trail][i][0]),weight);
+	roohist[2][reg_trail][i][bin_trail][0]->add(*(roovar[reg_trail][i][0]),weight);
       }
-      templatehist[2][reg_lead][bin]->Fill(pholead_outvar,weight);
-      templatehist[2][reg_trail][bin]->Fill(photrail_outvar,weight);
+      templatehist[2][reg_lead][bin_lead]->Fill(pholead_outvar,weight);
+      templatehist[2][reg_trail][bin_trail]->Fill(photrail_outvar,weight);
 
 	// order, all
       roovar[reg_lead][0][1]->setVal(pholead_outvar);
-      roohist[2][reg_lead][0][bin][1]->add(*(roovar[reg_lead][0][1]),weight);
+      roohist[2][reg_lead][0][bin_lead][1]->add(*(roovar[reg_lead][0][1]),weight);
       roovar[reg_trail][1][1]->setVal(photrail_outvar);
-      roohist[2][reg_trail][1][bin][1]->add(*(roovar[reg_trail][1][1]),weight);
+      roohist[2][reg_trail][1][bin_trail][1]->add(*(roovar[reg_trail][1][1]),weight);
 
 
       if (!isdata) {
@@ -136,18 +140,18 @@ void template_production::Loop()
       // noorder, all
       for (int i=0; i<3; i++){
 	roovar[reg_lead][i][0]->setVal(pholead_outvar);
-	roohist[indsignal_lead][reg_lead][i][bin][0]->add(*(roovar[reg_lead][i][0]),weight);
+	roohist[indsignal_lead][reg_lead][i][bin_lead][0]->add(*(roovar[reg_lead][i][0]),weight);
 	roovar[reg_trail][i][0]->setVal(photrail_outvar);
-	roohist[indsignal_lead][reg_trail][i][bin][0]->add(*(roovar[reg_trail][i][0]),weight);
+	roohist[indsignal_lead][reg_trail][i][bin_trail][0]->add(*(roovar[reg_trail][i][0]),weight);
       }
-      templatehist[indsignal_lead][reg_lead][bin]->Fill(pholead_outvar,weight);
-      templatehist[indsignal_lead][reg_trail][bin]->Fill(photrail_outvar,weight);
+      templatehist[indsignal_lead][reg_lead][bin_lead]->Fill(pholead_outvar,weight);
+      templatehist[indsignal_lead][reg_trail][bin_trail]->Fill(photrail_outvar,weight);
 
 	// order, all
       roovar[reg_lead][0][1]->setVal(pholead_outvar);
-      roohist[indsignal_lead][reg_lead][0][bin][1]->add(*(roovar[reg_lead][0][1]),weight);
+      roohist[indsignal_lead][reg_lead][0][bin_lead][1]->add(*(roovar[reg_lead][0][1]),weight);
       roovar[reg_trail][1][1]->setVal(photrail_outvar);
-      roohist[indsignal_lead][reg_trail][1][bin][1]->add(*(roovar[reg_trail][1][1]),weight);
+      roohist[indsignal_lead][reg_trail][1][bin_trail][1]->add(*(roovar[reg_trail][1][1]),weight);
 
       }
 
@@ -169,16 +173,16 @@ void template_production::Loop()
 	  roovar[0][1][0]->setVal(pholead_outvar);
 	  roovar[0][0][0]->setVal(photrail_outvar);
 	}
-	roodset[0][bin][0]->add(RooArgList(*roovar[0][0][0],*roovar[0][1][0]),weight);
+	roodset[0][bin_lead][0]->add(RooArgList(*roovar[0][0][0],*roovar[0][1][0]),weight);
 
 	roovar[0][0][1]->setVal(pholead_outvar);
 	roovar[0][1][1]->setVal(photrail_outvar);
-	roodset[0][bin][1]->add(RooArgList(*roovar[0][0][1],*roovar[0][1][1]),weight);
+	roodset[0][bin_lead][1]->add(RooArgList(*roovar[0][0][1],*roovar[0][1][1]),weight);
 
 	roovar[0][2][0]->setVal(pholead_outvar);
-	roodset_single[0][bin]->add(RooArgList(*roovar[0][2][0]),weight);
+	roodset_single[0][bin_lead]->add(RooArgList(*roovar[0][2][0]),weight);
 	roovar[0][2][0]->setVal(photrail_outvar);
-	roodset_single[0][bin]->add(RooArgList(*roovar[0][2][0]),weight);
+	roodset_single[0][bin_trail]->add(RooArgList(*roovar[0][2][0]),weight);
       }
       else if (event_ok_for_dataset==2){ // EEEE
 	if (randomgen->Uniform()>0.5){
@@ -189,46 +193,46 @@ void template_production::Loop()
 	  roovar[1][1][0]->setVal(pholead_outvar);
 	  roovar[1][0][0]->setVal(photrail_outvar);
 	}
-	roodset[2][bin][0]->add(RooArgList(*roovar[1][0][0],*roovar[1][1][0]),weight);
+	roodset[2][bin_lead][0]->add(RooArgList(*roovar[1][0][0],*roovar[1][1][0]),weight);
 
 	roovar[1][0][1]->setVal(pholead_outvar);
 	roovar[1][1][1]->setVal(photrail_outvar);
-	roodset[2][bin][1]->add(RooArgList(*roovar[1][0][1],*roovar[1][1][1]),weight);
+	roodset[2][bin_lead][1]->add(RooArgList(*roovar[1][0][1],*roovar[1][1][1]),weight);
 
 	roovar[1][2][0]->setVal(pholead_outvar);
-	roodset_single[1][bin]->add(RooArgList(*roovar[1][2][0]),weight);
+	roodset_single[1][bin_lead]->add(RooArgList(*roovar[1][2][0]),weight);
 	roovar[1][2][0]->setVal(photrail_outvar);
-	roodset_single[1][bin]->add(RooArgList(*roovar[1][2][0]),weight);
+	roodset_single[1][bin_trail]->add(RooArgList(*roovar[1][2][0]),weight);
       }
       else if (event_ok_for_dataset==3){ // EBEE
 	roovar[0][0][0]->setVal(pholead_outvar);
 	roovar[1][1][0]->setVal(photrail_outvar);
-	roodset[1][bin][0]->add(RooArgList(*roovar[0][0][0],*roovar[1][1][0]),weight);
+	roodset[1][bin_lead][0]->add(RooArgList(*roovar[0][0][0],*roovar[1][1][0]),weight);
 	// for the non-ordered, roodset[1][bin][0] is both EBEE and EEEB, leading on place 1 and trailing on place 2
 
 	roovar[0][0][1]->setVal(pholead_outvar);
 	roovar[1][1][1]->setVal(photrail_outvar);
-	roodset[1][bin][1]->add(RooArgList(*roovar[0][0][1],*roovar[1][1][1]),weight);
+	roodset[1][bin_lead][1]->add(RooArgList(*roovar[0][0][1],*roovar[1][1][1]),weight);
 
 	roovar[0][2][0]->setVal(pholead_outvar);
-	roodset_single[0][bin]->add(RooArgList(*roovar[0][2][0]),weight);
+	roodset_single[0][bin_lead]->add(RooArgList(*roovar[0][2][0]),weight);
 	roovar[1][2][0]->setVal(photrail_outvar);
-	roodset_single[1][bin]->add(RooArgList(*roovar[1][2][0]),weight);
+	roodset_single[1][bin_trail]->add(RooArgList(*roovar[1][2][0]),weight);
       }
       else if (event_ok_for_dataset==4){ // EEEB
 	roovar[0][0][0]->setVal(photrail_outvar);
 	roovar[1][1][0]->setVal(pholead_outvar);
-	roodset[1][bin][0]->add(RooArgList(*roovar[0][0][0],*roovar[1][1][0]),weight);
+	roodset[1][bin_lead][0]->add(RooArgList(*roovar[0][0][0],*roovar[1][1][0]),weight);
 	// for the non-ordered, roodset[1][bin][0] is both EBEE and EEEB, leading on place 1 and trailing on place 2
 
 	roovar[1][0][1]->setVal(pholead_outvar);
 	roovar[0][1][1]->setVal(photrail_outvar);
-	roodset[3][bin][1]->add(RooArgList(*roovar[1][0][1],*roovar[0][1][1]),weight);
+	roodset[3][bin_lead][1]->add(RooArgList(*roovar[1][0][1],*roovar[0][1][1]),weight);
 
 	roovar[1][2][0]->setVal(pholead_outvar);
-	roodset_single[1][bin]->add(RooArgList(*roovar[1][2][0]),weight);
+	roodset_single[1][bin_lead]->add(RooArgList(*roovar[1][2][0]),weight);
 	roovar[0][2][0]->setVal(photrail_outvar);
-	roodset_single[0][bin]->add(RooArgList(*roovar[0][2][0]),weight);
+	roodset_single[0][bin_trail]->add(RooArgList(*roovar[0][2][0]),weight);
       }
 
     }

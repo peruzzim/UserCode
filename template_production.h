@@ -495,6 +495,7 @@ public :
    TString get_roovar_name(TString _varname, int i, int j, TString _ord);
 
    Int_t Choose_bin_invmass(float invmass);
+   Int_t Choose_bin_pt(float pt);
 
 };
 
@@ -972,6 +973,23 @@ Int_t template_production::Choose_bin_invmass(float invmass){
   for (int i=0; i<n_templates; i++) if ((invmass>=cuts[i]) && (invmass<cuts[i+1])) return i;
   
   std::cout << "WARNING: called bin choice for out-of-range value " << invmass << std::endl;
+  return -999;
+
+
+};
+
+Int_t template_production::Choose_bin_pt(float pt){
+
+  const float cuts[n_templates+1] = {0,60,90,9999};
+
+  if (pt<cuts[0]){
+    std::cout << "WARNING: called bin choice for out-of-range value " << pt << std::endl;
+    return -999;
+  }
+
+  for (int i=0; i<n_templates; i++) if ((pt>=cuts[i]) && (pt<cuts[i+1])) return i;
+  
+  std::cout << "WARNING: called bin choice for out-of-range value " << pt << std::endl;
   return -999;
 
 
