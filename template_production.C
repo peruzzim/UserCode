@@ -153,6 +153,8 @@ void template_production::Loop()
 
       obs_hist[event_ok_for_dataset][bin_couple]->Fill(in1,in2,weight);
 	
+      if (!isdata && dosignal && (pholead_PhoMCmatchexitcode==1 || pholead_PhoMCmatchexitcode==2)) template_sigsig[event_ok_for_dataset][bin_couple]->Fill(in1,in2,weight);
+
     }
     
 
