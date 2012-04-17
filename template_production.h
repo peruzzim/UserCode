@@ -456,19 +456,29 @@ public :
    void     WriteOutput(const char* filename, const bool isdata, const TString dirname);
    void     ShowHistogram(int i, int j, int k, int l, int m);
 
-   void Setup(TString _varname, Float_t _leftrange, Float_t _rightrange, Int_t _nbins, Bool_t _isdata, Bool_t _dopucorr);
+   void Setup(TString _varname, Float_t _leftrange, Float_t _rightrange, Int_t _nbins, Bool_t _isdata, Bool_t _dopucorr, Bool_t _dosignal);
 
    TProfile** GetPUScaling();
 
    TRandom3 *randomgen;
 
-   static const int n_templates=3;
+   static const int n_templates=5;
+
+   bool dosignal;
 
    RooRealVar *roovar[2][3][2];
    RooDataHist *roohist[3][2][3][n_templates][2];
    TH1F *templatehist[3][2][n_templates];
    RooDataSet *roodset[4][n_templates][2];
    RooDataSet *roodset_single[2][n_templates];
+
+   TH1F *template_signal[2][n_templates];
+   TH1F *template_background[2][n_templates];
+
+   TH1F *obs_hist_single[2][n_templates];
+   TH2F *obs_hist[3][n_templates];
+
+
 
    TBranch *b_pholead_outvar;
    Float_t pholead_outvar;
@@ -524,13 +534,14 @@ template_production::template_production(TTree *tree)
 
 }
 
-void template_production::Setup(TString _varname, Float_t _leftrange, Float_t _rightrange, Int_t _nbins, Bool_t _isdata, Bool_t _dopucorr){
+void template_production::Setup(TString _varname, Float_t _leftrange, Float_t _rightrange, Int_t _nbins, Bool_t _isdata, Bool_t _dopucorr, Bool_t _dosignal){
 
   varname=_varname;
   leftrange=_leftrange;
   rightrange=_rightrange;
   nbins=_nbins;
   isdata=_isdata;
+  dosignal=_dosignal;
 
   doabsolute=false;
   if (varname=="PhoIso04"){
@@ -562,6 +573,45 @@ void template_production::Setup(TString _varname, Float_t _leftrange, Float_t _r
    
   randomgen = new TRandom3(0);
   
+  // template_{signal,background}[EB,EE][n_templates]
+  for (int i=0; i<2; i++)
+    for (int j=0; j<n_templates; j++) {
+      TString name_signal="template_signal";
+      TString reg;
+      if (i==0) reg="EB"; else if (i==1) reg="EE";
+      TString t=Form("%s_%s_b%d",name_signal.Data(),reg.Data(),j);
+      template_signal[i][j] = new TH1F(t.Data(),t.Data(),nbins,leftrange,rightrange);
+    }
+  for (int i=0; i<2; i++)
+    for (int j=0; j<n_templates; j++) {
+      TString name_background="template_background";
+      TString reg;
+      if (i==0) reg="EB"; else if (i==1) reg="EE";
+      TString t=Form("%s_%s_b%d",name_background.Data(),reg.Data(),j);
+      template_background[i][j] = new TH1F(t.Data(),t.Data(),nbins,leftrange,rightrange);
+    }
+      
+
+  // obs_hist{,_single}
+
+  for (int i=0; i<2; i++)
+    for (int j=0; j<n_templates; j++) {
+      TString name_signal="obs_hist_single";
+      TString reg;
+      if (i==0) reg="EB"; else if (i==1) reg="EE";
+      TString t=Form("%s_%s_b%d",name_signal.Data(),reg.Data(),j);
+      obs_hist_single[i][j] = new TH1F(t.Data(),t.Data(),nbins,leftrange,rightrange);
+    }
+  for (int i=0; i<3; i++)
+    for (int j=0; j<n_templates; j++) {
+      TString name_signal="obs_hist";
+      TString reg;
+      if (i==0) reg="EBEB"; else if (i==1) reg="EBEE"; else if (i==2) reg="EEEE"; else if (i==3) reg="EEEB";
+      TString t=Form("%s_%s_b%d",name_signal.Data(),reg.Data(),j);
+      obs_hist[i][j] = new TH2F(t.Data(),t.Data(),nbins,leftrange,rightrange,nbins,leftrange,rightrange);
+    }
+
+
   
   // roohist[sig,bkg,all][EB,EE][1,2,both][n_templates][noorder,order]
   for (int i=0; i<3; i++) {
@@ -920,11 +970,20 @@ void template_production::WriteOutput(const char* filename, const bool _isdata, 
   out->mkdir(dirname.Data());
   out->cd(dirname.Data());
 
-  for (int m=0; m<2; m++) for (int j=0;j<2;j++) for (int k=0;k<3;k++)  roovar[j][k][m]->Write();
-  for (int m=0; m<2; m++) for (int l=0; l<n_templates; l++) for (int i=0; i<3; i++) for (int j=0;j<2;j++) for (int k=0;k<3;k++)  roohist[i][j][k][l][m]->Write();
-  for (int l=0; l<n_templates; l++) for (int i=0; i<3; i++) for (int j=0;j<2;j++)  templatehist[i][j][l]->Write();
-  for (int m=0; m<2; m++) for (int l=0; l<n_templates; l++) for (int i=0; i<4; i++)  roodset[i][l][m]->Write();
-  for (int l=0; l<n_templates; l++) for (int i=0; i<2; i++)  roodset_single[i][l]->Write();
+//  for (int m=0; m<2; m++) for (int j=0;j<2;j++) for (int k=0;k<3;k++)  roovar[j][k][m]->Write();
+//  for (int m=0; m<2; m++) for (int l=0; l<n_templates; l++) for (int i=0; i<3; i++) for (int j=0;j<2;j++) for (int k=0;k<3;k++)  roohist[i][j][k][l][m]->Write();
+//  for (int l=0; l<n_templates; l++) for (int i=0; i<3; i++) for (int j=0;j<2;j++)  templatehist[i][j][l]->Write();
+//  for (int m=0; m<2; m++) for (int l=0; l<n_templates; l++) for (int i=0; i<4; i++)  roodset[i][l][m]->Write();
+//  for (int l=0; l<n_templates; l++) for (int i=0; i<2; i++)  roodset_single[i][l]->Write();
+
+  if (!_isdata){
+  for (int i=0; i<2; i++) for (int l=0; l<n_templates; l++) template_signal[i][l]->Write();
+  for (int i=0; i<2; i++) for (int l=0; l<n_templates; l++) template_background[i][l]->Write();
+  }
+  else{
+  for (int i=0; i<2; i++) for (int l=0; l<n_templates; l++) obs_hist_single[i][l]->Write();
+  for (int i=0; i<3; i++) for (int l=0; l<n_templates; l++) obs_hist[i][l]->Write();
+  }
 
   std::cout << "output written" << std::endl;
 
@@ -980,7 +1039,7 @@ Int_t template_production::Choose_bin_invmass(float invmass){
 
 Int_t template_production::Choose_bin_pt(float pt){
 
-  const float cuts[n_templates+1] = {0,60,90,9999};
+  const float cuts[n_templates+1] = {0,50,60,70,90,9999};
 
   if (pt<cuts[0]){
     std::cout << "WARNING: called bin choice for out-of-range value " << pt << std::endl;

@@ -66,9 +66,6 @@ void template_production::Loop()
     // initial kinematic selection
     if (pholead_pt<40 || photrail_pt<30 || dipho_mgg_photon<80) continue;
 
-    if (pholead_outvar>rightrange || pholead_outvar<leftrange) continue;
-    if (photrail_outvar>rightrange || photrail_outvar<leftrange) continue;
-
     Int_t event_ok_for_dataset=-1;
 
     Int_t reg_lead;
@@ -99,144 +96,65 @@ void template_production::Loop()
       reg_trail=0;
     }
 
-      
     Float_t weight=event_luminormfactor*event_Kfactor*event_weight;
-
 
     Int_t bin_lead = Choose_bin_pt(pholead_pt);
     Int_t bin_trail = Choose_bin_pt(photrail_pt);
 
-    //    Int_t bin_lead = Choose_bin_invmass(dipho_mgg_photon);
-    //    Int_t bin_trail = Choose_bin_invmass(dipho_mgg_photon);
+    Int_t bin_couple = Choose_bin_invmass(dipho_mgg_photon);
 
+    if (!isdata){
 
-    if (true) { // fill templates
-
-      Int_t indsignal_lead;
-      Int_t indsignal_trail;
-
-      // noorder, all
-      for (int i=0; i<3; i++){
-	roovar[reg_lead][i][0]->setVal(pholead_outvar);
-	roohist[2][reg_lead][i][bin_lead][0]->add(*(roovar[reg_lead][i][0]),weight);
-	roovar[reg_trail][i][0]->setVal(photrail_outvar);
-	roohist[2][reg_trail][i][bin_trail][0]->add(*(roovar[reg_trail][i][0]),weight);
+      if (dosignal){
+	// for the signal template generation
+	if (pholead_PhoMCmatchexitcode==1 || pholead_PhoMCmatchexitcode==2)
+	  if (pholead_outvar<rightrange && pholead_outvar>leftrange) 
+	    template_signal[reg_lead][bin_lead]->Fill(pholead_outvar,weight);
+	if (photrail_PhoMCmatchexitcode==1 || photrail_PhoMCmatchexitcode==2)
+	  if (photrail_outvar<rightrange && photrail_outvar>leftrange) 
+	    template_signal[reg_trail][bin_trail]->Fill(photrail_outvar,weight);
       }
-      templatehist[2][reg_lead][bin_lead]->Fill(pholead_outvar,weight);
-      templatehist[2][reg_trail][bin_trail]->Fill(photrail_outvar,weight);
-
-	// order, all
-      roovar[reg_lead][0][1]->setVal(pholead_outvar);
-      roohist[2][reg_lead][0][bin_lead][1]->add(*(roovar[reg_lead][0][1]),weight);
-      roovar[reg_trail][1][1]->setVal(photrail_outvar);
-      roohist[2][reg_trail][1][bin_trail][1]->add(*(roovar[reg_trail][1][1]),weight);
-
-
-      if (!isdata) {
-
-	if (pholead_PhoMCmatchexitcode==1 || pholead_PhoMCmatchexitcode==2) indsignal_lead=0; else indsignal_lead=1;
-	if (photrail_PhoMCmatchexitcode==1 || photrail_PhoMCmatchexitcode==2) indsignal_trail=0; else indsignal_trail=1;
-
-      // noorder, all
-      for (int i=0; i<3; i++){
-	roovar[reg_lead][i][0]->setVal(pholead_outvar);
-	roohist[indsignal_lead][reg_lead][i][bin_lead][0]->add(*(roovar[reg_lead][i][0]),weight);
-	roovar[reg_trail][i][0]->setVal(photrail_outvar);
-	roohist[indsignal_lead][reg_trail][i][bin_trail][0]->add(*(roovar[reg_trail][i][0]),weight);
+      else {
+	// for the background template generation
+	if (!(pholead_PhoMCmatchexitcode==1 || pholead_PhoMCmatchexitcode==2))
+	  if (pholead_outvar<rightrange && pholead_outvar>leftrange) 
+	    template_background[reg_lead][bin_lead]->Fill(pholead_outvar,weight);
+	if (!(photrail_PhoMCmatchexitcode==1 || photrail_PhoMCmatchexitcode==2))
+	  if (photrail_outvar<rightrange && photrail_outvar>leftrange) 
+	    template_background[reg_trail][bin_trail]->Fill(photrail_outvar,weight);
       }
-      templatehist[indsignal_lead][reg_lead][bin_lead]->Fill(pholead_outvar,weight);
-      templatehist[indsignal_lead][reg_trail][bin_trail]->Fill(photrail_outvar,weight);
-
-	// order, all
-      roovar[reg_lead][0][1]->setVal(pholead_outvar);
-      roohist[indsignal_lead][reg_lead][0][bin_lead][1]->add(*(roovar[reg_lead][0][1]),weight);
-      roovar[reg_trail][1][1]->setVal(photrail_outvar);
-      roohist[indsignal_lead][reg_trail][1][bin_trail][1]->add(*(roovar[reg_trail][1][1]),weight);
-
-      }
-
     }
 
-    //    std::cout << "filled histos" << std::endl;
 
-
-
+  
     if (event_ok_for_dataset>-1){
 
+      if (pholead_outvar<rightrange && pholead_outvar>leftrange) 
+	obs_hist_single[reg_lead][bin_lead]->Fill(pholead_outvar,weight);
+      if (photrail_outvar<rightrange && photrail_outvar>leftrange) 
+	obs_hist_single[reg_trail][bin_trail]->Fill(photrail_outvar,weight);
 
-      if (event_ok_for_dataset==0){ // EBEB
-	if (randomgen->Uniform()>0.5){
-	  roovar[0][0][0]->setVal(pholead_outvar);
-	  roovar[0][1][0]->setVal(photrail_outvar);
-	}
-	else {
-	  roovar[0][1][0]->setVal(pholead_outvar);
-	  roovar[0][0][0]->setVal(photrail_outvar);
-	}
-	roodset[0][bin_lead][0]->add(RooArgList(*roovar[0][0][0],*roovar[0][1][0]),weight);
+      float in1=pholead_outvar;
+      float in2=photrail_outvar;
 
-	roovar[0][0][1]->setVal(pholead_outvar);
-	roovar[0][1][1]->setVal(photrail_outvar);
-	roodset[0][bin_lead][1]->add(RooArgList(*roovar[0][0][1],*roovar[0][1][1]),weight);
 
-	roovar[0][2][0]->setVal(pholead_outvar);
-	roodset_single[0][bin_lead]->add(RooArgList(*roovar[0][2][0]),weight);
-	roovar[0][2][0]->setVal(photrail_outvar);
-	roodset_single[0][bin_trail]->add(RooArgList(*roovar[0][2][0]),weight);
-      }
-      else if (event_ok_for_dataset==2){ // EEEE
-	if (randomgen->Uniform()>0.5){
-	  roovar[1][0][0]->setVal(pholead_outvar);
-	  roovar[1][1][0]->setVal(photrail_outvar);
-	}
-	else {
-	  roovar[1][1][0]->setVal(pholead_outvar);
-	  roovar[1][0][0]->setVal(photrail_outvar);
-	}
-	roodset[2][bin_lead][0]->add(RooArgList(*roovar[1][0][0],*roovar[1][1][0]),weight);
+      bool doswap=false;
 
-	roovar[1][0][1]->setVal(pholead_outvar);
-	roovar[1][1][1]->setVal(photrail_outvar);
-	roodset[2][bin_lead][1]->add(RooArgList(*roovar[1][0][1],*roovar[1][1][1]),weight);
+      if ((event_ok_for_dataset==0 || event_ok_for_dataset==2) && (randomgen->Uniform()>0.5)) doswap=true;
 
-	roovar[1][2][0]->setVal(pholead_outvar);
-	roodset_single[1][bin_lead]->add(RooArgList(*roovar[1][2][0]),weight);
-	roovar[1][2][0]->setVal(photrail_outvar);
-	roodset_single[1][bin_trail]->add(RooArgList(*roovar[1][2][0]),weight);
-      }
-      else if (event_ok_for_dataset==3){ // EBEE
-	roovar[0][0][0]->setVal(pholead_outvar);
-	roovar[1][1][0]->setVal(photrail_outvar);
-	roodset[1][bin_lead][0]->add(RooArgList(*roovar[0][0][0],*roovar[1][1][0]),weight);
-	// for the non-ordered, roodset[1][bin][0] is both EBEE and EEEB, leading on place 1 and trailing on place 2
+      if (event_ok_for_dataset==4) doswap=true;
 
-	roovar[0][0][1]->setVal(pholead_outvar);
-	roovar[1][1][1]->setVal(photrail_outvar);
-	roodset[1][bin_lead][1]->add(RooArgList(*roovar[0][0][1],*roovar[1][1][1]),weight);
+      if (event_ok_for_dataset==3 || event_ok_for_dataset==4) event_ok_for_dataset=1;
 
-	roovar[0][2][0]->setVal(pholead_outvar);
-	roodset_single[0][bin_lead]->add(RooArgList(*roovar[0][2][0]),weight);
-	roovar[1][2][0]->setVal(photrail_outvar);
-	roodset_single[1][bin_trail]->add(RooArgList(*roovar[1][2][0]),weight);
-      }
-      else if (event_ok_for_dataset==4){ // EEEB
-	roovar[0][0][0]->setVal(photrail_outvar);
-	roovar[1][1][0]->setVal(pholead_outvar);
-	roodset[1][bin_lead][0]->add(RooArgList(*roovar[0][0][0],*roovar[1][1][0]),weight);
-	// for the non-ordered, roodset[1][bin][0] is both EBEE and EEEB, leading on place 1 and trailing on place 2
-
-	roovar[1][0][1]->setVal(pholead_outvar);
-	roovar[0][1][1]->setVal(photrail_outvar);
-	roodset[3][bin_lead][1]->add(RooArgList(*roovar[1][0][1],*roovar[0][1][1]),weight);
-
-	roovar[1][2][0]->setVal(pholead_outvar);
-	roodset_single[1][bin_lead]->add(RooArgList(*roovar[1][2][0]),weight);
-	roovar[0][2][0]->setVal(photrail_outvar);
-	roodset_single[0][bin_trail]->add(RooArgList(*roovar[0][2][0]),weight);
+      if (doswap){
+	  in2=pholead_outvar;
+	  in1=photrail_outvar;
       }
 
+      obs_hist[event_ok_for_dataset][bin_couple]->Fill(in1,in2,weight);
+	
     }
-
+    
 
 
   } // end event loop
@@ -246,29 +164,13 @@ void template_production::Loop()
 
 #endif
 
-void gen_templates(TString varname, Float_t leftrange, Float_t rightrange, Int_t nbins, const char* outfile="out.root",bool dopucorr=false){
+void gen_templates(TString filename="input.root", TString varname="PhoIso04", Float_t leftrange=-5, Float_t rightrange=35, Int_t nbins=400, const char* outfile="out.root",bool dopucorr=false, bool dosignal=true, bool isdata=false){
   
   TFile *outF = TFile::Open(outfile,"recreate");
   outF->Close();
 
-  TString dir("/Users/peruzzi/nobackup/vbox_sync/gg_minitree_020501_16mar12_");
-  dir.Append(varname);
-  dir.Append("/");
-
-  TString filenameDATA=dir;
-  filenameDATA.Append("data_16mar12_");
-  filenameDATA.Append(varname);
-  filenameDATA.Append(".root");
-
-  TString filenameMC=dir;
-  filenameMC.Append("mc_16mar12_");
-  filenameMC.Append(varname);
-  filenameMC.Append(".root");
-
-  TFile *file[2];
-  file[0] = TFile::Open(filenameMC.Data());
-  file[1] = TFile::Open(filenameDATA.Data());
-
+  TFile *file;
+  file = TFile::Open(filename.Data(),"read");
 
   TTree *t;
 
@@ -278,23 +180,23 @@ void gen_templates(TString varname, Float_t leftrange, Float_t rightrange, Int_t
   treename[2] = TString("Tree_inclusive_sel");
   treename[3] = TString("Tree_DY_sel");
 
-  for (int isdata=0; isdata<2; isdata++){
+
     for (int sel_cat=0; sel_cat<4; sel_cat++){
       std::cout << "Processing isdata=" << isdata << " selection " << treename[sel_cat].Data() << std::endl;
-      file[isdata]->GetObject(treename[sel_cat].Data(),t);
+      file->GetObject(treename[sel_cat].Data(),t);
       template_production *temp = new template_production(t);
-      temp->Setup(varname,leftrange,rightrange,nbins,isdata,dopucorr);
+      temp->Setup(varname,leftrange,rightrange,nbins,isdata,dopucorr,dosignal);
       temp->Loop();
       std::cout << "exited from event loop" << std::endl;
       temp->WriteOutput(outfile,isdata,treename[sel_cat].Data());
       std::cout << "written output" << std::endl;
       //      delete temp;
     }
-  }
 
 
-  file[0]->Close();
-  file[1]->Close();
+
+  file->Close();
+
 
 };
 
