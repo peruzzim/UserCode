@@ -66,6 +66,8 @@ void template_production::Loop()
     // initial kinematic selection
     if (pholead_pt<40 || photrail_pt<30 || dipho_mgg_photon<80) continue;
 
+
+
     Int_t event_ok_for_dataset=-1;
 
     Int_t reg_lead;
@@ -96,6 +98,21 @@ void template_production::Loop()
       reg_trail=0;
     }
 
+    // DIPHOTON SELECTION
+    //    if (pholead_hoe>0.05 || photrail_hoe>0.05) continue;
+    //    float cutUP, cutLOW;
+    //    if (fabs(pholead_SCeta)<1.4442) {cutLOW=0; cutUP=0.011;} // EB
+    //    else {cutLOW=0; cutUP=0.028;} // EE
+    //    if (pholead_sieie>cutUP || pholead_sieie<cutLOW) continue;
+    //    if (fabs(photrail_SCeta)<1.4442) {cutLOW=0; cutUP=0.011;} // EB
+    //    else {cutLOW=0; cutUP=0.028;} // EE
+    //    if (photrail_sieie>cutUP || photrail_sieie<cutLOW) continue;
+
+
+    // ONLY FAKE-FAKE SELECTION
+    //    if (pholead_PhoMCmatchexitcode==1 || pholead_PhoMCmatchexitcode==2) continue;
+    //    if (photrail_PhoMCmatchexitcode==1 || photrail_PhoMCmatchexitcode==2) continue;
+
     Float_t weight=event_luminormfactor*event_Kfactor*event_weight;
 
     Int_t bin_lead = Choose_bin_pt(pholead_pt);
@@ -107,7 +124,7 @@ void template_production::Loop()
 
       if (dosignal){
 	// for the signal template generation
-	if (pholead_PhoMCmatchexitcode==1 || pholead_PhoMCmatchexitcode==2)
+
 	  if (pholead_outvar<rightrange && pholead_outvar>leftrange) 
 	    template_signal[reg_lead][bin_lead]->Fill(pholead_outvar,weight);
 	if (photrail_PhoMCmatchexitcode==1 || photrail_PhoMCmatchexitcode==2)
@@ -128,6 +145,17 @@ void template_production::Loop()
 
   
     if (event_ok_for_dataset>-1){
+
+//      cout << "-" << endl;
+//      cout << pholead_PhoMCmatchexitcode << photrail_PhoMCmatchexitcode << endl;
+//      cout << event_luminormfactor << endl;
+//      cout << event_Kfactor << endl;
+//      cout << event_weight << endl;
+//      cout << pholead_outvar << endl;
+//      cout << weight << endl;
+//      cout << photrail_outvar << endl;
+//      cout << weight << endl;
+//      cout << "-" << endl;
 
       if (pholead_outvar<rightrange && pholead_outvar>leftrange) 
 	obs_hist_single[reg_lead][bin_lead]->Fill(pholead_outvar,weight);

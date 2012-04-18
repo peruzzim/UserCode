@@ -462,7 +462,7 @@ public :
 
    TRandom3 *randomgen;
 
-   static const int n_templates=9;
+   static const int n_templates=15;
 
    bool dosignal;
 
@@ -1037,7 +1037,7 @@ TString template_production::get_roovar_name(TString _varname, int i, int j, TSt
 
 Int_t template_production::Choose_bin_invmass(float invmass){
 
-  const float cuts[n_templates+1] = {80,90,100,110,120,130,9999};
+  const float cuts[n_templates+1] = {80,90,100,110,120,130,140,150,160,170,180,190,200,210,220,9999};
 
   if (invmass<cuts[0]){
     std::cout << "WARNING: called bin choice for out-of-range value " << invmass << std::endl;
@@ -1046,7 +1046,7 @@ Int_t template_production::Choose_bin_invmass(float invmass){
 
   for (int i=0; i<n_templates; i++) if ((invmass>=cuts[i]) && (invmass<cuts[i+1])) return i;
   
-  std::cout << "WARNING: called bin choice for out-of-range value " << invmass << std::endl;
+  //  std::cout << "WARNING: called bin choice for out-of-range value " << invmass << std::endl;
   return -999;
 
 
@@ -1054,7 +1054,7 @@ Int_t template_production::Choose_bin_invmass(float invmass){
 
 Int_t template_production::Choose_bin_pt(float pt){
 
-  const float cuts[n_templates+1] = {30,40,50,60,70,80,90,100,110,9999};
+  const float cuts[n_templates+1] = {30,40,50,60,70,80,90,100,110,120,130,140,150,160,170,9999};
 
   if (pt<cuts[0]){
     std::cout << "WARNING: called bin choice for out-of-range value " << pt << std::endl;
