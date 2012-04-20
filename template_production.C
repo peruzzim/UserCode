@@ -121,15 +121,14 @@ void template_production::Loop()
     Int_t bin_couple = Choose_bin_invmass(dipho_mgg_photon);
 
     if (!isdata){
-
       if (dosignal){
 	// for the signal template generation
-
-	  if (pholead_outvar<rightrange && pholead_outvar>leftrange) 
-	    template_signal[reg_lead][bin_lead]->Fill(pholead_outvar,weight);
-	if (photrail_PhoMCmatchexitcode==1 || photrail_PhoMCmatchexitcode==2)
-	  if (photrail_outvar<rightrange && photrail_outvar>leftrange) 
-	    template_signal[reg_trail][bin_trail]->Fill(photrail_outvar,weight);
+	if (pholead_PhoMCmatchexitcode==1 || pholead_PhoMCmatchexitcode==2){
+	  if (pholead_outvar<rightrange && pholead_outvar>leftrange) {
+	    template_signal[reg_lead][bin_lead]->Fill(pholead_outvar,weight);}}
+	if (photrail_PhoMCmatchexitcode==1 || photrail_PhoMCmatchexitcode==2){
+	  if (photrail_outvar<rightrange && photrail_outvar>leftrange) {
+	    template_signal[reg_trail][bin_trail]->Fill(photrail_outvar,weight);}}
       }
       else {
 	// for the background template generation
@@ -142,7 +141,23 @@ void template_production::Loop()
       }
     }
 
-
+//    if (!isdata){
+//      if (dosignal && (pholead_PhoMCmatchexitcode==1 || pholead_PhoMCmatchexitcode==2) && (photrail_PhoMCmatchexitcode==1 || photrail_PhoMCmatchexitcode==2)){
+//	if (pholead_outvar<rightrange && pholead_outvar>leftrange)
+//	  template_signal[reg_lead][bin_lead]->Fill(pholead_outvar,weight);
+//	if (photrail_outvar<rightrange && photrail_outvar>leftrange)
+//	  template_signal[reg_trail][bin_trail]->Fill(photrail_outvar,weight);
+//      }
+//      else if (!dosignal){
+//	if (!(pholead_PhoMCmatchexitcode==1 || pholead_PhoMCmatchexitcode==2))
+//	  if (pholead_outvar<rightrange && pholead_outvar>leftrange)
+//	    template_background[reg_lead][bin_lead]->Fill(pholead_outvar,weight);
+//	if (!(photrail_PhoMCmatchexitcode==1 || photrail_PhoMCmatchexitcode==2))
+//	  if (photrail_outvar<rightrange && photrail_outvar>leftrange)
+//	    template_background[reg_trail][bin_trail]->Fill(photrail_outvar,weight);
+//      }
+//    }
+//
   
     if (event_ok_for_dataset>-1){
 
@@ -181,7 +196,7 @@ void template_production::Loop()
 
       obs_hist[event_ok_for_dataset][bin_couple]->Fill(in1,in2,weight);
 	
-      if (!isdata && dosignal && (pholead_PhoMCmatchexitcode==1 || pholead_PhoMCmatchexitcode==2)) template_sigsig[event_ok_for_dataset][bin_couple]->Fill(in1,in2,weight);
+      if (!isdata && dosignal && (pholead_PhoMCmatchexitcode==1 || pholead_PhoMCmatchexitcode==2) && (photrail_PhoMCmatchexitcode==1 || photrail_PhoMCmatchexitcode==2)) template_sigsig[event_ok_for_dataset][bin_couple]->Fill(in1,in2,weight);
 
     }
     

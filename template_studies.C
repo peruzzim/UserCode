@@ -7,6 +7,7 @@ typedef struct {
   RooFitResult *fr;
   float purity;
   float efficiency;
+  float efficiency_err;
   float sig_events;
   float tot_events;
   float purity5;
@@ -21,6 +22,8 @@ static const int n_bins=15;
 
 float binsdef_single_gamma[n_bins+1]={30,40,50,60,70,80,90,100,110,120,130,140,150,160,170,180};
 float binsdef_diphoton[n_bins+1]={80,90,100,110,120,130,140,150,160,170,180,190,200,210,220,230};
+
+
 
 void run_fits(TString inputfilename_t="out_NEW.root", TString inputfilename_d_mc="out_NEW_mc.root", TString inputfilename_d_data="out_NEW_data.root", TString splitting, float leftrange=-5, float rightrange=35, int rebin=1){
 
@@ -38,8 +41,15 @@ void run_fits(TString inputfilename_t="out_NEW.root", TString inputfilename_d_mc
 
   TH1F *purity[2];
   TH1F *purity5[2];
-  TH1F *eff[2];
+  TH1F *eff;
   TH1F *xsec[2];
+
+  TFile *eff_file = new TFile("efficiencies.root");
+  if (single_gamma) eff_file->GetObject(Form("w_eff_1g_%s",splitting.Data()),eff);
+  if (!single_gamma) eff_file->GetObject(Form("w_eff_gg_%s",splitting.Data()),eff);
+
+  assert (eff!=NULL);
+
 
 
   for (int i=0; i<2; i++){
@@ -69,16 +79,16 @@ void run_fits(TString inputfilename_t="out_NEW.root", TString inputfilename_d_mc
     if (single_gamma)  purity5[i]->GetXaxis()->SetTitle("p_{T}");
     if (!single_gamma) purity5[i]->GetXaxis()->SetTitle("m_{#gamma #gamma}");
 
-    name="efficiency";
-    eff[i] = new TH1F(Form("%s_%d",name.Data(),i),Form("%s_%d",name.Data(),i),n_bins,single_gamma ? binsdef_single_gamma : binsdef_diphoton);
-    eff[i]->SetMarkerStyle(20);
-    eff[i]->SetLineWidth(2);
-    eff[i]->GetYaxis()->SetRangeUser(0,1);
-    if (i==0) eff[i]->SetLineStyle(kDashed);
+//    name="efficiency";
+//    eff[i] = new TH1F(Form("%s_%d",name.Data(),i),Form("%s_%d",name.Data(),i),n_bins,single_gamma ? binsdef_single_gamma : binsdef_diphoton);
+//    eff[i]->SetMarkerStyle(20);
+//    eff[i]->SetLineWidth(2);
+//    eff[i]->GetYaxis()->SetRangeUser(0,1);
+//    if (i==0) eff[i]->SetLineStyle(kDashed);
 
-    eff[i]->GetYaxis()->SetTitle("selection/ID efficiency (H/e, sieie)");
-    if (single_gamma)  eff[i]->GetXaxis()->SetTitle("p_{T}");
-    if (!single_gamma) eff[i]->GetXaxis()->SetTitle("m_{#gamma #gamma}");
+    eff->GetYaxis()->SetTitle("selection/ID efficiency (H/e, sieie)");
+    if (single_gamma)  eff->GetXaxis()->SetTitle("p_{T}");
+    if (!single_gamma) eff->GetXaxis()->SetTitle("m_{#gamma #gamma}");
 
     name="events";
     xsec[i] = new TH1F(Form("%s_%d",name.Data(),i),Form("%s_%d",name.Data(),i),n_bins,single_gamma ? binsdef_single_gamma : binsdef_diphoton);
@@ -123,8 +133,7 @@ void run_fits(TString inputfilename_t="out_NEW.root", TString inputfilename_d_mc
 	purity[i]->SetBinContent(bin+1,fsigsig.getVal());
 	purity[i]->SetBinError(bin+1,fsigsig.getPropagatedError(*(fr[bin][i]->fr)));
 	purity5[i]->SetBinContent(bin+1,fr[bin][i]->purity5);
-	xsec[i]->SetBinContent(bin+1,fr[bin][i]->sig_events/fr[bin][i]->efficiency);
-	eff[i]->SetBinContent(bin+1,fr[bin][i]->efficiency);
+	xsec[i]->SetBinContent(bin+1,fr[bin][i]->sig_events);
       }
 
       if (single_gamma){
@@ -134,9 +143,9 @@ void run_fits(TString inputfilename_t="out_NEW.root", TString inputfilename_d_mc
 	purity[i]->SetBinContent(bin+1,fsig.getVal());
 	purity[i]->SetBinError(bin+1,fsig.getPropagatedError(*(fr[bin][i]->fr)));
 	purity5[i]->SetBinContent(bin+1,fr[bin][i]->purity5);
-	xsec[i]->SetBinContent(bin+1,fr[bin][i]->sig_events/fr[bin][i]->efficiency);
-	eff[i]->SetBinContent(bin+1,fr[bin][i]->efficiency);
+	xsec[i]->SetBinContent(bin+1,fr[bin][i]->sig_events);
       }
+      xsec[i]->Divide(eff);
     }
   }
 
@@ -164,8 +173,7 @@ void run_fits(TString inputfilename_t="out_NEW.root", TString inputfilename_d_mc
 
   TCanvas *eff_canv = new TCanvas("eff_canv","eff_canv");
   eff_canv->cd();
-  eff[0]->Draw("e1");
-  eff[1]->Draw("e1same");
+  eff->Draw("e1");
   eff_canv->Update();
 
 };
@@ -184,7 +192,7 @@ fit_output *out = new fit_output();
 
   TFile *inputfile_t = TFile::Open(inputfilename_t);
   TFile *inputfile_d = TFile::Open(inputfilename_d);
-  TFile *inputfile_noselection = TFile::Open("test_signal_noselection.root");
+  //  TFile *inputfile_noselection = TFile::Open("test_signal_noselection.root");
 
 
   TString data_dir("data_Tree_standard_sel/");
@@ -200,8 +208,8 @@ fit_output *out = new fit_output();
   if (splitting=="EEEB") splitting="EBEE";
 
   TH1F *h_sighist;
-  TH1F *h_sighist_selection;
-  TH1F *h_sighist_noselection;
+  //  TH1F *h_sighist_selection;
+  //  TH1F *h_sighist_noselection;
   TH1F *h_bkghist;
   TH1F *h_datahist;
   TH2F *h_datahist_2D;
@@ -212,23 +220,25 @@ fit_output *out = new fit_output();
   TH1F *h_bkg2hist;
   //  TH1F *h_datahist;
 
-  TH2F *h_sigsighist_selection;
-  TH2F *h_sigsighist_noselection;
+  //  TH2F *h_sigsighist_selection;
+  //  TH2F *h_sigsighist_noselection;
 
+  TH1::SetDefaultSumw2(kTRUE);
   
   if (single_gamma) {
-    inputfile_t->GetObject(TString(mc_dir).Append(Form("template_signal_%s_b%d",splitting.Data(),bin)),h_sighist_selection);
-    inputfile_noselection->GetObject(TString(mc_dir).Append(Form("template_signal_%s_b%d",splitting.Data(),bin)),h_sighist_noselection);
+    //    inputfile_t->GetObject(TString(mc_dir).Append(Form("template_signal_%s_b%d",splitting.Data(),bin)),h_sighist_selection);
+    //    inputfile_noselection->GetObject(TString(mc_dir).Append(Form("template_signal_%s_b%d",splitting.Data(),bin)),h_sighist_noselection);
 
     inputfile_t->GetObject(TString(mc_dir).Append(Form("template_signal_%s_b%d",splitting.Data(),n_bins)),h_sighist);
     inputfile_t->GetObject(TString(mc_dir).Append(Form("template_background_%s_b%d",splitting.Data(),n_bins)),h_bkghist);
 
     inputfile_d->GetObject(TString(data_dir).Append(Form("obs_hist_single_%s_b%d",splitting.Data(),bin)),h_datahist);
     assert (h_sighist!=NULL);
+    //    assert (h_sighist_selection!=NULL);
+    //    assert (h_sighist_noselection!=NULL);
     assert (h_bkghist!=NULL);
     assert (h_datahist!=NULL);
     h_sighist->Rebin(rbin);
-    h_sighist_noselection->Rebin(rbin);
     h_bkghist->Rebin(rbin);
     h_datahist->Rebin(rbin);
   }
@@ -241,9 +251,11 @@ fit_output *out = new fit_output();
     inputfile_t->GetObject(TString(mc_dir).Append(Form("template_background_%s_b%d",s1.Data(),n_bins)),h_bkg1hist);
     inputfile_t->GetObject(TString(mc_dir).Append(Form("template_signal_%s_b%d",s2.Data(),n_bins)),h_sig2hist);
     inputfile_t->GetObject(TString(mc_dir).Append(Form("template_background_%s_b%d",s2.Data(),n_bins)),h_bkg2hist);
-    inputfile_t->GetObject(TString(mc_dir).Append(Form("template_sigsig_%s_b%d",splitting.Data(),bin)),h_sigsighist_selection);
-    inputfile_noselection->GetObject(TString(mc_dir).Append(Form("template_sigsig_%s_b%d",splitting.Data(),bin)),h_sigsighist_noselection);
+    //    inputfile_t->GetObject(TString(mc_dir).Append(Form("template_sigsig_%s_b%d",splitting.Data(),bin)),h_sigsighist_selection);
+    //    inputfile_noselection->GetObject(TString(mc_dir).Append(Form("template_sigsig_%s_b%d",splitting.Data(),bin)),h_sigsighist_noselection);
     inputfile_d->GetObject(TString(data_dir).Append(Form("obs_hist_%s_b%d",splitting.Data(),bin)),h_datahist_2D);
+    //    assert (h_sigsighist_selection!=NULL);
+    //    assert (h_sigsighist_noselection!=NULL);
     assert (h_sig1hist!=NULL);
     assert (h_bkg1hist!=NULL);
     assert (h_sig2hist!=NULL);
@@ -397,14 +409,22 @@ fit_output *out = new fit_output();
     out->purity5=out->sig_events5/out->tot_events5;
   
 
-    out->efficiency=h_sigsighist_selection->Integral()/h_sigsighist_noselection->Integral();
-
-    int xbl=h_sigsighist_selection->GetXaxis()->FindBin(-5);
-    int xbh=h_sigsighist_selection->GetXaxis()->FindBin(5);
-    int ybl=h_sigsighist_selection->GetYaxis()->FindBin(-5);
-    int ybh=h_sigsighist_selection->GetYaxis()->FindBin(5);
-
-    out->efficiency5=h_sigsighist_selection->Integral(xbl,xbh,ybl,ybh)/h_sigsighist_noselection->Integral(xbl,xbh,ybl,ybh);
+//    Double_t *a_err = new Double_t(); 
+//    Double_t *b_err = new Double_t(); 
+//    float a=h_sigsighist_selection->IntegralAndError(h_sigsighist_selection->GetXaxis()->FindBin(-5),h_sigsighist_selection->GetXaxis()->FindBin(35),h_sigsighist_selection->GetYaxis()->FindBin(-5),h_sigsighist_selection->GetYaxis()->FindBin(35),*a_err);
+//    float b=h_sigsighist_noselection->IntegralAndError(h_sigsighist_noselection->GetXaxis()->FindBin(-5),h_sigsighist_noselection->GetXaxis()->FindBin(35),h_sigsighist_selection->GetYaxis()->FindBin(-5),h_sigsighist_selection->GetYaxis()->FindBin(35),*b_err);
+//    
+//    cout << "efficiency: " << *a_err << " " << a << " " << b << " " << (*a_err)/b << endl;
+//    
+//    out->efficiency=a/b;
+//    out->efficiency_err=(*a_err)/b;
+//    
+//    int xbl=h_sigsighist_selection->GetXaxis()->FindBin(-5);
+//    int xbh=h_sigsighist_selection->GetXaxis()->FindBin(5);
+//    int ybl=h_sigsighist_selection->GetYaxis()->FindBin(-5);
+//    int ybh=h_sigsighist_selection->GetYaxis()->FindBin(5);
+//
+//    out->efficiency5=h_sigsighist_selection->Integral(xbl,xbh,ybl,ybh)/h_sigsighist_noselection->Integral(xbl,xbh,ybl,ybh);
 
 
   }
@@ -421,9 +441,20 @@ fit_output *out = new fit_output();
     out->tot_events5=out->sig_events5+out->tot_events*(1-out->purity)*h_bkghist->Integral(h_datahist->FindBin(-5),h_datahist->FindBin(5))/h_bkghist->Integral();
 
     out->purity5=out->sig_events5/out->tot_events5;
-  
-    out->efficiency=h_sighist_selection->Integral()/h_sighist_noselection->Integral();
-    out->efficiency5=h_sighist_selection->Integral(h_datahist->FindBin(-5),h_datahist->FindBin(5))/h_sighist_noselection->Integral(h_datahist->FindBin(-5),h_datahist->FindBin(5));
+
+//    Double_t *a_err = new Double_t(); 
+//    Double_t *b_err = new Double_t(); 
+//    float a=h_sighist_selection->IntegralAndError(h_sighist_selection->GetXaxis()->FindBin(-5),h_sighist_selection->GetXaxis()->FindBin(35),*a_err);
+//    float b=h_sighist_noselection->IntegralAndError(h_sighist_noselection->GetXaxis()->FindBin(-5),h_sighist_noselection->GetXaxis()->FindBin(35),*b_err);
+//
+//    cout << "efficiency: " << *a_err << " " << a << " " << b << " " << (*a_err)/b << endl;
+//
+//    out->efficiency=a/b;
+//    out->efficiency_err=(*a_err)/b;
+//
+//  
+//    //    out->efficiency=h_sighist_selection->Integral()/h_sighist_noselection->Integral();
+//    out->efficiency5=h_sighist_selection->Integral(h_datahist->FindBin(-5),h_datahist->FindBin(5))/h_sighist_noselection->Integral(h_datahist->FindBin(-5),h_datahist->FindBin(5));
 
 
   }
