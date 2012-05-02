@@ -8,6 +8,8 @@
 #ifndef template_production_h
 #define template_production_h
 
+#include "binsdef.h"
+
 #include <TROOT.h>
 #include <TChain.h>
 #include <TFile.h>
@@ -458,11 +460,11 @@ public :
 
    void Setup(TString _varname, Float_t _leftrange, Float_t _rightrange, Int_t _nbins, Bool_t _isdata, Bool_t _dopucorr, Bool_t _dosignal);
 
-   TProfile** GetPUScaling();
+   TProfile** GetPUScaling(bool doEB);
 
    TRandom3 *randomgen;
 
-   static const int n_templates=15;
+   static const int n_templates=n_bins;
 
    bool dosignal;
 
@@ -504,8 +506,8 @@ public :
    TString get_roodset_name_single(TString _varname, TString _reg, int _binnumber);
    TString get_roovar_name(TString _varname, int i, int j, TString _ord);
 
-   Int_t Choose_bin_invmass(float invmass);
-   Int_t Choose_bin_pt(float pt);
+   Int_t Choose_bin_invmass(float invmass, int region);
+   Int_t Choose_bin_pt(float pt, int region);
 
 };
 
@@ -538,6 +540,7 @@ template_production::template_production(TTree *tree)
 }
 
 void template_production::Setup(TString _varname, Float_t _leftrange, Float_t _rightrange, Int_t _nbins, Bool_t _isdata, Bool_t _dopucorr, Bool_t _dosignal){
+
 
   varname=_varname;
   leftrange=_leftrange;
@@ -1035,33 +1038,56 @@ TString template_production::get_roovar_name(TString _varname, int i, int j, TSt
       return t;
 };
 
-Int_t template_production::Choose_bin_invmass(float invmass){
+Int_t template_production::Choose_bin_invmass(float invmass, int region){
 
-  const float cuts[n_templates+1] = {80,90,100,110,120,130,140,150,160,170,180,190,200,210,220,9999};
+  int index;
+
+  float *cuts=NULL;
+
+  if (region==0) {cuts=binsdef_diphoton_EBEB; index=n_templates_EBEB;}
+  if (region==2) {cuts=binsdef_diphoton_EEEE; index=n_templates_EEEE;}
+  if (region==3) {cuts=binsdef_diphoton_EBEE; index=n_templates_EBEE;}
+  if (region==4) {cuts=binsdef_diphoton_EBEE; index=n_templates_EBEE;}
+  if (region==1) {cuts=binsdef_diphoton_EBEE; index=n_templates_EBEE;}
+
+  assert (cuts!=NULL);
+  assert (index!=0);
+
+  cuts[index]=9999;
 
   if (invmass<cuts[0]){
-    std::cout << "WARNING: called bin choice for out-of-range value " << invmass << std::endl;
+    std::cout << "WARNING: called bin choice for out-of-range value " << invmass << " cuts[0]= " << cuts[0] << std::endl;
     return -999;
   }
 
-  for (int i=0; i<n_templates; i++) if ((invmass>=cuts[i]) && (invmass<cuts[i+1])) return i;
+  for (int i=0; i<index; i++) if ((invmass>=cuts[i]) && (invmass<cuts[i+1])) return i;
   
-  //  std::cout << "WARNING: called bin choice for out-of-range value " << invmass << std::endl;
+  std::cout << "WARNING: called bin choice for out-of-range value " << invmass << std::endl;
   return -999;
 
 
 };
 
-Int_t template_production::Choose_bin_pt(float pt){
+Int_t template_production::Choose_bin_pt(float pt, int region){
 
-  const float cuts[n_templates+1] = {30,40,50,60,70,80,90,100,110,120,130,140,150,160,170,9999};
+  int index;
+
+  float *cuts=NULL;
+
+  if (region==0) {cuts=binsdef_single_gamma_EB; index=n_templates_EB;}
+  if (region==1) {cuts=binsdef_single_gamma_EE; index=n_templates_EE;}
+
+  assert (cuts!=NULL);
+  assert (index!=0);
+
+  cuts[index]=9999;
 
   if (pt<cuts[0]){
-    std::cout << "WARNING: called bin choice for out-of-range value " << pt << std::endl;
+    std::cout << "WARNING: called bin choice for out-of-range value " << pt << " cuts[0]=" << cuts[0] << std::endl;
     return -999;
   }
 
-  for (int i=0; i<n_templates; i++) if ((pt>=cuts[i]) && (pt<cuts[i+1])) return i;
+  for (int i=0; i<index; i++) if ((pt>=cuts[i]) && (pt<cuts[i+1])) return i;
   
   std::cout << "WARNING: called bin choice for out-of-range value " << pt << std::endl;
   return -999;

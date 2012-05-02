@@ -55,18 +55,17 @@ void template_production::Loop()
    //   DO_SEP_EB_EE;
    // pu subtraction
    if (dopucorr){
-     float eff_area_fraction=0.564;
+     float eff_area_fraction_EB=0.556;
+     float eff_area_fraction_EE=0.573;
      const float dR=0.4;
-     pholead_outvar-=eff_area_fraction*event_rho*3.14*dR*dR;
-     photrail_outvar-=eff_area_fraction*event_rho*3.14*dR*dR;
+     pholead_outvar-=event_rho*3.14*dR*dR*((fabs(pholead_SCeta)<1.4442) ? eff_area_fraction_EB : eff_area_fraction_EE);
+     photrail_outvar-=event_rho*3.14*dR*dR*((fabs(photrail_SCeta)<1.4442) ? eff_area_fraction_EB : eff_area_fraction_EE);
    }
 
-   //   std::cout << pholead_outvar << " " << pholead_PhoIso04 << " " << pholead_PhoIso04*pholead_pt << " " << pholead_pt << std::endl;
+   //      std::cout << pholead_outvar << " " << pholead_PhoIso04 << " " << pholead_PhoIso04*pholead_pt << " " << pholead_pt << std::endl;
 
     // initial kinematic selection
     if (pholead_pt<40 || photrail_pt<30 || dipho_mgg_photon<80) continue;
-
-
 
     Int_t event_ok_for_dataset=-1;
 
@@ -115,50 +114,33 @@ void template_production::Loop()
 
     Float_t weight=event_luminormfactor*event_Kfactor*event_weight;
 
-    Int_t bin_lead = Choose_bin_pt(pholead_pt);
-    Int_t bin_trail = Choose_bin_pt(photrail_pt);
+    Int_t bin_lead = Choose_bin_pt(pholead_pt,reg_lead);
+    Int_t bin_trail = Choose_bin_pt(photrail_pt,reg_trail);
 
-    Int_t bin_couple = Choose_bin_invmass(dipho_mgg_photon);
+    Int_t bin_couple = Choose_bin_invmass(dipho_mgg_photon,event_ok_for_dataset);
+
+    if (pholead_outvar<leftrange) pholead_outvar=leftrange;
+    if (pholead_outvar>rightrange) pholead_outvar=rightrange;
+    if (photrail_outvar<leftrange) photrail_outvar=leftrange;
+    if (photrail_outvar>rightrange) photrail_outvar=rightrange;
 
     if (!isdata){
       if (dosignal){
 	// for the signal template generation
 	if (pholead_PhoMCmatchexitcode==1 || pholead_PhoMCmatchexitcode==2){
-	  if (pholead_outvar<rightrange && pholead_outvar>leftrange) {
-	    template_signal[reg_lead][bin_lead]->Fill(pholead_outvar,weight);}}
+	    template_signal[reg_lead][bin_lead]->Fill(pholead_outvar,weight);}
 	if (photrail_PhoMCmatchexitcode==1 || photrail_PhoMCmatchexitcode==2){
-	  if (photrail_outvar<rightrange && photrail_outvar>leftrange) {
-	    template_signal[reg_trail][bin_trail]->Fill(photrail_outvar,weight);}}
+	    template_signal[reg_trail][bin_trail]->Fill(photrail_outvar,weight);}
       }
       else {
 	// for the background template generation
 	if (!(pholead_PhoMCmatchexitcode==1 || pholead_PhoMCmatchexitcode==2))
-	  if (pholead_outvar<rightrange && pholead_outvar>leftrange) 
 	    template_background[reg_lead][bin_lead]->Fill(pholead_outvar,weight);
 	if (!(photrail_PhoMCmatchexitcode==1 || photrail_PhoMCmatchexitcode==2))
-	  if (photrail_outvar<rightrange && photrail_outvar>leftrange) 
 	    template_background[reg_trail][bin_trail]->Fill(photrail_outvar,weight);
       }
     }
 
-//    if (!isdata){
-//      if (dosignal && (pholead_PhoMCmatchexitcode==1 || pholead_PhoMCmatchexitcode==2) && (photrail_PhoMCmatchexitcode==1 || photrail_PhoMCmatchexitcode==2)){
-//	if (pholead_outvar<rightrange && pholead_outvar>leftrange)
-//	  template_signal[reg_lead][bin_lead]->Fill(pholead_outvar,weight);
-//	if (photrail_outvar<rightrange && photrail_outvar>leftrange)
-//	  template_signal[reg_trail][bin_trail]->Fill(photrail_outvar,weight);
-//      }
-//      else if (!dosignal){
-//	if (!(pholead_PhoMCmatchexitcode==1 || pholead_PhoMCmatchexitcode==2))
-//	  if (pholead_outvar<rightrange && pholead_outvar>leftrange)
-//	    template_background[reg_lead][bin_lead]->Fill(pholead_outvar,weight);
-//	if (!(photrail_PhoMCmatchexitcode==1 || photrail_PhoMCmatchexitcode==2))
-//	  if (photrail_outvar<rightrange && photrail_outvar>leftrange)
-//	    template_background[reg_trail][bin_trail]->Fill(photrail_outvar,weight);
-//      }
-//    }
-//
-  
     if (event_ok_for_dataset>-1){
 
 //      cout << "-" << endl;
@@ -172,9 +154,7 @@ void template_production::Loop()
 //      cout << weight << endl;
 //      cout << "-" << endl;
 
-      if (pholead_outvar<rightrange && pholead_outvar>leftrange) 
 	obs_hist_single[reg_lead][bin_lead]->Fill(pholead_outvar,weight);
-      if (photrail_outvar<rightrange && photrail_outvar>leftrange) 
 	obs_hist_single[reg_trail][bin_trail]->Fill(photrail_outvar,weight);
 
       float in1=pholead_outvar;
@@ -246,9 +226,9 @@ void gen_templates(TString filename="input.root", TString varname="PhoIso04", Fl
 };
 
 
-void get_eff_area(){
+void get_eff_area(bool doEB){
   TString varname("PhoIso04");
-  const char* outfile="puscaling.root";
+  const char* outfile=Form("puscaling_%s.root",(doEB) ? "EB" : "EE");
   
   TFile *outF = TFile::Open(outfile,"recreate");
   
@@ -271,7 +251,7 @@ void get_eff_area(){
 
   file[0]->GetObject(treename[3].Data(),t);
   template_production *temp = new template_production(t);
-  output=temp->GetPUScaling();
+  output=temp->GetPUScaling(doEB);
 
   output[0]->Print();
   output[1]->Print();
@@ -299,7 +279,7 @@ void get_eff_area(){
   outF->Close();
 };
 
-TProfile** template_production::GetPUScaling(){
+TProfile** template_production::GetPUScaling(bool doEB){
 
 
   TProfile *prof_iso = new TProfile("prof_iso","prof_iso",30,0,30);
@@ -336,18 +316,29 @@ TProfile** template_production::GetPUScaling(){
     photrail_outvar*=photrail_pt;
     
     if (pholead_pt<40 || photrail_pt<30 || dipho_mgg_photon<80) continue;
+    if (dipho_mgg_photon>100) continue; // mass window
 
     Float_t weight=event_luminormfactor*event_Kfactor*event_weight;
+
+    if (!doEB){
+      if (fabs(pholead_SCeta)<1.4442) continue;
+      if (fabs(photrail_SCeta)<1.4442) continue;
+    }
+    else {
+      if (fabs(pholead_SCeta)>1.56) continue;
+      if (fabs(photrail_SCeta)>1.56) continue;
+    }
 
     //    std::cout << "Filling" << pholead_outvar << " " << photrail_outvar << " " << event_rho << std::endl;
 
     prof_iso->Fill(event_nRecVtx,pholead_outvar,weight/2);
     prof_iso->Fill(event_nRecVtx,photrail_outvar,weight/2);
 
-    const float eff_area_fraction=0.564;
-    const float dR=0.4;
-    pholead_outvar-=eff_area_fraction*event_rho*3.14*dR*dR;
-    photrail_outvar-=eff_area_fraction*event_rho*3.14*dR*dR;
+     float eff_area_fraction_EB=0.556;
+     float eff_area_fraction_EE=0.573;
+     const float dR=0.4;
+     pholead_outvar-=event_rho*3.14*dR*dR*((fabs(pholead_SCeta)<1.4442) ? eff_area_fraction_EB : eff_area_fraction_EE);
+     photrail_outvar-=event_rho*3.14*dR*dR*((fabs(photrail_SCeta)<1.4442) ? eff_area_fraction_EB : eff_area_fraction_EE);
     
     prof_iso_pu->Fill(event_nRecVtx,pholead_outvar,weight/2);
     prof_iso_pu->Fill(event_nRecVtx,photrail_outvar,weight/2);

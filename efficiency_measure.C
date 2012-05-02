@@ -3,6 +3,7 @@
 #include <TH2.h>
 #include <TStyle.h>
 #include <TCanvas.h>
+#include "binsdef.h"
 
 void efficiency_measure::Loop()
 {
@@ -33,22 +34,35 @@ void efficiency_measure::Loop()
 
    Long64_t nentries = fChain->GetEntriesFast();
 
-   static const int n_bins=15;
-
-   float binsdef_single_gamma[n_bins+1]={30,40,50,60,70,80,90,100,110,120,130,140,150,160,170,180};
-   float binsdef_diphoton[n_bins+1]={80,90,100,110,120,130,140,150,160,170,180,190,200,210,220,230};
-
    TH1::SetDefaultSumw2(kTRUE);
 
    TString gg_name[3]={"EBEB","EBEE","EEEE"};
    TString sg_name[2]={"EB","EE"};
 
-   for (int i=0; i<3; i++) w_eff_gg[i] = new TH1F(Form("w_eff_gg_%s",gg_name[i].Data()),Form("w_eff_gg_%s",gg_name[i].Data()),n_bins,binsdef_diphoton);
-   for (int i=0; i<2; i++) w_eff_1g[i] = new TH1F(Form("w_eff_1g_%s",sg_name[i].Data()),Form("w_eff_1g_%s",sg_name[i].Data()),n_bins,binsdef_single_gamma);
-   for (int i=0; i<3; i++) w_tot_gg[i] = new TH1F(Form("w_tot_gg_%s",gg_name[i].Data()),Form("w_tot_gg_%s",gg_name[i].Data()),n_bins,binsdef_diphoton);
-   for (int i=0; i<2; i++) w_tot_1g[i] = new TH1F(Form("w_tot_1g_%s",sg_name[i].Data()),Form("w_tot_1g_%s",sg_name[i].Data()),n_bins,binsdef_single_gamma);
-   for (int i=0; i<3; i++) w_passing_gg[i] = new TH1F(Form("w_passing_gg_%s",gg_name[i].Data()),Form("w_passing_gg_%s",gg_name[i].Data()),n_bins,binsdef_diphoton);
-   for (int i=0; i<2; i++) w_passing_1g[i] = new TH1F(Form("w_passing_1g_%s",sg_name[i].Data()),Form("w_passing_1g_%s",sg_name[i].Data()),n_bins,binsdef_single_gamma);
+   float *binsdef_gg[3];
+   float *binsdef_sg[2];
+
+   binsdef_sg[0]=binsdef_single_gamma_EB;
+   binsdef_sg[1]=binsdef_single_gamma_EE;
+   binsdef_gg[0]=binsdef_diphoton_EBEB;
+   binsdef_gg[1]=binsdef_diphoton_EBEE;
+   binsdef_gg[2]=binsdef_diphoton_EEEE;
+
+   int n_templates_gg[3];
+   int n_templates_sg[2];
+
+   n_templates_sg[0]=n_templates_EB;
+   n_templates_sg[1]=n_templates_EE;
+   n_templates_gg[0]=n_templates_EBEB;
+   n_templates_gg[1]=n_templates_EBEE;
+   n_templates_gg[2]=n_templates_EEEE;
+
+   for (int i=0; i<3; i++) w_eff_gg[i] = new TH1F(Form("w_eff_gg_%s",gg_name[i].Data()),Form("w_eff_gg_%s",gg_name[i].Data()),n_templates_gg[i],binsdef_gg[i]);
+   for (int i=0; i<2; i++) w_eff_1g[i] = new TH1F(Form("w_eff_1g_%s",sg_name[i].Data()),Form("w_eff_1g_%s",sg_name[i].Data()),n_templates_sg[i],binsdef_sg[i]);
+   for (int i=0; i<3; i++) w_tot_gg[i] = new TH1F(Form("w_tot_gg_%s",gg_name[i].Data()),Form("w_tot_gg_%s",gg_name[i].Data()),n_templates_gg[i],binsdef_gg[i]);
+   for (int i=0; i<2; i++) w_tot_1g[i] = new TH1F(Form("w_tot_1g_%s",sg_name[i].Data()),Form("w_tot_1g_%s",sg_name[i].Data()),n_templates_sg[i],binsdef_sg[i]);
+   for (int i=0; i<3; i++) w_passing_gg[i] = new TH1F(Form("w_passing_gg_%s",gg_name[i].Data()),Form("w_passing_gg_%s",gg_name[i].Data()),n_templates_gg[i],binsdef_gg[i]);
+   for (int i=0; i<2; i++) w_passing_1g[i] = new TH1F(Form("w_passing_1g_%s",sg_name[i].Data()),Form("w_passing_1g_%s",sg_name[i].Data()),n_templates_sg[i],binsdef_sg[i]);
 
    for (int i=0; i<3; i++) w_eff_gg[i]->Sumw2();
    for (int i=0; i<2; i++) w_eff_1g[i]->Sumw2();

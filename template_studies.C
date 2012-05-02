@@ -1,5 +1,7 @@
 #include <assert.h>
 
+#include "binsdef.h"
+
 using namespace std;
 using namespace RooFit;
 
@@ -18,13 +20,6 @@ typedef struct {
 
 bool study_templates=false;
 
-static const int n_bins=15;
-
-float binsdef_single_gamma[n_bins+1]={30,40,50,60,70,80,90,100,110,120,130,140,150,160,170,180};
-float binsdef_diphoton[n_bins+1]={80,90,100,110,120,130,140,150,160,170,180,190,200,210,220,230};
-
-
-
 void run_fits(TString inputfilename_t="out_NEW.root", TString inputfilename_d_mc="out_NEW_mc.root", TString inputfilename_d_data="out_NEW_data.root", TString splitting, float leftrange=-5, float rightrange=35, int rebin=1){
 
   TH1F::SetDefaultSumw2(kTRUE);
@@ -33,7 +28,30 @@ void run_fits(TString inputfilename_t="out_NEW.root", TString inputfilename_d_mc
   if (splitting=="EB" || splitting=="EE") single_gamma=true; else single_gamma=false;
 
 
-  int bins_to_run=15; if (single_gamma) bins_to_run=15;
+  int bins_to_run=0; 
+  if (single_gamma) {
+    if (splitting=="EB") bins_to_run=n_templates_EB;
+    else bins_to_run=n_templates_EE;
+  }
+  else {
+    if (splitting=="EBEB") bins_to_run=n_templates_EBEB;
+    else if (splitting=="EBEE") bins_to_run=n_templates_EBEE;
+    else if (splitting=="EEEE") bins_to_run=n_templates_EEEE;
+  }
+
+
+  float *binsdef;
+  if (single_gamma) {
+    if (splitting=="EB") binsdef=binsdef_single_gamma_EB;
+    else binsdef_single_gamma_EE;
+  }
+  else {
+    if (splitting=="EBEB") binsdef=binsdef_diphoton_EBEB;
+    else if (splitting=="EBEE") binsdef=binsdef_diphoton_EBEE;
+    else if (splitting=="EEEE") binsdef=binsdef_diphoton_EEEE;
+  }
+
+
 
   fit_output *fr[n_bins][2];
 
@@ -56,7 +74,7 @@ void run_fits(TString inputfilename_t="out_NEW.root", TString inputfilename_d_mc
     TString name;
 
     name="purity";
-    purity[i] = new TH1F(Form("%s_%d",name.Data(),i),Form("%s_%d",name.Data(),i),n_bins,single_gamma ? binsdef_single_gamma : binsdef_diphoton);
+    purity[i] = new TH1F(Form("%s_%d",name.Data(),i),Form("%s_%d",name.Data(),i),n_bins,binsdef);
     purity[i]->SetMarkerStyle(20);
     purity[i]->SetMarkerColor(kRed);
     purity[i]->SetLineColor(kRed);
@@ -69,7 +87,7 @@ void run_fits(TString inputfilename_t="out_NEW.root", TString inputfilename_d_mc
     if (!single_gamma) purity[i]->GetXaxis()->SetTitle("m_{#gamma #gamma}");
 
     name="purity5";
-    purity5[i] = new TH1F(Form("%s_%d",name.Data(),i),Form("%s_%d",name.Data(),i),n_bins,single_gamma ? binsdef_single_gamma : binsdef_diphoton);
+    purity5[i] = new TH1F(Form("%s_%d",name.Data(),i),Form("%s_%d",name.Data(),i),n_bins,binsdef);
     purity5[i]->SetMarkerStyle(20);
     purity5[i]->SetMarkerColor(kBlue);
     purity5[i]->SetLineColor(kBlue);
@@ -80,7 +98,7 @@ void run_fits(TString inputfilename_t="out_NEW.root", TString inputfilename_d_mc
     if (!single_gamma) purity5[i]->GetXaxis()->SetTitle("m_{#gamma #gamma}");
 
 //    name="efficiency";
-//    eff[i] = new TH1F(Form("%s_%d",name.Data(),i),Form("%s_%d",name.Data(),i),n_bins,single_gamma ? binsdef_single_gamma : binsdef_diphoton);
+//    eff[i] = new TH1F(Form("%s_%d",name.Data(),i),Form("%s_%d",name.Data(),i),n_bins,binsdef);
 //    eff[i]->SetMarkerStyle(20);
 //    eff[i]->SetLineWidth(2);
 //    eff[i]->GetYaxis()->SetRangeUser(0,1);
@@ -91,20 +109,23 @@ void run_fits(TString inputfilename_t="out_NEW.root", TString inputfilename_d_mc
     if (!single_gamma) eff->GetXaxis()->SetTitle("m_{#gamma #gamma}");
 
     name="events";
-    xsec[i] = new TH1F(Form("%s_%d",name.Data(),i),Form("%s_%d",name.Data(),i),n_bins,single_gamma ? binsdef_single_gamma : binsdef_diphoton);
+    xsec[i] = new TH1F(Form("%s_%d",name.Data(),i),Form("%s_%d",name.Data(),i),n_bins,binsdef);
     xsec[i]->SetMarkerStyle(20);
     xsec[i]->SetMarkerColor(kGreen);
     xsec[i]->SetLineColor(kGreen);
     xsec[i]->SetLineWidth(2);
     if (i==0) xsec[i]->SetLineStyle(kDashed);
 
-    xsec[i]->GetYaxis()->SetTitle("events after efficiency corr.");
+    xsec[i]->GetYaxis()->SetTitle("d#sigma/dp_{T} (fb/GeV)");
+    //    xsec[i]->GetYaxis()->SetTitle("events after efficiency corr.");
     if (single_gamma)  xsec[i]->GetXaxis()->SetTitle("p_{T}");
     if (!single_gamma) xsec[i]->GetXaxis()->SetTitle("m_{#gamma #gamma}");
 
     name="fits";
     fits_canv[i] = new TCanvas(Form("%s_%d",name.Data(),i),Form("%s_%d",name.Data(),i));
+    if (bins_to_run==4) fits_canv[i]->Divide(2,3);
     if (bins_to_run==6) fits_canv[i]->Divide(2,3);
+    if (bins_to_run==8) fits_canv[i]->Divide(2,4);
     if (bins_to_run==9) fits_canv[i]->Divide(2,5);
     if (bins_to_run==12) fits_canv[i]->Divide(2,6);
     if (bins_to_run==15) fits_canv[i]->Divide(2,8);
@@ -133,7 +154,7 @@ void run_fits(TString inputfilename_t="out_NEW.root", TString inputfilename_d_mc
 	purity[i]->SetBinContent(bin+1,fsigsig.getVal());
 	purity[i]->SetBinError(bin+1,fsigsig.getPropagatedError(*(fr[bin][i]->fr)));
 	purity5[i]->SetBinContent(bin+1,fr[bin][i]->purity5);
-	xsec[i]->SetBinContent(bin+1,fr[bin][i]->sig_events);
+	xsec[i]->SetBinContent(bin+1,fr[bin][i]->sig_events/10.0/2.1);
       }
 
       if (single_gamma){
@@ -486,6 +507,8 @@ fit_output *out = new fit_output();
       model->plotOn(varframe[0],Components("sigpdf"),LineStyle(kDashed),LineColor(kRed));
       model->plotOn(varframe[0],Components("bkgpdf"),LineStyle(kDashed),LineColor(kBlack));
       varframe[0]->Draw();
+      //      new TCanvas();
+      //      varframe[0]->Draw();
     }
 
     if (!single_gamma){
@@ -500,6 +523,8 @@ fit_output *out = new fit_output();
       model->plotOn(varframe[i],Components("sigbkgpdf"),LineStyle(kDashed),LineColor(kGreen),Range("fitrange"),NormRange("fullrange"));
       model->plotOn(varframe[i],Components("bkgbkgpdf"),LineStyle(kDashed),LineColor(kBlack),Range("fitrange"),NormRange("fullrange"));
       varframe[i]->Draw();
+      //      new TCanvas();
+      //      varframe[i]->Draw();
     }
 
   }
