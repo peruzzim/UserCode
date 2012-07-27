@@ -85,96 +85,38 @@ public :
    Float_t         photrail_sigmaPhi;
    Float_t         pholead_sigmaEta;
    Float_t         photrail_sigmaEta;
-   Float_t         pholead_Pho_Cone04PhotonIso_dR0_dEta0_pt5;
-   Float_t         pholead_Pho_Cone04PhotonIso_dR8_dEta0_pt0;
-   Float_t         pholead_Pho_Cone04PhotonIso_dR8_dEta0_pt5;
-   Float_t         pholead_Pho_Cone01PhotonIso_dR045EB070EE_dEta015_pt08EB1EE_mvVtx;
-   Float_t         pholead_Pho_Cone02PhotonIso_dR045EB070EE_dEta015_pt08EB1EE_mvVtx;
-   Float_t         pholead_Pho_Cone03PhotonIso_dR045EB070EE_dEta015_pt08EB1EE_mvVtx;
-   Float_t         pholead_Pho_Cone04PhotonIso_dR045EB070EE_dEta015_pt08EB1EE_mvVtx;
-   Float_t         pholead_Pho_Cone04NeutralHadronIso_dR0_dEta0_pt0;
-   Float_t         pholead_Pho_Cone04NeutralHadronIso_dR0_dEta0_pt5;
-   Float_t         pholead_Pho_Cone04NeutralHadronIso_dR0_dEta0_pt0_nocracks;
-   Float_t         pholead_Pho_Cone04NeutralHadronIso_dR0_dEta0_pt5_nocracks;
-   Float_t         pholead_Pho_Cone04NeutralHadronIso_dR7_dEta0_pt0;
-   Float_t         pholead_Pho_Cone04NeutralHadronIso_dR7_dEta0_pt5;
-   Float_t         pholead_Pho_Cone01NeutralHadronIso_dR0_dEta0_pt0_mvVtx;
-   Float_t         pholead_Pho_Cone02NeutralHadronIso_dR0_dEta0_pt0_mvVtx;
-   Float_t         pholead_Pho_Cone03NeutralHadronIso_dR0_dEta0_pt0_mvVtx;
-   Float_t         pholead_Pho_Cone04NeutralHadronIso_dR0_dEta0_pt0_mvVtx;
-   Float_t         pholead_Pho_Cone04ChargedHadronIso_dR0_dEta0_pt0_dz0_old;
-   Float_t         pholead_Pho_Cone04ChargedHadronIso_dR0_dEta0_pt0_PFnoPU_old;
-   Float_t         pholead_Pho_Cone04ChargedHadronIso_dR015_dEta0_pt0_dz0_old;
-   Float_t         pholead_Pho_Cone04ChargedHadronIso_dR015_dEta0_pt0_PFnoPU_old;
-   Float_t         pholead_Pho_Cone01ChargedHadronIso_dR0_dEta0_pt0_dz0;
-   Float_t         pholead_Pho_Cone01ChargedHadronIso_dR0_dEta0_pt0_dz1_dxy01;
-   Float_t         pholead_Pho_Cone01ChargedHadronIso_dR0_dEta0_pt0_PFnoPU;
-   Float_t         pholead_Pho_Cone01ChargedHadronIso_dR015_dEta0_pt0_dz0;
-   Float_t         pholead_Pho_Cone01ChargedHadronIso_dR015_dEta0_pt0_dz1_dxy01;
-   Float_t         pholead_Pho_Cone01ChargedHadronIso_dR015_dEta0_pt0_PFnoPU;
-   Float_t         pholead_Pho_Cone02ChargedHadronIso_dR0_dEta0_pt0_dz0;
-   Float_t         pholead_Pho_Cone02ChargedHadronIso_dR0_dEta0_pt0_dz1_dxy01;
-   Float_t         pholead_Pho_Cone02ChargedHadronIso_dR0_dEta0_pt0_PFnoPU;
-   Float_t         pholead_Pho_Cone02ChargedHadronIso_dR015_dEta0_pt0_dz0;
-   Float_t         pholead_Pho_Cone02ChargedHadronIso_dR015_dEta0_pt0_dz1_dxy01;
-   Float_t         pholead_Pho_Cone02ChargedHadronIso_dR015_dEta0_pt0_PFnoPU;
-   Float_t         pholead_Pho_Cone03ChargedHadronIso_dR0_dEta0_pt0_dz0;
-   Float_t         pholead_Pho_Cone03ChargedHadronIso_dR0_dEta0_pt0_dz1_dxy01;
-   Float_t         pholead_Pho_Cone03ChargedHadronIso_dR0_dEta0_pt0_PFnoPU;
-   Float_t         pholead_Pho_Cone03ChargedHadronIso_dR015_dEta0_pt0_dz0;
-   Float_t         pholead_Pho_Cone03ChargedHadronIso_dR015_dEta0_pt0_dz1_dxy01;
-   Float_t         pholead_Pho_Cone03ChargedHadronIso_dR015_dEta0_pt0_PFnoPU;
-   Float_t         pholead_Pho_Cone04ChargedHadronIso_dR0_dEta0_pt0_dz0;
-   Float_t         pholead_Pho_Cone04ChargedHadronIso_dR0_dEta0_pt0_dz1_dxy01;
-   Float_t         pholead_Pho_Cone04ChargedHadronIso_dR0_dEta0_pt0_PFnoPU;
-   Float_t         pholead_Pho_Cone04ChargedHadronIso_dR015_dEta0_pt0_dz0;
-   Float_t         pholead_Pho_Cone04ChargedHadronIso_dR015_dEta0_pt0_dz1_dxy01;
-   Float_t         pholead_Pho_Cone04ChargedHadronIso_dR015_dEta0_pt0_PFnoPU;
-   Float_t         photrail_Pho_Cone04PhotonIso_dR0_dEta0_pt5;
-   Float_t         photrail_Pho_Cone04PhotonIso_dR8_dEta0_pt0;
-   Float_t         photrail_Pho_Cone04PhotonIso_dR8_dEta0_pt5;
-   Float_t         photrail_Pho_Cone01PhotonIso_dR045EB070EE_dEta015_pt08EB1EE_mvVtx;
-   Float_t         photrail_Pho_Cone02PhotonIso_dR045EB070EE_dEta015_pt08EB1EE_mvVtx;
-   Float_t         photrail_Pho_Cone03PhotonIso_dR045EB070EE_dEta015_pt08EB1EE_mvVtx;
-   Float_t         photrail_Pho_Cone04PhotonIso_dR045EB070EE_dEta015_pt08EB1EE_mvVtx;
-   Float_t         photrail_Pho_Cone04NeutralHadronIso_dR0_dEta0_pt0;
-   Float_t         photrail_Pho_Cone04NeutralHadronIso_dR0_dEta0_pt5;
-   Float_t         photrail_Pho_Cone04NeutralHadronIso_dR0_dEta0_pt0_nocracks;
-   Float_t         photrail_Pho_Cone04NeutralHadronIso_dR0_dEta0_pt5_nocracks;
-   Float_t         photrail_Pho_Cone04NeutralHadronIso_dR7_dEta0_pt0;
-   Float_t         photrail_Pho_Cone04NeutralHadronIso_dR7_dEta0_pt5;
-   Float_t         photrail_Pho_Cone01NeutralHadronIso_dR0_dEta0_pt0_mvVtx;
-   Float_t         photrail_Pho_Cone02NeutralHadronIso_dR0_dEta0_pt0_mvVtx;
-   Float_t         photrail_Pho_Cone03NeutralHadronIso_dR0_dEta0_pt0_mvVtx;
-   Float_t         photrail_Pho_Cone04NeutralHadronIso_dR0_dEta0_pt0_mvVtx;
-   Float_t         photrail_Pho_Cone04ChargedHadronIso_dR0_dEta0_pt0_dz0_old;
-   Float_t         photrail_Pho_Cone04ChargedHadronIso_dR0_dEta0_pt0_PFnoPU_old;
-   Float_t         photrail_Pho_Cone04ChargedHadronIso_dR015_dEta0_pt0_dz0_old;
-   Float_t         photrail_Pho_Cone04ChargedHadronIso_dR015_dEta0_pt0_PFnoPU_old;
-   Float_t         photrail_Pho_Cone01ChargedHadronIso_dR0_dEta0_pt0_dz0;
-   Float_t         photrail_Pho_Cone01ChargedHadronIso_dR0_dEta0_pt0_dz1_dxy01;
-   Float_t         photrail_Pho_Cone01ChargedHadronIso_dR0_dEta0_pt0_PFnoPU;
-   Float_t         photrail_Pho_Cone01ChargedHadronIso_dR015_dEta0_pt0_dz0;
-   Float_t         photrail_Pho_Cone01ChargedHadronIso_dR015_dEta0_pt0_dz1_dxy01;
-   Float_t         photrail_Pho_Cone01ChargedHadronIso_dR015_dEta0_pt0_PFnoPU;
-   Float_t         photrail_Pho_Cone02ChargedHadronIso_dR0_dEta0_pt0_dz0;
-   Float_t         photrail_Pho_Cone02ChargedHadronIso_dR0_dEta0_pt0_dz1_dxy01;
-   Float_t         photrail_Pho_Cone02ChargedHadronIso_dR0_dEta0_pt0_PFnoPU;
-   Float_t         photrail_Pho_Cone02ChargedHadronIso_dR015_dEta0_pt0_dz0;
-   Float_t         photrail_Pho_Cone02ChargedHadronIso_dR015_dEta0_pt0_dz1_dxy01;
-   Float_t         photrail_Pho_Cone02ChargedHadronIso_dR015_dEta0_pt0_PFnoPU;
-   Float_t         photrail_Pho_Cone03ChargedHadronIso_dR0_dEta0_pt0_dz0;
-   Float_t         photrail_Pho_Cone03ChargedHadronIso_dR0_dEta0_pt0_dz1_dxy01;
-   Float_t         photrail_Pho_Cone03ChargedHadronIso_dR0_dEta0_pt0_PFnoPU;
-   Float_t         photrail_Pho_Cone03ChargedHadronIso_dR015_dEta0_pt0_dz0;
-   Float_t         photrail_Pho_Cone03ChargedHadronIso_dR015_dEta0_pt0_dz1_dxy01;
-   Float_t         photrail_Pho_Cone03ChargedHadronIso_dR015_dEta0_pt0_PFnoPU;
-   Float_t         photrail_Pho_Cone04ChargedHadronIso_dR0_dEta0_pt0_dz0;
-   Float_t         photrail_Pho_Cone04ChargedHadronIso_dR0_dEta0_pt0_dz1_dxy01;
-   Float_t         photrail_Pho_Cone04ChargedHadronIso_dR0_dEta0_pt0_PFnoPU;
-   Float_t         photrail_Pho_Cone04ChargedHadronIso_dR015_dEta0_pt0_dz0;
-   Float_t         photrail_Pho_Cone04ChargedHadronIso_dR015_dEta0_pt0_dz1_dxy01;
-   Float_t         photrail_Pho_Cone04ChargedHadronIso_dR015_dEta0_pt0_PFnoPU;
+   Float_t         pholead_pho_Cone01PhotonIso_dEta015EB_dR070EE_mvVtx;
+   Float_t         photrail_pho_Cone01PhotonIso_dEta015EB_dR070EE_mvVtx;
+   Float_t         pholead_pho_Cone02PhotonIso_dEta015EB_dR070EE_mvVtx;
+   Float_t         photrail_pho_Cone02PhotonIso_dEta015EB_dR070EE_mvVtx;
+   Float_t         pholead_pho_Cone03PhotonIso_dEta015EB_dR070EE_mvVtx;
+   Float_t         photrail_pho_Cone03PhotonIso_dEta015EB_dR070EE_mvVtx;
+   Float_t         pholead_pho_Cone04PhotonIso_dEta015EB_dR070EE_mvVtx;
+   Float_t         photrail_pho_Cone04PhotonIso_dEta015EB_dR070EE_mvVtx;
+   Float_t         pholead_pho_Cone01NeutralHadronIso_mvVtx;
+   Float_t         photrail_pho_Cone01NeutralHadronIso_mvVtx;
+   Float_t         pholead_pho_Cone02NeutralHadronIso_mvVtx;
+   Float_t         photrail_pho_Cone02NeutralHadronIso_mvVtx;
+   Float_t         pholead_pho_Cone03NeutralHadronIso_mvVtx;
+   Float_t         photrail_pho_Cone03NeutralHadronIso_mvVtx;
+   Float_t         pholead_pho_Cone04NeutralHadronIso_mvVtx;
+   Float_t         photrail_pho_Cone04NeutralHadronIso_mvVtx;
+   Float_t         pholead_pho_Cone01ChargedHadronIso_dR02_dz02_dxy01;
+   Float_t         photrail_pho_Cone01ChargedHadronIso_dR02_dz02_dxy01;
+   Float_t         pholead_pho_Cone02ChargedHadronIso_dR02_dz02_dxy01;
+   Float_t         photrail_pho_Cone02ChargedHadronIso_dR02_dz02_dxy01;
+   Float_t         pholead_pho_Cone03ChargedHadronIso_dR02_dz02_dxy01;
+   Float_t         photrail_pho_Cone03ChargedHadronIso_dR02_dz02_dxy01;
+   Float_t         pholead_pho_Cone04ChargedHadronIso_dR02_dz02_dxy01;
+   Float_t         photrail_pho_Cone04ChargedHadronIso_dR02_dz02_dxy01;
+   Float_t         pholead_pho_Cone03PFCombinedIso;
+   Float_t         photrail_pho_Cone03PFCombinedIso;
+   Float_t         pholead_pho_Cone04PFCombinedIso;
+   Float_t         photrail_pho_Cone04PFCombinedIso;
+   Int_t           pholead_PhoPassConvSafeElectronVeto;
+   Int_t           photrail_PhoPassConvSafeElectronVeto;
+   Float_t         pholead_GenPhotonIsoDR04;
+   Float_t         photrail_GenPhotonIsoDR04;
    Float_t         pholead_PhoIso03Ecal;
    Float_t         pholead_PhoIso03Hcal;
    Float_t         pholead_PhoIso03TrkSolid;
@@ -290,96 +232,38 @@ public :
    TBranch        *b_photrail_sigmaPhi;   //!
    TBranch        *b_pholead_sigmaEta;   //!
    TBranch        *b_photrail_sigmaEta;   //!
-   TBranch        *b_pholead_Pho_Cone04PhotonIso_dR0_dEta0_pt5;   //!
-   TBranch        *b_pholead_Pho_Cone04PhotonIso_dR8_dEta0_pt0;   //!
-   TBranch        *b_pholead_Pho_Cone04PhotonIso_dR8_dEta0_pt5;   //!
-   TBranch        *b_pholead_Pho_Cone01PhotonIso_dR045EB070EE_dEta015_pt08EB1EE_mvVtx;   //!
-   TBranch        *b_pholead_Pho_Cone02PhotonIso_dR045EB070EE_dEta015_pt08EB1EE_mvVtx;   //!
-   TBranch        *b_pholead_Pho_Cone03PhotonIso_dR045EB070EE_dEta015_pt08EB1EE_mvVtx;   //!
-   TBranch        *b_pholead_Pho_Cone04PhotonIso_dR045EB070EE_dEta015_pt08EB1EE_mvVtx;   //!
-   TBranch        *b_pholead_Pho_Cone04NeutralHadronIso_dR0_dEta0_pt0;   //!
-   TBranch        *b_pholead_Pho_Cone04NeutralHadronIso_dR0_dEta0_pt5;   //!
-   TBranch        *b_pholead_Pho_Cone04NeutralHadronIso_dR0_dEta0_pt0_nocracks;   //!
-   TBranch        *b_pholead_Pho_Cone04NeutralHadronIso_dR0_dEta0_pt5_nocracks;   //!
-   TBranch        *b_pholead_Pho_Cone04NeutralHadronIso_dR7_dEta0_pt0;   //!
-   TBranch        *b_pholead_Pho_Cone04NeutralHadronIso_dR7_dEta0_pt5;   //!
-   TBranch        *b_pholead_Pho_Cone01NeutralHadronIso_dR0_dEta0_pt0_mvVtx;   //!
-   TBranch        *b_pholead_Pho_Cone02NeutralHadronIso_dR0_dEta0_pt0_mvVtx;   //!
-   TBranch        *b_pholead_Pho_Cone03NeutralHadronIso_dR0_dEta0_pt0_mvVtx;   //!
-   TBranch        *b_pholead_Pho_Cone04NeutralHadronIso_dR0_dEta0_pt0_mvVtx;   //!
-   TBranch        *b_pholead_Pho_Cone04ChargedHadronIso_dR0_dEta0_pt0_dz0_old;   //!
-   TBranch        *b_pholead_Pho_Cone04ChargedHadronIso_dR0_dEta0_pt0_PFnoPU_old;   //!
-   TBranch        *b_pholead_Pho_Cone04ChargedHadronIso_dR015_dEta0_pt0_dz0_old;   //!
-   TBranch        *b_pholead_Pho_Cone04ChargedHadronIso_dR015_dEta0_pt0_PFnoPU_old;   //!
-   TBranch        *b_pholead_Pho_Cone01ChargedHadronIso_dR0_dEta0_pt0_dz0;   //!
-   TBranch        *b_pholead_Pho_Cone01ChargedHadronIso_dR0_dEta0_pt0_dz1_dxy01;   //!
-   TBranch        *b_pholead_Pho_Cone01ChargedHadronIso_dR0_dEta0_pt0_PFnoPU;   //!
-   TBranch        *b_pholead_Pho_Cone01ChargedHadronIso_dR015_dEta0_pt0_dz0;   //!
-   TBranch        *b_pholead_Pho_Cone01ChargedHadronIso_dR015_dEta0_pt0_dz1_dxy01;   //!
-   TBranch        *b_pholead_Pho_Cone01ChargedHadronIso_dR015_dEta0_pt0_PFnoPU;   //!
-   TBranch        *b_pholead_Pho_Cone02ChargedHadronIso_dR0_dEta0_pt0_dz0;   //!
-   TBranch        *b_pholead_Pho_Cone02ChargedHadronIso_dR0_dEta0_pt0_dz1_dxy01;   //!
-   TBranch        *b_pholead_Pho_Cone02ChargedHadronIso_dR0_dEta0_pt0_PFnoPU;   //!
-   TBranch        *b_pholead_Pho_Cone02ChargedHadronIso_dR015_dEta0_pt0_dz0;   //!
-   TBranch        *b_pholead_Pho_Cone02ChargedHadronIso_dR015_dEta0_pt0_dz1_dxy01;   //!
-   TBranch        *b_pholead_Pho_Cone02ChargedHadronIso_dR015_dEta0_pt0_PFnoPU;   //!
-   TBranch        *b_pholead_Pho_Cone03ChargedHadronIso_dR0_dEta0_pt0_dz0;   //!
-   TBranch        *b_pholead_Pho_Cone03ChargedHadronIso_dR0_dEta0_pt0_dz1_dxy01;   //!
-   TBranch        *b_pholead_Pho_Cone03ChargedHadronIso_dR0_dEta0_pt0_PFnoPU;   //!
-   TBranch        *b_pholead_Pho_Cone03ChargedHadronIso_dR015_dEta0_pt0_dz0;   //!
-   TBranch        *b_pholead_Pho_Cone03ChargedHadronIso_dR015_dEta0_pt0_dz1_dxy01;   //!
-   TBranch        *b_pholead_Pho_Cone03ChargedHadronIso_dR015_dEta0_pt0_PFnoPU;   //!
-   TBranch        *b_pholead_Pho_Cone04ChargedHadronIso_dR0_dEta0_pt0_dz0;   //!
-   TBranch        *b_pholead_Pho_Cone04ChargedHadronIso_dR0_dEta0_pt0_dz1_dxy01;   //!
-   TBranch        *b_pholead_Pho_Cone04ChargedHadronIso_dR0_dEta0_pt0_PFnoPU;   //!
-   TBranch        *b_pholead_Pho_Cone04ChargedHadronIso_dR015_dEta0_pt0_dz0;   //!
-   TBranch        *b_pholead_Pho_Cone04ChargedHadronIso_dR015_dEta0_pt0_dz1_dxy01;   //!
-   TBranch        *b_pholead_Pho_Cone04ChargedHadronIso_dR015_dEta0_pt0_PFnoPU;   //!
-   TBranch        *b_photrail_Pho_Cone04PhotonIso_dR0_dEta0_pt5;   //!
-   TBranch        *b_photrail_Pho_Cone04PhotonIso_dR8_dEta0_pt0;   //!
-   TBranch        *b_photrail_Pho_Cone04PhotonIso_dR8_dEta0_pt5;   //!
-   TBranch        *b_photrail_Pho_Cone01PhotonIso_dR045EB070EE_dEta015_pt08EB1EE_mvVtx;   //!
-   TBranch        *b_photrail_Pho_Cone02PhotonIso_dR045EB070EE_dEta015_pt08EB1EE_mvVtx;   //!
-   TBranch        *b_photrail_Pho_Cone03PhotonIso_dR045EB070EE_dEta015_pt08EB1EE_mvVtx;   //!
-   TBranch        *b_photrail_Pho_Cone04PhotonIso_dR045EB070EE_dEta015_pt08EB1EE_mvVtx;   //!
-   TBranch        *b_photrail_Pho_Cone04NeutralHadronIso_dR0_dEta0_pt0;   //!
-   TBranch        *b_photrail_Pho_Cone04NeutralHadronIso_dR0_dEta0_pt5;   //!
-   TBranch        *b_photrail_Pho_Cone04NeutralHadronIso_dR0_dEta0_pt0_nocracks;   //!
-   TBranch        *b_photrail_Pho_Cone04NeutralHadronIso_dR0_dEta0_pt5_nocracks;   //!
-   TBranch        *b_photrail_Pho_Cone04NeutralHadronIso_dR7_dEta0_pt0;   //!
-   TBranch        *b_photrail_Pho_Cone04NeutralHadronIso_dR7_dEta0_pt5;   //!
-   TBranch        *b_photrail_Pho_Cone01NeutralHadronIso_dR0_dEta0_pt0_mvVtx;   //!
-   TBranch        *b_photrail_Pho_Cone02NeutralHadronIso_dR0_dEta0_pt0_mvVtx;   //!
-   TBranch        *b_photrail_Pho_Cone03NeutralHadronIso_dR0_dEta0_pt0_mvVtx;   //!
-   TBranch        *b_photrail_Pho_Cone04NeutralHadronIso_dR0_dEta0_pt0_mvVtx;   //!
-   TBranch        *b_photrail_Pho_Cone04ChargedHadronIso_dR0_dEta0_pt0_dz0_old;   //!
-   TBranch        *b_photrail_Pho_Cone04ChargedHadronIso_dR0_dEta0_pt0_PFnoPU_old;   //!
-   TBranch        *b_photrail_Pho_Cone04ChargedHadronIso_dR015_dEta0_pt0_dz0_old;   //!
-   TBranch        *b_photrail_Pho_Cone04ChargedHadronIso_dR015_dEta0_pt0_PFnoPU_old;   //!
-   TBranch        *b_photrail_Pho_Cone01ChargedHadronIso_dR0_dEta0_pt0_dz0;   //!
-   TBranch        *b_photrail_Pho_Cone01ChargedHadronIso_dR0_dEta0_pt0_dz1_dxy01;   //!
-   TBranch        *b_photrail_Pho_Cone01ChargedHadronIso_dR0_dEta0_pt0_PFnoPU;   //!
-   TBranch        *b_photrail_Pho_Cone01ChargedHadronIso_dR015_dEta0_pt0_dz0;   //!
-   TBranch        *b_photrail_Pho_Cone01ChargedHadronIso_dR015_dEta0_pt0_dz1_dxy01;   //!
-   TBranch        *b_photrail_Pho_Cone01ChargedHadronIso_dR015_dEta0_pt0_PFnoPU;   //!
-   TBranch        *b_photrail_Pho_Cone02ChargedHadronIso_dR0_dEta0_pt0_dz0;   //!
-   TBranch        *b_photrail_Pho_Cone02ChargedHadronIso_dR0_dEta0_pt0_dz1_dxy01;   //!
-   TBranch        *b_photrail_Pho_Cone02ChargedHadronIso_dR0_dEta0_pt0_PFnoPU;   //!
-   TBranch        *b_photrail_Pho_Cone02ChargedHadronIso_dR015_dEta0_pt0_dz0;   //!
-   TBranch        *b_photrail_Pho_Cone02ChargedHadronIso_dR015_dEta0_pt0_dz1_dxy01;   //!
-   TBranch        *b_photrail_Pho_Cone02ChargedHadronIso_dR015_dEta0_pt0_PFnoPU;   //!
-   TBranch        *b_photrail_Pho_Cone03ChargedHadronIso_dR0_dEta0_pt0_dz0;   //!
-   TBranch        *b_photrail_Pho_Cone03ChargedHadronIso_dR0_dEta0_pt0_dz1_dxy01;   //!
-   TBranch        *b_photrail_Pho_Cone03ChargedHadronIso_dR0_dEta0_pt0_PFnoPU;   //!
-   TBranch        *b_photrail_Pho_Cone03ChargedHadronIso_dR015_dEta0_pt0_dz0;   //!
-   TBranch        *b_photrail_Pho_Cone03ChargedHadronIso_dR015_dEta0_pt0_dz1_dxy01;   //!
-   TBranch        *b_photrail_Pho_Cone03ChargedHadronIso_dR015_dEta0_pt0_PFnoPU;   //!
-   TBranch        *b_photrail_Pho_Cone04ChargedHadronIso_dR0_dEta0_pt0_dz0;   //!
-   TBranch        *b_photrail_Pho_Cone04ChargedHadronIso_dR0_dEta0_pt0_dz1_dxy01;   //!
-   TBranch        *b_photrail_Pho_Cone04ChargedHadronIso_dR0_dEta0_pt0_PFnoPU;   //!
-   TBranch        *b_photrail_Pho_Cone04ChargedHadronIso_dR015_dEta0_pt0_dz0;   //!
-   TBranch        *b_photrail_Pho_Cone04ChargedHadronIso_dR015_dEta0_pt0_dz1_dxy01;   //!
-   TBranch        *b_photrail_Pho_Cone04ChargedHadronIso_dR015_dEta0_pt0_PFnoPU;   //!
+   TBranch        *b_pholead_pho_Cone01PhotonIso_dEta015EB_dR070EE_mvVtx;   //!
+   TBranch        *b_photrail_pho_Cone01PhotonIso_dEta015EB_dR070EE_mvVtx;   //!
+   TBranch        *b_pholead_pho_Cone02PhotonIso_dEta015EB_dR070EE_mvVtx;   //!
+   TBranch        *b_photrail_pho_Cone02PhotonIso_dEta015EB_dR070EE_mvVtx;   //!
+   TBranch        *b_pholead_pho_Cone03PhotonIso_dEta015EB_dR070EE_mvVtx;   //!
+   TBranch        *b_photrail_pho_Cone03PhotonIso_dEta015EB_dR070EE_mvVtx;   //!
+   TBranch        *b_pholead_pho_Cone04PhotonIso_dEta015EB_dR070EE_mvVtx;   //!
+   TBranch        *b_photrail_pho_Cone04PhotonIso_dEta015EB_dR070EE_mvVtx;   //!
+   TBranch        *b_pholead_pho_Cone01NeutralHadronIso_mvVtx;   //!
+   TBranch        *b_photrail_pho_Cone01NeutralHadronIso_mvVtx;   //!
+   TBranch        *b_pholead_pho_Cone02NeutralHadronIso_mvVtx;   //!
+   TBranch        *b_photrail_pho_Cone02NeutralHadronIso_mvVtx;   //!
+   TBranch        *b_pholead_pho_Cone03NeutralHadronIso_mvVtx;   //!
+   TBranch        *b_photrail_pho_Cone03NeutralHadronIso_mvVtx;   //!
+   TBranch        *b_pholead_pho_Cone04NeutralHadronIso_mvVtx;   //!
+   TBranch        *b_photrail_pho_Cone04NeutralHadronIso_mvVtx;   //!
+   TBranch        *b_pholead_pho_Cone01ChargedHadronIso_dR02_dz02_dxy01;   //!
+   TBranch        *b_photrail_pho_Cone01ChargedHadronIso_dR02_dz02_dxy01;   //!
+   TBranch        *b_pholead_pho_Cone02ChargedHadronIso_dR02_dz02_dxy01;   //!
+   TBranch        *b_photrail_pho_Cone02ChargedHadronIso_dR02_dz02_dxy01;   //!
+   TBranch        *b_pholead_pho_Cone03ChargedHadronIso_dR02_dz02_dxy01;   //!
+   TBranch        *b_photrail_pho_Cone03ChargedHadronIso_dR02_dz02_dxy01;   //!
+   TBranch        *b_pholead_pho_Cone04ChargedHadronIso_dR02_dz02_dxy01;   //!
+   TBranch        *b_photrail_pho_Cone04ChargedHadronIso_dR02_dz02_dxy01;   //!
+   TBranch        *b_pholead_pho_Cone03PFCombinedIso;   //!
+   TBranch        *b_photrail_pho_Cone03PFCombinedIso;   //!
+   TBranch        *b_pholead_pho_Cone04PFCombinedIso;   //!
+   TBranch        *b_photrail_pho_Cone04PFCombinedIso;   //!
+   TBranch        *b_pholead_PhoPassConvSafeElectronVeto;   //!
+   TBranch        *b_photrail_PhoPassConvSafeElectronVeto;   //!
+   TBranch        *b_pholead_GenPhotonIsoDR04;   //!
+   TBranch        *b_photrail_GenPhotonIsoDR04;   //!
    TBranch        *b_pholead_PhoIso03Ecal;   //!
    TBranch        *b_pholead_PhoIso03Hcal;   //!
    TBranch        *b_pholead_PhoIso03TrkSolid;   //!
@@ -455,10 +339,9 @@ public :
    virtual Bool_t   Notify();
    virtual void     Show(Long64_t entry = -1);
 
-   void     WriteOutput(const char* filename, const bool isdata, const TString dirname);
-   void     ShowHistogram(int i, int j, int k, int l, int m);
+   void     WriteOutput(const char* filename, const TString dirname);
 
-   void Setup(TString _varname, Float_t _leftrange, Float_t _rightrange, Int_t _nbins, Bool_t _isdata, Bool_t _dopucorr, Bool_t _dosignal);
+   void Setup(Bool_t _isdata, TString _mode);
 
    TProfile** GetPUScaling(bool doEB);
 
@@ -468,46 +351,33 @@ public :
 
    bool dosignal;
 
-   RooRealVar *roovar[2][3][2];
-   RooDataHist *roohist[3][2][3][n_templates][2];
-   TH1F *templatehist[3][2][n_templates];
-   RooDataSet *roodset[4][n_templates][2];
-   RooDataSet *roodset_single[2][n_templates];
-
    TH1F *template_signal[2][n_templates+1];
    TH1F *template_background[2][n_templates+1];
 
    TH1F *obs_hist_single[2][n_templates];
    TH2F *obs_hist[3][n_templates];
 
-   TH2F *template_sigsig[3][n_templates];
 
-   TBranch *b_pholead_outvar;
    Float_t pholead_outvar;
-
-   TBranch *b_photrail_outvar;
    Float_t photrail_outvar;
 
    Bool_t initialized;
 
    Bool_t isdata;
 
-   Bool_t doabsolute;
-   Bool_t dopucorr;
+   TString mode;
 
-   Float_t leftrange, rightrange;
-   Int_t nbins;
+   Int_t n_histobins;
+   Float_t leftrange;
+   Float_t rightrange;
 
-   TString varname;
-   TString sidebandoption;
-
-   TString get_roohist_name(TString varname, TString st, TString reg, TString count, int _binnumber,TString _ord);
-   TString get_roodset_name(TString varname, TString reg, int _binnumber, TString _ord);
-   TString get_roodset_name_single(TString _varname, TString _reg, int _binnumber);
-   TString get_roovar_name(TString _varname, int i, int j, TString _ord);
+   Bool_t dosignaltemplate;
+   Bool_t dobackgroundtemplate;
+   Bool_t dodistribution;
 
    Int_t Choose_bin_invmass(float invmass, int region);
    Int_t Choose_bin_pt(float pt, int region);
+   Int_t Choose_bin_eta(float eta, int region);
 
 };
 
@@ -536,46 +406,27 @@ template_production::template_production(TTree *tree)
    fChain = tree;
 
    initialized=false;
+   dosignaltemplate=false;
+   dobackgroundtemplate=false;
+   dodistribution=false;
+
+   n_histobins = 400;
+   leftrange = 0.0;
+   rightrange = 5.0;
 
 }
 
-void template_production::Setup(TString _varname, Float_t _leftrange, Float_t _rightrange, Int_t _nbins, Bool_t _isdata, Bool_t _dopucorr, Bool_t _dosignal){
+void template_production::Setup(Bool_t _isdata, TString _mode){
 
 
-  varname=_varname;
-  leftrange=_leftrange;
-  rightrange=_rightrange;
-  nbins=_nbins;
   isdata=_isdata;
-  dosignal=_dosignal;
-
-  doabsolute=false;
-  if (varname=="PhoIso04"){
-     std::cout << "Building templates for absolute isolation" << std::endl;
-     doabsolute=true;
-  }
-
-  dopucorr=_dopucorr;
-  if (varname!="PhoIso04") {
-    dopucorr=false;
-    std::cout << "WARNING: NOT applying PU correction for this unknown variable" << std::endl;
-  }
-  if (dopucorr) std::cout << "Applying PU correction" << std::endl;
-
+  mode=_mode;
 
   Init();
 
-//  // roovar[EB,EE][1,2,both][noorder,order]
-//  for (int i=0; i<2; i++) for (int j=0; j<3; j++) for (int k=0; k<2; k++) {
-//	TString t=varname;
-//	if (i==0) t.Append("_EB"); else t.Append("_EE");
-//	if (j==0) t.Append("_1"); else if (j==1) t.Append("_2"); else t.Append("_both");
-//	if (k==0) t.Append("_noorder"); else t.Append("_order");
-//	roovar[i][j][k] = new RooRealVar(t.Data(),t.Data(),leftrange,rightrange);
-//	roovar[i][j][k]->setBinning(RooBinning(nbins,leftrange,rightrange));
-//	std::cout << t.Data() << std::endl;
-//      }
-
+  if (mode=="standard") dodistribution=true;
+  if (mode=="signal" || mode=="randomcone") dosignaltemplate=true;
+  if (mode=="background") dobackgroundtemplate=true;
    
   randomgen = new TRandom3(0);
   
@@ -586,7 +437,7 @@ void template_production::Setup(TString _varname, Float_t _leftrange, Float_t _r
       TString reg;
       if (i==0) reg="EB"; else if (i==1) reg="EE";
       TString t=Form("%s_%s_b%d",name_signal.Data(),reg.Data(),j);
-      template_signal[i][j] = new TH1F(t.Data(),t.Data(),nbins,leftrange,rightrange);
+      template_signal[i][j] = new TH1F(t.Data(),t.Data(),n_histobins,leftrange,rightrange);
       template_signal[i][j]->Sumw2();
     }
   for (int i=0; i<2; i++)
@@ -595,7 +446,7 @@ void template_production::Setup(TString _varname, Float_t _leftrange, Float_t _r
       TString reg;
       if (i==0) reg="EB"; else if (i==1) reg="EE";
       TString t=Form("%s_%s_b%d",name_background.Data(),reg.Data(),j);
-      template_background[i][j] = new TH1F(t.Data(),t.Data(),nbins,leftrange,rightrange);
+      template_background[i][j] = new TH1F(t.Data(),t.Data(),n_histobins,leftrange,rightrange);
       template_background[i][j]->Sumw2();
     }
       
@@ -608,7 +459,7 @@ void template_production::Setup(TString _varname, Float_t _leftrange, Float_t _r
       TString reg;
       if (i==0) reg="EB"; else if (i==1) reg="EE";
       TString t=Form("%s_%s_b%d",name_signal.Data(),reg.Data(),j);
-      obs_hist_single[i][j] = new TH1F(t.Data(),t.Data(),nbins,leftrange,rightrange);
+      obs_hist_single[i][j] = new TH1F(t.Data(),t.Data(),n_histobins,leftrange,rightrange);
       obs_hist_single[i][j]->Sumw2();
     }
   for (int i=0; i<3; i++)
@@ -617,79 +468,12 @@ void template_production::Setup(TString _varname, Float_t _leftrange, Float_t _r
       TString reg;
       if (i==0) reg="EBEB"; else if (i==1) reg="EBEE"; else if (i==2) reg="EEEE"; else if (i==3) reg="EEEB";
       TString t=Form("%s_%s_b%d",name_signal.Data(),reg.Data(),j);
-      TString t2=Form("%s_%s_b%d","template_sigsig",reg.Data(),j);
-      obs_hist[i][j] = new TH2F(t.Data(),t.Data(),nbins,leftrange,rightrange,nbins,leftrange,rightrange);
+      obs_hist[i][j] = new TH2F(t.Data(),t.Data(),n_histobins,leftrange,rightrange,n_histobins,leftrange,rightrange);
       obs_hist[i][j]->Sumw2();
-      template_sigsig[i][j] = new TH2F(t2.Data(),t2.Data(),nbins,leftrange,rightrange,nbins,leftrange,rightrange);
-      template_sigsig[i][j]->Sumw2();
     }
 
 
   
-//  // roohist[sig,bkg,all][EB,EE][1,2,both][n_templates][noorder,order]
-//  for (int i=0; i<3; i++) {
-//    for (int j=0; j<2; j++) {
-//      for (int k=0; k<3; k++) {
-//	for (int l=0; l<n_templates; l++){
-//	  for (int m=0; m<2; m++){
-//	    TString st;
-//	    if (i==0) st="sig"; else if (i==1) st="bkg"; else if (i==2) st="all";
-//	    TString reg;
-//	    if (j==0) reg="EB"; else if (j==1) reg="EE";
-//	    TString count;
-//	    if (k==0) count="1"; else if (k==1) count="2"; else count="both";
-//	    TString ord;
-//	    if (m==0) ord="noorder"; else ord="order";
-//	    TString t=Form("roohist_%s_%s_%s_%s_b%d_%s",varname.Data(),st.Data(),reg.Data(),count.Data(),l,ord.Data());
-//	    std::cout << t.Data() << " " << roovar[j][k][m]->getTitle().Data() << std::endl;
-//	    roohist[i][j][k][l][m] = new RooDataHist(t.Data(),t.Data(),RooArgSet(*(roovar[j][k][m])));
-//	  }
-//	}
-//      }
-//    }
-//  }
-//  
-//  // templatehist[sig,bkg,all][EB,EE][n_templates]
-//  for (int i=0; i<3; i++) {
-//    for (int j=0;j<2;j++) {
-//      for (int l=0; l<n_templates; l++){
-//	TString st;
-//	if (i==0) st="sig"; else if (i==1) st="bkg"; else if (i==2) st="all";
-//	TString reg;
-//	if (j==0) reg="EB"; else if (j==1) reg="EE";
-//	TString t=Form("templatehist_%s_%s_%s_b%d",varname.Data(),st.Data(),reg.Data(),l);
-//	templatehist[i][j][l] = new TH1F(t.Data(),t.Data(),nbins,leftrange,rightrange);
-//      }
-//    }
-//  }
-//  
-//  
-//  // roodataset[EBEB,EBEE,EEEE,EEEB][n_templates][noorder,order]
-//  for (int i=0; i<4; i++){
-//    for (int l=0; l<n_templates; l++){
-//      for (int m=0; m<2; m++){
-//	TString reg;
-//	if (i==0) reg="EBEB"; else if (i==1) reg="EBEE"; else if (i==2) reg="EEEE"; else if (i==3) reg="EEEB";
-//	TString ord;
-//	if (m==0) ord="noorder"; else ord="order";
-//	TString t=Form("roodataset_%s_%s_b%d_%s",varname.Data(),reg.Data(),l,ord.Data());
-//	RooArgSet vars;
-//	if (i==0) { vars.add(*(roovar[0][0][m])); vars.add(*(roovar[0][1][m])); }
-//	if (i==2) { vars.add(*(roovar[1][0][m])); vars.add(*(roovar[1][1][m])); }
-//	if (i==1) { vars.add(*(roovar[0][0][m])); vars.add(*(roovar[1][1][m])); }
-//	if (i==3) { vars.add(*(roovar[1][0][m])); vars.add(*(roovar[0][1][m])); }
-//	roodset[i][l][m] = new RooDataSet(t.Data(),t.Data(),vars);
-//      }
-//    }
-//  }
-//  
-//  // roodataset_single[EB,EE][bin]
-//  for (int i=0; i<2; i++) for (int j=0; j<n_templates; j++) {
-//      TString reg; if (i==0) reg="EB"; else reg="EE";
-//      TString t=Form("roodataset_single_%s_%s_b%d",varname.Data(),reg.Data(),j);
-//      roodset_single[i][j] = new RooDataSet(t.Data(),t.Data(),RooArgList(*roovar[i][2][0]));
-//    }
-
   initialized=true;
   
 };
@@ -700,11 +484,6 @@ template_production::~template_production()
    delete fChain->GetCurrentFile();
    delete randomgen;
 
-//   for (int m=0; m<2; m++) for (int j=0;j<2;j++) for (int k=0;k<3;k++) delete roovar[j][k][m];
-//   for (int m=0; m<2; m++) for (int l=0; l<n_templates; l++) for (int i=0; i<3; i++) for (int j=0;j<2;j++) for (int k=0;k<3;k++) delete roohist[i][j][k][l][m];
-//   for (int l=0; l<n_templates; l++) for (int i=0; i<3; i++) for (int j=0;j<2;j++) delete templatehist[i][j][l];
-//   for (int m=0; m<2; m++) for (int l=0; l<n_templates; l++) for (int i=0; i<4; i++) delete roodset[i][l][m];
-//   for (int l=0; l<n_templates; l++) for (int i=0; i<2; i++) delete roodset_single[i][l];
 
 }
 
@@ -792,96 +571,38 @@ void template_production::Init()
    fChain->SetBranchAddress("photrail_sigmaPhi", &photrail_sigmaPhi, &b_photrail_sigmaPhi);
    fChain->SetBranchAddress("pholead_sigmaEta", &pholead_sigmaEta, &b_pholead_sigmaEta);
    fChain->SetBranchAddress("photrail_sigmaEta", &photrail_sigmaEta, &b_photrail_sigmaEta);
-   fChain->SetBranchAddress("pholead_Pho_Cone04PhotonIso_dR0_dEta0_pt5", &pholead_Pho_Cone04PhotonIso_dR0_dEta0_pt5, &b_pholead_Pho_Cone04PhotonIso_dR0_dEta0_pt5);
-   fChain->SetBranchAddress("pholead_Pho_Cone04PhotonIso_dR8_dEta0_pt0", &pholead_Pho_Cone04PhotonIso_dR8_dEta0_pt0, &b_pholead_Pho_Cone04PhotonIso_dR8_dEta0_pt0);
-   fChain->SetBranchAddress("pholead_Pho_Cone04PhotonIso_dR8_dEta0_pt5", &pholead_Pho_Cone04PhotonIso_dR8_dEta0_pt5, &b_pholead_Pho_Cone04PhotonIso_dR8_dEta0_pt5);
-   fChain->SetBranchAddress("pholead_Pho_Cone01PhotonIso_dR045EB070EE_dEta015_pt08EB1EE_mvVtx", &pholead_Pho_Cone01PhotonIso_dR045EB070EE_dEta015_pt08EB1EE_mvVtx, &b_pholead_Pho_Cone01PhotonIso_dR045EB070EE_dEta015_pt08EB1EE_mvVtx);
-   fChain->SetBranchAddress("pholead_Pho_Cone02PhotonIso_dR045EB070EE_dEta015_pt08EB1EE_mvVtx", &pholead_Pho_Cone02PhotonIso_dR045EB070EE_dEta015_pt08EB1EE_mvVtx, &b_pholead_Pho_Cone02PhotonIso_dR045EB070EE_dEta015_pt08EB1EE_mvVtx);
-   fChain->SetBranchAddress("pholead_Pho_Cone03PhotonIso_dR045EB070EE_dEta015_pt08EB1EE_mvVtx", &pholead_Pho_Cone03PhotonIso_dR045EB070EE_dEta015_pt08EB1EE_mvVtx, &b_pholead_Pho_Cone03PhotonIso_dR045EB070EE_dEta015_pt08EB1EE_mvVtx);
-   fChain->SetBranchAddress("pholead_Pho_Cone04PhotonIso_dR045EB070EE_dEta015_pt08EB1EE_mvVtx", &pholead_Pho_Cone04PhotonIso_dR045EB070EE_dEta015_pt08EB1EE_mvVtx, &b_pholead_Pho_Cone04PhotonIso_dR045EB070EE_dEta015_pt08EB1EE_mvVtx);
-   fChain->SetBranchAddress("pholead_Pho_Cone04NeutralHadronIso_dR0_dEta0_pt0", &pholead_Pho_Cone04NeutralHadronIso_dR0_dEta0_pt0, &b_pholead_Pho_Cone04NeutralHadronIso_dR0_dEta0_pt0);
-   fChain->SetBranchAddress("pholead_Pho_Cone04NeutralHadronIso_dR0_dEta0_pt5", &pholead_Pho_Cone04NeutralHadronIso_dR0_dEta0_pt5, &b_pholead_Pho_Cone04NeutralHadronIso_dR0_dEta0_pt5);
-   fChain->SetBranchAddress("pholead_Pho_Cone04NeutralHadronIso_dR0_dEta0_pt0_nocracks", &pholead_Pho_Cone04NeutralHadronIso_dR0_dEta0_pt0_nocracks, &b_pholead_Pho_Cone04NeutralHadronIso_dR0_dEta0_pt0_nocracks);
-   fChain->SetBranchAddress("pholead_Pho_Cone04NeutralHadronIso_dR0_dEta0_pt5_nocracks", &pholead_Pho_Cone04NeutralHadronIso_dR0_dEta0_pt5_nocracks, &b_pholead_Pho_Cone04NeutralHadronIso_dR0_dEta0_pt5_nocracks);
-   fChain->SetBranchAddress("pholead_Pho_Cone04NeutralHadronIso_dR7_dEta0_pt0", &pholead_Pho_Cone04NeutralHadronIso_dR7_dEta0_pt0, &b_pholead_Pho_Cone04NeutralHadronIso_dR7_dEta0_pt0);
-   fChain->SetBranchAddress("pholead_Pho_Cone04NeutralHadronIso_dR7_dEta0_pt5", &pholead_Pho_Cone04NeutralHadronIso_dR7_dEta0_pt5, &b_pholead_Pho_Cone04NeutralHadronIso_dR7_dEta0_pt5);
-   fChain->SetBranchAddress("pholead_Pho_Cone01NeutralHadronIso_dR0_dEta0_pt0_mvVtx", &pholead_Pho_Cone01NeutralHadronIso_dR0_dEta0_pt0_mvVtx, &b_pholead_Pho_Cone01NeutralHadronIso_dR0_dEta0_pt0_mvVtx);
-   fChain->SetBranchAddress("pholead_Pho_Cone02NeutralHadronIso_dR0_dEta0_pt0_mvVtx", &pholead_Pho_Cone02NeutralHadronIso_dR0_dEta0_pt0_mvVtx, &b_pholead_Pho_Cone02NeutralHadronIso_dR0_dEta0_pt0_mvVtx);
-   fChain->SetBranchAddress("pholead_Pho_Cone03NeutralHadronIso_dR0_dEta0_pt0_mvVtx", &pholead_Pho_Cone03NeutralHadronIso_dR0_dEta0_pt0_mvVtx, &b_pholead_Pho_Cone03NeutralHadronIso_dR0_dEta0_pt0_mvVtx);
-   fChain->SetBranchAddress("pholead_Pho_Cone04NeutralHadronIso_dR0_dEta0_pt0_mvVtx", &pholead_Pho_Cone04NeutralHadronIso_dR0_dEta0_pt0_mvVtx, &b_pholead_Pho_Cone04NeutralHadronIso_dR0_dEta0_pt0_mvVtx);
-   fChain->SetBranchAddress("pholead_Pho_Cone04ChargedHadronIso_dR0_dEta0_pt0_dz0_old", &pholead_Pho_Cone04ChargedHadronIso_dR0_dEta0_pt0_dz0_old, &b_pholead_Pho_Cone04ChargedHadronIso_dR0_dEta0_pt0_dz0_old);
-   fChain->SetBranchAddress("pholead_Pho_Cone04ChargedHadronIso_dR0_dEta0_pt0_PFnoPU_old", &pholead_Pho_Cone04ChargedHadronIso_dR0_dEta0_pt0_PFnoPU_old, &b_pholead_Pho_Cone04ChargedHadronIso_dR0_dEta0_pt0_PFnoPU_old);
-   fChain->SetBranchAddress("pholead_Pho_Cone04ChargedHadronIso_dR015_dEta0_pt0_dz0_old", &pholead_Pho_Cone04ChargedHadronIso_dR015_dEta0_pt0_dz0_old, &b_pholead_Pho_Cone04ChargedHadronIso_dR015_dEta0_pt0_dz0_old);
-   fChain->SetBranchAddress("pholead_Pho_Cone04ChargedHadronIso_dR015_dEta0_pt0_PFnoPU_old", &pholead_Pho_Cone04ChargedHadronIso_dR015_dEta0_pt0_PFnoPU_old, &b_pholead_Pho_Cone04ChargedHadronIso_dR015_dEta0_pt0_PFnoPU_old);
-   fChain->SetBranchAddress("pholead_Pho_Cone01ChargedHadronIso_dR0_dEta0_pt0_dz0", &pholead_Pho_Cone01ChargedHadronIso_dR0_dEta0_pt0_dz0, &b_pholead_Pho_Cone01ChargedHadronIso_dR0_dEta0_pt0_dz0);
-   fChain->SetBranchAddress("pholead_Pho_Cone01ChargedHadronIso_dR0_dEta0_pt0_dz1_dxy01", &pholead_Pho_Cone01ChargedHadronIso_dR0_dEta0_pt0_dz1_dxy01, &b_pholead_Pho_Cone01ChargedHadronIso_dR0_dEta0_pt0_dz1_dxy01);
-   fChain->SetBranchAddress("pholead_Pho_Cone01ChargedHadronIso_dR0_dEta0_pt0_PFnoPU", &pholead_Pho_Cone01ChargedHadronIso_dR0_dEta0_pt0_PFnoPU, &b_pholead_Pho_Cone01ChargedHadronIso_dR0_dEta0_pt0_PFnoPU);
-   fChain->SetBranchAddress("pholead_Pho_Cone01ChargedHadronIso_dR015_dEta0_pt0_dz0", &pholead_Pho_Cone01ChargedHadronIso_dR015_dEta0_pt0_dz0, &b_pholead_Pho_Cone01ChargedHadronIso_dR015_dEta0_pt0_dz0);
-   fChain->SetBranchAddress("pholead_Pho_Cone01ChargedHadronIso_dR015_dEta0_pt0_dz1_dxy01", &pholead_Pho_Cone01ChargedHadronIso_dR015_dEta0_pt0_dz1_dxy01, &b_pholead_Pho_Cone01ChargedHadronIso_dR015_dEta0_pt0_dz1_dxy01);
-   fChain->SetBranchAddress("pholead_Pho_Cone01ChargedHadronIso_dR015_dEta0_pt0_PFnoPU", &pholead_Pho_Cone01ChargedHadronIso_dR015_dEta0_pt0_PFnoPU, &b_pholead_Pho_Cone01ChargedHadronIso_dR015_dEta0_pt0_PFnoPU);
-   fChain->SetBranchAddress("pholead_Pho_Cone02ChargedHadronIso_dR0_dEta0_pt0_dz0", &pholead_Pho_Cone02ChargedHadronIso_dR0_dEta0_pt0_dz0, &b_pholead_Pho_Cone02ChargedHadronIso_dR0_dEta0_pt0_dz0);
-   fChain->SetBranchAddress("pholead_Pho_Cone02ChargedHadronIso_dR0_dEta0_pt0_dz1_dxy01", &pholead_Pho_Cone02ChargedHadronIso_dR0_dEta0_pt0_dz1_dxy01, &b_pholead_Pho_Cone02ChargedHadronIso_dR0_dEta0_pt0_dz1_dxy01);
-   fChain->SetBranchAddress("pholead_Pho_Cone02ChargedHadronIso_dR0_dEta0_pt0_PFnoPU", &pholead_Pho_Cone02ChargedHadronIso_dR0_dEta0_pt0_PFnoPU, &b_pholead_Pho_Cone02ChargedHadronIso_dR0_dEta0_pt0_PFnoPU);
-   fChain->SetBranchAddress("pholead_Pho_Cone02ChargedHadronIso_dR015_dEta0_pt0_dz0", &pholead_Pho_Cone02ChargedHadronIso_dR015_dEta0_pt0_dz0, &b_pholead_Pho_Cone02ChargedHadronIso_dR015_dEta0_pt0_dz0);
-   fChain->SetBranchAddress("pholead_Pho_Cone02ChargedHadronIso_dR015_dEta0_pt0_dz1_dxy01", &pholead_Pho_Cone02ChargedHadronIso_dR015_dEta0_pt0_dz1_dxy01, &b_pholead_Pho_Cone02ChargedHadronIso_dR015_dEta0_pt0_dz1_dxy01);
-   fChain->SetBranchAddress("pholead_Pho_Cone02ChargedHadronIso_dR015_dEta0_pt0_PFnoPU", &pholead_Pho_Cone02ChargedHadronIso_dR015_dEta0_pt0_PFnoPU, &b_pholead_Pho_Cone02ChargedHadronIso_dR015_dEta0_pt0_PFnoPU);
-   fChain->SetBranchAddress("pholead_Pho_Cone03ChargedHadronIso_dR0_dEta0_pt0_dz0", &pholead_Pho_Cone03ChargedHadronIso_dR0_dEta0_pt0_dz0, &b_pholead_Pho_Cone03ChargedHadronIso_dR0_dEta0_pt0_dz0);
-   fChain->SetBranchAddress("pholead_Pho_Cone03ChargedHadronIso_dR0_dEta0_pt0_dz1_dxy01", &pholead_Pho_Cone03ChargedHadronIso_dR0_dEta0_pt0_dz1_dxy01, &b_pholead_Pho_Cone03ChargedHadronIso_dR0_dEta0_pt0_dz1_dxy01);
-   fChain->SetBranchAddress("pholead_Pho_Cone03ChargedHadronIso_dR0_dEta0_pt0_PFnoPU", &pholead_Pho_Cone03ChargedHadronIso_dR0_dEta0_pt0_PFnoPU, &b_pholead_Pho_Cone03ChargedHadronIso_dR0_dEta0_pt0_PFnoPU);
-   fChain->SetBranchAddress("pholead_Pho_Cone03ChargedHadronIso_dR015_dEta0_pt0_dz0", &pholead_Pho_Cone03ChargedHadronIso_dR015_dEta0_pt0_dz0, &b_pholead_Pho_Cone03ChargedHadronIso_dR015_dEta0_pt0_dz0);
-   fChain->SetBranchAddress("pholead_Pho_Cone03ChargedHadronIso_dR015_dEta0_pt0_dz1_dxy01", &pholead_Pho_Cone03ChargedHadronIso_dR015_dEta0_pt0_dz1_dxy01, &b_pholead_Pho_Cone03ChargedHadronIso_dR015_dEta0_pt0_dz1_dxy01);
-   fChain->SetBranchAddress("pholead_Pho_Cone03ChargedHadronIso_dR015_dEta0_pt0_PFnoPU", &pholead_Pho_Cone03ChargedHadronIso_dR015_dEta0_pt0_PFnoPU, &b_pholead_Pho_Cone03ChargedHadronIso_dR015_dEta0_pt0_PFnoPU);
-   fChain->SetBranchAddress("pholead_Pho_Cone04ChargedHadronIso_dR0_dEta0_pt0_dz0", &pholead_Pho_Cone04ChargedHadronIso_dR0_dEta0_pt0_dz0, &b_pholead_Pho_Cone04ChargedHadronIso_dR0_dEta0_pt0_dz0);
-   fChain->SetBranchAddress("pholead_Pho_Cone04ChargedHadronIso_dR0_dEta0_pt0_dz1_dxy01", &pholead_Pho_Cone04ChargedHadronIso_dR0_dEta0_pt0_dz1_dxy01, &b_pholead_Pho_Cone04ChargedHadronIso_dR0_dEta0_pt0_dz1_dxy01);
-   fChain->SetBranchAddress("pholead_Pho_Cone04ChargedHadronIso_dR0_dEta0_pt0_PFnoPU", &pholead_Pho_Cone04ChargedHadronIso_dR0_dEta0_pt0_PFnoPU, &b_pholead_Pho_Cone04ChargedHadronIso_dR0_dEta0_pt0_PFnoPU);
-   fChain->SetBranchAddress("pholead_Pho_Cone04ChargedHadronIso_dR015_dEta0_pt0_dz0", &pholead_Pho_Cone04ChargedHadronIso_dR015_dEta0_pt0_dz0, &b_pholead_Pho_Cone04ChargedHadronIso_dR015_dEta0_pt0_dz0);
-   fChain->SetBranchAddress("pholead_Pho_Cone04ChargedHadronIso_dR015_dEta0_pt0_dz1_dxy01", &pholead_Pho_Cone04ChargedHadronIso_dR015_dEta0_pt0_dz1_dxy01, &b_pholead_Pho_Cone04ChargedHadronIso_dR015_dEta0_pt0_dz1_dxy01);
-   fChain->SetBranchAddress("pholead_Pho_Cone04ChargedHadronIso_dR015_dEta0_pt0_PFnoPU", &pholead_Pho_Cone04ChargedHadronIso_dR015_dEta0_pt0_PFnoPU, &b_pholead_Pho_Cone04ChargedHadronIso_dR015_dEta0_pt0_PFnoPU);
-   fChain->SetBranchAddress("photrail_Pho_Cone04PhotonIso_dR0_dEta0_pt5", &photrail_Pho_Cone04PhotonIso_dR0_dEta0_pt5, &b_photrail_Pho_Cone04PhotonIso_dR0_dEta0_pt5);
-   fChain->SetBranchAddress("photrail_Pho_Cone04PhotonIso_dR8_dEta0_pt0", &photrail_Pho_Cone04PhotonIso_dR8_dEta0_pt0, &b_photrail_Pho_Cone04PhotonIso_dR8_dEta0_pt0);
-   fChain->SetBranchAddress("photrail_Pho_Cone04PhotonIso_dR8_dEta0_pt5", &photrail_Pho_Cone04PhotonIso_dR8_dEta0_pt5, &b_photrail_Pho_Cone04PhotonIso_dR8_dEta0_pt5);
-   fChain->SetBranchAddress("photrail_Pho_Cone01PhotonIso_dR045EB070EE_dEta015_pt08EB1EE_mvVtx", &photrail_Pho_Cone01PhotonIso_dR045EB070EE_dEta015_pt08EB1EE_mvVtx, &b_photrail_Pho_Cone01PhotonIso_dR045EB070EE_dEta015_pt08EB1EE_mvVtx);
-   fChain->SetBranchAddress("photrail_Pho_Cone02PhotonIso_dR045EB070EE_dEta015_pt08EB1EE_mvVtx", &photrail_Pho_Cone02PhotonIso_dR045EB070EE_dEta015_pt08EB1EE_mvVtx, &b_photrail_Pho_Cone02PhotonIso_dR045EB070EE_dEta015_pt08EB1EE_mvVtx);
-   fChain->SetBranchAddress("photrail_Pho_Cone03PhotonIso_dR045EB070EE_dEta015_pt08EB1EE_mvVtx", &photrail_Pho_Cone03PhotonIso_dR045EB070EE_dEta015_pt08EB1EE_mvVtx, &b_photrail_Pho_Cone03PhotonIso_dR045EB070EE_dEta015_pt08EB1EE_mvVtx);
-   fChain->SetBranchAddress("photrail_Pho_Cone04PhotonIso_dR045EB070EE_dEta015_pt08EB1EE_mvVtx", &photrail_Pho_Cone04PhotonIso_dR045EB070EE_dEta015_pt08EB1EE_mvVtx, &b_photrail_Pho_Cone04PhotonIso_dR045EB070EE_dEta015_pt08EB1EE_mvVtx);
-   fChain->SetBranchAddress("photrail_Pho_Cone04NeutralHadronIso_dR0_dEta0_pt0", &photrail_Pho_Cone04NeutralHadronIso_dR0_dEta0_pt0, &b_photrail_Pho_Cone04NeutralHadronIso_dR0_dEta0_pt0);
-   fChain->SetBranchAddress("photrail_Pho_Cone04NeutralHadronIso_dR0_dEta0_pt5", &photrail_Pho_Cone04NeutralHadronIso_dR0_dEta0_pt5, &b_photrail_Pho_Cone04NeutralHadronIso_dR0_dEta0_pt5);
-   fChain->SetBranchAddress("photrail_Pho_Cone04NeutralHadronIso_dR0_dEta0_pt0_nocracks", &photrail_Pho_Cone04NeutralHadronIso_dR0_dEta0_pt0_nocracks, &b_photrail_Pho_Cone04NeutralHadronIso_dR0_dEta0_pt0_nocracks);
-   fChain->SetBranchAddress("photrail_Pho_Cone04NeutralHadronIso_dR0_dEta0_pt5_nocracks", &photrail_Pho_Cone04NeutralHadronIso_dR0_dEta0_pt5_nocracks, &b_photrail_Pho_Cone04NeutralHadronIso_dR0_dEta0_pt5_nocracks);
-   fChain->SetBranchAddress("photrail_Pho_Cone04NeutralHadronIso_dR7_dEta0_pt0", &photrail_Pho_Cone04NeutralHadronIso_dR7_dEta0_pt0, &b_photrail_Pho_Cone04NeutralHadronIso_dR7_dEta0_pt0);
-   fChain->SetBranchAddress("photrail_Pho_Cone04NeutralHadronIso_dR7_dEta0_pt5", &photrail_Pho_Cone04NeutralHadronIso_dR7_dEta0_pt5, &b_photrail_Pho_Cone04NeutralHadronIso_dR7_dEta0_pt5);
-   fChain->SetBranchAddress("photrail_Pho_Cone01NeutralHadronIso_dR0_dEta0_pt0_mvVtx", &photrail_Pho_Cone01NeutralHadronIso_dR0_dEta0_pt0_mvVtx, &b_photrail_Pho_Cone01NeutralHadronIso_dR0_dEta0_pt0_mvVtx);
-   fChain->SetBranchAddress("photrail_Pho_Cone02NeutralHadronIso_dR0_dEta0_pt0_mvVtx", &photrail_Pho_Cone02NeutralHadronIso_dR0_dEta0_pt0_mvVtx, &b_photrail_Pho_Cone02NeutralHadronIso_dR0_dEta0_pt0_mvVtx);
-   fChain->SetBranchAddress("photrail_Pho_Cone03NeutralHadronIso_dR0_dEta0_pt0_mvVtx", &photrail_Pho_Cone03NeutralHadronIso_dR0_dEta0_pt0_mvVtx, &b_photrail_Pho_Cone03NeutralHadronIso_dR0_dEta0_pt0_mvVtx);
-   fChain->SetBranchAddress("photrail_Pho_Cone04NeutralHadronIso_dR0_dEta0_pt0_mvVtx", &photrail_Pho_Cone04NeutralHadronIso_dR0_dEta0_pt0_mvVtx, &b_photrail_Pho_Cone04NeutralHadronIso_dR0_dEta0_pt0_mvVtx);
-   fChain->SetBranchAddress("photrail_Pho_Cone04ChargedHadronIso_dR0_dEta0_pt0_dz0_old", &photrail_Pho_Cone04ChargedHadronIso_dR0_dEta0_pt0_dz0_old, &b_photrail_Pho_Cone04ChargedHadronIso_dR0_dEta0_pt0_dz0_old);
-   fChain->SetBranchAddress("photrail_Pho_Cone04ChargedHadronIso_dR0_dEta0_pt0_PFnoPU_old", &photrail_Pho_Cone04ChargedHadronIso_dR0_dEta0_pt0_PFnoPU_old, &b_photrail_Pho_Cone04ChargedHadronIso_dR0_dEta0_pt0_PFnoPU_old);
-   fChain->SetBranchAddress("photrail_Pho_Cone04ChargedHadronIso_dR015_dEta0_pt0_dz0_old", &photrail_Pho_Cone04ChargedHadronIso_dR015_dEta0_pt0_dz0_old, &b_photrail_Pho_Cone04ChargedHadronIso_dR015_dEta0_pt0_dz0_old);
-   fChain->SetBranchAddress("photrail_Pho_Cone04ChargedHadronIso_dR015_dEta0_pt0_PFnoPU_old", &photrail_Pho_Cone04ChargedHadronIso_dR015_dEta0_pt0_PFnoPU_old, &b_photrail_Pho_Cone04ChargedHadronIso_dR015_dEta0_pt0_PFnoPU_old);
-   fChain->SetBranchAddress("photrail_Pho_Cone01ChargedHadronIso_dR0_dEta0_pt0_dz0", &photrail_Pho_Cone01ChargedHadronIso_dR0_dEta0_pt0_dz0, &b_photrail_Pho_Cone01ChargedHadronIso_dR0_dEta0_pt0_dz0);
-   fChain->SetBranchAddress("photrail_Pho_Cone01ChargedHadronIso_dR0_dEta0_pt0_dz1_dxy01", &photrail_Pho_Cone01ChargedHadronIso_dR0_dEta0_pt0_dz1_dxy01, &b_photrail_Pho_Cone01ChargedHadronIso_dR0_dEta0_pt0_dz1_dxy01);
-   fChain->SetBranchAddress("photrail_Pho_Cone01ChargedHadronIso_dR0_dEta0_pt0_PFnoPU", &photrail_Pho_Cone01ChargedHadronIso_dR0_dEta0_pt0_PFnoPU, &b_photrail_Pho_Cone01ChargedHadronIso_dR0_dEta0_pt0_PFnoPU);
-   fChain->SetBranchAddress("photrail_Pho_Cone01ChargedHadronIso_dR015_dEta0_pt0_dz0", &photrail_Pho_Cone01ChargedHadronIso_dR015_dEta0_pt0_dz0, &b_photrail_Pho_Cone01ChargedHadronIso_dR015_dEta0_pt0_dz0);
-   fChain->SetBranchAddress("photrail_Pho_Cone01ChargedHadronIso_dR015_dEta0_pt0_dz1_dxy01", &photrail_Pho_Cone01ChargedHadronIso_dR015_dEta0_pt0_dz1_dxy01, &b_photrail_Pho_Cone01ChargedHadronIso_dR015_dEta0_pt0_dz1_dxy01);
-   fChain->SetBranchAddress("photrail_Pho_Cone01ChargedHadronIso_dR015_dEta0_pt0_PFnoPU", &photrail_Pho_Cone01ChargedHadronIso_dR015_dEta0_pt0_PFnoPU, &b_photrail_Pho_Cone01ChargedHadronIso_dR015_dEta0_pt0_PFnoPU);
-   fChain->SetBranchAddress("photrail_Pho_Cone02ChargedHadronIso_dR0_dEta0_pt0_dz0", &photrail_Pho_Cone02ChargedHadronIso_dR0_dEta0_pt0_dz0, &b_photrail_Pho_Cone02ChargedHadronIso_dR0_dEta0_pt0_dz0);
-   fChain->SetBranchAddress("photrail_Pho_Cone02ChargedHadronIso_dR0_dEta0_pt0_dz1_dxy01", &photrail_Pho_Cone02ChargedHadronIso_dR0_dEta0_pt0_dz1_dxy01, &b_photrail_Pho_Cone02ChargedHadronIso_dR0_dEta0_pt0_dz1_dxy01);
-   fChain->SetBranchAddress("photrail_Pho_Cone02ChargedHadronIso_dR0_dEta0_pt0_PFnoPU", &photrail_Pho_Cone02ChargedHadronIso_dR0_dEta0_pt0_PFnoPU, &b_photrail_Pho_Cone02ChargedHadronIso_dR0_dEta0_pt0_PFnoPU);
-   fChain->SetBranchAddress("photrail_Pho_Cone02ChargedHadronIso_dR015_dEta0_pt0_dz0", &photrail_Pho_Cone02ChargedHadronIso_dR015_dEta0_pt0_dz0, &b_photrail_Pho_Cone02ChargedHadronIso_dR015_dEta0_pt0_dz0);
-   fChain->SetBranchAddress("photrail_Pho_Cone02ChargedHadronIso_dR015_dEta0_pt0_dz1_dxy01", &photrail_Pho_Cone02ChargedHadronIso_dR015_dEta0_pt0_dz1_dxy01, &b_photrail_Pho_Cone02ChargedHadronIso_dR015_dEta0_pt0_dz1_dxy01);
-   fChain->SetBranchAddress("photrail_Pho_Cone02ChargedHadronIso_dR015_dEta0_pt0_PFnoPU", &photrail_Pho_Cone02ChargedHadronIso_dR015_dEta0_pt0_PFnoPU, &b_photrail_Pho_Cone02ChargedHadronIso_dR015_dEta0_pt0_PFnoPU);
-   fChain->SetBranchAddress("photrail_Pho_Cone03ChargedHadronIso_dR0_dEta0_pt0_dz0", &photrail_Pho_Cone03ChargedHadronIso_dR0_dEta0_pt0_dz0, &b_photrail_Pho_Cone03ChargedHadronIso_dR0_dEta0_pt0_dz0);
-   fChain->SetBranchAddress("photrail_Pho_Cone03ChargedHadronIso_dR0_dEta0_pt0_dz1_dxy01", &photrail_Pho_Cone03ChargedHadronIso_dR0_dEta0_pt0_dz1_dxy01, &b_photrail_Pho_Cone03ChargedHadronIso_dR0_dEta0_pt0_dz1_dxy01);
-   fChain->SetBranchAddress("photrail_Pho_Cone03ChargedHadronIso_dR0_dEta0_pt0_PFnoPU", &photrail_Pho_Cone03ChargedHadronIso_dR0_dEta0_pt0_PFnoPU, &b_photrail_Pho_Cone03ChargedHadronIso_dR0_dEta0_pt0_PFnoPU);
-   fChain->SetBranchAddress("photrail_Pho_Cone03ChargedHadronIso_dR015_dEta0_pt0_dz0", &photrail_Pho_Cone03ChargedHadronIso_dR015_dEta0_pt0_dz0, &b_photrail_Pho_Cone03ChargedHadronIso_dR015_dEta0_pt0_dz0);
-   fChain->SetBranchAddress("photrail_Pho_Cone03ChargedHadronIso_dR015_dEta0_pt0_dz1_dxy01", &photrail_Pho_Cone03ChargedHadronIso_dR015_dEta0_pt0_dz1_dxy01, &b_photrail_Pho_Cone03ChargedHadronIso_dR015_dEta0_pt0_dz1_dxy01);
-   fChain->SetBranchAddress("photrail_Pho_Cone03ChargedHadronIso_dR015_dEta0_pt0_PFnoPU", &photrail_Pho_Cone03ChargedHadronIso_dR015_dEta0_pt0_PFnoPU, &b_photrail_Pho_Cone03ChargedHadronIso_dR015_dEta0_pt0_PFnoPU);
-   fChain->SetBranchAddress("photrail_Pho_Cone04ChargedHadronIso_dR0_dEta0_pt0_dz0", &photrail_Pho_Cone04ChargedHadronIso_dR0_dEta0_pt0_dz0, &b_photrail_Pho_Cone04ChargedHadronIso_dR0_dEta0_pt0_dz0);
-   fChain->SetBranchAddress("photrail_Pho_Cone04ChargedHadronIso_dR0_dEta0_pt0_dz1_dxy01", &photrail_Pho_Cone04ChargedHadronIso_dR0_dEta0_pt0_dz1_dxy01, &b_photrail_Pho_Cone04ChargedHadronIso_dR0_dEta0_pt0_dz1_dxy01);
-   fChain->SetBranchAddress("photrail_Pho_Cone04ChargedHadronIso_dR0_dEta0_pt0_PFnoPU", &photrail_Pho_Cone04ChargedHadronIso_dR0_dEta0_pt0_PFnoPU, &b_photrail_Pho_Cone04ChargedHadronIso_dR0_dEta0_pt0_PFnoPU);
-   fChain->SetBranchAddress("photrail_Pho_Cone04ChargedHadronIso_dR015_dEta0_pt0_dz0", &photrail_Pho_Cone04ChargedHadronIso_dR015_dEta0_pt0_dz0, &b_photrail_Pho_Cone04ChargedHadronIso_dR015_dEta0_pt0_dz0);
-   fChain->SetBranchAddress("photrail_Pho_Cone04ChargedHadronIso_dR015_dEta0_pt0_dz1_dxy01", &photrail_Pho_Cone04ChargedHadronIso_dR015_dEta0_pt0_dz1_dxy01, &b_photrail_Pho_Cone04ChargedHadronIso_dR015_dEta0_pt0_dz1_dxy01);
-   fChain->SetBranchAddress("photrail_Pho_Cone04ChargedHadronIso_dR015_dEta0_pt0_PFnoPU", &photrail_Pho_Cone04ChargedHadronIso_dR015_dEta0_pt0_PFnoPU, &b_photrail_Pho_Cone04ChargedHadronIso_dR015_dEta0_pt0_PFnoPU);
+   fChain->SetBranchAddress("pholead_pho_Cone01PhotonIso_dEta015EB_dR070EE_mvVtx", &pholead_pho_Cone01PhotonIso_dEta015EB_dR070EE_mvVtx, &b_pholead_pho_Cone01PhotonIso_dEta015EB_dR070EE_mvVtx);
+   fChain->SetBranchAddress("photrail_pho_Cone01PhotonIso_dEta015EB_dR070EE_mvVtx", &photrail_pho_Cone01PhotonIso_dEta015EB_dR070EE_mvVtx, &b_photrail_pho_Cone01PhotonIso_dEta015EB_dR070EE_mvVtx);
+   fChain->SetBranchAddress("pholead_pho_Cone02PhotonIso_dEta015EB_dR070EE_mvVtx", &pholead_pho_Cone02PhotonIso_dEta015EB_dR070EE_mvVtx, &b_pholead_pho_Cone02PhotonIso_dEta015EB_dR070EE_mvVtx);
+   fChain->SetBranchAddress("photrail_pho_Cone02PhotonIso_dEta015EB_dR070EE_mvVtx", &photrail_pho_Cone02PhotonIso_dEta015EB_dR070EE_mvVtx, &b_photrail_pho_Cone02PhotonIso_dEta015EB_dR070EE_mvVtx);
+   fChain->SetBranchAddress("pholead_pho_Cone03PhotonIso_dEta015EB_dR070EE_mvVtx", &pholead_pho_Cone03PhotonIso_dEta015EB_dR070EE_mvVtx, &b_pholead_pho_Cone03PhotonIso_dEta015EB_dR070EE_mvVtx);
+   fChain->SetBranchAddress("photrail_pho_Cone03PhotonIso_dEta015EB_dR070EE_mvVtx", &photrail_pho_Cone03PhotonIso_dEta015EB_dR070EE_mvVtx, &b_photrail_pho_Cone03PhotonIso_dEta015EB_dR070EE_mvVtx);
+   fChain->SetBranchAddress("pholead_pho_Cone04PhotonIso_dEta015EB_dR070EE_mvVtx", &pholead_pho_Cone04PhotonIso_dEta015EB_dR070EE_mvVtx, &b_pholead_pho_Cone04PhotonIso_dEta015EB_dR070EE_mvVtx);
+   fChain->SetBranchAddress("photrail_pho_Cone04PhotonIso_dEta015EB_dR070EE_mvVtx", &photrail_pho_Cone04PhotonIso_dEta015EB_dR070EE_mvVtx, &b_photrail_pho_Cone04PhotonIso_dEta015EB_dR070EE_mvVtx);
+   fChain->SetBranchAddress("pholead_pho_Cone01NeutralHadronIso_mvVtx", &pholead_pho_Cone01NeutralHadronIso_mvVtx, &b_pholead_pho_Cone01NeutralHadronIso_mvVtx);
+   fChain->SetBranchAddress("photrail_pho_Cone01NeutralHadronIso_mvVtx", &photrail_pho_Cone01NeutralHadronIso_mvVtx, &b_photrail_pho_Cone01NeutralHadronIso_mvVtx);
+   fChain->SetBranchAddress("pholead_pho_Cone02NeutralHadronIso_mvVtx", &pholead_pho_Cone02NeutralHadronIso_mvVtx, &b_pholead_pho_Cone02NeutralHadronIso_mvVtx);
+   fChain->SetBranchAddress("photrail_pho_Cone02NeutralHadronIso_mvVtx", &photrail_pho_Cone02NeutralHadronIso_mvVtx, &b_photrail_pho_Cone02NeutralHadronIso_mvVtx);
+   fChain->SetBranchAddress("pholead_pho_Cone03NeutralHadronIso_mvVtx", &pholead_pho_Cone03NeutralHadronIso_mvVtx, &b_pholead_pho_Cone03NeutralHadronIso_mvVtx);
+   fChain->SetBranchAddress("photrail_pho_Cone03NeutralHadronIso_mvVtx", &photrail_pho_Cone03NeutralHadronIso_mvVtx, &b_photrail_pho_Cone03NeutralHadronIso_mvVtx);
+   fChain->SetBranchAddress("pholead_pho_Cone04NeutralHadronIso_mvVtx", &pholead_pho_Cone04NeutralHadronIso_mvVtx, &b_pholead_pho_Cone04NeutralHadronIso_mvVtx);
+   fChain->SetBranchAddress("photrail_pho_Cone04NeutralHadronIso_mvVtx", &photrail_pho_Cone04NeutralHadronIso_mvVtx, &b_photrail_pho_Cone04NeutralHadronIso_mvVtx);
+   fChain->SetBranchAddress("pholead_pho_Cone01ChargedHadronIso_dR02_dz02_dxy01", &pholead_pho_Cone01ChargedHadronIso_dR02_dz02_dxy01, &b_pholead_pho_Cone01ChargedHadronIso_dR02_dz02_dxy01);
+   fChain->SetBranchAddress("photrail_pho_Cone01ChargedHadronIso_dR02_dz02_dxy01", &photrail_pho_Cone01ChargedHadronIso_dR02_dz02_dxy01, &b_photrail_pho_Cone01ChargedHadronIso_dR02_dz02_dxy01);
+   fChain->SetBranchAddress("pholead_pho_Cone02ChargedHadronIso_dR02_dz02_dxy01", &pholead_pho_Cone02ChargedHadronIso_dR02_dz02_dxy01, &b_pholead_pho_Cone02ChargedHadronIso_dR02_dz02_dxy01);
+   fChain->SetBranchAddress("photrail_pho_Cone02ChargedHadronIso_dR02_dz02_dxy01", &photrail_pho_Cone02ChargedHadronIso_dR02_dz02_dxy01, &b_photrail_pho_Cone02ChargedHadronIso_dR02_dz02_dxy01);
+   fChain->SetBranchAddress("pholead_pho_Cone03ChargedHadronIso_dR02_dz02_dxy01", &pholead_pho_Cone03ChargedHadronIso_dR02_dz02_dxy01, &b_pholead_pho_Cone03ChargedHadronIso_dR02_dz02_dxy01);
+   fChain->SetBranchAddress("photrail_pho_Cone03ChargedHadronIso_dR02_dz02_dxy01", &photrail_pho_Cone03ChargedHadronIso_dR02_dz02_dxy01, &b_photrail_pho_Cone03ChargedHadronIso_dR02_dz02_dxy01);
+   fChain->SetBranchAddress("pholead_pho_Cone04ChargedHadronIso_dR02_dz02_dxy01", &pholead_pho_Cone04ChargedHadronIso_dR02_dz02_dxy01, &b_pholead_pho_Cone04ChargedHadronIso_dR02_dz02_dxy01);
+   fChain->SetBranchAddress("photrail_pho_Cone04ChargedHadronIso_dR02_dz02_dxy01", &photrail_pho_Cone04ChargedHadronIso_dR02_dz02_dxy01, &b_photrail_pho_Cone04ChargedHadronIso_dR02_dz02_dxy01);
+   fChain->SetBranchAddress("pholead_pho_Cone03PFCombinedIso", &pholead_pho_Cone03PFCombinedIso, &b_pholead_pho_Cone03PFCombinedIso);
+   fChain->SetBranchAddress("photrail_pho_Cone03PFCombinedIso", &photrail_pho_Cone03PFCombinedIso, &b_photrail_pho_Cone03PFCombinedIso);
+   fChain->SetBranchAddress("pholead_pho_Cone04PFCombinedIso", &pholead_pho_Cone04PFCombinedIso, &b_pholead_pho_Cone04PFCombinedIso);
+   fChain->SetBranchAddress("photrail_pho_Cone04PFCombinedIso", &photrail_pho_Cone04PFCombinedIso, &b_photrail_pho_Cone04PFCombinedIso);
+   fChain->SetBranchAddress("pholead_PhoPassConvSafeElectronVeto", &pholead_PhoPassConvSafeElectronVeto, &b_pholead_PhoPassConvSafeElectronVeto);
+   fChain->SetBranchAddress("photrail_PhoPassConvSafeElectronVeto", &photrail_PhoPassConvSafeElectronVeto, &b_photrail_PhoPassConvSafeElectronVeto);
+   fChain->SetBranchAddress("pholead_GenPhotonIsoDR04", &pholead_GenPhotonIsoDR04, &b_pholead_GenPhotonIsoDR04);
+   fChain->SetBranchAddress("photrail_GenPhotonIsoDR04", &photrail_GenPhotonIsoDR04, &b_photrail_GenPhotonIsoDR04);
    fChain->SetBranchAddress("pholead_PhoIso03Ecal", &pholead_PhoIso03Ecal, &b_pholead_PhoIso03Ecal);
    fChain->SetBranchAddress("pholead_PhoIso03Hcal", &pholead_PhoIso03Hcal, &b_pholead_PhoIso03Hcal);
    fChain->SetBranchAddress("pholead_PhoIso03TrkSolid", &pholead_PhoIso03TrkSolid, &b_pholead_PhoIso03TrkSolid);
@@ -947,6 +668,7 @@ void template_production::Init()
    fChain->SetBranchAddress("photrail_PhoMCmatchindex", &photrail_PhoMCmatchindex, &b_photrail_PhoMCmatchindex);
    fChain->SetBranchAddress("photrail_PhoMCmatchexitcode", &photrail_PhoMCmatchexitcode, &b_photrail_PhoMCmatchexitcode);
 
+
    Notify();
 }
 
@@ -968,6 +690,7 @@ void template_production::Show(Long64_t entry)
    if (!fChain) return;
    fChain->Show(entry);
 }
+
 /* Int_t template_production::Cut(Long64_t entry) */
 /* { */
 /* // This function may be called from Loop. */
@@ -975,30 +698,26 @@ void template_production::Show(Long64_t entry)
 /* // returns -1 otherwise. */
 /*    return 1; */
 /* } */
-void template_production::WriteOutput(const char* filename, const bool _isdata, const TString _dirname){
+
+void template_production::WriteOutput(const char* filename, const TString _dirname){
   TFile *out = TFile::Open(filename,"update");
   TString dirname("");
-  if (_isdata) dirname.Append("data_"); else dirname.Append("mc_");
+  if (isdata) dirname.Append("data_"); else dirname.Append("mc_");
   dirname.Append(_dirname.Data());
   out->mkdir(dirname.Data());
   out->cd(dirname.Data());
 
-//  for (int m=0; m<2; m++) for (int j=0;j<2;j++) for (int k=0;k<3;k++)  roovar[j][k][m]->Write();
-//  for (int m=0; m<2; m++) for (int l=0; l<n_templates; l++) for (int i=0; i<3; i++) for (int j=0;j<2;j++) for (int k=0;k<3;k++)  roohist[i][j][k][l][m]->Write();
-//  for (int l=0; l<n_templates; l++) for (int i=0; i<3; i++) for (int j=0;j<2;j++)  templatehist[i][j][l]->Write();
-//  for (int m=0; m<2; m++) for (int l=0; l<n_templates; l++) for (int i=0; i<4; i++)  roodset[i][l][m]->Write();
-//  for (int l=0; l<n_templates; l++) for (int i=0; i<2; i++)  roodset_single[i][l]->Write();
-
-  if (!_isdata){
+  if (dosignaltemplate || dobackgroundtemplate) {
 
     for (int i=0; i<2; i++) for (int l=0; l<n_templates; l++) template_signal[i][n_templates]->Add(template_signal[i][l]);
     for (int i=0; i<2; i++) for (int l=0; l<n_templates; l++) template_background[i][n_templates]->Add(template_background[i][l]);
 
-  for (int i=0; i<2; i++) for (int l=0; l<n_templates+1; l++) template_signal[i][l]->Write();
-  for (int i=0; i<2; i++) for (int l=0; l<n_templates+1; l++) template_background[i][l]->Write();
-  for (int i=0; i<3; i++) for (int l=0; l<n_templates; l++) template_sigsig[i][l]->Write();
+    for (int i=0; i<2; i++) for (int l=0; l<n_templates+1; l++) template_signal[i][l]->Write();
+    for (int i=0; i<2; i++) for (int l=0; l<n_templates+1; l++) template_background[i][l]->Write();
+
   }
-  else{
+
+  if (dodistribution) {
   for (int i=0; i<2; i++) for (int l=0; l<n_templates; l++) obs_hist_single[i][l]->Write();
   for (int i=0; i<3; i++) for (int l=0; l<n_templates; l++) obs_hist[i][l]->Write();
   }
@@ -1008,35 +727,6 @@ void template_production::WriteOutput(const char* filename, const bool _isdata, 
   out->Close();
 };
 
-void template_production::ShowHistogram(int i, int j, int k, int l, int m){
-  RooPlot *outroovarframe = roovar[j][k][m]->frame(Name(varname.Data()),Title(varname.Data()));
-  roohist[i][j][k][l][m]->plotOn(outroovarframe);
-  outroovarframe->Draw();
-};
-
-TString template_production::get_roohist_name(TString _varname, TString _st, TString _reg, TString _count, int _binnumber, TString _ord){
-  TString a(Form("roohist_%s_%s_%s_%s_b%d_%s",_varname.Data(),_st.Data(),_reg.Data(),_count.Data(),_binnumber,_ord.Data()));
-  return a;
-};
-
-TString template_production::get_roodset_name(TString _varname, TString _reg, int _binnumber, TString _ord){
-  TString a(Form("roodataset_%s_%s_b%d_%s",_varname.Data(),_reg.Data(),_binnumber,_ord.Data()));
-  return a;
-};
-
-TString template_production::get_roodset_name_single(TString _varname, TString _reg, int _binnumber){
-  TString a(Form("roodataset_single_%s_%s_b%d",_varname.Data(),_reg.Data(),_binnumber));
-  return a;
-};
-
-TString template_production::get_roovar_name(TString _varname, int i, int j, TString _ord){
-      TString t=_varname;
-      if (i==0) t.Append("_EB"); else t.Append("_EE");
-      if (j==0) t.Append("_1"); else if (j==1) t.Append("_2"); else t.Append("_both");
-      t.Append("_");
-      t.Append(_ord);
-      return t;
-};
 
 Int_t template_production::Choose_bin_invmass(float invmass, int region){
 
@@ -1092,6 +782,34 @@ Int_t template_production::Choose_bin_pt(float pt, int region){
   std::cout << "WARNING: called bin choice for out-of-range value " << pt << std::endl;
   return -999;
 
+
+};
+
+Int_t template_production::Choose_bin_eta(float eta, int region){
+
+  eta=fabs(eta);
+
+  int index;
+
+  float *cuts=NULL;
+
+  if (region==0) {cuts=binsdef_single_gamma_EB_eta; index=n_templates_EB;}
+  if (region==1) {cuts=binsdef_single_gamma_EE_eta; index=n_templates_EE;}
+
+  assert (cuts!=NULL);
+  assert (index!=0);
+
+  cuts[index]=9999;
+
+  if (eta<cuts[0]){
+    std::cout << "WARNING: called bin choice for out-of-range value " << eta << " cuts[0]=" << cuts[0] << std::endl;
+    return -999;
+  }
+
+  for (int i=0; i<index; i++) if ((eta>=cuts[i]) && (eta<cuts[i+1])) return i;
+
+  std::cout << "WARNING: called bin choice for out-of-range value " << eta << std::endl;
+  return -999;
 
 };
 

@@ -124,26 +124,37 @@ void efficiency_measure::Loop()
 
       if (!(pholead_PhoMCmatchexitcode==1 || pholead_PhoMCmatchexitcode==2)) pass1=false;
       if (!(photrail_PhoMCmatchexitcode==1 || photrail_PhoMCmatchexitcode==2)) pass1=false;
+      if (pholead_GenPhotonIsoDR04>5 || photrail_GenPhotonIsoDR04>5) pass1=false;
 
       if (pass1) w_tot_gg[event_ok_for_dataset]->Fill(dipho_mgg_photon,weight);
       
       bool pass2;
       pass2=true;
 
-      float cutUP, cutLOW;
-      if (fabs(pholead_SCeta)<1.4442) {cutLOW=0; cutUP=0.011;} // EB
-      else {cutLOW=0; cutUP=0.028;} // EE
-
-      if (pholead_hoe>0.05) pass2=false;
-      if (pholead_sieie>cutUP) pass2=false;
-      if (pholead_sieie<cutLOW) pass2=false;
-
-      if (fabs(photrail_SCeta)<1.4442) {cutLOW=0; cutUP=0.011;} // EB
-      else {cutLOW=0; cutUP=0.028;} // EE
-
-      if (photrail_hoe>0.05) pass2=false;
-      if (photrail_sieie>cutUP) pass2=false;
-      if (photrail_sieie<cutLOW) pass2=false;
+      {
+	if (!pholead_PhoPassConvSafeElectronVeto) pass2=false;
+	float eta = fabs(pholead_SCeta);
+	float hoe = pholead_hoe;
+	float sieie = pholead_sieie;
+	float eff_area = (fabs(eta)<1.4442) ? 0.406 : 0.528;
+	float puenergy =3.14*0.4*0.4*eff_area*event_rho;
+	if (hoe>0.05) pass2=false;
+	if (fabs(eta)<1.4442 && sieie>0.011) pass2=false;
+	if (fabs(eta)>1.56 && sieie>0.030) pass2=false;
+	if (pholead_pho_Cone04PFCombinedIso*pholead_pt-puenergy>5) pass2=false;
+      }
+      {
+	if (!photrail_PhoPassConvSafeElectronVeto) pass2=false;
+	float eta = fabs(photrail_SCeta);
+	float hoe = photrail_hoe;
+	float sieie = photrail_sieie;
+	float eff_area = (fabs(eta)<1.4442) ? 0.406 : 0.528;
+	float puenergy =3.14*0.4*0.4*eff_area*event_rho;
+	if (hoe>0.05) pass2=false;
+	if (fabs(eta)<1.4442 && sieie>0.011) pass2=false;
+	if (fabs(eta)>1.56 && sieie>0.030) pass2=false;
+	if (photrail_pho_Cone04PFCombinedIso*photrail_pt-puenergy>5) pass2=false;
+      }
 
       if (pass1 && pass2) w_passing_gg[event_ok_for_dataset]->Fill(dipho_mgg_photon,weight);
 
@@ -153,21 +164,27 @@ void efficiency_measure::Loop()
 
 	bool pass1;
 	bool pass2;
-      float cutUP, cutLOW;
 
 	pass1=true;
 	pass2=true;
 	
 	if (!(pholead_PhoMCmatchexitcode==1 || pholead_PhoMCmatchexitcode==2)) pass1=false;
+	if (pholead_GenPhotonIsoDR04>5) pass1=false;
 	if (pass1) w_tot_1g[reg_lead]->Fill(pholead_pt,weight);
 
+      {
+	if (!pholead_PhoPassConvSafeElectronVeto) pass2=false;
+	float eta = fabs(pholead_SCeta);
+	float hoe = pholead_hoe;
+	float sieie = pholead_sieie;
+	float eff_area = (fabs(eta)<1.4442) ? 0.406 : 0.528;
+	float puenergy =3.14*0.4*0.4*eff_area*event_rho;
+	if (hoe>0.05) pass2=false;
+	if (fabs(eta)<1.4442 && sieie>0.011) pass2=false;
+	if (fabs(eta)>1.56 && sieie>0.030) pass2=false;
+	if (pholead_pho_Cone04PFCombinedIso*pholead_pt-puenergy>5) pass2=false;
+      }
 
-      if (fabs(pholead_SCeta)<1.4442) {cutLOW=0; cutUP=0.011;} // EB
-      else {cutLOW=0; cutUP=0.028;} // EE
-
-      if (pholead_hoe>0.05) pass2=false;
-      if (pholead_sieie>cutUP) pass2=false;
-      if (pholead_sieie<cutLOW) pass2=false;
 
       if (pass1 && pass2) w_passing_1g[reg_lead]->Fill(pholead_pt,weight);
 
@@ -175,14 +192,21 @@ void efficiency_measure::Loop()
       pass2=true;
 
       if (!(photrail_PhoMCmatchexitcode==1 || photrail_PhoMCmatchexitcode==2)) pass1=false;
+      if (photrail_GenPhotonIsoDR04>5) pass1=false;
       if (pass1) w_tot_1g[reg_trail]->Fill(photrail_pt,weight);
 
-      if (fabs(photrail_SCeta)<1.4442) {cutLOW=0; cutUP=0.011;} // EB
-      else {cutLOW=0; cutUP=0.028;} // EE
-
-      if (photrail_hoe>0.05) pass2=false;
-      if (photrail_sieie>cutUP) pass2=false;
-      if (photrail_sieie<cutLOW) pass2=false;
+      {
+	if (!photrail_PhoPassConvSafeElectronVeto) pass2=false;
+	float eta = fabs(photrail_SCeta);
+	float hoe = photrail_hoe;
+	float sieie = photrail_sieie;
+	float eff_area = (fabs(eta)<1.4442) ? 0.406 : 0.528;
+	float puenergy =3.14*0.4*0.4*eff_area*event_rho;
+	if (hoe>0.05) pass2=false;
+	if (fabs(eta)<1.4442 && sieie>0.011) pass2=false;
+	if (fabs(eta)>1.56 && sieie>0.030) pass2=false;
+	if (photrail_pho_Cone04PFCombinedIso*photrail_pt-puenergy>5) pass2=false;
+      }
 
       if (pass1 && pass2) w_passing_1g[reg_trail]->Fill(photrail_pt,weight);
 
@@ -196,6 +220,8 @@ void efficiency_measure::Loop()
    if (true){
    TCanvas *c = new TCanvas();
    c->Divide(3,2);
+   for (int i=0; i<3; i++) {w_eff_gg[i]->GetXaxis()->SetTitle("m_{#gamma #gamma} (GeV)");}
+   for (int i=0; i<2; i++) {w_eff_1g[i]->GetXaxis()->SetTitle("p_{t} (GeV)");}
    for (int i=0; i<3; i++) {c->cd(i+1); w_eff_gg[i]->Draw("e1");}
    for (int i=0; i<2; i++) {c->cd(i+4); w_eff_1g[i]->Draw("e1");}
    }
