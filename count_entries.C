@@ -19,7 +19,9 @@ while (true){
 list >> filename;
 if (!list.good()) break;
 cout << filename << endl;
- f=TFile::Open(filename,"read");
+ TString base("dcap://t3se01.psi.ch:22125/");
+ base.Append(filename);
+ f=TFile::Open(base.Data(),"read");
  filecount++;
  f->GetObject(treename,tree);
  count+=tree->GetEntries();
