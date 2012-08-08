@@ -89,15 +89,19 @@ void template_production::Loop()
     // Int_t bin_trail = Choose_bin_eta(photrail_SCeta,reg_trail);
 
     if (pholead_outvar<leftrange) pholead_outvar=leftrange;
-    if (pholead_outvar>rightrange) pholead_outvar=rightrange;
+    if (pholead_outvar>=rightrange) pholead_outvar=rightrange-1e-5; // overflow in last bin
     if (photrail_outvar<leftrange) photrail_outvar=leftrange;
-    if (photrail_outvar>rightrange) photrail_outvar=rightrange;
+    if (photrail_outvar>=rightrange) photrail_outvar=rightrange-1e-5; // overflow in last bin
 
     if (dosignaltemplate){
       template_signal[reg_lead][bin_lead]->Fill(pholead_outvar,weight);
     }
     if (dobackgroundtemplate){
-      template_background[reg_lead][bin_lead]->Fill(pholead_outvar,weight);
+      if (mode=="impinging" || mode=="sieiesideband"){
+	if (!(pholead_PhoMCmatchexitcode==1 || pholead_PhoMCmatchexitcode==2)) // impinging and sieiesideband from fakes only
+	  template_background[reg_lead][bin_lead]->Fill(pholead_outvar,weight);
+      }
+      else template_background[reg_lead][bin_lead]->Fill(pholead_outvar,weight);
     }
 
     if (dodistribution && event_ok_for_dataset>-1){
@@ -144,18 +148,24 @@ void gen_templates(TString filename="input.root", TString mode="", bool isdata=1
 
   TTree *t;
 
-  TString treename[5];
+  TString treename[9];
   treename[0] = TString("Tree_standard_sel");
   treename[1] = TString("Tree_signal_template");
   treename[2] = TString("Tree_background_template");
   treename[3] = TString("Tree_DY_sel");
   treename[4] = TString("Tree_randomcone_signal_template");
+  treename[5] = TString("Tree_impinging_track_template");
+  treename[6] = TString("Tree_singlephoton_sel_noimpingingcut");
+  treename[7] = TString("Tree_onlypreselection");
+  treename[8] = TString("Tree_sieiesideband_sel");
 
   TString treename_chosen="";
   if (mode=="standard") treename_chosen=treename[0];
   if (mode=="signal") treename_chosen=treename[1];
   if (mode=="background") treename_chosen=treename[2];
   if (mode=="randomcone") treename_chosen=treename[4];
+  if (mode=="impinging") treename_chosen=treename[5];
+  if (mode=="sieiesideband") treename_chosen=treename[8];
 
   file->GetObject(treename_chosen.Data(),t);
 

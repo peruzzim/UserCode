@@ -166,8 +166,7 @@ void run_fits(TString inputfilename_t="out_NEW.root", TString inputfilename_d_mc
 
   output_canv->Update();
 
-		
-   
+
   TCanvas *xsec_canv = new TCanvas("xsec_canv","xsec_canv");
   xsec_canv->cd();
 
@@ -180,6 +179,11 @@ void run_fits(TString inputfilename_t="out_NEW.root", TString inputfilename_d_mc
   eff_canv->cd();
   eff->Draw("e1");
   eff_canv->Update();
+
+  TFile *out1 = new TFile(Form("purity_%s_data.root",splitting.Data()),"recreate");
+  out1->cd();
+  purity[0]->Write();
+
 
   TFile *outfile = new TFile(Form("xsec_%s_data.root",splitting.Data()),"recreate");
   outfile->cd();
@@ -198,9 +202,15 @@ fit_output *out = new fit_output();
   TFile *inputfile_t = TFile::Open(inputfilename_t);
   TFile *inputfile_d = TFile::Open(inputfilename_d);
 
-  TString data_dir("data_Tree_standard_sel/");
-  if (!isdata) data_dir="mc_Tree_standard_sel/";
-  TString sig_dir("mc_Tree_signal_template/");
+  //  TString data_dir("data_Tree_standard_sel/");
+  //  if (!isdata) data_dir="mc_Tree_standard_sel/";
+  TString data_dir("data_Tree_standard_sel/"); //testing without mc
+  
+  TString sig_dir("data_Tree_randomcone_signal_template/");
+  //  TString bkg_dir("data_Tree_impinging_track_template/");
+  //  TString sig_dir("mc_Tree_randomcone_signal_template/");
+  //  TString bkg_dir("mc_Tree_impinging_track_template/");
+  //  TString sig_dir("mc_Tree_signal_template/");
   TString bkg_dir("mc_Tree_background_template/");
 
 

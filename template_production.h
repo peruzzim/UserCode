@@ -426,8 +426,11 @@ void template_production::Setup(Bool_t _isdata, TString _mode){
 
   if (mode=="standard") dodistribution=true;
   if (mode=="signal" || mode=="randomcone") dosignaltemplate=true;
-  if (mode=="background") dobackgroundtemplate=true;
+  if (mode=="background" || mode=="impinging" || mode=="sieiesideband") dobackgroundtemplate=true;
    
+  if (mode=="impinging" || mode=="sieiesideband") for (int i=0; i<5; i++) std::cout << "Warning: impinging and sieiesideband templates from fakes only" << std::endl;
+
+
   randomgen = new TRandom3(0);
   
   // template_{signal,background}[EB,EE][n_templates]
