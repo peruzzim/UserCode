@@ -428,7 +428,8 @@ void template_production::Setup(Bool_t _isdata, TString _mode){
   if (mode=="signal" || mode=="randomcone") dosignaltemplate=true;
   if (mode=="background" || mode=="impinging" || mode=="sieiesideband") dobackgroundtemplate=true;
    
-  if (mode=="impinging" || mode=="sieiesideband") for (int i=0; i<5; i++) std::cout << "Warning: impinging and sieiesideband templates from fakes only" << std::endl;
+  if (!isdata) if (mode=="impinging" || mode=="sieiesideband") for (int i=0; i<5; i++) std::cout << "Warning: impinging and sieiesideband templates from fakes only" << std::endl;
+  if (mode=="sieiesideband") for (int i=0; i<5; i++) std::cout << "Warning: NARROW sieie sideband (0.012/0.031)" << std::endl;
 
 
   randomgen = new TRandom3(0);

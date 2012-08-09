@@ -72,6 +72,7 @@ void template_production::Loop()
       reg_lead=1;
       reg_trail=0;
     }
+    else std::cout << "We have a problem here!!!" << std::endl;
 
     Float_t weight=event_luminormfactor*event_Kfactor*event_weight;
 
@@ -88,21 +89,47 @@ void template_production::Loop()
     // Int_t bin_lead = Choose_bin_eta(pholead_SCeta,reg_lead);
     // Int_t bin_trail = Choose_bin_eta(photrail_SCeta,reg_trail);
 
+
+    // I want to kick away the errors in random cone generation, i.e. when it's -999
+
+    if (dodistribution) if (pholead_outvar==-999 || photrail_outvar==-999) continue;
+    if (dosignaltemplate || dobackgroundtemplate) if (pholead_outvar==-999) continue;
+
     if (pholead_outvar<leftrange) pholead_outvar=leftrange;
-    if (pholead_outvar>=rightrange) pholead_outvar=rightrange-1e-5; // overflow in last bin
     if (photrail_outvar<leftrange) photrail_outvar=leftrange;
+
+    if (pholead_outvar>=rightrange) pholead_outvar=rightrange-1e-5; // overflow in last bin
     if (photrail_outvar>=rightrange) photrail_outvar=rightrange-1e-5; // overflow in last bin
 
     if (dosignaltemplate){
       template_signal[reg_lead][bin_lead]->Fill(pholead_outvar,weight);
     }
+
     if (dobackgroundtemplate){
-      if (mode=="impinging" || mode=="sieiesideband"){
-	if (!(pholead_PhoMCmatchexitcode==1 || pholead_PhoMCmatchexitcode==2)) // impinging and sieiesideband from fakes only
-	  template_background[reg_lead][bin_lead]->Fill(pholead_outvar,weight);
+
+      if (!isdata){ // MC
+	if (mode=="impinging"){ // impinging from fakes only for MC
+	  if (!(pholead_PhoMCmatchexitcode==1 || pholead_PhoMCmatchexitcode==2)) template_background[reg_lead][bin_lead]->Fill(pholead_outvar,weight);
+	}
+	else if (mode=="sieiesideband"){ // narrower sieiesideband from fakes only for MC
+	  if (!(pholead_PhoMCmatchexitcode==1 || pholead_PhoMCmatchexitcode==2)){
+	    if (fabs(pholead_SCeta)<1.4442 && pholead_sieie>0.011 && pholead_sieie<0.012) template_background[reg_lead][bin_lead]->Fill(pholead_outvar,weight);
+	    if (fabs(pholead_SCeta)>1.56 && pholead_sieie>0.030 && pholead_sieie<0.031) template_background[reg_lead][bin_lead]->Fill(pholead_outvar,weight);
+	  }
+	}
+	else template_background[reg_lead][bin_lead]->Fill(pholead_outvar,weight);
       }
-      else template_background[reg_lead][bin_lead]->Fill(pholead_outvar,weight);
+      
+      else { // data
+	if (mode=="sieiesideband") {
+	  if (fabs(pholead_SCeta)<1.4442 && pholead_sieie>0.011 && pholead_sieie<0.012) template_background[reg_lead][bin_lead]->Fill(pholead_outvar,weight);
+	  if (fabs(pholead_SCeta)>1.56 && pholead_sieie>0.030 && pholead_sieie<0.031) template_background[reg_lead][bin_lead]->Fill(pholead_outvar,weight);
+	}
+	else template_background[reg_lead][bin_lead]->Fill(pholead_outvar,weight);
+      }
+      
     }
+    
 
     if (dodistribution && event_ok_for_dataset>-1){
       

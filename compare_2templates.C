@@ -3,7 +3,7 @@
 #include <iostream>
 
 
-compare_2templates(TString dset1, TString dset2, TString temp1, TString temp2, int rbin=1, float maxrange=5){
+compare_2templates(TString dset1, TString dset2, TString temp1, TString temp2, TString reg="EB", TString colorstring="br", int rbin=1, float maxrange=5){
 
   TString file1="out_";
   file1.Append(dset1);
@@ -25,19 +25,25 @@ compare_2templates(TString dset1, TString dset2, TString temp1, TString temp2, i
 
   TString name1="";
   if (dset1=="data") name1.Append("data_Tree_"); else name1.Append("mc_Tree_");
-  if (temp1=="bkg") name1.Append("background_template/template_background_EB_b9");
-  if (temp1=="sig") name1.Append("signal_template/template_signal_EB_b9");
-  if (temp1=="rcone") name1.Append("randomcone_signal_template/template_signal_EB_b9");
-  if (temp1=="impinging") name1.Append("impinging_track_template/template_background_EB_b9");
-  if (temp1=="sieiesideband") name1.Append("sieiesideband_sel/template_background_EB_b9");
+  if (temp1=="bkg") name1.Append("background_template/template_background_");
+  if (temp1=="sig") name1.Append("signal_template/template_signal_");
+  if (temp1=="rcone") name1.Append("randomcone_signal_template/template_signal_");
+  if (temp1=="impinging") name1.Append("impinging_track_template/template_background_");
+  if (temp1=="sieiesideband") name1.Append("sieiesideband_sel/template_background_");
+  name1.Append(reg);
+  name1.Append("_b9");
 
   TString name2="";
   if (dset2=="data") name2.Append("data_Tree_"); else name2.Append("mc_Tree_");
-  if (temp2=="bkg") name2.Append("background_template/template_background_EB_b9");
-  if (temp2=="sig") name2.Append("signal_template/template_signal_EB_b9");
-  if (temp2=="rcone") name2.Append("randomcone_signal_template/template_signal_EB_b9");
-  if (temp2=="impinging") name2.Append("impinging_track_template/template_background_EB_b9");
-  if (temp2=="sieiesideband") name2.Append("sieiesideband_sel/template_background_EB_b9");
+  if (temp2=="bkg") name2.Append("background_template/template_background_");
+  if (temp2=="sig") name2.Append("signal_template/template_signal_");
+  if (temp2=="rcone") name2.Append("randomcone_signal_template/template_signal_");
+  if (temp2=="impinging") name2.Append("impinging_track_template/template_background_");
+  if (temp2=="sieiesideband") name2.Append("sieiesideband_sel/template_background_");
+  name2.Append(reg);
+  name2.Append("_b9");
+
+
 
   std::cout << name1.Data() << std::endl;
   f1->GetObject(name1.Data(),h[0]);
@@ -48,18 +54,29 @@ compare_2templates(TString dset1, TString dset2, TString temp1, TString temp2, i
   f2->GetObject(name2.Data(),h[1]);
   assert (h[1]!=NULL);
 
+  int colors[2];
+  for (int i=0; i<2; i++){
+    char c = colorstring[i];
+    if (TString(c)=="b") colors[i]=1;
+    else if (TString(c)=="r") colors[i]=2;
+    else if (TString(c)=="p") colors[i]=6;
+    else if (TString(c)=="u") colors[i]=4;
+    else colors[i]=3;
+  }
+
+
   // Rebin
   for (int i=0; i<2; i++) h[i]->Rebin(rbin);
 
   for (int i=0; i<2; i++){
     h[i]->Scale(1.0/h[i]->Integral());
-    h[i]->SetLineColor(i+1);
+    h[i]->SetLineColor(colors[i]);
     h[i]->SetLineWidth(2);
   }
 
-  // Kolmogorov test
-  cout << "Kolmogorov test" << endl;
-  cout << h[0]->KolmogorovTest(h[1]) << endl;
+//  // Kolmogorov test
+//  cout << "Kolmogorov test" << endl;
+//  cout << h[0]->KolmogorovTest(h[1]) << endl;
 
   TCanvas *c1 = new TCanvas();
   c1->cd();
