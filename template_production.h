@@ -26,6 +26,8 @@
 #include "TProfile.h"
 #include "TF1.h"
 #include "RooBinning.h"
+#include "TString.h"
+#include "TH1.h"
 
 using namespace std;
 using namespace RooFit;
@@ -341,9 +343,11 @@ public :
 
    void     WriteOutput(const char* filename, const TString dirname);
 
-   void Setup(Bool_t _isdata, TString _mode);
+   void Setup(Bool_t _isdata, TString _mode, TString _differentialvariable);
 
-   TProfile** GetPUScaling(bool doEB);
+   TString differentialvariable;
+
+   TProfile** GetPUScaling(bool doEB, TString diffvar);
 
    TRandom3 *randomgen;
 
@@ -351,12 +355,16 @@ public :
 
    bool dosignal;
 
+   TH1F *histo_pt[2];
+
    TH1F *template_signal[2][n_templates+1];
    TH1F *template_background[2][n_templates+1];
 
    TH1F *obs_hist_single[2][n_templates];
    TH2F *obs_hist[3][n_templates];
 
+   bool pt_reweighting_initialized;
+   bool do_pt_reweighting;
 
    Float_t pholead_outvar;
    Float_t photrail_outvar;
@@ -378,6 +386,13 @@ public :
    Int_t Choose_bin_invmass(float invmass, int region);
    Int_t Choose_bin_pt(float pt, int region);
    Int_t Choose_bin_eta(float eta, int region);
+   Int_t Choose_bin_sieie(float sieie, int region);
+
+   float FindPtWeight(float pt, float eta);
+   void Initialize_Pt_Reweighting(TString dset1, TString dset2, TString temp1, TString temp2);
+   void SetNoPtReweighting();
+
+   TH1F *histo_pt_reweighting[2];
 
 };
 
@@ -410,29 +425,41 @@ template_production::template_production(TTree *tree)
    dobackgroundtemplate=false;
    dodistribution=false;
 
+   pt_reweighting_initialized = 0;
+   do_pt_reweighting = 0;
+
    n_histobins = 400;
    leftrange = 0.0;
    rightrange = 5.0;
 
 }
 
-void template_production::Setup(Bool_t _isdata, TString _mode){
+void template_production::Setup(Bool_t _isdata, TString _mode, TString _differentialvariable){
 
+  for (int i=0; i<5; i++) std::cout << "WARNING: NO PT REWEIGHTING FOR 2D HISTOS" << std::endl;
 
   isdata=_isdata;
   mode=_mode;
+  differentialvariable=_differentialvariable;
 
   Init();
 
   if (mode=="standard") dodistribution=true;
   if (mode=="signal" || mode=="randomcone") dosignaltemplate=true;
-  if (mode=="background" || mode=="impinging" || mode=="sieiesideband") dobackgroundtemplate=true;
+  if (mode=="background" || mode=="impinging" || mode=="sieiesideband" || mode=="combisosideband") dobackgroundtemplate=true;
    
-  if (!isdata) if (mode=="impinging" || mode=="sieiesideband") for (int i=0; i<5; i++) std::cout << "Warning: impinging and sieiesideband templates from fakes only" << std::endl;
-  if (mode=="sieiesideband") for (int i=0; i<5; i++) std::cout << "Warning: NARROW sieie sideband (0.012/0.031)" << std::endl;
-
+  if (mode=="sieiesideband") for (int i=0; i<5; i++) std::cout << "Warning: large sieie sideband (0.014/0.031)" << std::endl;
 
   randomgen = new TRandom3(0);
+
+  for (int i=0; i<2; i++){
+    TString name="histo_pt_";
+    TString reg;
+    if (i==0) reg="EB"; else if (i==1) reg="EE";
+    name.Append(reg);
+    histo_pt[i] = new TH1F(name.Data(),name.Data(),172,40,900);
+  }
+
   
   // template_{signal,background}[EB,EE][n_templates]
   for (int i=0; i<2; i++)
@@ -479,6 +506,107 @@ void template_production::Setup(Bool_t _isdata, TString _mode){
 
   
   initialized=true;
+  
+};
+
+void template_production::Initialize_Pt_Reweighting(TString dset1, TString dset2, TString temp1, TString temp2){
+
+  TString regions[2];
+  regions[0]="EB";
+  regions[1]="EE";
+
+  for (int i=0; i<2; i++){
+
+    TString reg=regions[i];
+
+    TString file1="out_";
+    file1.Append(dset1);
+    file1.Append("_");
+    file1.Append(temp1);
+    file1.Append(".root");
+
+    TString file2="out_";
+    file2.Append(dset2);
+    file2.Append("_");
+    file2.Append(temp2);
+    file2.Append(".root");
+
+
+    TFile *f1 = new TFile(file1.Data(),"read");
+    TFile *f2 = new TFile(file2.Data(),"read");
+
+
+    TString name1="";
+    if (dset1=="data") name1.Append("data_Tree_"); else name1.Append("mc_Tree_");
+    if (temp1=="bkg") name1.Append("background_template/");
+    if (temp1=="sig") name1.Append("signal_template/");
+    if (temp1=="rcone") name1.Append("randomcone_signal_template/");
+    if (temp1=="impinging") name1.Append("impinging_track_template/");
+    if (temp1=="sieiesideband") name1.Append("sieiesideband_sel/");
+    if (temp1=="combisosideband") name1.Append("combisosideband_sel/");
+    name1.Append("histo_pt_");
+    name1.Append(reg);
+
+    TString name2="";
+    if (dset2=="data") name2.Append("data_Tree_"); else name2.Append("mc_Tree_");
+    if (temp2=="bkg") name2.Append("background_template/");
+    if (temp2=="sig") name2.Append("signal_template/");
+    if (temp2=="rcone") name2.Append("randomcone_signal_template/");
+    if (temp2=="impinging") name2.Append("impinging_track_template/");
+    if (temp2=="sieiesideband") name2.Append("sieiesideband_sel/");
+    if (temp2=="combisosideband") name2.Append("combisosideband_sel/");
+    name2.Append("histo_pt_");
+    name2.Append(reg);
+
+    TH1F *h[2];
+    f1->GetObject(name1,h[0]);
+    f2->GetObject(name2,h[1]);
+    assert(h[0]!=NULL);
+    assert(h[1]!=NULL);
+
+    h[0]->Print();
+    h[1]->Print();
+
+    TH1F *newhist = (TH1F*)(h[1]->Clone(Form("reweight_%s",reg.Data())));
+    assert(newhist!=NULL);
+    newhist->Print();
+
+    newhist->Scale(1.0/newhist->Integral());
+    h[0]->Scale(1.0/h[0]->Integral());
+
+    newhist->Divide(h[0]);
+
+    pt_reweighting_initialized = 1;
+    do_pt_reweighting = 1;
+
+    histo_pt_reweighting[i] = newhist;
+
+  }
+
+};
+
+void template_production::SetNoPtReweighting(){
+  pt_reweighting_initialized = 1;
+  do_pt_reweighting = 0;
+};
+
+float template_production::FindPtWeight(float pt, float eta){
+
+  if (!pt_reweighting_initialized){
+    std::cout << "PT REWEIGHTING NOT INITIALIZED" << std::endl;
+    return -999;
+  }
+
+  if (!do_pt_reweighting) return 1;
+
+  TH1F *h;
+  if (fabs(eta)<1.5) h=histo_pt_reweighting[0]; else h=histo_pt_reweighting[1];
+
+  if (pt>h->GetXaxis()->GetXmax() || pt<h->GetXaxis()->GetXmin()) return 1;
+  float res = h->GetBinContent(h->FindBin(pt));
+  if (res==0) res=1;
+  //  std::cout << res << std::endl;
+  return res;
   
 };
 
@@ -713,6 +841,8 @@ void template_production::WriteOutput(const char* filename, const TString _dirna
 
   if (dosignaltemplate || dobackgroundtemplate) {
 
+    for (int i=0; i<2; i++) histo_pt[i]->Write();
+
     for (int i=0; i<2; i++) for (int l=0; l<n_templates; l++) template_signal[i][n_templates]->Add(template_signal[i][l]);
     for (int i=0; i<2; i++) for (int l=0; l<n_templates; l++) template_background[i][n_templates]->Add(template_background[i][l]);
 
@@ -814,6 +944,22 @@ Int_t template_production::Choose_bin_eta(float eta, int region){
 
   std::cout << "WARNING: called bin choice for out-of-range value " << eta << std::endl;
   return -999;
+
+};
+
+
+Int_t template_production::Choose_bin_sieie(float sieie, int region){
+
+  if (region==1) return 0;
+
+  if (sieie<0.008) return 0;
+  if (sieie<0.009) return 1;
+  if (sieie<0.010) return 2;
+  if (sieie<0.011) return 3;
+  if (sieie<0.012) return 4;
+  if (sieie<0.013) return 5;
+  if (sieie<0.014) return 6;
+  return 7;
 
 };
 

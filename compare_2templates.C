@@ -3,15 +3,17 @@
 #include <iostream>
 
 
-compare_2templates(TString dset1, TString dset2, TString temp1, TString temp2, TString reg="EB", TString colorstring="br", int rbin=1, float maxrange=5){
+compare_2templates(TString pref1, TString pref2, TString dset1, TString dset2, TString temp1, TString temp2, TString reg="EB", TString colorstring="br", int rbin=1, float maxrange=5){
 
-  TString file1="out_";
+  TString file1=pref1;
+  file1.Append("_");
   file1.Append(dset1);
   file1.Append("_");
   file1.Append(temp1);
   file1.Append(".root");
 
-  TString file2="out_";
+  TString file2=pref2;
+  file2.Append("_");
   file2.Append(dset2);
   file2.Append("_");
   file2.Append(temp2);
@@ -30,6 +32,7 @@ compare_2templates(TString dset1, TString dset2, TString temp1, TString temp2, T
   if (temp1=="rcone") name1.Append("randomcone_signal_template/template_signal_");
   if (temp1=="impinging") name1.Append("impinging_track_template/template_background_");
   if (temp1=="sieiesideband") name1.Append("sieiesideband_sel/template_background_");
+  if (temp1=="combisosideband") name1.Append("combisosideband_sel/template_background_");
   name1.Append(reg);
   name1.Append("_b9");
 
@@ -40,6 +43,7 @@ compare_2templates(TString dset1, TString dset2, TString temp1, TString temp2, T
   if (temp2=="rcone") name2.Append("randomcone_signal_template/template_signal_");
   if (temp2=="impinging") name2.Append("impinging_track_template/template_background_");
   if (temp2=="sieiesideband") name2.Append("sieiesideband_sel/template_background_");
+  if (temp2=="combisosideband") name2.Append("combisosideband_sel/template_background_");
   name2.Append(reg);
   name2.Append("_b9");
 
