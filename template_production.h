@@ -429,7 +429,7 @@ template_production::template_production(TTree *tree)
    do_pt_reweighting = 0;
 
    n_histobins = 400;
-   leftrange = 0.0;
+   leftrange = -5.0;
    rightrange = 5.0;
 
 }
