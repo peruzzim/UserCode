@@ -245,12 +245,14 @@ void get_eff_area(bool doEB, TString comp){
 
   TTree *t;
 
-  TString treename[4];
-  treename[3] = TString("Tree_DYnocombisowithinvmasscut_sel");
+  TString treename;
+  //  treename = TString("Tree_randomcone_signal_template");
+  //  treename[3] = TString("Tree_DYnocombisowithinvmasscut_sel");
+  treename = TString("Tree_randomcone_nocombisocut");
 
   TProfile** output;
 
-  file[0]->GetObject(treename[3].Data(),t);
+  file[0]->GetObject(treename.Data(),t);
   template_production *temp = new template_production(t);
   output=temp->GetPUScaling(doEB,comp);
 
@@ -258,9 +260,9 @@ void get_eff_area(bool doEB, TString comp){
   output[1]->Print();
   output[2]->Print();
 
-  TF1 *f_iso = new TF1("f_iso","pol1(0)",5,15);
-  TF1 *f_rho = new TF1("f_rho","pol1(0)",5,15);
-  TF1 *f_iso_pu = new TF1("f_iso_pu","pol1(0)",5,15);
+  TF1 *f_iso = new TF1("f_iso","pol1(0)",5,20);
+  TF1 *f_rho = new TF1("f_rho","pol1(0)",5,20);
+  TF1 *f_iso_pu = new TF1("f_iso_pu","pol1(0)",5,20);
 
   output[0]->Fit(f_iso,"R");
   output[1]->Fit(f_rho,"R");
@@ -310,6 +312,18 @@ TProfile** template_production::GetPUScaling(bool doEB, TString diffvar){
       std::cout << "Processing entry " << jentry << std::endl;
     }
 
+    float puincone = 0.4*0.4*3.14*event_rho;
+
+    bool isbarrel = (fabs(pholead_SCeta)<1.4442);
+
+    float eff_area = 0;
+
+    // use this to UNDO effarea corrections
+//    if (diffvar=="photoniso") eff_area = isbarrel ? 0.225 : 0.594;
+//    if (diffvar=="chargediso") eff_area = isbarrel ? 0 : 0;
+//    if (diffvar=="neutraliso") eff_area = isbarrel ? 0.077 : 0.085;
+//    if (diffvar=="combiso") eff_area = isbarrel ? 0.302 : 0.679;
+//
     if (diffvar=="photoniso"){
       pholead_outvar=pholead_pho_Cone04PhotonIso_dEta015EB_dR070EE_mvVtx;
     }
@@ -322,6 +336,7 @@ TProfile** template_production::GetPUScaling(bool doEB, TString diffvar){
     else if (diffvar=="neutraliso"){
       pholead_outvar=pholead_pho_Cone04NeutralHadronIso_mvVtx;
     }
+    pholead_outvar+=puincone*eff_area;
 
     if (pholead_outvar==-999) continue;
 
