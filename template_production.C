@@ -27,6 +27,8 @@ void template_production::Loop()
     return;
   }
 
+  TRandom3 *rand = new TRandom3(0);
+
   Long64_t nentries = fChain->GetEntriesFast();
 
   Long64_t nbytes = 0, nb = 0;
@@ -36,31 +38,43 @@ void template_production::Loop()
     nb = fChain->GetEntry(jentry);   nbytes += nb;
     if (jentry%100000==0) std::cout << "Processing entry " << jentry << std::endl;
 
-    //    if (event_nRecVtx>7) continue;
 
-    if (differentialvariable=="photoniso"){
-      pholead_outvar=pholead_pho_Cone04PhotonIso_dEta015EB_dR070EE_mvVtx;
-      photrail_outvar=photrail_pho_Cone04PhotonIso_dEta015EB_dR070EE_mvVtx;
-    }
-    else if (differentialvariable=="combiso"){
-      pholead_outvar=pholead_pho_Cone04PFCombinedIso;
-      photrail_outvar=photrail_pho_Cone04PFCombinedIso;
-    }
-    else if (differentialvariable=="chargediso"){
-      pholead_outvar=pholead_pho_Cone04ChargedHadronIso_dR02_dz02_dxy01;
-      photrail_outvar=photrail_pho_Cone04ChargedHadronIso_dR02_dz02_dxy01;
-    }
-    else if (differentialvariable=="neutraliso"){
-      pholead_outvar=pholead_pho_Cone04NeutralHadronIso_mvVtx;
-      photrail_outvar=photrail_pho_Cone04NeutralHadronIso_mvVtx;
-    }
 
+//    if (differentialvariable=="photoniso"){
+//      pholead_outvar=pholead_pho_Cone04PhotonIso_dEta015EB_dR070EE_mvVtx;
+//      photrail_outvar=photrail_pho_Cone04PhotonIso_dEta015EB_dR070EE_mvVtx;
+//      candcounter=pholead_Npfcandphotonincone;
+//    }
+//    else if (differentialvariable=="combiso"){
+//      pholead_outvar=pholead_pho_Cone04PFCombinedIso;
+//      photrail_outvar=photrail_pho_Cone04PFCombinedIso;
+//      candcounter=pholead_Npfcandphotonincone+pholead_Npfcandchargedincone+pholead_Npfcandneutralincone;
+//    }
+//    else if (differentialvariable=="chargediso"){
+//      pholead_outvar=pholead_pho_Cone04ChargedHadronIso_dR02_dz02_dxy01;
+//      photrail_outvar=photrail_pho_Cone04ChargedHadronIso_dR02_dz02_dxy01;
+//      candcounter=pholead_Npfcandchargedincone;
+//    }
+//    else if (differentialvariable=="neutraliso"){
+//      pholead_outvar=pholead_pho_Cone04NeutralHadronIso_mvVtx;
+//      photrail_outvar=photrail_pho_Cone04NeutralHadronIso_mvVtx;
+//      candcounter=pholead_Npfcandneutralincone;
+//    }
+
+
+
+// TESTING STUFF
+    //    if (event_nRecVtx<7 || event_nRecVtx>9) continue;
+    //    if (candcounter>1) continue;
     //    std::cout << pholead_pho_Cone04PhotonIso_dEta015EB_dR070EE_mvVtx+pholead_pho_Cone04ChargedHadronIso_dR02_dz02_dxy01+pholead_pho_Cone04NeutralHadronIso_mvVtx << std::endl;
     //    std::cout << pholead_pho_Cone04PFCombinedIso << std::endl;
 
     // initial kinematic selection
     if (dodistribution) if (pholead_pt<40 || photrail_pt<30 || dipho_mgg_photon<80) continue;
-    if (dosignaltemplate || dobackgroundtemplate) if (pholead_pt<40) continue;
+    float cutpt = (mode=="muon") ? 10 : 30;
+    if (dosignaltemplate || dobackgroundtemplate) if (pholead_pt<cutpt) continue;
+
+    //    if (fabs(pholead_SCeta)>1.8) continue;
 
     Int_t event_ok_for_dataset=-1;
 
@@ -93,15 +107,39 @@ void template_production::Loop()
     }
     else std::cout << "We have a problem here!!!" << std::endl;
 
+    float eff_area[2] = {0,0};
+
+    if (mode!="muon"){
+      // use this to UNDO effarea corrections
+      if (differentialvariable=="photoniso") {eff_area[0] = 0.221; eff_area[1] = 0.130;}
+      if (differentialvariable=="chargediso") {eff_area[0] = 0.016; eff_area[1] = 0.017;}
+      if (differentialvariable=="neutraliso") {eff_area[0] = 0.097; eff_area[1] = 0.132;}
+    }
+
+    float puincone = 0.4*0.4*3.14*event_rho;
+    pholead_outvar+=puincone*eff_area[reg_lead];
+    photrail_outvar+=puincone*eff_area[reg_trail];
+
+//    float scale_lead = 1;
+//    float scale_trail = 1;
+//    if (mode=="muon") {scale_lead = 1.066;} // not using trail here
+//    else if (differentialvariable=="chargediso") {scale_lead = 1+2.5e-3; scale_trail=1+2.5e-3;}
+//    else if (differentialvariable=="photoniso") {scale_lead = pholead_scareaSF; scale_trail = photrail_scareaSF;}
+//    pholead_outvar/=scale_lead;
+//    photrail_outvar/=scale_trail;
+
+
     Float_t weight=event_luminormfactor*event_Kfactor*event_weight;
 
     //    Int_t bin_lead = Choose_bin_pt(pholead_pt,reg_lead);
-    Int_t bin_lead = Choose_bin_sieie(pholead_sieie,reg_lead);
+    Int_t bin_lead = Choose_bin_eta(pholead_SCeta,reg_lead);
+    //Int_t bin_lead = Choose_bin_sieie(pholead_sieie,reg_lead);
 
     Int_t bin_trail = -999;
     Int_t bin_couple = -999;
     if (dodistribution) {
-      bin_trail = Choose_bin_pt(photrail_pt,reg_trail);
+      //      bin_trail = Choose_bin_pt(photrail_pt,reg_trail);
+      bin_trail = Choose_bin_eta(photrail_SCeta,reg_trail);
       bin_couple = Choose_bin_invmass(dipho_mgg_photon,event_ok_for_dataset);
     }
    
@@ -124,6 +162,10 @@ void template_production::Loop()
     float ptweight_lead = FindPtWeight(pholead_pt,pholead_SCeta);
     float ptweight_trail = FindPtWeight(photrail_pt,photrail_SCeta);
 
+    ptweight_lead=1;
+    weight=1;
+
+
     if (dosignaltemplate){
       template_signal[reg_lead][bin_lead]->Fill(pholead_outvar,weight*ptweight_lead);
       histo_pt[reg_lead]->Fill(pholead_pt,weight*ptweight_lead);
@@ -131,7 +173,6 @@ void template_production::Loop()
     }
 
     if (dobackgroundtemplate){
-
 	if (mode=="sieiesideband"){ 
 	    if (fabs(pholead_SCeta)<1.4442 && pholead_sieie>0.011 && pholead_sieie<0.014) template_background[reg_lead][bin_lead]->Fill(pholead_outvar,weight*ptweight_lead);
 	    if (fabs(pholead_SCeta)>1.56 && pholead_sieie>0.030 && pholead_sieie<0.031) template_background[reg_lead][bin_lead]->Fill(pholead_outvar,weight*ptweight_lead);
@@ -142,9 +183,59 @@ void template_production::Loop()
 	  template_background[reg_lead][bin_lead]->Fill(pholead_outvar,weight*ptweight_lead);
 	  histo_pt[reg_lead]->Fill(pholead_pt,weight*ptweight_lead);
 	}
-      
     }
-    
+
+
+
+
+
+
+
+
+    pholead_outvar=-999;
+    photrail_outvar=-999;
+
+    if (dosignaltemplate||dobackgroundtemplate){
+      float et_recalc = 0;
+      float e_recalc = 0;
+      for (int i=0; i<pholead_Npfcandphotonincone; i++) {
+
+	float et=pholead_photonpfcandets[i];
+	float e=pholead_photonpfcandenergies[i];
+	float eta=fabs(TMath::ACosH(e/et));
+	if (eta>1.4442 && eta<1.56) continue;
+	if (eta>2.5) continue;
+	if (eta<1.4442){
+	  if (et<0.3) continue;
+	}
+	else if (eta>1.56){
+	  if (et<0.15) continue;
+	  if (e<0.7) continue;
+	}
+	et_recalc+=et;
+	e_recalc+=e;
+        if ((!isdata) && rand->Uniform(0,1)<0.20) e_recalc+=0.7;
+	hist2d_singlecandet->Fill(et,eta,weight*ptweight_lead);
+	hist2d_singlecandenergy->Fill(e,eta,weight*ptweight_lead);
+      }
+      hist2d_coneet->Fill(et_recalc,fabs(pholead_SCeta),weight*ptweight_lead);
+      hist2d_coneenergy->Fill(e_recalc,fabs(pholead_SCeta),weight*ptweight_lead);
+      //      hist2d_iso_ncand[reg_lead][bin_lead]->Fill(pholead_outvar,candcounter,weight*ptweight_lead);
+      template_signal[reg_lead][bin_lead]->Fill(e_recalc,weight*ptweight_lead); 
+   }    
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     if (dodistribution && event_ok_for_dataset>-1){
       
@@ -190,7 +281,7 @@ void gen_templates(TString filename="input.root", TString mode="", bool isdata=1
 
   TTree *t;
 
-  TString treename[10];
+  TString treename[11];
   treename[0] = TString("Tree_standard_sel");
   treename[1] = TString("Tree_signal_template");
   treename[2] = TString("Tree_background_template");
@@ -201,6 +292,7 @@ void gen_templates(TString filename="input.root", TString mode="", bool isdata=1
   treename[7] = TString("Tree_onlypreselection");
   treename[8] = TString("Tree_sieiesideband_sel");
   treename[9] = TString("Tree_combisosideband_sel");
+  treename[10] = TString("Tree_muoncone");
 
   TString treename_chosen="";
   if (mode=="standard") treename_chosen=treename[0];
@@ -210,6 +302,7 @@ void gen_templates(TString filename="input.root", TString mode="", bool isdata=1
   if (mode=="impinging") treename_chosen=treename[5];
   if (mode=="sieiesideband") treename_chosen=treename[8];
   if (mode=="combisosideband") treename_chosen=treename[9];
+  if (mode=="muon") treename_chosen=treename[10];
 
   file->GetObject(treename_chosen.Data(),t);
 
@@ -319,11 +412,10 @@ TProfile** template_production::GetPUScaling(bool doEB, TString diffvar){
     float eff_area = 0;
 
     // use this to UNDO effarea corrections
-//    if (diffvar=="photoniso") eff_area = isbarrel ? 0.225 : 0.594;
-//    if (diffvar=="chargediso") eff_area = isbarrel ? 0 : 0;
-//    if (diffvar=="neutraliso") eff_area = isbarrel ? 0.077 : 0.085;
-//    if (diffvar=="combiso") eff_area = isbarrel ? 0.302 : 0.679;
-//
+//    if (diffvar=="photoniso") eff_area = isbarrel ? 0.221 : 0.130;
+//    if (diffvar=="chargediso") eff_area = isbarrel ? 0.016 : 0.017;
+//    if (diffvar=="neutraliso") eff_area = isbarrel ? 0.097 : 0.132;
+
     if (diffvar=="photoniso"){
       pholead_outvar=pholead_pho_Cone04PhotonIso_dEta015EB_dR070EE_mvVtx;
     }

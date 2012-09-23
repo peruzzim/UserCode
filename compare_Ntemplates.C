@@ -3,7 +3,7 @@
 #include <iostream>
 
 
-void compare_Ntemplates(TString pref1, TString pref2, TString dset1, TString dset2, TString temp1, TString temp2, TString reg="EB", int rbin=1, int choosebin1=-1, int choosebin2=-1, float maxrange=5){
+void compare_Ntemplates(TString pref1, TString pref2, TString dset1, TString dset2, TString temp1, TString temp2, TString reg="EB", int rbin=1, int choosebin1=-1, int choosebin2=-1, float minrange=-5, float maxrange=5){
 
   const int nbins=10;
 
@@ -101,7 +101,7 @@ void compare_Ntemplates(TString pref1, TString pref2, TString dset1, TString dse
   c1->Divide(2);
 
   c1->cd(1);
-  h[0][nbins-1]->GetXaxis()->SetRangeUser(0,maxrange);
+  h[0][nbins-1]->GetXaxis()->SetRangeUser(minrange,maxrange);
   h[0][nbins-1]->Draw("axis");
   for (int j=0; j<2; j++){
     //    for (int i=0; i<nbins-1; i++){
@@ -115,7 +115,7 @@ void compare_Ntemplates(TString pref1, TString pref2, TString dset1, TString dse
 
   c1->cd(2);
   c1->GetPad(2)->SetLogy();
-  h[0][nbins-1]->GetXaxis()->SetRangeUser(0,maxrange);
+  h[0][nbins-1]->GetXaxis()->SetRangeUser(minrange,maxrange);
   h[0][nbins-1]->Draw("axis");
   for (int j=0; j<2; j++){
     //    for (int i=0; i<nbins-1; i++){

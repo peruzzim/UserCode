@@ -3,7 +3,7 @@
 #include <iostream>
 
 
-compare_3templates(TString pref, TString temp, TString reg, int rbin=-1){
+compare_3templates(TString pref, TString temp, TString reg, int rbin=-1, int binchoice=9, float normmin=-9999, float normmax=9999, float minplotrange=-5, float maxplotrange=5){
 
   TString pref1;
   TString dset1("gjet");
@@ -66,8 +66,9 @@ compare_3templates(TString pref, TString temp, TString reg, int rbin=-1){
   if (temp1=="impinging") name1.Append("impinging_track_template/template_background_");
   if (temp1=="sieiesideband") name1.Append("sieiesideband_sel/template_background_");
   if (temp1=="combisosideband") name1.Append("combisosideband_sel/template_background_");
+  if (temp1=="muon") name1.Append("muoncone/template_signal_");
   name1.Append(reg);
-  name1.Append("_b9");
+  name1.Append(Form("_b%d",binchoice));
 
   TString name2="";
   if (dset2=="data") name2.Append("data_Tree_"); else name2.Append("mc_Tree_");
@@ -77,8 +78,9 @@ compare_3templates(TString pref, TString temp, TString reg, int rbin=-1){
   if (temp2=="impinging") name2.Append("impinging_track_template/template_background_");
   if (temp2=="sieiesideband") name2.Append("sieiesideband_sel/template_background_");
   if (temp2=="combisosideband") name2.Append("combisosideband_sel/template_background_");
+  if (temp2=="muon") name2.Append("muoncone/template_signal_");
   name2.Append(reg);
-  name2.Append("_b9");
+  name2.Append(Form("_b%d",binchoice));
 
   TString name3="";
   if (dset3=="data") name3.Append("data_Tree_"); else name3.Append("mc_Tree_");
@@ -88,8 +90,9 @@ compare_3templates(TString pref, TString temp, TString reg, int rbin=-1){
   if (temp3=="impinging") name3.Append("impinging_track_template/template_background_");
   if (temp3=="sieiesideband") name3.Append("sieiesideband_sel/template_background_");
   if (temp3=="combisosideband") name3.Append("combisosideband_sel/template_background_");
+  if (temp3=="muon") name3.Append("muoncone/template_signal_");
   name3.Append(reg);
-  name3.Append("_b9");
+  name3.Append(Form("_b%d",binchoice));
 
 
 
@@ -116,7 +119,8 @@ compare_3templates(TString pref, TString temp, TString reg, int rbin=-1){
   for (int i=0; i<3; i++) h[i]->Rebin(rbin);
 
   for (int i=0; i<3; i++){
-    h[i]->Scale(1.0/h[i]->Integral());
+    h[i]->Scale(1.0/h[i]->Integral(h[i]->FindBin(normmin),h[i]->FindBin(normmax)));
+    h[i]->SetAxisRange(minplotrange,maxplotrange);
     h[i]->SetLineColor(colors[i]);
     h[i]->SetLineWidth(2);
   }
@@ -134,25 +138,34 @@ compare_3templates(TString pref, TString temp, TString reg, int rbin=-1){
   c1->cd();
   c1->Divide(2);
 
-  h[0]->GetXaxis()->SetTitle(pref.Data());
+  h[2]->GetXaxis()->SetTitle(pref.Data());
   //  h[0]->GetXaxis()->SetRangeUser(0,maxrange);
   
+  //  h[2]->GetYaxis()->SetRangeUser(0,0.09);
+
+  float max=0;
+  for (int i=0; i<3; i++){
+    float thismax = h[i]->GetBinContent(h[i]->GetMaximumBin());
+    max = (thismax>max) ? thismax : max;
+  }
+  h[2]->GetYaxis()->SetRangeUser(0,max*1.05);
+
   c1->cd(1);
-  h[0]->Draw();
+  h[2]->Draw();
   h[1]->Draw("same");
-  h[2]->Draw("same");
-  leg->Draw();	
+  h[0]->Draw("same");
+  //  leg->Draw();	
 
   c1->cd(2);
   c1->GetPad(2)->SetLogy();
-  h[0]->Draw();
+  h[2]->Draw();
   h[1]->Draw("same");
-  h[2]->Draw("same");
-  leg->Draw();	
+  h[0]->Draw("same");
+  //  leg->Draw();	
 
   c1->Update();
 
-  c1->SaveAs(Form("plots/comparison_%s_%s_%s.root",pref.Data(),temp.Data(),reg.Data()));
-  c1->SaveAs(Form("plots/comparison_%s_%s_%s.png",pref.Data(),temp.Data(),reg.Data()));
+  //  c1->SaveAs(Form("plots/comparison_%s_%s_%s_b%d.root",pref.Data(),temp.Data(),reg.Data(),binchoice));
+  c1->SaveAs(Form("plots/comparison_%s_%s_%s_b%d.png",pref.Data(),temp.Data(),reg.Data(),binchoice));
 
 }

@@ -28,6 +28,8 @@
 #include "RooBinning.h"
 #include "TString.h"
 #include "TH1.h"
+#include "TMath.h"
+#include "TRandom3.h"
 
 using namespace std;
 using namespace RooFit;
@@ -183,6 +185,16 @@ public :
    Int_t           pholead_PhoMCmatchexitcode;
    Int_t           photrail_PhoMCmatchindex;
    Int_t           photrail_PhoMCmatchexitcode;
+   Int_t           pholead_Npfcandphotonincone;
+   Int_t           pholead_Npfcandchargedincone;
+   Int_t           pholead_Npfcandneutralincone;
+   Int_t           photrail_Npfcandphotonincone;
+   Int_t           photrail_Npfcandchargedincone;
+   Int_t           photrail_Npfcandneutralincone;
+   Float_t         pholead_scareaSF;
+   Float_t         photrail_scareaSF;
+   Float_t         pholead_photonpfcandenergies[30];
+   Float_t         pholead_photonpfcandets[30];
 
    // List of branches
    TBranch        *b_event_luminormfactor;   //!
@@ -330,6 +342,17 @@ public :
    TBranch        *b_pholead_PhoMCmatchexitcode;   //!
    TBranch        *b_photrail_PhoMCmatchindex;   //!
    TBranch        *b_photrail_PhoMCmatchexitcode;   //!
+   TBranch        *b_pholead_Npfcandphotonincone;
+   TBranch        *b_pholead_Npfcandchargedincone;
+   TBranch        *b_pholead_Npfcandneutralincone;
+   TBranch        *b_photrail_Npfcandphotonincone;
+   TBranch        *b_photrail_Npfcandchargedincone;
+   TBranch        *b_photrail_Npfcandneutralincone;
+   TBranch        *b_pholead_scareaSF;
+   TBranch        *b_photrail_scareaSF;
+   TBranch        *b_pholead_photonpfcandets;
+   TBranch        *b_pholead_photonpfcandenergies;
+
 
    template_production(TTree *tree=0);
    virtual ~template_production();
@@ -363,11 +386,19 @@ public :
    TH1F *obs_hist_single[2][n_templates];
    TH2F *obs_hist[3][n_templates];
 
+   TH2F *hist2d_iso_ncand[2][n_templates+1];
+
+   TH2F *hist2d_singlecandet;
+   TH2F *hist2d_singlecandenergy;
+   TH2F *hist2d_coneet;
+   TH2F *hist2d_coneenergy;
+
    bool pt_reweighting_initialized;
    bool do_pt_reweighting;
 
    Float_t pholead_outvar;
    Float_t photrail_outvar;
+   Int_t candcounter;
 
    Bool_t initialized;
 
@@ -445,7 +476,7 @@ void template_production::Setup(Bool_t _isdata, TString _mode, TString _differen
   Init();
 
   if (mode=="standard") dodistribution=true;
-  if (mode=="signal" || mode=="randomcone") dosignaltemplate=true;
+  if (mode=="signal" || mode=="randomcone" || mode=="muon") dosignaltemplate=true;
   if (mode=="background" || mode=="impinging" || mode=="sieiesideband" || mode=="combisosideband") dobackgroundtemplate=true;
    
   if (mode=="sieiesideband") for (int i=0; i<5; i++) std::cout << "Warning: large sieie sideband (0.014/0.031)" << std::endl;
@@ -480,7 +511,26 @@ void template_production::Setup(Bool_t _isdata, TString _mode, TString _differen
       template_background[i][j] = new TH1F(t.Data(),t.Data(),n_histobins,leftrange,rightrange);
       template_background[i][j]->Sumw2();
     }
+  for (int i=0; i<2; i++)
+    for (int j=0; j<n_templates+1; j++) {
+      TString name="hist2d_iso_ncand";
+      TString reg;
+      if (i==0) reg="EB"; else if (i==1) reg="EE";
+      TString t=Form("%s_%s_b%d",name.Data(),reg.Data(),j);
+      hist2d_iso_ncand[i][j] = new TH2F(t.Data(),t.Data(),n_histobins,leftrange,rightrange,10,0,10);
+      hist2d_iso_ncand[i][j]->Sumw2();
+    }
+
+  Double_t etabinsfor2d[26] = {0.0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0,1.1,1.2,1.3,1.4442,1.56,1.653,1.7,1.8,1.9,2.0,2.1,2.2,2.3,2.4,2.5};
       
+  hist2d_singlecandet = new TH2F("hist2d_singlecandet","hist2d_singlecandet",500,0,5,25,etabinsfor2d);
+  hist2d_singlecandet->GetYaxis()->SetTitle("ET");
+  hist2d_singlecandenergy = new TH2F("hist2d_singlecandenergy","hist2d_singlecandenergy",500,0,5,25,etabinsfor2d);
+  hist2d_singlecandenergy->GetYaxis()->SetTitle("E");
+  hist2d_coneet = new TH2F("hist2d_coneet","hist2d_coneet",500,0,5,25,etabinsfor2d);
+  hist2d_coneet->GetYaxis()->SetTitle("ET");
+  hist2d_coneenergy = new TH2F("hist2d_coneenergy","hist2d_coneenergy",500,0,5,25,etabinsfor2d);
+  hist2d_coneenergy->GetYaxis()->SetTitle("E");
 
   // obs_hist{,_single}
 
@@ -799,7 +849,16 @@ void template_production::Init()
    fChain->SetBranchAddress("pholead_PhoMCmatchexitcode", &pholead_PhoMCmatchexitcode, &b_pholead_PhoMCmatchexitcode);
    fChain->SetBranchAddress("photrail_PhoMCmatchindex", &photrail_PhoMCmatchindex, &b_photrail_PhoMCmatchindex);
    fChain->SetBranchAddress("photrail_PhoMCmatchexitcode", &photrail_PhoMCmatchexitcode, &b_photrail_PhoMCmatchexitcode);
-
+   fChain->SetBranchAddress("pholead_Npfcandphotonincone",&pholead_Npfcandphotonincone, &b_pholead_Npfcandphotonincone);
+   fChain->SetBranchAddress("pholead_Npfcandchargedincone",&pholead_Npfcandchargedincone, &b_pholead_Npfcandchargedincone);
+   fChain->SetBranchAddress("pholead_Npfcandneutralincone",&pholead_Npfcandneutralincone, &b_pholead_Npfcandneutralincone);
+   fChain->SetBranchAddress("photrail_Npfcandphotonincone",&photrail_Npfcandphotonincone, &b_photrail_Npfcandphotonincone);
+   fChain->SetBranchAddress("photrail_Npfcandchargedincone",&photrail_Npfcandchargedincone, &b_photrail_Npfcandchargedincone);
+   fChain->SetBranchAddress("photrail_Npfcandneutralincone",&photrail_Npfcandneutralincone, &b_photrail_Npfcandneutralincone);
+   fChain->SetBranchAddress("pholead_scareaSF",&pholead_scareaSF, &b_pholead_scareaSF);
+   fChain->SetBranchAddress("photrail_scareaSF",&photrail_scareaSF, &b_photrail_scareaSF);
+   fChain->SetBranchAddress("pholead_photonpfcandenergies",&pholead_photonpfcandenergies, &b_pholead_photonpfcandenergies);
+   fChain->SetBranchAddress("pholead_photonpfcandets",&pholead_photonpfcandets, &b_pholead_photonpfcandets);
 
    Notify();
 }
@@ -845,9 +904,17 @@ void template_production::WriteOutput(const char* filename, const TString _dirna
 
     for (int i=0; i<2; i++) for (int l=0; l<n_templates; l++) template_signal[i][n_templates]->Add(template_signal[i][l]);
     for (int i=0; i<2; i++) for (int l=0; l<n_templates; l++) template_background[i][n_templates]->Add(template_background[i][l]);
+    for (int i=0; i<2; i++) for (int l=0; l<n_templates; l++) hist2d_iso_ncand[i][n_templates]->Add(hist2d_iso_ncand[i][l]);
 
     for (int i=0; i<2; i++) for (int l=0; l<n_templates+1; l++) template_signal[i][l]->Write();
     for (int i=0; i<2; i++) for (int l=0; l<n_templates+1; l++) template_background[i][l]->Write();
+    for (int i=0; i<2; i++) for (int l=0; l<n_templates+1; l++) hist2d_iso_ncand[i][l]->Write();
+
+    hist2d_singlecandet->Write();
+    hist2d_singlecandenergy->Write();
+    hist2d_coneet->Write();
+    hist2d_coneenergy->Write();
+
 
   }
 

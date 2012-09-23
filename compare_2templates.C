@@ -3,7 +3,7 @@
 #include <iostream>
 
 
-compare_2templates(TString pref1, TString pref2, TString dset1, TString dset2, TString temp1, TString temp2, TString reg="EB", TString colorstring="br", int rbin=1, float maxrange=5){
+compare_2templates(TString pref1, TString pref2, TString dset1, TString dset2, TString temp1, TString temp2, TString reg="EB", TString colorstring="br", int rbin=1){
 
   TString file1=pref1;
   file1.Append("_");
@@ -87,13 +87,13 @@ compare_2templates(TString pref1, TString pref2, TString dset1, TString dset2, T
   c1->Divide(2);
 
   c1->cd(1);
-  h[0]->GetXaxis()->SetRangeUser(0,maxrange);
+  h[0]->GetXaxis()->SetRangeUser(-5,5);
   h[0]->Draw();
   h[1]->Draw("same");
 
   c1->cd(2);
   c1->GetPad(2)->SetLogy();
-  h[0]->GetXaxis()->SetRangeUser(0,maxrange);
+  h[0]->GetXaxis()->SetRangeUser(-5,5);
   h[0]->Draw();
   h[1]->Draw("same");
 
