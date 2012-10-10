@@ -140,21 +140,7 @@ void template_production::Loop()
 	if (eta>1.4442 && eta<1.56) continue;
 	if (eta>2.5) continue;
 
-	if (eta<1.4442){
-
-	  if (e<0.25) continue;
-	  //	  if (deta<0.015) continue;
-
-	}
-	else if (eta>1.56){
-
-	  if (et<0.15) continue;
-	  if (e<0.6) continue;
-	  //	  if (deta<0.05) continue;
-	  //	  if (dR<4*0.00864*fabs(sinh(pholead_SCeta))) continue;
-	  //	  if (dR<0.2) continue;
-
-	}
+#include "cleaning.cc"
 
 	if (fabs(pholead_SCeta)<1.4442 && eta>1.4442) continue;
 	if (fabs(pholead_SCeta)>1.56 && eta<1.56) continue;
@@ -204,21 +190,7 @@ void template_production::Loop()
 	if (eta>1.4442 && eta<1.56) continue;
 	if (eta>2.5) continue;
 
-	if (eta<1.4442){
-
-	  if (e<0.25) continue;
-	  //	  if (deta<0.015) continue;
-
-	}
-	else if (eta>1.56){
-
-	  if (et<0.15) continue;
-	  if (e<0.6) continue;
-	  //	  if (deta<0.05) continue;
-	  //	  if (dR<4*0.00864*fabs(sinh(photrail_SCeta))) continue;
-	  //	  if (dR<0.2) continue;
-
-	}
+#include "cleaning.cc"
 
 	if (fabs(photrail_SCeta)<1.4442 && eta>1.4442) continue;
 	if (fabs(photrail_SCeta)>1.56 && eta<1.56) continue;

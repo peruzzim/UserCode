@@ -1,9 +1,13 @@
 #include "binsdef.h"
-#include <assert>
+#include <assert.h>
 #include <iostream>
+#include "TString.h"
+#include "TFile.h"
+#include "TH1F.h"
+#include "TCanvas.h"
+#include "TLegend.h"
 
-
-compare_3templates(TString pref, TString temp, TString reg, int rbin=-1, int binchoice=9, float normmin=-9999, float normmax=9999, float minplotrange=-5, float maxplotrange=5){
+void compare_3templates(TString pref, TString temp, TString reg, int rbin=-1, int binchoice=n_bins, float normmin=-9999, float normmax=9999, float minplotrange=-5, float maxplotrange=5){
 
   TString pref1;
   TString dset1("gjet");

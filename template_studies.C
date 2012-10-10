@@ -27,23 +27,23 @@ typedef struct {
 
 bool study_templates=0;
 
-fit_output* fit_dataset(const char* inputfilename_t, const char* inputfilename_d, TString diffvariable, TString splitting, float leftrange, float rightrange, int bin, TCanvas *canv=NULL, int rbin=1){
+fit_output* fit_dataset(const char* inputfilename_t, const char* inputfilename_d, TString diffvariable, TString splitting, float leftrange, float rightrange, int bin, int rbin=1){
 
 fit_output *out = new fit_output();
 
   TFile *inputfile_t = TFile::Open(inputfilename_t);
   TFile *inputfile_d = TFile::Open(inputfilename_d);
 
-  //  TString data_dir("data_Tree_standard_sel/");
-  //  if (!isdata) data_dir="mc_Tree_standard_sel/";
-  TString data_dir("data_Tree_standard_sel/"); //testing without mc
+
+  TString data_dir("mc_Tree_standard_sel/");
+  //TString data_dir("data_Tree_standard_sel/"); 
   
   TString sig_dir("data_Tree_randomcone_signal_template/");
-  //  TString bkg_dir("data_Tree_impinging_track_template/");
-  //  TString sig_dir("mc_Tree_randomcone_signal_template/");
-  //  TString bkg_dir("mc_Tree_impinging_track_template/");
   //  TString sig_dir("mc_Tree_signal_template/");
+  //  TString sig_dir("mc_Tree_randomcone_signal_template/");
+
   TString bkg_dir("data_Tree_sieiesideband_sel/");
+  //TString bkg_dir("mc_Tree_sieiesideband_sel/");
 
   if (splitting=="EEEB") splitting="EBEE";
 
@@ -158,25 +158,26 @@ fit_output *out = new fit_output();
 
   out->tot_events=h_datahist_2D->Integral();
 
+  TCanvas *canv = new TCanvas();
+  canv->SetName(Form("fittingplot_%s_%s_b%d",splitting.Data(),diffvariable.Data(),bin));
+  canv->SetTitle(Form("fittingplot_%s_%s_b%d",splitting.Data(),diffvariable.Data(),bin));
 
-  //  canv=NULL;
-  if (canv!=NULL){
-
-    RooPlot *varframe[2];
-    varframe[0]=roovar1.frame();
-    varframe[1]=roovar2.frame();
-    int i=0;
-    canv->cd(bin+i+1);
-    datahist->plotOn(varframe[i]);
-    model->plotOn(varframe[i],Range("fitrange"),NormRange("fullrange"));
-    model->plotOn(varframe[i],Components("sigsigpdf"),LineStyle(kDashed),LineColor(kRed),Range("fitrange"),NormRange("fullrange"));
-    model->plotOn(varframe[i],Components("sigbkgpdf"),LineStyle(kDashed),LineColor(kGreen),Range("fitrange"),NormRange("fullrange"));
-    model->plotOn(varframe[i],Components("bkgbkgpdf"),LineStyle(kDashed),LineColor(kBlack),Range("fitrange"),NormRange("fullrange"));
-    varframe[i]->Draw();
-
+  RooPlot *varframe[2];
+  varframe[0]=roovar1.frame();
+  varframe[1]=roovar2.frame();
+  canv->Divide(2);
+  for (int i=0; i<2; i++){
+  canv->cd(i+1);
+  datahist->plotOn(varframe[i]);
+  model->plotOn(varframe[i],Range("fitrange"),NormRange("fullrange"));
+  model->plotOn(varframe[i],Components("sigsigpdf"),LineStyle(kDashed),LineColor(kRed),Range("fitrange"),NormRange("fullrange"));
+  model->plotOn(varframe[i],Components("sigbkgpdf"),LineStyle(kDashed),LineColor(kGreen),Range("fitrange"),NormRange("fullrange"));
+  model->plotOn(varframe[i],Components("bkgbkgpdf"),LineStyle(kDashed),LineColor(kBlack),Range("fitrange"),NormRange("fullrange"));
+  varframe[i]->Draw();
+  canv->GetPad(i+1)->SetLogy(1);
   }
 
-
+  canv->SaveAs(Form("plots/fittingplot_%s_%s_b%d.png",splitting.Data(),diffvariable.Data(),bin));
 
   return out;
 
@@ -228,8 +229,6 @@ void run_fits(TString inputfilename_t="templates.root", TString inputfilename_d=
   
   fit_output *fr[n_bins];
 
-  TCanvas *fits_canv;
-
   TH1F *purity[3];
   TH1F *eff;
   TH1F *xsec;
@@ -265,16 +264,7 @@ void run_fits(TString inputfilename_t="templates.root", TString inputfilename_d=
 
 
     //    xsec->GetYaxis()->SetTitle("");
-    xsec->GetXaxis()->SetTitle("diffvariable.Data()");
-
-
-    fits_canv = new TCanvas("fits","fits");
-    if (bins_to_run==4) fits_canv->Divide(2,3);
-    if (bins_to_run==6) fits_canv->Divide(2,3);
-    if (bins_to_run==8) fits_canv->Divide(2,4);
-    if (bins_to_run==9) fits_canv->Divide(2,5);
-    if (bins_to_run==12) fits_canv->Divide(2,6);
-    if (bins_to_run==15) fits_canv->Divide(2,8);
+    xsec->GetXaxis()->SetTitle(diffvariable.Data());
 
 
 
@@ -284,7 +274,7 @@ void run_fits(TString inputfilename_t="templates.root", TString inputfilename_d=
 
   for (int bin=0; bin<bins_to_run; bin++) {
 
-    fr[bin]=fit_dataset(inputfilename_t.Data(),inputfilename_d.Data(),diffvariable,splitting,leftrange,rightrange,bin,fits_canv,rebin);
+    fr[bin]=fit_dataset(inputfilename_t.Data(),inputfilename_d.Data(),diffvariable,splitting,leftrange,rightrange,bin,rebin);
     
     float intlumi=4.519;
 
@@ -312,7 +302,6 @@ void run_fits(TString inputfilename_t="templates.root", TString inputfilename_d=
 
   }
 
-  fits_canv->Update();
 
   TCanvas *output_canv = new TCanvas("output_canv","output_canv");
   output_canv->cd();
