@@ -30,6 +30,9 @@
 #include "TH1.h"
 #include "TMath.h"
 #include "TRandom3.h"
+#include <map>
+#include "TVector3.h"
+#include "TLorentzVector.h"
 
 using namespace std;
 using namespace RooFit;
@@ -45,7 +48,12 @@ public :
    Float_t         event_weight;
    Float_t         event_rho;
    Int_t           event_nPU;
+   Int_t           event_PUOOTnumInteractionsEarly;
+   Int_t           event_PUOOTnumInteractionsLate;
    Int_t           event_nRecVtx;
+   Int_t           event_CSCTightHaloID;
+   Int_t           event_NMuons;
+   Int_t           event_NMuonsTot;
    Float_t         dipho_mgg_photon;
    Float_t         dipho_mgg_newCorr;
    Float_t         dipho_mgg_newCorrLocal;
@@ -195,14 +203,25 @@ public :
    Float_t         photrail_scareaSF;
    Float_t         pholead_photonpfcandenergies[30];
    Float_t         pholead_photonpfcandets[30];
-
+   Float_t         pholead_photonpfcanddetas[30];
+   Float_t         pholead_photonpfcanddphis[30];
+   Float_t         photrail_photonpfcandenergies[30];
+   Float_t         photrail_photonpfcandets[30];
+   Float_t         photrail_photonpfcanddetas[30];
+   Float_t         photrail_photonpfcanddphis[30];
+   
    // List of branches
    TBranch        *b_event_luminormfactor;   //!
    TBranch        *b_event_Kfactor;   //!
    TBranch        *b_event_weight;   //!
    TBranch        *b_event_rho;   //!
    TBranch        *b_event_nPU;   //!
+   TBranch        *b_event_PUOOTnumInteractionsEarly;   //!
+   TBranch        *b_event_PUOOTnumInteractionsLate;   //!
    TBranch        *b_event_nRecVtx;   //!
+   TBranch        *b_event_CSCTightHaloID; //!
+   TBranch        *b_event_NMuons; //!
+   TBranch        *b_event_NMuonsTot; //!
    TBranch        *b_dipho_mgg_photon;   //!
    TBranch        *b_dipho_mgg_newCorr;   //!
    TBranch        *b_dipho_mgg_newCorrLocal;   //!
@@ -352,6 +371,12 @@ public :
    TBranch        *b_photrail_scareaSF;
    TBranch        *b_pholead_photonpfcandets;
    TBranch        *b_pholead_photonpfcandenergies;
+   TBranch        *b_pholead_photonpfcanddetas;
+   TBranch        *b_pholead_photonpfcanddphis;
+   TBranch        *b_photrail_photonpfcandets;
+   TBranch        *b_photrail_photonpfcandenergies;
+   TBranch        *b_photrail_photonpfcanddetas;
+   TBranch        *b_photrail_photonpfcanddphis;
 
 
    template_production(TTree *tree=0);
@@ -374,27 +399,49 @@ public :
 
    TRandom3 *randomgen;
 
+   float AbsDeltaPhi(double phi1, double phi2);
+
    static const int n_templates=n_bins;
 
    bool dosignal;
 
    TH1F *histo_pt[2];
+   TH1F *histo_eta;
+   TH2F *histo_pt_eta;
 
    TH1F *template_signal[2][n_templates+1];
    TH1F *template_background[2][n_templates+1];
 
-   TH1F *obs_hist_single[2][n_templates];
-   TH2F *obs_hist[3][n_templates];
+   //   TH1F *obs_hist_single[2][n_templates];
+   //   TH2F *obs_hist[3][n_templates];
+
+   //   std::vector<TString> diffvariables_list;
+
+   std::map<TString, TH1F*> obs_hist_single;
+   std::map<TString, TH2F*> obs_hist;
+
+   TString get_name_obs_single(int region, TString diffvariable, int bin);
+   TString get_name_obs(int region, TString diffvariable, int bin);
+
 
    TH2F *hist2d_iso_ncand[2][n_templates+1];
 
    TH2F *hist2d_singlecandet;
+   TH2F *hist2d_singlecanddeta;
+   TH2F *hist2d_singlecanddphi;
+   TH2F *hist2d_singlecanddR;
    TH2F *hist2d_singlecandenergy;
    TH2F *hist2d_coneet;
    TH2F *hist2d_coneenergy;
 
    bool pt_reweighting_initialized;
    bool do_pt_reweighting;
+
+   bool eta_reweighting_initialized;
+   bool do_eta_reweighting;
+
+   bool pt_eta_reweighting_initialized;
+   bool do_pt_eta_reweighting;
 
    Float_t pholead_outvar;
    Float_t photrail_outvar;
@@ -415,6 +462,10 @@ public :
    Bool_t dodistribution;
 
    Int_t Choose_bin_invmass(float invmass, int region);
+   Int_t Choose_bin_diphotonpt(float diphotonpt, int region);
+   Int_t Choose_bin_costhetastar(float costhetastar, int region);
+   Int_t Choose_bin_dphi(float dphi, int region);
+
    Int_t Choose_bin_pt(float pt, int region);
    Int_t Choose_bin_eta(float eta, int region);
    Int_t Choose_bin_sieie(float sieie, int region);
@@ -423,8 +474,17 @@ public :
    void Initialize_Pt_Reweighting(TString dset1, TString dset2, TString temp1, TString temp2);
    void SetNoPtReweighting();
 
-   TH1F *histo_pt_reweighting[2];
+   float FindEtaWeight(float eta);
+   void Initialize_Eta_Reweighting(TString dset1, TString dset2, TString temp1, TString temp2);
+   void SetNoEtaReweighting();
 
+   float FindPtEtaWeight(float pt, float eta);
+   void Initialize_Pt_Eta_Reweighting(TString dset1, TString dset2, TString temp1, TString temp2);
+   void SetNoPtEtaReweighting();
+
+   TH1F *histo_pt_reweighting[2];
+   TH1F *histo_eta_reweighting;
+   TH2F *histo_pt_eta_reweighting;
 };
 
 #endif
@@ -459,6 +519,12 @@ template_production::template_production(TTree *tree)
    pt_reweighting_initialized = 0;
    do_pt_reweighting = 0;
 
+   eta_reweighting_initialized = 0;
+   do_eta_reweighting = 0;
+
+   pt_eta_reweighting_initialized = 0;
+   do_pt_eta_reweighting = 0;
+
    n_histobins = 400;
    leftrange = -5.0;
    rightrange = 5.0;
@@ -467,11 +533,14 @@ template_production::template_production(TTree *tree)
 
 void template_production::Setup(Bool_t _isdata, TString _mode, TString _differentialvariable){
 
-  for (int i=0; i<5; i++) std::cout << "WARNING: NO PT REWEIGHTING FOR 2D HISTOS" << std::endl;
-
   isdata=_isdata;
   mode=_mode;
   differentialvariable=_differentialvariable;
+
+//  diffvariables_list.push_back(TString("invmass"));
+//  diffvariables_list.push_back(TString("diphotonpt"));
+//  diffvariables_list.push_back(TString("costhetastar"));
+//  diffvariables_list.push_back(TString("dphi"));
 
   Init();
 
@@ -479,7 +548,7 @@ void template_production::Setup(Bool_t _isdata, TString _mode, TString _differen
   if (mode=="signal" || mode=="randomcone" || mode=="muon") dosignaltemplate=true;
   if (mode=="background" || mode=="impinging" || mode=="sieiesideband" || mode=="combisosideband") dobackgroundtemplate=true;
    
-  if (mode=="sieiesideband") for (int i=0; i<5; i++) std::cout << "Warning: large sieie sideband (0.014/0.031)" << std::endl;
+  if (mode=="sieiesideband") for (int i=0; i<1; i++) std::cout << "Info: sieie sideband is (0.014/0.031)" << std::endl;
 
   randomgen = new TRandom3(0);
 
@@ -488,10 +557,12 @@ void template_production::Setup(Bool_t _isdata, TString _mode, TString _differen
     TString reg;
     if (i==0) reg="EB"; else if (i==1) reg="EE";
     name.Append(reg);
-    histo_pt[i] = new TH1F(name.Data(),name.Data(),172,40,900);
+    histo_pt[i] = new TH1F(name.Data(),name.Data(),135,30,300);
   }
 
-  
+  histo_eta = new TH1F("histo_eta","histo_eta",25,0,2.5);
+  histo_pt_eta = new TH2F("histo_pt_eta","histo_pt_eta",135,30,300,25,0,2.5);
+
   // template_{signal,background}[EB,EE][n_templates]
   for (int i=0; i<2; i++)
     for (int j=0; j<n_templates+1; j++) {
@@ -525,38 +596,177 @@ void template_production::Setup(Bool_t _isdata, TString _mode, TString _differen
       
   hist2d_singlecandet = new TH2F("hist2d_singlecandet","hist2d_singlecandet",500,0,5,25,etabinsfor2d);
   hist2d_singlecandet->GetYaxis()->SetTitle("ET");
+
   hist2d_singlecandenergy = new TH2F("hist2d_singlecandenergy","hist2d_singlecandenergy",500,0,5,25,etabinsfor2d);
   hist2d_singlecandenergy->GetYaxis()->SetTitle("E");
+
+  hist2d_singlecanddeta = new TH2F("hist2d_singlecanddeta","hist2d_singlecanddeta",450,-0.45,0.45,25,etabinsfor2d);
+  hist2d_singlecanddeta->GetYaxis()->SetTitle("dEta");
+
+  hist2d_singlecanddphi = new TH2F("hist2d_singlecanddphi","hist2d_singlecanddphi",450,-0.45,0.45,25,etabinsfor2d);
+  hist2d_singlecanddphi->GetYaxis()->SetTitle("dPhi");
+
+  hist2d_singlecanddR = new TH2F("hist2d_singlecanddR","hist2d_singlecanddR",450,0,0.45,25,etabinsfor2d);
+  hist2d_singlecanddR->GetYaxis()->SetTitle("dR");
+
   hist2d_coneet = new TH2F("hist2d_coneet","hist2d_coneet",500,0,5,25,etabinsfor2d);
   hist2d_coneet->GetYaxis()->SetTitle("ET");
+
   hist2d_coneenergy = new TH2F("hist2d_coneenergy","hist2d_coneenergy",500,0,5,25,etabinsfor2d);
   hist2d_coneenergy->GetYaxis()->SetTitle("E");
 
   // obs_hist{,_single}
 
-  for (int i=0; i<2; i++)
-    for (int j=0; j<n_templates; j++) {
-      TString name_signal="obs_hist_single";
-      TString reg;
-      if (i==0) reg="EB"; else if (i==1) reg="EE";
-      TString t=Form("%s_%s_b%d",name_signal.Data(),reg.Data(),j);
-      obs_hist_single[i][j] = new TH1F(t.Data(),t.Data(),n_histobins,leftrange,rightrange);
-      obs_hist_single[i][j]->Sumw2();
-    }
-  for (int i=0; i<3; i++)
-    for (int j=0; j<n_templates; j++) {
-      TString name_signal="obs_hist";
-      TString reg;
-      if (i==0) reg="EBEB"; else if (i==1) reg="EBEE"; else if (i==2) reg="EEEE"; else if (i==3) reg="EEEB";
-      TString t=Form("%s_%s_b%d",name_signal.Data(),reg.Data(),j);
-      obs_hist[i][j] = new TH2F(t.Data(),t.Data(),n_histobins,leftrange,rightrange,n_histobins,leftrange,rightrange);
-      obs_hist[i][j]->Sumw2();
-    }
-
+  for (std::vector<TString>::const_iterator diffvariable = diffvariables_list.begin(); diffvariable!=diffvariables_list.end(); diffvariable++){
+    for (int i=0; i<2; i++)
+      for (int j=0; j<n_templates; j++) {
+	TString name_signal="obs_hist_single";
+	TString reg;
+	if (i==0) reg="EB"; else if (i==1) reg="EE";
+	TString t=Form("%s_%s_%s_b%d",name_signal.Data(),reg.Data(),diffvariable->Data(),j);
+	obs_hist_single[t] = new TH1F(t.Data(),t.Data(),n_histobins,leftrange,rightrange);
+	obs_hist_single[t]->Sumw2();
+      }
+    for (int i=0; i<3; i++)
+      for (int j=0; j<n_templates; j++) {
+	TString name_signal="obs_hist";
+	TString reg;
+	if (i==0) reg="EBEB"; else if (i==1) reg="EBEE"; else if (i==2) reg="EEEE"; else if (i==3) reg="EEEB";
+	TString t=Form("%s_%s_%s_b%d",name_signal.Data(),reg.Data(),diffvariable->Data(),j);
+	obs_hist[t] = new TH2F(t.Data(),t.Data(),n_histobins,leftrange,rightrange,n_histobins,leftrange,rightrange);
+	obs_hist[t]->Sumw2();
+      }
+  }
 
   
   initialized=true;
   
+};
+
+void template_production::Initialize_Eta_Reweighting(TString dset1, TString dset2, TString temp1, TString temp2){
+
+  TString file1="forreweight_";
+  file1.Append(dset1);
+  file1.Append("_");
+  file1.Append(temp1);
+  file1.Append(".root");
+
+  TString file2="forreweight_";
+  file2.Append(dset2);
+  file2.Append("_");
+  file2.Append(temp2);
+  file2.Append(".root");
+
+
+  TFile *f1 = new TFile(file1.Data(),"read");
+  TFile *f2 = new TFile(file2.Data(),"read");
+
+  TString name1="";
+  if (dset1=="data") name1.Append("data_Tree_"); else name1.Append("mc_Tree_");
+  if (temp1=="bkg") name1.Append("background_template/");
+  if (temp1=="sig") name1.Append("signal_template/");
+  if (temp1=="rcone") name1.Append("randomcone_signal_template/");
+  if (temp1=="impinging") name1.Append("impinging_track_template/");
+  if (temp1=="sieiesideband") name1.Append("sieiesideband_sel/");
+  if (temp1=="combisosideband") name1.Append("combisosideband_sel/");
+  name1.Append("histo_eta");
+
+  TString name2="";
+  if (dset2=="data") name2.Append("data_Tree_"); else name2.Append("mc_Tree_");
+  if (temp2=="bkg") name2.Append("background_template/");
+  if (temp2=="sig") name2.Append("signal_template/");
+  if (temp2=="rcone") name2.Append("randomcone_signal_template/");
+  if (temp2=="impinging") name2.Append("impinging_track_template/");
+  if (temp2=="sieiesideband") name2.Append("sieiesideband_sel/");
+  if (temp2=="combisosideband") name2.Append("combisosideband_sel/");
+  name2.Append("histo_eta");
+
+  TH1F *h[2];
+  f1->GetObject(name1,h[0]);
+  f2->GetObject(name2,h[1]);
+  assert(h[0]!=NULL);
+  assert(h[1]!=NULL);
+
+  h[0]->Print();
+  h[1]->Print();
+
+  TH1F *newhist = (TH1F*)(h[1]->Clone("etareweight"));
+  assert(newhist!=NULL);
+  newhist->Print();
+
+  newhist->Scale(1.0/newhist->Integral());
+  h[0]->Scale(1.0/h[0]->Integral());
+
+  newhist->Divide(h[0]);
+
+  eta_reweighting_initialized = 1;
+  do_eta_reweighting = 1;
+
+  histo_eta_reweighting = newhist;
+
+};
+
+void template_production::Initialize_Pt_Eta_Reweighting(TString dset1, TString dset2, TString temp1, TString temp2){
+
+  TString file1="forreweight_";
+  file1.Append(dset1);
+  file1.Append("_");
+  file1.Append(temp1);
+  file1.Append(".root");
+
+  TString file2="forreweight_";
+  file2.Append(dset2);
+  file2.Append("_");
+  file2.Append(temp2);
+  file2.Append(".root");
+
+
+  TFile *f1 = new TFile(file1.Data(),"read");
+  TFile *f2 = new TFile(file2.Data(),"read");
+
+  TString name1="";
+  if (dset1=="data") name1.Append("data_Tree_"); else name1.Append("mc_Tree_");
+  if (temp1=="bkg") name1.Append("background_template/");
+  if (temp1=="sig") name1.Append("signal_template/");
+  if (temp1=="rcone") name1.Append("randomcone_signal_template/");
+  if (temp1=="impinging") name1.Append("impinging_track_template/");
+  if (temp1=="sieiesideband") name1.Append("sieiesideband_sel/");
+  if (temp1=="combisosideband") name1.Append("combisosideband_sel/");
+  name1.Append("histo_pt_eta");
+
+  TString name2="";
+  if (dset2=="data") name2.Append("data_Tree_"); else name2.Append("mc_Tree_");
+  if (temp2=="bkg") name2.Append("background_template/");
+  if (temp2=="sig") name2.Append("signal_template/");
+  if (temp2=="rcone") name2.Append("randomcone_signal_template/");
+  if (temp2=="impinging") name2.Append("impinging_track_template/");
+  if (temp2=="sieiesideband") name2.Append("sieiesideband_sel/");
+  if (temp2=="combisosideband") name2.Append("combisosideband_sel/");
+  name2.Append("histo_pt_eta");
+
+  TH2F *h[2];
+  f1->GetObject(name1,h[0]);
+  f2->GetObject(name2,h[1]);
+  assert(h[0]!=NULL);
+  assert(h[1]!=NULL);
+
+  h[0]->Print();
+  h[1]->Print();
+
+  TH2F *newhist = (TH2F*)(h[1]->Clone("ptetareweight"));
+  assert(newhist!=NULL);
+  newhist->Print();
+
+  newhist->Scale(1.0/newhist->Integral());
+  h[0]->Scale(1.0/h[0]->Integral());
+
+  newhist->Divide(h[0]);
+
+  pt_eta_reweighting_initialized = 1;
+  do_pt_eta_reweighting = 1;
+
+  histo_pt_eta_reweighting = newhist;
+
 };
 
 void template_production::Initialize_Pt_Reweighting(TString dset1, TString dset2, TString temp1, TString temp2){
@@ -569,13 +779,13 @@ void template_production::Initialize_Pt_Reweighting(TString dset1, TString dset2
 
     TString reg=regions[i];
 
-    TString file1="out_";
+    TString file1="forreweight_";
     file1.Append(dset1);
     file1.Append("_");
     file1.Append(temp1);
     file1.Append(".root");
 
-    TString file2="out_";
+    TString file2="forreweight_";
     file2.Append(dset2);
     file2.Append("_");
     file2.Append(temp2);
@@ -640,6 +850,16 @@ void template_production::SetNoPtReweighting(){
   do_pt_reweighting = 0;
 };
 
+void template_production::SetNoEtaReweighting(){
+  eta_reweighting_initialized = 1;
+  do_eta_reweighting = 0;
+};
+
+void template_production::SetNoPtEtaReweighting(){
+  pt_eta_reweighting_initialized = 1;
+  do_pt_eta_reweighting = 0;
+};
+
 float template_production::FindPtWeight(float pt, float eta){
 
   if (!pt_reweighting_initialized){
@@ -656,6 +876,47 @@ float template_production::FindPtWeight(float pt, float eta){
   float res = h->GetBinContent(h->FindBin(pt));
   if (res==0) res=1;
   //  std::cout << res << std::endl;
+  return res;
+  
+};
+
+float template_production::FindEtaWeight(float eta){
+
+  eta = fabs(eta);
+
+  if (!eta_reweighting_initialized){
+    std::cout << "ETA REWEIGHTING NOT INITIALIZED" << std::endl;
+    return -999;
+  }
+
+  if (!do_eta_reweighting) return 1;
+
+  TH1F *h = histo_eta_reweighting;
+
+  if (eta>h->GetXaxis()->GetXmax() || eta<h->GetXaxis()->GetXmin()) return 1;
+  float res = h->GetBinContent(h->FindBin(eta));
+
+  return res;
+  
+};
+
+float template_production::FindPtEtaWeight(float pt, float eta){
+
+  eta = fabs(eta);
+
+  if (!pt_eta_reweighting_initialized){
+    std::cout << "PT_ETA REWEIGHTING NOT INITIALIZED" << std::endl;
+    return -999;
+  }
+
+  if (!do_pt_eta_reweighting) return 1;
+
+  TH2F *h = histo_pt_eta_reweighting;
+
+  if (pt>h->GetXaxis()->GetXmax() || pt<h->GetXaxis()->GetXmin()) return 1;
+  if (eta>h->GetYaxis()->GetXmax() || eta<h->GetYaxis()->GetXmin()) return 1;
+  float res = h->GetBinContent(h->FindBin(pt,eta));
+
   return res;
   
 };
@@ -709,7 +970,12 @@ void template_production::Init()
    fChain->SetBranchAddress("event_weight", &event_weight, &b_event_weight);
    fChain->SetBranchAddress("event_rho", &event_rho, &b_event_rho);
    fChain->SetBranchAddress("event_nPU", &event_nPU, &b_event_nPU);
+   fChain->SetBranchAddress("event_PUOOTnumInteractionsEarly", &event_PUOOTnumInteractionsEarly, &b_event_PUOOTnumInteractionsEarly);
+   fChain->SetBranchAddress("event_PUOOTnumInteractionsLate", &event_PUOOTnumInteractionsLate, &b_event_PUOOTnumInteractionsLate);
    fChain->SetBranchAddress("event_nRecVtx", &event_nRecVtx, &b_event_nRecVtx);
+   fChain->SetBranchAddress("event_CSCTightHaloID", &event_CSCTightHaloID, &b_event_CSCTightHaloID);
+   fChain->SetBranchAddress("event_NMuons", &event_NMuons, &b_event_NMuons);
+   fChain->SetBranchAddress("event_NMuonsTot", &event_NMuonsTot, &b_event_NMuonsTot);
    fChain->SetBranchAddress("dipho_mgg_photon", &dipho_mgg_photon, &b_dipho_mgg_photon);
    fChain->SetBranchAddress("dipho_mgg_newCorr", &dipho_mgg_newCorr, &b_dipho_mgg_newCorr);
    fChain->SetBranchAddress("dipho_mgg_newCorrLocal", &dipho_mgg_newCorrLocal, &b_dipho_mgg_newCorrLocal);
@@ -859,6 +1125,12 @@ void template_production::Init()
    fChain->SetBranchAddress("photrail_scareaSF",&photrail_scareaSF, &b_photrail_scareaSF);
    fChain->SetBranchAddress("pholead_photonpfcandenergies",&pholead_photonpfcandenergies, &b_pholead_photonpfcandenergies);
    fChain->SetBranchAddress("pholead_photonpfcandets",&pholead_photonpfcandets, &b_pholead_photonpfcandets);
+   fChain->SetBranchAddress("pholead_photonpfcanddetas",&pholead_photonpfcanddetas, &b_pholead_photonpfcanddetas);
+   fChain->SetBranchAddress("pholead_photonpfcanddphis",&pholead_photonpfcanddphis, &b_pholead_photonpfcanddphis);
+   fChain->SetBranchAddress("photrail_photonpfcandenergies",&photrail_photonpfcandenergies, &b_photrail_photonpfcandenergies);
+   fChain->SetBranchAddress("photrail_photonpfcandets",&photrail_photonpfcandets, &b_photrail_photonpfcandets);
+   fChain->SetBranchAddress("photrail_photonpfcanddetas",&photrail_photonpfcanddetas, &b_photrail_photonpfcanddetas);
+   fChain->SetBranchAddress("photrail_photonpfcanddphis",&photrail_photonpfcanddphis, &b_photrail_photonpfcanddphis);
 
    Notify();
 }
@@ -901,6 +1173,8 @@ void template_production::WriteOutput(const char* filename, const TString _dirna
   if (dosignaltemplate || dobackgroundtemplate) {
 
     for (int i=0; i<2; i++) histo_pt[i]->Write();
+    histo_eta->Write();
+    histo_pt_eta->Write();
 
     for (int i=0; i<2; i++) for (int l=0; l<n_templates; l++) template_signal[i][n_templates]->Add(template_signal[i][l]);
     for (int i=0; i<2; i++) for (int l=0; l<n_templates; l++) template_background[i][n_templates]->Add(template_background[i][l]);
@@ -912,6 +1186,9 @@ void template_production::WriteOutput(const char* filename, const TString _dirna
 
     hist2d_singlecandet->Write();
     hist2d_singlecandenergy->Write();
+    hist2d_singlecanddeta->Write();
+    hist2d_singlecanddphi->Write();
+    hist2d_singlecanddR->Write();
     hist2d_coneet->Write();
     hist2d_coneenergy->Write();
 
@@ -919,8 +1196,8 @@ void template_production::WriteOutput(const char* filename, const TString _dirna
   }
 
   if (dodistribution) {
-  for (int i=0; i<2; i++) for (int l=0; l<n_templates; l++) obs_hist_single[i][l]->Write();
-  for (int i=0; i<3; i++) for (int l=0; l<n_templates; l++) obs_hist[i][l]->Write();
+    for (std::map<TString, TH1F*>::const_iterator it = obs_hist_single.begin(); it!=obs_hist_single.end(); it++) it->second->Write();
+    for (std::map<TString, TH2F*>::const_iterator it = obs_hist.begin(); it!=obs_hist.end(); it++) it->second->Write();
   }
 
   std::cout << "output written" << std::endl;
@@ -929,17 +1206,33 @@ void template_production::WriteOutput(const char* filename, const TString _dirna
 };
 
 
+TString template_production::get_name_obs_single(int region, TString diffvariable, int bin){
+  TString name_signal="obs_hist_single";
+  TString reg;
+  if (region==0) reg="EB"; else reg="EE";
+  TString t=Form("%s_%s_%s_b%d",name_signal.Data(),reg.Data(),diffvariable.Data(),bin);
+  return t;
+};
+
+TString template_production::get_name_obs(int region, TString diffvariable, int bin){
+  TString name_signal="obs_hist";
+  TString reg;
+  if (region==0) reg="EBEB"; else if (region==1) reg="EBEE"; else if (region==2) reg="EEEE"; else if (region==3) reg="EEEB";
+  TString t=Form("%s_%s_%s_b%d",name_signal.Data(),reg.Data(),diffvariable.Data(),bin);
+  return t;
+};
+
 Int_t template_production::Choose_bin_invmass(float invmass, int region){
 
   int index;
 
   float *cuts=NULL;
 
-  if (region==0) {cuts=binsdef_diphoton_EBEB; index=n_templates_EBEB;}
-  if (region==2) {cuts=binsdef_diphoton_EEEE; index=n_templates_EEEE;}
-  if (region==3) {cuts=binsdef_diphoton_EBEE; index=n_templates_EBEE;}
-  if (region==4) {cuts=binsdef_diphoton_EBEE; index=n_templates_EBEE;}
-  if (region==1) {cuts=binsdef_diphoton_EBEE; index=n_templates_EBEE;}
+  if (region==0) {cuts=binsdef_diphoton_invmass_EBEB; index=n_templates_invmass_EBEB;}
+  if (region==2) {cuts=binsdef_diphoton_invmass_EEEE; index=n_templates_invmass_EEEE;}
+  if (region==3) {cuts=binsdef_diphoton_invmass_EBEE; index=n_templates_invmass_EBEE;}
+  if (region==4) {cuts=binsdef_diphoton_invmass_EBEE; index=n_templates_invmass_EBEE;}
+  if (region==1) {cuts=binsdef_diphoton_invmass_EBEE; index=n_templates_invmass_EBEE;}
 
   assert (cuts!=NULL);
   assert (index!=0);
@@ -958,6 +1251,97 @@ Int_t template_production::Choose_bin_invmass(float invmass, int region){
 
 
 };
+
+Int_t template_production::Choose_bin_diphotonpt(float diphotonpt, int region){
+
+  int index;
+
+  float *cuts=NULL;
+
+  if (region==0) {cuts=binsdef_diphoton_diphotonpt_EBEB; index=n_templates_diphotonpt_EBEB;}
+  if (region==2) {cuts=binsdef_diphoton_diphotonpt_EEEE; index=n_templates_diphotonpt_EEEE;}
+  if (region==3) {cuts=binsdef_diphoton_diphotonpt_EBEE; index=n_templates_diphotonpt_EBEE;}
+  if (region==4) {cuts=binsdef_diphoton_diphotonpt_EBEE; index=n_templates_diphotonpt_EBEE;}
+  if (region==1) {cuts=binsdef_diphoton_diphotonpt_EBEE; index=n_templates_diphotonpt_EBEE;}
+
+  assert (cuts!=NULL);
+  assert (index!=0);
+
+  cuts[index]=9999;
+
+  if (diphotonpt<cuts[0]){
+    std::cout << "WARNING: called bin choice for out-of-range value " << diphotonpt << " cuts[0]= " << cuts[0] << std::endl;
+    return -999;
+  }
+
+  for (int i=0; i<index; i++) if ((diphotonpt>=cuts[i]) && (diphotonpt<cuts[i+1])) return i;
+  
+  std::cout << "WARNING: called bin choice for out-of-range value " << diphotonpt << std::endl;
+  return -999;
+
+
+};
+
+Int_t template_production::Choose_bin_costhetastar(float costhetastar, int region){
+
+  int index;
+
+  float *cuts=NULL;
+
+  if (region==0) {cuts=binsdef_diphoton_costhetastar_EBEB; index=n_templates_costhetastar_EBEB;}
+  if (region==2) {cuts=binsdef_diphoton_costhetastar_EEEE; index=n_templates_costhetastar_EEEE;}
+  if (region==3) {cuts=binsdef_diphoton_costhetastar_EBEE; index=n_templates_costhetastar_EBEE;}
+  if (region==4) {cuts=binsdef_diphoton_costhetastar_EBEE; index=n_templates_costhetastar_EBEE;}
+  if (region==1) {cuts=binsdef_diphoton_costhetastar_EBEE; index=n_templates_costhetastar_EBEE;}
+
+  assert (cuts!=NULL);
+  assert (index!=0);
+
+  cuts[index]=9999;
+
+  if (costhetastar<cuts[0]){
+    std::cout << "WARNING: called bin choice for out-of-range value " << costhetastar << " cuts[0]= " << cuts[0] << std::endl;
+    return -999;
+  }
+
+  for (int i=0; i<index; i++) if ((costhetastar>=cuts[i]) && (costhetastar<cuts[i+1])) return i;
+  
+  std::cout << "WARNING: called bin choice for out-of-range value " << costhetastar << std::endl;
+  return -999;
+
+
+};
+
+Int_t template_production::Choose_bin_dphi(float dphi, int region){
+
+  int index;
+
+  float *cuts=NULL;
+
+  if (region==0) {cuts=binsdef_diphoton_dphi_EBEB; index=n_templates_dphi_EBEB;}
+  if (region==2) {cuts=binsdef_diphoton_dphi_EEEE; index=n_templates_dphi_EEEE;}
+  if (region==3) {cuts=binsdef_diphoton_dphi_EBEE; index=n_templates_dphi_EBEE;}
+  if (region==4) {cuts=binsdef_diphoton_dphi_EBEE; index=n_templates_dphi_EBEE;}
+  if (region==1) {cuts=binsdef_diphoton_dphi_EBEE; index=n_templates_dphi_EBEE;}
+
+  assert (cuts!=NULL);
+  assert (index!=0);
+
+  cuts[index]=9999;
+
+  if (dphi<cuts[0]){
+    std::cout << "WARNING: called bin choice for out-of-range value " << dphi << " cuts[0]= " << cuts[0] << std::endl;
+    return -999;
+  }
+
+  for (int i=0; i<index; i++) if ((dphi>=cuts[i]) && (dphi<cuts[i+1])) return i;
+  
+  std::cout << "WARNING: called bin choice for out-of-range value " << dphi << std::endl;
+  return -999;
+
+
+};
+
 
 Int_t template_production::Choose_bin_pt(float pt, int region){
 
@@ -1029,6 +1413,15 @@ Int_t template_production::Choose_bin_sieie(float sieie, int region){
   return 7;
 
 };
+
+float template_production::AbsDeltaPhi(double phi1, double phi2){
+  // From cmssw reco::deltaPhi()
+  double result = phi1 - phi2;
+  while( result >   TMath::Pi() ) result -= TMath::TwoPi();
+  while( result <= -TMath::Pi() ) result += TMath::TwoPi();
+  return TMath::Abs(result);
+}
+
 
 #endif // #ifdef template_production_cxx
 

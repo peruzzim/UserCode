@@ -5,7 +5,15 @@
 #include <TCanvas.h>
 #include "binsdef.h"
 
-void efficiency_measure::Loop()
+void efficiency_measure::Loop(){
+  TFile *outf = new TFile(outname.Data(),"recreate");
+  for (std::vector<TString>::const_iterator diffvariable = diffvariables_list.begin(); diffvariable!=diffvariables_list.end(); diffvariable++){
+    LoopOne(*diffvariable,outf);
+  }
+  outf->Close();
+};
+
+void efficiency_measure::LoopOne(TString diffvariable, TFile *outf)
 {
 //   In a ROOT session, you can do:
 //      Root > .L efficiency_measure.C
@@ -37,39 +45,51 @@ void efficiency_measure::Loop()
    TH1::SetDefaultSumw2(kTRUE);
 
    TString gg_name[3]={"EBEB","EBEE","EEEE"};
-   TString sg_name[2]={"EB","EE"};
-
-   float *binsdef_gg[3];
-   float *binsdef_sg[2];
-
-   binsdef_sg[0]=binsdef_single_gamma_EB;
-   binsdef_sg[1]=binsdef_single_gamma_EE;
-   binsdef_gg[0]=binsdef_diphoton_EBEB;
-   binsdef_gg[1]=binsdef_diphoton_EBEE;
-   binsdef_gg[2]=binsdef_diphoton_EEEE;
 
    int n_templates_gg[3];
-   int n_templates_sg[2];
+   float *binsdef_gg[3];
 
-   n_templates_sg[0]=n_templates_EB;
-   n_templates_sg[1]=n_templates_EE;
-   n_templates_gg[0]=n_templates_EBEB;
-   n_templates_gg[1]=n_templates_EBEE;
-   n_templates_gg[2]=n_templates_EEEE;
+  if (diffvariable=="invmass"){
+    n_templates_gg[0]=n_templates_invmass_EBEB;
+    n_templates_gg[1]=n_templates_invmass_EBEE;
+    n_templates_gg[2]=n_templates_invmass_EEEE; 
+    binsdef_gg[0]=binsdef_diphoton_invmass_EBEB;
+    binsdef_gg[1]=binsdef_diphoton_invmass_EBEE;
+    binsdef_gg[2]=binsdef_diphoton_invmass_EEEE;
+  }
+  if (diffvariable=="diphotonpt"){
+    n_templates_gg[0]=n_templates_diphotonpt_EBEB;
+    n_templates_gg[1]=n_templates_diphotonpt_EBEE;
+    n_templates_gg[2]=n_templates_diphotonpt_EEEE; 
+    binsdef_gg[0]=binsdef_diphoton_diphotonpt_EBEB;
+    binsdef_gg[1]=binsdef_diphoton_diphotonpt_EBEE;
+    binsdef_gg[2]=binsdef_diphoton_diphotonpt_EEEE;
+  }
+  if (diffvariable=="costhetastar"){
+    n_templates_gg[0]=n_templates_costhetastar_EBEB;
+    n_templates_gg[1]=n_templates_costhetastar_EBEE;
+    n_templates_gg[2]=n_templates_costhetastar_EEEE; 
+    binsdef_gg[0]=binsdef_diphoton_costhetastar_EBEB;
+    binsdef_gg[1]=binsdef_diphoton_costhetastar_EBEE;
+    binsdef_gg[2]=binsdef_diphoton_costhetastar_EEEE;
+  }
+  if (diffvariable=="dphi"){
+    n_templates_gg[0]=n_templates_dphi_EBEB;
+    n_templates_gg[1]=n_templates_dphi_EBEE;
+    n_templates_gg[2]=n_templates_dphi_EEEE; 
+    binsdef_gg[0]=binsdef_diphoton_dphi_EBEB;
+    binsdef_gg[1]=binsdef_diphoton_dphi_EBEE;
+    binsdef_gg[2]=binsdef_diphoton_dphi_EEEE;
+  }
 
-   for (int i=0; i<3; i++) w_eff_gg[i] = new TH1F(Form("w_eff_gg_%s",gg_name[i].Data()),Form("w_eff_gg_%s",gg_name[i].Data()),n_templates_gg[i],binsdef_gg[i]);
-   for (int i=0; i<2; i++) w_eff_1g[i] = new TH1F(Form("w_eff_1g_%s",sg_name[i].Data()),Form("w_eff_1g_%s",sg_name[i].Data()),n_templates_sg[i],binsdef_sg[i]);
-   for (int i=0; i<3; i++) w_tot_gg[i] = new TH1F(Form("w_tot_gg_%s",gg_name[i].Data()),Form("w_tot_gg_%s",gg_name[i].Data()),n_templates_gg[i],binsdef_gg[i]);
-   for (int i=0; i<2; i++) w_tot_1g[i] = new TH1F(Form("w_tot_1g_%s",sg_name[i].Data()),Form("w_tot_1g_%s",sg_name[i].Data()),n_templates_sg[i],binsdef_sg[i]);
-   for (int i=0; i<3; i++) w_passing_gg[i] = new TH1F(Form("w_passing_gg_%s",gg_name[i].Data()),Form("w_passing_gg_%s",gg_name[i].Data()),n_templates_gg[i],binsdef_gg[i]);
-   for (int i=0; i<2; i++) w_passing_1g[i] = new TH1F(Form("w_passing_1g_%s",sg_name[i].Data()),Form("w_passing_1g_%s",sg_name[i].Data()),n_templates_sg[i],binsdef_sg[i]);
 
-   for (int i=0; i<3; i++) w_eff_gg[i]->Sumw2();
-   for (int i=0; i<2; i++) w_eff_1g[i]->Sumw2();
+
+
+   for (int i=0; i<3; i++) w_tot_gg[i] = new TH1F(Form("w_tot_gg_%s_%s",gg_name[i].Data(),diffvariable.Data()),Form("w_tot_gg_%s_%s",gg_name[i].Data(),diffvariable.Data()),n_templates_gg[i],binsdef_gg[i]);
+
    for (int i=0; i<3; i++) w_tot_gg[i]->Sumw2();
-   for (int i=0; i<2; i++) w_tot_1g[i]->Sumw2();
-   for (int i=0; i<3; i++) w_passing_gg[i]->Sumw2();
-   for (int i=0; i<2; i++) w_passing_1g[i]->Sumw2();
+
+
 
    Long64_t nbytes = 0, nb = 0;
    for (Long64_t jentry=0; jentry<nentries;jentry++) {
@@ -116,9 +136,10 @@ void efficiency_measure::Loop()
 
       if (event_ok_for_dataset==3 || event_ok_for_dataset==4) event_ok_for_dataset=1;
 
-      if (pholead_pt<40 || photrail_pt<30 || dipho_mgg_photon<80) continue;
+      //      if (pholead_pt<40 || photrail_pt<30 || dipho_mgg_photon<80) continue;
+      if (pholead_pt<40 || photrail_pt<30) continue;
 
-      { // 2 prompt photon efficiency
+
 
       bool pass1=true;
 
@@ -126,112 +147,83 @@ void efficiency_measure::Loop()
       if (!(photrail_PhoMCmatchexitcode==1 || photrail_PhoMCmatchexitcode==2)) pass1=false;
       if (pholead_GenPhotonIsoDR04>5 || photrail_GenPhotonIsoDR04>5) pass1=false;
 
-      if (pass1) w_tot_gg[event_ok_for_dataset]->Fill(dipho_mgg_photon,weight);
+
+      float fillvar=0;
+      if (diffvariable==TString("invmass")) fillvar=dipho_mgg_photon;
+	if (diffvariable==TString("diphotonpt")){
+	  float px = pholead_px+photrail_px;
+	  float py = pholead_py+photrail_py;
+	  float pt = sqrt(px*px+py*py);
+	  fillvar = pt;
+	}
+	if (diffvariable==TString("costhetastar")){
+	  TLorentzVector pho1(pholead_px,pholead_py,pholead_pz,pholead_energy);
+	  TLorentzVector pho2(photrail_px,photrail_py,photrail_pz,photrail_energy);
+	  TVector3 boost = (pho1+pho2).BoostVector();
+	  TLorentzVector boostedpho1 = pho1;
+	  boostedpho1.Boost(-boost);
+	  float thetastar1 = boostedpho1.Angle(boost);
+	  if (thetastar1>TMath::Pi()/2) thetastar1 = TMath::Pi()-thetastar1;
+	  fillvar=TMath::Cos(thetastar1);
+	}
+	if (diffvariable==TString("dphi")){
+	  float phi1 = pholead_SCphi;
+	  float phi2 = photrail_SCphi;
+	  float dphi = AbsDeltaPhi(phi1,phi2);
+	  fillvar=dphi;
+	}
+
+
+      if (pass1) w_tot_gg[event_ok_for_dataset]->Fill(fillvar,weight);
       
-      bool pass2;
-      pass2=true;
-
-      {
-	if (!pholead_PhoPassConvSafeElectronVeto) pass2=false;
-	float eta = fabs(pholead_SCeta);
-	float hoe = pholead_hoe;
-	float sieie = pholead_sieie;
-	float eff_area = (fabs(eta)<1.4442) ? 0.406 : 0.528;
-	float puenergy =3.14*0.4*0.4*eff_area*event_rho;
-	if (hoe>0.05) pass2=false;
-	if (fabs(eta)<1.4442 && sieie>0.011) pass2=false;
-	if (fabs(eta)>1.56 && sieie>0.030) pass2=false;
-	if (pholead_pho_Cone04PFCombinedIso*pholead_pt-puenergy>5) pass2=false;
-      }
-      {
-	if (!photrail_PhoPassConvSafeElectronVeto) pass2=false;
-	float eta = fabs(photrail_SCeta);
-	float hoe = photrail_hoe;
-	float sieie = photrail_sieie;
-	float eff_area = (fabs(eta)<1.4442) ? 0.406 : 0.528;
-	float puenergy =3.14*0.4*0.4*eff_area*event_rho;
-	if (hoe>0.05) pass2=false;
-	if (fabs(eta)<1.4442 && sieie>0.011) pass2=false;
-	if (fabs(eta)>1.56 && sieie>0.030) pass2=false;
-	if (photrail_pho_Cone04PFCombinedIso*photrail_pt-puenergy>5) pass2=false;
-      }
-
-      if (pass1 && pass2) w_passing_gg[event_ok_for_dataset]->Fill(dipho_mgg_photon,weight);
-
-      } // end 2 prompt efficiency    
-
-      { // single prompt photon efficiency
-
-	bool pass1;
-	bool pass2;
-
-	pass1=true;
-	pass2=true;
-	
-	if (!(pholead_PhoMCmatchexitcode==1 || pholead_PhoMCmatchexitcode==2)) pass1=false;
-	if (pholead_GenPhotonIsoDR04>5) pass1=false;
-	if (pass1) w_tot_1g[reg_lead]->Fill(pholead_pt,weight);
-
-      {
-	if (!pholead_PhoPassConvSafeElectronVeto) pass2=false;
-	float eta = fabs(pholead_SCeta);
-	float hoe = pholead_hoe;
-	float sieie = pholead_sieie;
-	float eff_area = (fabs(eta)<1.4442) ? 0.406 : 0.528;
-	float puenergy =3.14*0.4*0.4*eff_area*event_rho;
-	if (hoe>0.05) pass2=false;
-	if (fabs(eta)<1.4442 && sieie>0.011) pass2=false;
-	if (fabs(eta)>1.56 && sieie>0.030) pass2=false;
-	if (pholead_pho_Cone04PFCombinedIso*pholead_pt-puenergy>5) pass2=false;
-      }
 
 
-      if (pass1 && pass2) w_passing_1g[reg_lead]->Fill(pholead_pt,weight);
 
-      pass1=true;
-      pass2=true;
-
-      if (!(photrail_PhoMCmatchexitcode==1 || photrail_PhoMCmatchexitcode==2)) pass1=false;
-      if (photrail_GenPhotonIsoDR04>5) pass1=false;
-      if (pass1) w_tot_1g[reg_trail]->Fill(photrail_pt,weight);
-
-      {
-	if (!photrail_PhoPassConvSafeElectronVeto) pass2=false;
-	float eta = fabs(photrail_SCeta);
-	float hoe = photrail_hoe;
-	float sieie = photrail_sieie;
-	float eff_area = (fabs(eta)<1.4442) ? 0.406 : 0.528;
-	float puenergy =3.14*0.4*0.4*eff_area*event_rho;
-	if (hoe>0.05) pass2=false;
-	if (fabs(eta)<1.4442 && sieie>0.011) pass2=false;
-	if (fabs(eta)>1.56 && sieie>0.030) pass2=false;
-	if (photrail_pho_Cone04PFCombinedIso*photrail_pt-puenergy>5) pass2=false;
-      }
-
-      if (pass1 && pass2) w_passing_1g[reg_trail]->Fill(photrail_pt,weight);
-
-      } // end 2 prompt efficiency    
 
    } // end event loop
 
-   for (int i=0; i<3; i++) w_eff_gg[i]->Divide(w_passing_gg[i],w_tot_gg[i],1,1,"B");
-   for (int i=0; i<2; i++) w_eff_1g[i]->Divide(w_passing_1g[i],w_tot_1g[i],1,1,"B");
 
-   if (true){
-   TCanvas *c = new TCanvas();
-   c->Divide(3,2);
-   for (int i=0; i<3; i++) {w_eff_gg[i]->GetXaxis()->SetTitle("m_{#gamma #gamma} (GeV)");}
-   for (int i=0; i<2; i++) {w_eff_1g[i]->GetXaxis()->SetTitle("p_{t} (GeV)");}
-   for (int i=0; i<3; i++) {c->cd(i+1); w_eff_gg[i]->Draw("e1");}
-   for (int i=0; i<2; i++) {c->cd(i+4); w_eff_1g[i]->Draw("e1");}
-   }
+   outf->cd();
+   for (int i=0; i<3; i++) w_tot_gg[i]->Write();   
 
-   if (true){
-     TFile *outf = new TFile("efficiencies.root","recreate");
-     outf->cd();
-     for (int i=0; i<3; i++) w_eff_gg[i]->Write();
-     for (int i=0; i<2; i++) w_eff_1g[i]->Write();
-     outf->Close();
-   }
+
 
 }
+
+void divide_eff_histosOne(TString numerator, TString denominator, TString diffvariable, TFile *outf){
+
+  TString gg_name[3]={"EBEB","EBEE","EEEE"};
+  //  TString sg_name[2]={"EB","EE"};
+
+  TFile *nfile = new TFile(numerator.Data(),"read");
+  TFile *dfile = new TFile(denominator.Data(),"read");
+
+  TH1F w_eff_gg[3];
+  TH1F *w_num_gg[3];
+  TH1F *w_den_gg[3];
+
+  for (int i=0; i<3; i++) nfile->GetObject(Form("w_tot_gg_%s_%s",gg_name[i].Data(),diffvariable.Data()),w_num_gg[i]);
+  for (int i=0; i<3; i++) dfile->GetObject(Form("w_tot_gg_%s_%s",gg_name[i].Data(),diffvariable.Data()),w_den_gg[i]);
+  for (int i=0; i<3; i++) w_num_gg[i]->Copy(w_eff_gg[i]);
+
+  // already present
+//  for (int i=0; i<3; i++) w_eff_gg[i].Sumw2();
+//  for (int i=0; i<3; i++) w_num_gg[i]->Sumw2();
+//  for (int i=0; i<3; i++) w_den_gg[i]->Sumw2();
+
+  for (int i=0; i<3; i++) w_eff_gg[i].Divide(w_num_gg[i],w_den_gg[i],1,1,"B");  
+  for (int i=0; i<3; i++) { w_eff_gg[i].SetName(Form("w_eff_gg_%s_%s",gg_name[i].Data(),diffvariable.Data())); w_eff_gg[i].SetTitle(Form("w_eff_gg_%s_%s",gg_name[i].Data(),diffvariable.Data()));}
+
+  outf->cd();
+  for (int i=0; i<3; i++) w_eff_gg[i].Write();  
+
+
+};
+
+void divide_eff_histos(TString numerator, TString denominator){
+  TFile *outf = new TFile("efficiencies.root","recreate");
+  for (std::vector<TString>::const_iterator diffvariable = diffvariables_list.begin(); diffvariable!=diffvariables_list.end(); diffvariable++){
+    divide_eff_histosOne(numerator,denominator,*diffvariable,outf);
+  }  
+  outf->Close();
+};

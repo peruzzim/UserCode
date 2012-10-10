@@ -1,203 +1,35 @@
 #include <assert.h>
 
 #include "binsdef.h"
+#include "RooFitResult.h"
+#include "TString.h"
+#include "TFile.h"
+#include "TCanvas.h"
+#include "TH1F.h"
+#include "TH2F.h"
+#include "RooDataSet.h"
+#include "RooDataHist.h"
+#include "RooAddPdf.h"
+#include "RooProdPdf.h"
+#include "RooHistPdf.h"
+#include "RooFormulaVar.h"
+#include "RooRealVar.h"
+#include "RooRealConstant.h"
+#include "RooPlot.h"
 
 using namespace std;
 using namespace RooFit;
 
 typedef struct {
   RooFitResult *fr;
-  float purity;
-  float sig_events;
   float tot_events;
 } fit_output; 
 
-bool study_templates=false;
+bool study_templates=0;
 
-void run_fits(TString inputfilename_t="out_NEW.root", TString inputfilename_d_mc="out_NEW_mc.root", TString inputfilename_d_data="out_NEW_data.root", TString splitting, float leftrange=0, float rightrange=5, int rebin=1){
-
-  TH1F::SetDefaultSumw2(kTRUE);
-
-  bool single_gamma;
-  if (splitting=="EB" || splitting=="EE") single_gamma=true; else single_gamma=false;
-
-  int bins_to_run=0; 
-  if (single_gamma) {
-    if (splitting=="EB") bins_to_run=n_templates_EB;
-    else bins_to_run=n_templates_EE;
-  }
-  else {
-    if (splitting=="EBEB") bins_to_run=n_templates_EBEB;
-    else if (splitting=="EBEE") bins_to_run=n_templates_EBEE;
-    else if (splitting=="EEEE") bins_to_run=n_templates_EEEE;
-  }
-
-  float *binsdef;
-  if (single_gamma) {
-    if (splitting=="EB") binsdef=binsdef_single_gamma_EB;
-    else binsdef=binsdef_single_gamma_EE;
-  }
-  else {
-    if (splitting=="EBEB") binsdef=binsdef_diphoton_EBEB;
-    else if (splitting=="EBEE") binsdef=binsdef_diphoton_EBEE;
-    else if (splitting=="EEEE") binsdef=binsdef_diphoton_EEEE;
-  }
-
-
-
-  fit_output *fr[n_bins][2];
-
-  TCanvas *fits_canv[2];
-
-  TH1F *purity[2];
-  TH1F *eff;
-  TH1F *xsec[2];
-
-  TFile *eff_file = new TFile("efficiencies.root");
-  if (single_gamma) eff_file->GetObject(Form("w_eff_1g_%s",splitting.Data()),eff);
-  if (!single_gamma) eff_file->GetObject(Form("w_eff_gg_%s",splitting.Data()),eff);
-
-  assert (eff!=NULL);
-
-  eff->GetYaxis()->SetTitle("selection/ID efficiency");
-  if (single_gamma)  eff->GetXaxis()->SetTitle("p_{T}");
-  if (!single_gamma) eff->GetXaxis()->SetTitle("m_{#gamma #gamma}");
-
-
-  for (int i=0; i<2; i++){
-    TString name;
-
-    name="purity";
-    purity[i] = new TH1F(Form("%s_%d",name.Data(),i),Form("%s_%d",name.Data(),i),bins_to_run,binsdef);
-    purity[i]->SetMarkerStyle(20);
-    purity[i]->SetMarkerColor(kRed);
-    purity[i]->SetLineColor(kRed);
-    purity[i]->SetLineWidth(2);
-    purity[i]->GetYaxis()->SetRangeUser(0,1);
-    if (i==0) purity[i]->SetLineStyle(kDashed);
-
-    purity[i]->GetYaxis()->SetTitle("purity");
-    if (single_gamma)  purity[i]->GetXaxis()->SetTitle("p_{T}");
-    if (!single_gamma) purity[i]->GetXaxis()->SetTitle("m_{#gamma #gamma}");
-
-
-    name="events";
-    xsec[i] = new TH1F(Form("%s_%d",name.Data(),i),Form("%s_%d",name.Data(),i),bins_to_run,binsdef);
-    xsec[i]->SetMarkerStyle(20);
-    xsec[i]->SetMarkerColor(kGreen);
-    xsec[i]->SetLineColor(kGreen);
-    xsec[i]->SetLineWidth(2);
-    if (i==0) xsec[i]->SetLineStyle(kDashed);
-
-    xsec[i]->GetYaxis()->SetTitle("d#sigma/dp_{T} (fb/GeV)");
-    //    xsec[i]->GetYaxis()->SetTitle("events after efficiency corr.");
-    if (single_gamma)  xsec[i]->GetXaxis()->SetTitle("p_{T}");
-    if (!single_gamma) xsec[i]->GetXaxis()->SetTitle("m_{#gamma #gamma}");
-
-
-    name="fits";
-    fits_canv[i] = new TCanvas(Form("%s_%d",name.Data(),i),Form("%s_%d",name.Data(),i));
-    if (bins_to_run==4) fits_canv[i]->Divide(2,3);
-    if (bins_to_run==6) fits_canv[i]->Divide(2,3);
-    if (bins_to_run==8) fits_canv[i]->Divide(2,4);
-    if (bins_to_run==9) fits_canv[i]->Divide(2,5);
-    if (bins_to_run==12) fits_canv[i]->Divide(2,6);
-    if (bins_to_run==15) fits_canv[i]->Divide(2,8);
-
-  }
-
-
-  RooRealVar *rf1;
-  RooRealVar *rf2;
-
-  for (int bin=0; bin<bins_to_run; bin++) {
-
-    fr[bin][0]=fit_dataset(inputfilename_t.Data(),inputfilename_d_mc.Data(),splitting.Data(),leftrange,rightrange,bin,fits_canv[0],rebin,0);
-    fr[bin][1]=fit_dataset(inputfilename_t.Data(),inputfilename_d_data.Data(),splitting.Data(),leftrange,rightrange,bin,fits_canv[1],rebin,1);
-    
-    float intlumi=2.0;
-
-    for (int i=0; i<2; i++){
-
-      if (!single_gamma){  
-	rf1=(RooRealVar*)(fr[bin][i]->fr->floatParsFinal().find("rf1"));
-	rf2=(RooRealVar*)(fr[bin][i]->fr->floatParsFinal().find("rf2"));
-	RooFormulaVar fsigsig("fsigsig","fsigsig","rf1",RooArgList(*rf1));
-	RooFormulaVar fsigbkg("fsigbkg","fsigbkg","(1-rf1)*rf2",RooArgList(*rf1,*rf2));
-	RooFormulaVar fbkgbkg("fbkgbkg","fbkgbkg","1-fsigsig-fsigbkg",RooArgList(fsigsig,fsigbkg));
-	std::cout << bin << " " << fsigsig.getVal() << " " << fsigbkg.getVal() << " " << fbkgbkg.getVal() << std::endl;
-	purity[i]->SetBinContent(bin+1,fsigsig.getVal());
-	purity[i]->SetBinError(bin+1,fsigsig.getPropagatedError(*(fr[bin][i]->fr)));
-	xsec[i]->SetBinContent(bin+1,fr[bin][i]->sig_events/xsec[i]->GetBinWidth(bin+1)/intlumi);
-	float err1=purity[i]->GetBinError(bin+1)/purity[i]->GetBinContent(bin+1);
-	float err2=1.0/sqrt(fr[bin][i]->tot_events);
-	float err=sqrt(err1*err1+err2*err2);
-	cout << "err" << err << endl;
-	xsec[i]->SetBinError(bin+1,err*xsec[i]->GetBinContent(bin+1));
-      }
-
-      if (single_gamma){
-	rf1=(RooRealVar*)(fr[bin][i]->fr->floatParsFinal().find("rf1"));
-	RooFormulaVar fsig("fsig","fsig","rf1",RooArgList(*rf1));
-	RooFormulaVar fbkg("fbkg","fbkg","1-rf1",RooArgList(*rf1));
-	purity[i]->SetBinContent(bin+1,fsig.getVal());
-	purity[i]->SetBinError(bin+1,fsig.getPropagatedError(*(fr[bin][i]->fr)));
-	xsec[i]->SetBinContent(bin+1,fr[bin][i]->sig_events/xsec[i]->GetBinWidth(bin+1)/intlumi);
-	float err1=purity[i]->GetBinError(bin+1)/purity[i]->GetBinContent(bin+1);
-	float err2=1.0/sqrt(fr[bin][i]->tot_events);
-	float err=sqrt(err1*err1+err2*err2);
-	cout << "err" << err << endl;
-	xsec[i]->SetBinError(bin+1,err*xsec[i]->GetBinContent(bin+1));
-      }
-      cout << xsec[i]->GetNbinsX() << " " << eff->GetNbinsX() << endl;
-      xsec[i]->Divide(eff);
-    }
-  }
-
-  fits_canv[0]->Update();
-  fits_canv[1]->Update();
-
-
-  TCanvas *output_canv = new TCanvas("output_canv","output_canv");
-  output_canv->cd();
-
-  purity[0]->Draw("e1");
-  purity[1]->Draw("e1same");
-
-  output_canv->Update();
-
-
-  TCanvas *xsec_canv = new TCanvas("xsec_canv","xsec_canv");
-  xsec_canv->cd();
-
-  xsec[0]->Draw("e1");
-  xsec[1]->Draw("e1same");
-
-  xsec_canv->Update();
-
-  TCanvas *eff_canv = new TCanvas("eff_canv","eff_canv");
-  eff_canv->cd();
-  eff->Draw("e1");
-  eff_canv->Update();
-
-  TFile *out1 = new TFile(Form("purity_%s_data.root",splitting.Data()),"recreate");
-  out1->cd();
-  purity[0]->Write();
-
-
-  TFile *outfile = new TFile(Form("xsec_%s_data.root",splitting.Data()),"recreate");
-  outfile->cd();
-  xsec[1]->Write();
-  
-
-};
-
-
-fit_output* fit_dataset(const char* inputfilename_t, const char* inputfilename_d, TString splitting, float leftrange, float rightrange, int bin, TCanvas *canv=NULL, int rbin, bool isdata){
+fit_output* fit_dataset(const char* inputfilename_t, const char* inputfilename_d, TString diffvariable, TString splitting, float leftrange, float rightrange, int bin, TCanvas *canv=NULL, int rbin=1){
 
 fit_output *out = new fit_output();
-
-  bool single_gamma;
 
   TFile *inputfile_t = TFile::Open(inputfilename_t);
   TFile *inputfile_d = TFile::Open(inputfilename_d);
@@ -211,15 +43,11 @@ fit_output *out = new fit_output();
   //  TString sig_dir("mc_Tree_randomcone_signal_template/");
   //  TString bkg_dir("mc_Tree_impinging_track_template/");
   //  TString sig_dir("mc_Tree_signal_template/");
-  TString bkg_dir("mc_Tree_background_template/");
+  TString bkg_dir("data_Tree_sieiesideband_sel/");
 
-
-  if (splitting=="EB" || splitting=="EE") single_gamma=true; else single_gamma=false;
   if (splitting=="EEEB") splitting="EBEE";
 
-  TH1F *h_sighist;
-  TH1F *h_bkghist;
-  TH1F *h_datahist;
+  
   TH2F *h_datahist_2D;
 
   TH1F *h_sig1hist;
@@ -229,24 +57,6 @@ fit_output *out = new fit_output();
 
   TH1::SetDefaultSumw2(kTRUE);
   
-  if (single_gamma) {
-
-    inputfile_t->GetObject(TString(sig_dir).Append(Form("template_signal_%s_b%d",splitting.Data(),n_bins)),h_sighist);
-    inputfile_t->GetObject(TString(bkg_dir).Append(Form("template_background_%s_b%d",splitting.Data(),n_bins)),h_bkghist);
-    inputfile_d->GetObject(TString(data_dir).Append(Form("obs_hist_single_%s_b%d",splitting.Data(),bin)),h_datahist);
-
-    assert (h_sighist!=NULL);
-    assert (h_bkghist!=NULL);
-    assert (h_datahist!=NULL);
-
-    h_sighist->Rebin(rbin);
-    h_bkghist->Rebin(rbin);
-    h_datahist->Rebin(rbin);
-
-  }
-
-  if (!single_gamma) {
-
     TString s1; TString s2;
     if (splitting=="EBEB") {s1="EB"; s2="EB";}
     else if (splitting=="EEEE") {s1="EE"; s2="EE";}
@@ -256,10 +66,10 @@ fit_output *out = new fit_output();
     inputfile_t->GetObject(TString(bkg_dir).Append(Form("template_background_%s_b%d",s1.Data(),n_bins)),h_bkg1hist);
     inputfile_t->GetObject(TString(sig_dir).Append(Form("template_signal_%s_b%d",s2.Data(),n_bins)),h_sig2hist);
     inputfile_t->GetObject(TString(bkg_dir).Append(Form("template_background_%s_b%d",s2.Data(),n_bins)),h_bkg2hist);
-    inputfile_d->GetObject(TString(data_dir).Append(Form("obs_hist_%s_b%d",splitting.Data(),bin)),h_datahist_2D);
+    inputfile_d->GetObject(TString(data_dir).Append(Form("obs_hist_%s_%s_b%d",splitting.Data(),diffvariable.Data(),bin)),h_datahist_2D);
 
     std::cout << inputfilename_d << std::endl;
-    std::cout << TString(data_dir).Append(Form("obs_hist_%s_b%d",splitting.Data(),bin)) << std::endl;
+    std::cout << TString(data_dir).Append(Form("obs_hist_%s_%s_b%d",splitting.Data(),diffvariable.Data(),bin)) << std::endl;
 
     assert (h_sig1hist!=NULL);
     assert (h_bkg1hist!=NULL);
@@ -271,56 +81,19 @@ fit_output *out = new fit_output();
     h_bkg1hist->Rebin(rbin);
     h_datahist_2D->Rebin2D(rbin,rbin);
 
-  }
-
-
-  RooRealVar roovar("roovar","roovar",-5,35);
-  RooRealVar roovar1("roovar1","roovar1",-5,35);
-  RooRealVar roovar2("roovar2","roovar2",-5,35);
-
-  RooRealVar rf1("rf1","rf1",0.5,0,1);
-  RooRealVar rf2("rf2","rf2",0.5,0,1);
-  RooRealVar rf3("rf3","rf3",0.5,0,1);
-
-  if (!single_gamma){
-    rf1.setVal(1./3);
-    rf2.setVal(1./2);
-  }
-
-  RooDataHist *sighist;
-  RooDataHist *bkghist;
-  RooDataHist *datahist;
-
-
-  RooHistPdf *sigpdf;
-  RooHistPdf *bkgpdf;
-
-  RooFormulaVar *fsig;
-  RooFormulaVar *fbkg;
-
-  RooAddPdf *model;
-
-  if (single_gamma){
   
-    sighist   = new RooDataHist("sighist","sighist",RooArgList(roovar),h_sighist,1.0/h_sighist->Integral());
-    bkghist   = new RooDataHist("bkghist","bkghist",RooArgList(roovar),h_bkghist,1.0/h_bkghist->Integral());
-    datahist   = new RooDataHist("datahist","datahist",RooArgList(roovar),h_datahist);
-  
-    sigpdf = new RooHistPdf("sigpdf","sigpdf",roovar,*sighist);
-    bkgpdf = new RooHistPdf("bkgpdf","bkgpdf",roovar,*bkghist);
-  
-    fsig = new RooFormulaVar("fsig","fsig","rf1",RooArgList(rf1));
-    fbkg = new RooFormulaVar("fbkg","fbkg","1-rf1",RooArgList(rf1));
+  RooRealVar roovar("roovar","roovar",-5,5);
+  RooRealVar roovar1("roovar1","roovar1",-5,5);
+  RooRealVar roovar2("roovar2","roovar2",-5,5);
 
-    model = new RooAddPdf("model","model",RooArgList(*sigpdf,*bkgpdf),RooArgList(rf1),kTRUE);
-
-  }
-
+  RooRealVar rf1("rf1","rf1",1./3,0,1);
+  RooRealVar rf2("rf2","rf2",1./2,0,1);
 
   RooDataHist *sig1hist;
   RooDataHist *sig2hist;
   RooDataHist *bkg1hist;
   RooDataHist *bkg2hist;
+  RooDataHist *datahist;
 
   RooHistPdf *sig1pdf;
   RooHistPdf *sig2pdf;
@@ -336,10 +109,9 @@ fit_output *out = new fit_output();
   RooFormulaVar *fsigsig;
   RooFormulaVar *fsigbkg;
   RooFormulaVar *fbkgbkg;
+  
+  RooAddPdf *model;
 
-  //  RooAddPdf *model;
-
-  if (!single_gamma){
 
     sig1hist = new RooDataHist("sighist","sighist",RooArgList(roovar1),h_sig1hist,1.0/h_sig1hist->Integral());
     sig2hist = new RooDataHist("sighist","sighist",RooArgList(roovar2),h_sig2hist,1.0/h_sig2hist->Integral());
@@ -364,19 +136,16 @@ fit_output *out = new fit_output();
 
     model = new RooAddPdf("model","model",RooArgList(*sigsigpdf,*sigbkgpdf_noorder,*bkgbkgpdf),RooArgList(rf1,rf2),kTRUE);
 
-  }
-
 
   if (study_templates){
     RooDataHist *datahist_toy;
-    if (!single_gamma) datahist_toy = model->generateBinned(RooArgSet(roovar1,roovar2),100000,Name("Toy dataset"));
-    if (single_gamma) datahist_toy = model->generateBinned(RooArgSet(roovar),100000,Name("Toy dataset"));
+    datahist_toy = model->generateBinned(RooArgSet(roovar1,roovar2),100000,Name("Toy dataset"));
     datahist=datahist_toy;
   }
 
-  roovar.setRange("fullrange",0,5);
-  roovar1.setRange("fullrange",0,5);
-  roovar2.setRange("fullrange",0,5);
+  roovar.setRange("fullrange",-5,5);
+  roovar1.setRange("fullrange",-5,5);
+  roovar2.setRange("fullrange",-5,5);
 
   roovar.setRange("fitrange",leftrange,rightrange);
   roovar1.setRange("fitrange",leftrange,rightrange);
@@ -387,74 +156,197 @@ fit_output *out = new fit_output();
 
   out->fr=fitres;
 
-  if (single_gamma){
-
-    out->purity=fsig->getVal();
-
-    out->tot_events=h_datahist->Integral();
-    out->sig_events=h_datahist->Integral()*out->purity;
-  
-  }
-
-
-  if (!single_gamma){
-
-    out->purity=fsigsig->getVal();
-
-    out->tot_events=h_datahist_2D->Integral();
-    out->sig_events=h_datahist_2D->Integral()*out->purity;
-
-  }
-
-
-
-
-  cout << "-" << endl;
-  std::cout << out->purity << std::endl;
-  std::cout << out->tot_events << std::endl;
-  std::cout << out->sig_events << std::endl;
-  cout << "-" << endl;
+  out->tot_events=h_datahist_2D->Integral();
 
 
   //  canv=NULL;
-
   if (canv!=NULL){
 
     RooPlot *varframe[2];
-
-    if (single_gamma){
-      canv->cd(bin+1);
-      varframe[0]=roovar.frame();
-      datahist->plotOn(varframe[0]);
-      model->plotOn(varframe[0]);
-      model->plotOn(varframe[0],Components("sigpdf"),LineStyle(kDashed),LineColor(kRed));
-      model->plotOn(varframe[0],Components("bkgpdf"),LineStyle(kDashed),LineColor(kBlack));
-      varframe[0]->Draw();
-      //      new TCanvas();
-      //      varframe[0]->Draw();
-    }
-
-    if (!single_gamma){
-
-      varframe[0]=roovar1.frame();
-      varframe[1]=roovar2.frame();
-      int i=0;
-      canv->cd(bin+i+1);
-      datahist->plotOn(varframe[i]);
-      model->plotOn(varframe[i],Range("fitrange"),NormRange("fullrange"));
-      model->plotOn(varframe[i],Components("sigsigpdf"),LineStyle(kDashed),LineColor(kRed),Range("fitrange"),NormRange("fullrange"));
-      model->plotOn(varframe[i],Components("sigbkgpdf"),LineStyle(kDashed),LineColor(kGreen),Range("fitrange"),NormRange("fullrange"));
-      model->plotOn(varframe[i],Components("bkgbkgpdf"),LineStyle(kDashed),LineColor(kBlack),Range("fitrange"),NormRange("fullrange"));
-      varframe[i]->Draw();
-      //      new TCanvas();
-      //      varframe[i]->Draw();
-    }
+    varframe[0]=roovar1.frame();
+    varframe[1]=roovar2.frame();
+    int i=0;
+    canv->cd(bin+i+1);
+    datahist->plotOn(varframe[i]);
+    model->plotOn(varframe[i],Range("fitrange"),NormRange("fullrange"));
+    model->plotOn(varframe[i],Components("sigsigpdf"),LineStyle(kDashed),LineColor(kRed),Range("fitrange"),NormRange("fullrange"));
+    model->plotOn(varframe[i],Components("sigbkgpdf"),LineStyle(kDashed),LineColor(kGreen),Range("fitrange"),NormRange("fullrange"));
+    model->plotOn(varframe[i],Components("bkgbkgpdf"),LineStyle(kDashed),LineColor(kBlack),Range("fitrange"),NormRange("fullrange"));
+    varframe[i]->Draw();
 
   }
 
 
 
   return out;
+
+};
+
+
+
+
+void run_fits(TString inputfilename_t="templates.root", TString inputfilename_d="tobefitted.root", TString diffvariable="", TString splitting="", float leftrange=-5, float rightrange=5, int rebin=1){
+
+  TH1F::SetDefaultSumw2(kTRUE);
+
+  int bins_to_run=0; 
+  float *binsdef;
+
+  if (diffvariable=="invmass"){
+    if (splitting=="EBEB")      bins_to_run=n_templates_invmass_EBEB;
+    else if (splitting=="EBEE") bins_to_run=n_templates_invmass_EBEE;
+    else if (splitting=="EEEE") bins_to_run=n_templates_invmass_EEEE; 
+    if (splitting=="EBEB")      binsdef=binsdef_diphoton_invmass_EBEB;
+    else if (splitting=="EBEE") binsdef=binsdef_diphoton_invmass_EBEE;
+    else if (splitting=="EEEE") binsdef=binsdef_diphoton_invmass_EEEE;
+  }
+  if (diffvariable=="diphotonpt"){
+    if (splitting=="EBEB")      bins_to_run=n_templates_diphotonpt_EBEB;
+    else if (splitting=="EBEE") bins_to_run=n_templates_diphotonpt_EBEE;
+    else if (splitting=="EEEE") bins_to_run=n_templates_diphotonpt_EEEE; 
+    if (splitting=="EBEB")      binsdef=binsdef_diphoton_diphotonpt_EBEB;
+    else if (splitting=="EBEE") binsdef=binsdef_diphoton_diphotonpt_EBEE;
+    else if (splitting=="EEEE") binsdef=binsdef_diphoton_diphotonpt_EEEE;
+  }
+  if (diffvariable=="costhetastar"){
+    if (splitting=="EBEB")      bins_to_run=n_templates_costhetastar_EBEB;
+    else if (splitting=="EBEE") bins_to_run=n_templates_costhetastar_EBEE;
+    else if (splitting=="EEEE") bins_to_run=n_templates_costhetastar_EEEE; 
+    if (splitting=="EBEB")      binsdef=binsdef_diphoton_costhetastar_EBEB;
+    else if (splitting=="EBEE") binsdef=binsdef_diphoton_costhetastar_EBEE;
+    else if (splitting=="EEEE") binsdef=binsdef_diphoton_costhetastar_EEEE;
+  }
+  if (diffvariable=="dphi"){
+    if (splitting=="EBEB")      bins_to_run=n_templates_dphi_EBEB;
+    else if (splitting=="EBEE") bins_to_run=n_templates_dphi_EBEE;
+    else if (splitting=="EEEE") bins_to_run=n_templates_dphi_EEEE; 
+    if (splitting=="EBEB")      binsdef=binsdef_diphoton_dphi_EBEB;
+    else if (splitting=="EBEE") binsdef=binsdef_diphoton_dphi_EBEE;
+    else if (splitting=="EEEE") binsdef=binsdef_diphoton_dphi_EEEE;
+  }
+
+  
+  fit_output *fr[n_bins];
+
+  TCanvas *fits_canv;
+
+  TH1F *purity[3];
+  TH1F *eff;
+  TH1F *xsec;
+
+  TFile *eff_file = new TFile("efficiencies.root");
+  eff_file->GetObject(Form("w_eff_gg_%s_%s",splitting.Data(),diffvariable.Data()),eff);
+
+  assert (eff!=NULL);
+
+  eff->GetYaxis()->SetTitle("selection/ID efficiency");
+  eff->GetXaxis()->SetTitle(diffvariable.Data());
+
+  int colors[3] = {kRed, kGreen, kBlack};
+
+  for (int i=0; i<3; i++){
+    TString name = "purity_";
+    if (i==0) name.Append("sigsig"); else if (i==1) name.Append("sigbkg"); else if (i==2) name.Append("bkgbkg");
+    purity[i] = new TH1F(name.Data(),name.Data(),bins_to_run,binsdef);
+    purity[i]->SetMarkerStyle(20);
+    purity[i]->SetMarkerColor(colors[i]);
+    purity[i]->SetLineColor(colors[i]);
+    purity[i]->SetLineWidth(2);
+    purity[i]->GetYaxis()->SetRangeUser(0,1);
+    purity[i]->GetYaxis()->SetTitle("purity");
+    purity[i]->GetXaxis()->SetTitle(diffvariable.Data());
+  }
+
+    xsec = new TH1F("xsec","xsec",bins_to_run,binsdef);
+    xsec->SetMarkerStyle(20);
+    xsec->SetMarkerColor(kGreen);
+    xsec->SetLineColor(kGreen);
+    xsec->SetLineWidth(2);
+
+
+    //    xsec->GetYaxis()->SetTitle("");
+    xsec->GetXaxis()->SetTitle("diffvariable.Data()");
+
+
+    fits_canv = new TCanvas("fits","fits");
+    if (bins_to_run==4) fits_canv->Divide(2,3);
+    if (bins_to_run==6) fits_canv->Divide(2,3);
+    if (bins_to_run==8) fits_canv->Divide(2,4);
+    if (bins_to_run==9) fits_canv->Divide(2,5);
+    if (bins_to_run==12) fits_canv->Divide(2,6);
+    if (bins_to_run==15) fits_canv->Divide(2,8);
+
+
+
+
+  RooRealVar *rf1;
+  RooRealVar *rf2;
+
+  for (int bin=0; bin<bins_to_run; bin++) {
+
+    fr[bin]=fit_dataset(inputfilename_t.Data(),inputfilename_d.Data(),diffvariable,splitting,leftrange,rightrange,bin,fits_canv,rebin);
+    
+    float intlumi=4.519;
+
+	rf1=(RooRealVar*)(fr[bin]->fr->floatParsFinal().find("rf1"));
+	rf2=(RooRealVar*)(fr[bin]->fr->floatParsFinal().find("rf2"));
+	RooFormulaVar fsigsig("fsigsig","fsigsig","rf1",RooArgList(*rf1));
+	RooFormulaVar fsigbkg("fsigbkg","fsigbkg","(1-rf1)*rf2",RooArgList(*rf1,*rf2));
+	RooFormulaVar fbkgbkg("fbkgbkg","fbkgbkg","1-fsigsig-fsigbkg",RooArgList(fsigsig,fsigbkg));
+	//	std::cout << bin << " " << fsigsig.getVal() << " " << fsigbkg.getVal() << " " << fbkgbkg.getVal() << std::endl;
+
+	purity[0]->SetBinContent(bin+1,fsigsig.getVal());
+	purity[0]->SetBinError(bin+1,fsigsig.getPropagatedError(*(fr[bin]->fr)));
+	purity[1]->SetBinContent(bin+1,fsigbkg.getVal());
+	purity[1]->SetBinError(bin+1,fsigbkg.getPropagatedError(*(fr[bin]->fr)));
+	purity[2]->SetBinContent(bin+1,fbkgbkg.getVal());
+	purity[2]->SetBinError(bin+1,fbkgbkg.getPropagatedError(*(fr[bin]->fr)));
+
+	xsec->SetBinContent(bin+1,fsigsig.getVal()*fr[bin]->tot_events/xsec->GetBinWidth(bin+1)/intlumi);
+	float err1=purity[0]->GetBinError(bin+1)/purity[0]->GetBinContent(bin+1);
+	float err2=1.0/sqrt(fr[bin]->tot_events);
+	float err=sqrt(err1*err1+err2*err2);
+	xsec->SetBinError(bin+1,err*xsec->GetBinContent(bin+1));
+	
+	xsec->Divide(eff);
+
+  }
+
+  fits_canv->Update();
+
+  TCanvas *output_canv = new TCanvas("output_canv","output_canv");
+  output_canv->cd();
+
+  purity[0]->Draw("e1");
+  purity[1]->Draw("e1same");
+  purity[2]->Draw("e1same");
+
+  output_canv->Update();
+
+
+  TCanvas *xsec_canv = new TCanvas("xsec_canv","xsec_canv");
+  xsec_canv->cd();
+
+  xsec->Draw("e1");
+
+  xsec_canv->Update();
+
+
+//  TCanvas *eff_canv = new TCanvas("eff_canv","eff_canv");
+//  eff_canv->cd();
+//  eff->Draw("e1");
+//  eff_canv->Update();
+
+  TFile *out1 = new TFile(Form("purity_%s_data.root",splitting.Data()),"recreate");
+  out1->cd();
+  purity[0]->Write();
+  purity[1]->Write();
+  purity[2]->Write();
+
+  TFile *outfile = new TFile(Form("xsec_%s_data.root",splitting.Data()),"recreate");
+  outfile->cd();
+  xsec->Write();
+  
 
 };
 
