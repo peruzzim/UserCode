@@ -19,6 +19,7 @@
 #include "RooMinuit.h"
 #include "RooMCStudy.h"
 #include "RooGaussian.h"
+#include "RooExtendPdf.h"
 
 using namespace std;
 using namespace RooFit;
@@ -29,6 +30,7 @@ typedef struct {
 } fit_output; 
 
 bool study_templates=0;
+bool study_templates_plotting=0;
 
 fit_output* fit_dataset(const char* inputfilename_t, const char* inputfilename_d, TString diffvariable, TString splitting, int bin){
 
@@ -99,11 +101,11 @@ fit_output* fit_dataset(const char* inputfilename_t, const char* inputfilename_d
 
     
   
-  RooRealVar roovar1("roovar1","roovar1",0,5);
-  roovar1.setBins(n_histobins);
-  RooRealVar roovar2("roovar2","roovar2",0,5);
-  roovar2.setBins(n_histobins);
-
+    RooRealVar roovar1("roovar1","roovar1",leftrange,rightrange);
+    roovar1.setBins(n_histobins);
+    RooRealVar roovar2("roovar2","roovar2",leftrange,rightrange);
+    roovar2.setBins(n_histobins);
+    
   RooRealVar rf1("rf1","rf1",1./3,0,1);
   RooRealVar rf2("rf2","rf2",1./2,0,1);
 
@@ -131,6 +133,8 @@ fit_output* fit_dataset(const char* inputfilename_t, const char* inputfilename_d
   RooFormulaVar *fbkg;
   
   RooAddPdf *model;
+  RooRealVar *nevents;
+  RooExtendPdf *model_extended;
 
   if (dosingle){
     sig1hist = new RooDataHist("sighist","sighist",RooArgList(roovar1),h_sig1hist,1.0/h_sig1hist->Integral());
@@ -142,6 +146,8 @@ fit_output* fit_dataset(const char* inputfilename_t, const char* inputfilename_d
     fsig = new RooFormulaVar("fsig","fsig","rf1",RooArgList(rf1));
     fbkg = new RooFormulaVar("fbkg","fbkg","1-fsigsig",RooArgList(*fsig));
     model = new RooAddPdf("model","model",RooArgList(*sig1pdf,*bkg1pdf),RooArgList(rf1),kTRUE);
+    nevents = new RooRealVar("nevents","nevents",h_datahist_1D->GetEntries(),1e1,1e5);
+    model_extended = new RooExtendPdf("model_extended","model_extended",*model,*nevents);
   }
   else {
     sig1hist = new RooDataHist("sighist","sighist",RooArgList(roovar1),h_sig1hist,1.0/h_sig1hist->Integral());
@@ -166,18 +172,23 @@ fit_output* fit_dataset(const char* inputfilename_t, const char* inputfilename_d
     fbkgbkg = new RooFormulaVar("fbkgbkg","fbkgbkg","1-fsigsig-fsigbkg",RooArgList(*fsigsig,*fsigbkg));
 
     model = new RooAddPdf("model","model",RooArgList(*sigsigpdf,*sigbkgpdf_noorder,*bkgbkgpdf),RooArgList(rf1,rf2),kTRUE);
+    nevents = new RooRealVar("nevents","nevents",h_datahist_2D->GetEntries(),1e1,1e5);
+    model_extended = new RooExtendPdf("model_extended","model_extended",*model,*nevents);
   }
 
-    RooMCStudy *mcstudy = NULL;
+  RooMCStudy *mcstudy = NULL;
 
   if (study_templates){
 
-    rf1.setVal(0.2);
+    rf1.setVal(0.6);
     rf2.setVal(1./2);
+    int howmanyevents = 1e+4;
+    int howmanytoys = 500;
 
-    if (dosingle) mcstudy = new RooMCStudy(*model,RooArgSet(roovar1),Silence(),FitOptions(Save(kTRUE),PrintEvalErrors(0)));
-    else mcstudy = new RooMCStudy(*model,RooArgSet(roovar1,roovar2),Silence(),FitOptions(Save(kTRUE),PrintEvalErrors(0)));
-    mcstudy->generateAndFit(500, 2e+3);
+    if (!study_templates_plotting){
+    if (dosingle) mcstudy = new RooMCStudy(*model_extended,RooArgSet(roovar1),Silence(),Extended(),FitOptions(Save(kTRUE),PrintEvalErrors(0)));
+    else mcstudy = new RooMCStudy(*model_extended,RooArgSet(roovar1,roovar2),Silence(),Extended(),FitOptions(Save(kTRUE),PrintEvalErrors(0)));
+    mcstudy->generateAndFit(howmanytoys, howmanyevents);
 
     TCanvas *c1 = new TCanvas();
     c1->SetWindowSize(800,600);
@@ -212,43 +223,35 @@ fit_output* fit_dataset(const char* inputfilename_t, const char* inputfilename_d
     c1->cd();
     c1->SaveAs(Form("plots/biasstudy_%s_%s_b%d.png",splitting.Data(),diffvariable.Data(),bin));
 
-    /*
+    return out;
+  }
+
+    if (study_templates_plotting){
     RooDataHist *datahist_toy;
-    datahist_toy = model->generateBinned(RooArgSet(roovar1,roovar2),1e4,Name("Toy_dataset"));
+    datahist_toy = model_extended->generateBinned(RooArgSet(roovar1,roovar2),howmanyevents,Name("Toy_dataset"));
     datahist=datahist_toy;
     rf1.setVal(0);
     rf2.setVal(0);
-    */
+    }
 
-    return out;
+    
 
   }
 
 
-//  roovar1.setRange("fullrange",0,5);
-//  roovar2.setRange("fullrange",0,5);
-//  roovar1.setRange("fitrange",2,4);
-//  roovar2.setRange("fitrange",2,4);
 
-//  RooAbsReal* nll = model->createNLL(*datahist,SumCoefRange("fitrange"),Range("fitrange"));
-//  RooMinuit m(*nll) ;
-//  m.setVerbose(kTRUE) ;
-//  m.migrad() ;
-//  m.setVerbose(kFALSE) ;
-//  m.hesse() ;
-//  RooFitResult *fitres = m.save();
+  RooFitResult *fitres = model_extended->fitTo(*datahist,Save());
 
-  RooFitResult *fitres = model->fitTo(*datahist,Save());
-
-  model->Print();
+  model_extended->Print();
 
   std::cout << "---------------------------" << std::endl;
   std::cout << rf1.getVal() << " " << rf2.getVal() << std::endl;
 
   out->fr=fitres;
 
-  if (dosingle) out->tot_events=h_datahist_1D->Integral();
-  else out->tot_events=h_datahist_2D->Integral();
+  //  if (dosingle) out->tot_events=h_datahist_1D->Integral();
+  //  else out->tot_events=h_datahist_2D->Integral();
+  out->tot_events=nevents->getVal();
 
   TCanvas *canv = new TCanvas();
   canv->SetName(Form("fittingplot_%s_%s_b%d",splitting.Data(),diffvariable.Data(),bin));
@@ -262,18 +265,18 @@ fit_output* fit_dataset(const char* inputfilename_t, const char* inputfilename_d
     if (dosingle && i==1) continue;
     canv->cd(i+1);
     datahist->plotOn(varframe[i]);
-    model->plotOn(varframe[i]);
+    model_extended->plotOn(varframe[i]);
     if (dosingle){
-      model->plotOn(varframe[i],Components("sigpdf"),LineStyle(kDashed),LineColor(kRed));
-      model->plotOn(varframe[i],Components("bkgpdf"),LineStyle(kDashed),LineColor(kBlack));
+      model_extended->plotOn(varframe[i],Components("sigpdf"),LineStyle(kDashed),LineColor(kRed));
+      model_extended->plotOn(varframe[i],Components("bkgpdf"),LineStyle(kDashed),LineColor(kBlack));
     }
     else {
-      model->plotOn(varframe[i],Components("sigsigpdf"),LineStyle(kDashed),LineColor(kRed));
-      model->plotOn(varframe[i],Components("sigbkgpdf"),LineStyle(kDashed),LineColor(kGreen));
-      model->plotOn(varframe[i],Components("bkgbkgpdf"),LineStyle(kDashed),LineColor(kBlack));
+      model_extended->plotOn(varframe[i],Components("sigsigpdf"),LineStyle(kDashed),LineColor(kRed));
+      model_extended->plotOn(varframe[i],Components("sigbkgpdf"),LineStyle(kDashed),LineColor(kGreen));
+      model_extended->plotOn(varframe[i],Components("bkgbkgpdf"),LineStyle(kDashed),LineColor(kBlack));
     }
     varframe[i]->Draw();
-    canv->GetPad(i+1)->SetLogy(1);
+    //    canv->GetPad(i+1)->SetLogy(1);
   }
 
   canv->SaveAs(Form("plots/fittingplot_%s_%s_b%d.png",splitting.Data(),diffvariable.Data(),bin));
@@ -382,7 +385,7 @@ void run_fits(TString inputfilename_t="templates.root", TString inputfilename_d=
   RooRealVar *rf1;
   RooRealVar *rf2;
 
-  if (study_templates) bins_to_run=1;
+  if (study_templates && !study_templates_plotting) bins_to_run=1;
 
   for (int bin=0; bin<bins_to_run; bin++) {
 
@@ -443,7 +446,7 @@ void run_fits(TString inputfilename_t="templates.root", TString inputfilename_d=
 
   }
 
-  if (study_templates) return;
+  if (study_templates && !study_templates_plotting) return;
 
 
   TCanvas *output_canv = new TCanvas("output_canv","output_canv");

@@ -607,18 +607,20 @@ void template_production::Setup(Bool_t _isdata, TString _mode, TString _differen
   hist2d_coneenergy = new TH2F("hist2d_coneenergy","hist2d_coneenergy",500,0,5,25,etabinsfor2d);
   hist2d_coneenergy->GetYaxis()->SetTitle("E");
 
-  // obs_hist{,_single}
+
+
+  for (int i=0; i<2; i++)
+    for (int j=0; j<n_templates+1; j++) {
+      TString name_signal="obs_hist_single";
+      TString reg;
+      if (i==0) reg="EB"; else if (i==1) reg="EE";
+      TString t=Form("%s_%s_b%d",name_signal.Data(),reg.Data(),j);
+      obs_hist_single[t] = new TH1F(t.Data(),t.Data(),n_histobins,leftrange,rightrange);
+      obs_hist_single[t]->Sumw2();
+    }
+  
 
   for (std::vector<TString>::const_iterator diffvariable = diffvariables_list.begin(); diffvariable!=diffvariables_list.end(); diffvariable++){
-    for (int i=0; i<2; i++)
-      for (int j=0; j<n_templates+1; j++) {
-	TString name_signal="obs_hist_single";
-	TString reg;
-	if (i==0) reg="EB"; else if (i==1) reg="EE";
-	TString t=Form("%s_%s_b%d",name_signal.Data(),reg.Data(),j);
-	obs_hist_single[t] = new TH1F(t.Data(),t.Data(),n_histobins,leftrange,rightrange);
-	obs_hist_single[t]->Sumw2();
-      }
     for (int i=0; i<3; i++)
       for (int j=0; j<n_templates+1; j++) {
 	TString name_signal="obs_hist";

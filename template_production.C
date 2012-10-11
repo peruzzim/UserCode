@@ -208,26 +208,20 @@ void template_production::Loop()
     }
 
 
-    if (pholead_outvar<leftrange) pholead_outvar=leftrange;
-    if (photrail_outvar<leftrange) photrail_outvar=leftrange;
-    if (pholead_outvar>=rightrange) pholead_outvar=rightrange-1e-5; // overflow in last bin
-    if (photrail_outvar>=rightrange) photrail_outvar=rightrange-1e-5; // overflow in last bin
-
-    // OCCHIO ALL'ORDINE DI QUANDO DI METTE IL TAGLIO LEFT/RIGHTRANGE QUI!!!!
 
 
-//    float eff_area[2] = {0,0};
-//    if (mode!="muon"){
-//      // use this to UNDO effarea corrections
-//      if (differentialvariable=="photoniso") {eff_area[0] = 0.221; eff_area[1] = 0.130;}
-//      if (differentialvariable=="chargediso") {eff_area[0] = 0.016; eff_area[1] = 0.017;}
-//      if (differentialvariable=="neutraliso") {eff_area[0] = 0.097; eff_area[1] = 0.132;}
-//    }
-//    float puincone = 0.4*0.4*3.14*event_rho;
-//    pholead_outvar+=puincone*eff_area[reg_lead];
-//    photrail_outvar+=puincone*eff_area[reg_trail];
-
-
+    float eff_area[2] = {0,0};
+    //    if (mode!="muon"){
+      // use this to UNDO effarea corrections
+      //      if (differentialvariable=="photoniso") {
+	eff_area[0] = 0.221; eff_area[1] = 0.130;
+	//    }
+	//      if (differentialvariable=="chargediso") {eff_area[0] = 0.016; eff_area[1] = 0.017;}
+	//      if (differentialvariable=="neutraliso") {eff_area[0] = 0.097; eff_area[1] = 0.132;}
+	//    }
+    float puincone = 0.4*0.4*3.14*event_rho;
+    pholead_outvar-=puincone*eff_area[reg_lead];
+    photrail_outvar-=puincone*eff_area[reg_trail];
 
 
 //    float scale_lead = 1;
@@ -237,6 +231,12 @@ void template_production::Loop()
 //    else if (differentialvariable=="photoniso") {scale_lead = pholead_scareaSF; scale_trail = photrail_scareaSF;}
 //    pholead_outvar/=scale_lead;
 //    photrail_outvar/=scale_trail;
+
+
+    if (pholead_outvar<leftrange) pholead_outvar=leftrange;
+    if (photrail_outvar<leftrange) photrail_outvar=leftrange;
+    if (pholead_outvar>=rightrange) pholead_outvar=rightrange-1e-5; // overflow in last bin
+    if (photrail_outvar>=rightrange) photrail_outvar=rightrange-1e-5; // overflow in last bin
 
 
     Float_t weight=event_luminormfactor*event_Kfactor*event_weight;
@@ -287,11 +287,16 @@ void template_production::Loop()
     }
 
     if (dodistribution && event_ok_for_dataset>-1){
+
+      Int_t bin_lead = Choose_bin_eta(pholead_SCeta,reg_lead);
+      Int_t bin_trail = Choose_bin_eta(photrail_SCeta,reg_trail);
+
+      obs_hist_single[get_name_obs_single(reg_lead,bin_lead)]->Fill(pholead_outvar,weight*ptweight_lead);
+      obs_hist_single[get_name_obs_single(reg_trail,bin_trail)]->Fill(photrail_outvar,weight*ptweight_trail);
+
     
       for (std::vector<TString>::const_iterator diffvariable = diffvariables_list.begin(); diffvariable!=diffvariables_list.end(); diffvariable++){
 
-	Int_t bin_lead = Choose_bin_eta(pholead_SCeta,reg_lead);
-	Int_t bin_trail = Choose_bin_eta(photrail_SCeta,reg_trail);
 	Int_t bin_couple = -999;
 	
 	if (*diffvariable==TString("invmass")) bin_couple = Choose_bin_invmass(dipho_mgg_photon,event_ok_for_dataset);
@@ -318,8 +323,6 @@ void template_production::Loop()
 	  bin_couple = Choose_bin_dphi(dphi,event_ok_for_dataset);
 	}
       
-	obs_hist_single[get_name_obs_single(reg_lead,bin_lead)]->Fill(pholead_outvar,weight*ptweight_lead);
-	obs_hist_single[get_name_obs_single(reg_trail,bin_trail)]->Fill(photrail_outvar,weight*ptweight_trail);
 	
 	float in1=pholead_outvar;
 	float in2=photrail_outvar;
