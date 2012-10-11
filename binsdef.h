@@ -4,10 +4,14 @@
 #include <vector>
 #include "TString.h"
 #include "TMath.h"
+#include <iostream>
 
 TString __variables__[] = {TString("invmass"),TString("diphotonpt"),TString("costhetastar"),TString("dphi")};
-const std::vector<TString> diffvariables_list (__variables__, __variables__ + sizeof(__variables__) / sizeof(TString) );
+std::vector<TString> diffvariables_list (__variables__, __variables__ + sizeof(__variables__) / sizeof(TString) );
 
+const Int_t n_histobins = 20;
+const Float_t leftrange = 0.0;
+const Float_t rightrange = 5.0;
 
 static const int n_bins=13;
 
@@ -18,10 +22,11 @@ float binsdef_single_gamma_EE[n_bins+1]={30,40,50,60,70,80,90,110,120};
 float binsdef_single_gamma_EB_eta[n_bins+1]={0,0.2,0.4,0.6,0.8,1,1.2,1.442};
 float binsdef_single_gamma_EE_eta[n_bins+1]={1.56,1.653,1.8,2,2.2,2.5};
 
-int n_templates_invmass_EBEB=13;
+int n_templates_invmass_EBEB=4;
 int n_templates_invmass_EBEE=13;
 int n_templates_invmass_EEEE=13;
-float binsdef_diphoton_invmass_EBEB[n_bins+1]={0,20,40,60,80,90,100,110,120,130,140,160,190,200};
+//float binsdef_diphoton_invmass_EBEB[n_bins+1]={0,20,40,60,80,90,100,110,120,130,140,160,190,200};
+float binsdef_diphoton_invmass_EBEB[n_bins+1]={0,80,100,140,200};
 float binsdef_diphoton_invmass_EBEE[n_bins+1]={0,20,40,60,80,90,100,110,120,130,140,160,190,200};
 float binsdef_diphoton_invmass_EEEE[n_bins+1]={0,20,40,60,80,90,100,110,120,130,140,160,190,200};
 //float binsdef_diphoton_invmass_EBEB[n_bins+1]={80,90,100,110,120,130,140,160,190,200};

@@ -29,11 +29,11 @@ class efficiency_measure {
 public :
 
    TH1F *w_eff_gg[3];
-   TH1F *w_eff_1g[2];
+   TH1F *w_eff_sg[2];
    TH1F *w_tot_gg[3];
-   TH1F *w_tot_1g[2];
+   TH1F *w_tot_sg[2];
    TH1F *w_passing_gg[3];
-   TH1F *w_passing_1g[2];
+   TH1F *w_passing_sg[2];
 
    TTree          *fChain;   //!pointer to the analyzed TTree or TChain
    Int_t           fCurrent; //!current Tree number in a TChain

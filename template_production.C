@@ -318,8 +318,8 @@ void template_production::Loop()
 	  bin_couple = Choose_bin_dphi(dphi,event_ok_for_dataset);
 	}
       
-	obs_hist_single[get_name_obs_single(reg_lead,*diffvariable,bin_lead)]->Fill(pholead_outvar,weight*ptweight_lead);
-	obs_hist_single[get_name_obs_single(reg_trail,*diffvariable,bin_trail)]->Fill(photrail_outvar,weight*ptweight_trail);
+	obs_hist_single[get_name_obs_single(reg_lead,bin_lead)]->Fill(pholead_outvar,weight*ptweight_lead);
+	obs_hist_single[get_name_obs_single(reg_trail,bin_trail)]->Fill(photrail_outvar,weight*ptweight_trail);
 	
 	float in1=pholead_outvar;
 	float in2=photrail_outvar;

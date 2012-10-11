@@ -420,7 +420,7 @@ public :
    std::map<TString, TH1F*> obs_hist_single;
    std::map<TString, TH2F*> obs_hist;
 
-   TString get_name_obs_single(int region, TString diffvariable, int bin);
+   TString get_name_obs_single(int region, int bin);
    TString get_name_obs(int region, TString diffvariable, int bin);
 
 
@@ -452,10 +452,6 @@ public :
    Bool_t isdata;
 
    TString mode;
-
-   Int_t n_histobins;
-   Float_t leftrange;
-   Float_t rightrange;
 
    Bool_t dosignaltemplate;
    Bool_t dobackgroundtemplate;
@@ -524,10 +520,6 @@ template_production::template_production(TTree *tree)
 
    pt_eta_reweighting_initialized = 0;
    do_pt_eta_reweighting = 0;
-
-   n_histobins = 400;
-   leftrange = -5.0;
-   rightrange = 5.0;
 
 }
 
@@ -619,16 +611,16 @@ void template_production::Setup(Bool_t _isdata, TString _mode, TString _differen
 
   for (std::vector<TString>::const_iterator diffvariable = diffvariables_list.begin(); diffvariable!=diffvariables_list.end(); diffvariable++){
     for (int i=0; i<2; i++)
-      for (int j=0; j<n_templates; j++) {
+      for (int j=0; j<n_templates+1; j++) {
 	TString name_signal="obs_hist_single";
 	TString reg;
 	if (i==0) reg="EB"; else if (i==1) reg="EE";
-	TString t=Form("%s_%s_%s_b%d",name_signal.Data(),reg.Data(),diffvariable->Data(),j);
+	TString t=Form("%s_%s_b%d",name_signal.Data(),reg.Data(),j);
 	obs_hist_single[t] = new TH1F(t.Data(),t.Data(),n_histobins,leftrange,rightrange);
 	obs_hist_single[t]->Sumw2();
       }
     for (int i=0; i<3; i++)
-      for (int j=0; j<n_templates; j++) {
+      for (int j=0; j<n_templates+1; j++) {
 	TString name_signal="obs_hist";
 	TString reg;
 	if (i==0) reg="EBEB"; else if (i==1) reg="EBEE"; else if (i==2) reg="EEEE"; else if (i==3) reg="EEEB";
@@ -1196,6 +1188,18 @@ void template_production::WriteOutput(const char* filename, const TString _dirna
   }
 
   if (dodistribution) {
+
+    for (std::vector<TString>::const_iterator diffvariable = diffvariables_list.begin(); diffvariable!=diffvariables_list.end(); diffvariable++){
+      for (int i=0; i<2; i++)
+	for (int j=0; j<n_templates; j++) {
+	  obs_hist_single[get_name_obs_single(i,n_templates)]->Add(obs_hist_single[get_name_obs_single(i,j)]);
+	}
+      for (int i=0; i<3; i++)
+	for (int j=0; j<n_templates; j++) {
+	  obs_hist[get_name_obs(i,*diffvariable,n_templates)]->Add(obs_hist[get_name_obs(i,*diffvariable,j)]);
+	}
+    }
+
     for (std::map<TString, TH1F*>::const_iterator it = obs_hist_single.begin(); it!=obs_hist_single.end(); it++) it->second->Write();
     for (std::map<TString, TH2F*>::const_iterator it = obs_hist.begin(); it!=obs_hist.end(); it++) it->second->Write();
   }
@@ -1206,11 +1210,11 @@ void template_production::WriteOutput(const char* filename, const TString _dirna
 };
 
 
-TString template_production::get_name_obs_single(int region, TString diffvariable, int bin){
+TString template_production::get_name_obs_single(int region, int bin){
   TString name_signal="obs_hist_single";
   TString reg;
   if (region==0) reg="EB"; else reg="EE";
-  TString t=Form("%s_%s_%s_b%d",name_signal.Data(),reg.Data(),diffvariable.Data(),bin);
+  TString t=Form("%s_%s_b%d",name_signal.Data(),reg.Data(),bin);
   return t;
 };
 

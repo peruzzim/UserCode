@@ -7,6 +7,7 @@
 
 void efficiency_measure::Loop(){
   TFile *outf = new TFile(outname.Data(),"recreate");
+  diffvariables_list.push_back(TString("dosingle"));
   for (std::vector<TString>::const_iterator diffvariable = diffvariables_list.begin(); diffvariable!=diffvariables_list.end(); diffvariable++){
     LoopOne(*diffvariable,outf);
   }
@@ -44,10 +45,16 @@ void efficiency_measure::LoopOne(TString diffvariable, TFile *outf)
 
    TH1::SetDefaultSumw2(kTRUE);
 
+   TString sg_name[2]={"EB","EE"};
    TString gg_name[3]={"EBEB","EBEE","EEEE"};
+
+   int n_templates_sg[2];
+   float *binsdef_sg[2];
 
    int n_templates_gg[3];
    float *binsdef_gg[3];
+
+   bool dosingle=0;
 
   if (diffvariable=="invmass"){
     n_templates_gg[0]=n_templates_invmass_EBEB;
@@ -81,13 +88,25 @@ void efficiency_measure::LoopOne(TString diffvariable, TFile *outf)
     binsdef_gg[1]=binsdef_diphoton_dphi_EBEE;
     binsdef_gg[2]=binsdef_diphoton_dphi_EEEE;
   }
+  if (diffvariable=="dosingle"){
+    dosingle=1;
+    n_templates_sg[0]=n_templates_EB;
+    n_templates_sg[1]=n_templates_EE;
+    binsdef_sg[0]=binsdef_single_gamma_EB_eta;
+    binsdef_sg[1]=binsdef_single_gamma_EE_eta;
+    diffvariable="singlegamma_eta";
+  }
 
 
 
-
-   for (int i=0; i<3; i++) w_tot_gg[i] = new TH1F(Form("w_tot_gg_%s_%s",gg_name[i].Data(),diffvariable.Data()),Form("w_tot_gg_%s_%s",gg_name[i].Data(),diffvariable.Data()),n_templates_gg[i],binsdef_gg[i]);
-
-   for (int i=0; i<3; i++) w_tot_gg[i]->Sumw2();
+  if (dosingle){
+    for (int i=0; i<2; i++) w_tot_sg[i] = new TH1F(Form("w_tot_sg_%s",sg_name[i].Data()),Form("w_tot_sg_%s",sg_name[i].Data()),n_templates_sg[i],binsdef_sg[i]);
+    for (int i=0; i<2; i++) w_tot_sg[i]->Sumw2();
+  }
+  else {
+    for (int i=0; i<3; i++) w_tot_gg[i] = new TH1F(Form("w_tot_gg_%s_%s",gg_name[i].Data(),diffvariable.Data()),Form("w_tot_gg_%s_%s",gg_name[i].Data(),diffvariable.Data()),n_templates_gg[i],binsdef_gg[i]);
+    for (int i=0; i<3; i++) w_tot_gg[i]->Sumw2();
+  }
 
 
 
@@ -147,7 +166,7 @@ void efficiency_measure::LoopOne(TString diffvariable, TFile *outf)
       if (!(photrail_PhoMCmatchexitcode==1 || photrail_PhoMCmatchexitcode==2)) pass1=false;
       if (pholead_GenPhotonIsoDR04>5 || photrail_GenPhotonIsoDR04>5) pass1=false;
 
-
+      if (!dosingle){
       float fillvar=0;
       if (diffvariable==TString("invmass")) fillvar=dipho_mgg_photon;
 	if (diffvariable==TString("diphotonpt")){
@@ -172,10 +191,15 @@ void efficiency_measure::LoopOne(TString diffvariable, TFile *outf)
 	  float dphi = AbsDeltaPhi(phi1,phi2);
 	  fillvar=dphi;
 	}
-
+	
 
       if (pass1) w_tot_gg[event_ok_for_dataset]->Fill(fillvar,weight);
-      
+      }
+
+      if (dosingle){
+	if (pass1) w_tot_sg[reg_lead]->Fill(fabs(pholead_SCeta),weight);
+	if (pass1) w_tot_sg[reg_trail]->Fill(fabs(photrail_SCeta),weight);
+      }
 
 
 
@@ -184,7 +208,8 @@ void efficiency_measure::LoopOne(TString diffvariable, TFile *outf)
 
 
    outf->cd();
-   for (int i=0; i<3; i++) w_tot_gg[i]->Write();   
+   if (!dosingle) for (int i=0; i<3; i++) w_tot_gg[i]->Write();   
+   else for (int i=0; i<2; i++) w_tot_sg[i]->Write();   
 
 
 
@@ -193,7 +218,7 @@ void efficiency_measure::LoopOne(TString diffvariable, TFile *outf)
 void divide_eff_histosOne(TString numerator, TString denominator, TString diffvariable, TFile *outf){
 
   TString gg_name[3]={"EBEB","EBEE","EEEE"};
-  //  TString sg_name[2]={"EB","EE"};
+  TString sg_name[2]={"EB","EE"};
 
   TFile *nfile = new TFile(numerator.Data(),"read");
   TFile *dfile = new TFile(denominator.Data(),"read");
@@ -201,27 +226,41 @@ void divide_eff_histosOne(TString numerator, TString denominator, TString diffva
   TH1F w_eff_gg[3];
   TH1F *w_num_gg[3];
   TH1F *w_den_gg[3];
+  TH1F w_eff_sg[2];
+  TH1F *w_num_sg[2];
+  TH1F *w_den_sg[2];
 
+  bool dosingle=0;
+  if (diffvariable=="dosingle"){
+    dosingle=1;
+    diffvariable="singlegamma_eta";    
+  }
+
+  if (dosingle){
+  for (int i=0; i<2; i++) nfile->GetObject(Form("w_tot_sg_%s",sg_name[i].Data()),w_num_sg[i]);
+  for (int i=0; i<2; i++) dfile->GetObject(Form("w_tot_sg_%s",sg_name[i].Data()),w_den_sg[i]);
+  for (int i=0; i<2; i++) w_num_sg[i]->Copy(w_eff_sg[i]);
+  for (int i=0; i<2; i++) w_eff_sg[i].Divide(w_num_sg[i],w_den_sg[i],1,1,"B");  
+  for (int i=0; i<2; i++) { w_eff_sg[i].SetName(Form("w_eff_sg_%s",sg_name[i].Data())); w_eff_sg[i].SetTitle(Form("w_eff_sg_%s",sg_name[i].Data()));}
+  }
+  else {
   for (int i=0; i<3; i++) nfile->GetObject(Form("w_tot_gg_%s_%s",gg_name[i].Data(),diffvariable.Data()),w_num_gg[i]);
   for (int i=0; i<3; i++) dfile->GetObject(Form("w_tot_gg_%s_%s",gg_name[i].Data(),diffvariable.Data()),w_den_gg[i]);
   for (int i=0; i<3; i++) w_num_gg[i]->Copy(w_eff_gg[i]);
-
-  // already present
-//  for (int i=0; i<3; i++) w_eff_gg[i].Sumw2();
-//  for (int i=0; i<3; i++) w_num_gg[i]->Sumw2();
-//  for (int i=0; i<3; i++) w_den_gg[i]->Sumw2();
-
   for (int i=0; i<3; i++) w_eff_gg[i].Divide(w_num_gg[i],w_den_gg[i],1,1,"B");  
   for (int i=0; i<3; i++) { w_eff_gg[i].SetName(Form("w_eff_gg_%s_%s",gg_name[i].Data(),diffvariable.Data())); w_eff_gg[i].SetTitle(Form("w_eff_gg_%s_%s",gg_name[i].Data(),diffvariable.Data()));}
+  }
+
 
   outf->cd();
-  for (int i=0; i<3; i++) w_eff_gg[i].Write();  
-
+  if (!dosingle) for (int i=0; i<3; i++) w_eff_gg[i].Write();  
+  else for (int i=0; i<2; i++) w_eff_sg[i].Write();  
 
 };
 
 void divide_eff_histos(TString numerator, TString denominator){
   TFile *outf = new TFile("efficiencies.root","recreate");
+  diffvariables_list.push_back(TString("dosingle"));
   for (std::vector<TString>::const_iterator diffvariable = diffvariables_list.begin(); diffvariable!=diffvariables_list.end(); diffvariable++){
     divide_eff_histosOne(numerator,denominator,*diffvariable,outf);
   }  
