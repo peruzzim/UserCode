@@ -36,7 +36,7 @@ fit_output* fit_dataset(const char* inputfilename_t, const char* inputfilename_d
 
   bool dosingle=0;
 
-  if (diffvariable==TString("dosingle")) {dosingle=1; diffvariable=TString("singlegamma_eta");}
+  if (diffvariable==TString("dosingle")) {dosingle=1;}
 
   fit_output *out = new fit_output();
   out->fr=NULL;
@@ -182,7 +182,7 @@ fit_output* fit_dataset(const char* inputfilename_t, const char* inputfilename_d
 
     rf1.setVal(0.6);
     rf2.setVal(1./2);
-    int howmanyevents = 1e+4;
+    int howmanyevents = 2e+3;
     int howmanytoys = 500;
 
     if (!study_templates_plotting){
@@ -267,8 +267,8 @@ fit_output* fit_dataset(const char* inputfilename_t, const char* inputfilename_d
     datahist->plotOn(varframe[i]);
     model_extended->plotOn(varframe[i]);
     if (dosingle){
-      model_extended->plotOn(varframe[i],Components("sigpdf"),LineStyle(kDashed),LineColor(kRed));
-      model_extended->plotOn(varframe[i],Components("bkgpdf"),LineStyle(kDashed),LineColor(kBlack));
+      model_extended->plotOn(varframe[i],Components("sig1pdf"),LineStyle(kDashed),LineColor(kRed));
+      model_extended->plotOn(varframe[i],Components("bkg1pdf"),LineStyle(kDashed),LineColor(kBlack));
     }
     else {
       model_extended->plotOn(varframe[i],Components("sigsigpdf"),LineStyle(kDashed),LineColor(kRed));
@@ -335,19 +335,18 @@ void run_fits(TString inputfilename_t="templates.root", TString inputfilename_d=
     else if (splitting=="EE") bins_to_run=n_templates_EE;
     if (splitting=="EB")      binsdef=binsdef_single_gamma_EB_eta;
     else if (splitting=="EE") binsdef=binsdef_single_gamma_EE_eta;
-    diffvariable="singlegamma_eta";
   }
 
   
   fit_output *fr[n_bins];
 
   TH1F *purity[3];
-  TH1F *eff;
+  TH1F *eff=NULL;
   TH1F *xsec;
 
   TFile *eff_file = new TFile("efficiencies.root");
   if (dosingle) eff_file->GetObject(Form("w_eff_sg_%s",splitting.Data()),eff);
-  eff_file->GetObject(Form("w_eff_gg_%s_%s",splitting.Data(),diffvariable.Data()),eff);
+  else eff_file->GetObject(Form("w_eff_gg_%s_%s",splitting.Data(),diffvariable.Data()),eff);
 
   assert (eff!=NULL);
 
@@ -453,8 +452,8 @@ void run_fits(TString inputfilename_t="templates.root", TString inputfilename_d=
   output_canv->cd();
 
   purity[0]->Draw("e1");
-  if (!dosingle) purity[1]->Draw("e1same");
-  purity[2]->Draw("e1same");
+  //  if (!dosingle) purity[1]->Draw("e1same");
+  //  purity[2]->Draw("e1same");
 
   output_canv->Update();
 

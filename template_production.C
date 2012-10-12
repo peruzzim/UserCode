@@ -210,18 +210,18 @@ void template_production::Loop()
 
 
 
-    float eff_area[2] = {0,0};
-    //    if (mode!="muon"){
-      // use this to UNDO effarea corrections
-      //      if (differentialvariable=="photoniso") {
-	eff_area[0] = 0.221; eff_area[1] = 0.130;
-	//    }
-	//      if (differentialvariable=="chargediso") {eff_area[0] = 0.016; eff_area[1] = 0.017;}
-	//      if (differentialvariable=="neutraliso") {eff_area[0] = 0.097; eff_area[1] = 0.132;}
-	//    }
-    float puincone = 0.4*0.4*3.14*event_rho;
-    pholead_outvar-=puincone*eff_area[reg_lead];
-    photrail_outvar-=puincone*eff_area[reg_trail];
+//    float eff_area[2] = {0,0};
+//    //    if (mode!="muon"){
+//      // use this to UNDO effarea corrections
+//      //      if (differentialvariable=="photoniso") {
+//	eff_area[0] = 0.221; eff_area[1] = 0.130;
+//	//    }
+//	//      if (differentialvariable=="chargediso") {eff_area[0] = 0.016; eff_area[1] = 0.017;}
+//	//      if (differentialvariable=="neutraliso") {eff_area[0] = 0.097; eff_area[1] = 0.132;}
+//	//    }
+//    float puincone = 0.4*0.4*3.14*event_rho;
+//    pholead_outvar-=puincone*eff_area[reg_lead];
+//    photrail_outvar-=puincone*eff_area[reg_trail];
 
 
 //    float scale_lead = 1;
