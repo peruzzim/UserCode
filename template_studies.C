@@ -183,6 +183,7 @@ fit_output* fit_dataset(const char* inputfilename_ts, const char* inputfilename_
     bkg2dset=bkg2dset_red;
     dataset=dataset_red;
     */
+    
     sig1dset->Print();
     bkg1dset->Print();
     sig2dset->Print();
@@ -284,7 +285,12 @@ fit_output* fit_dataset(const char* inputfilename_ts, const char* inputfilename_
     frame02bkg->Draw();
     c0->GetPad(4)->SetLogy(1);
 
-    
+    c0->SaveAs(Form("plots/fittingplot0_%s_%s_b%d.png",splitting.Data(),diffvariable.Data(),bin));
+    c0->SaveAs(Form("plots/fittingplot0_%s_%s_b%d.pdf",splitting.Data(),diffvariable.Data(),bin));
+    c0->SaveAs(Form("plots/fittingplot0_%s_%s_b%d.jpg",splitting.Data(),diffvariable.Data(),bin));
+    c0->SaveAs(Form("plots/fittingplot0_%s_%s_b%d.root",splitting.Data(),diffvariable.Data(),bin));
+
+
     RooFormulaVar *fsig1 = new RooFormulaVar("fsig1","fsig1","j1",RooArgList(*j1));
     //    RooFormulaVar *fbkg1 = new RooFormulaVar("fbkg1","fbkg1","1-fsig1",RooArgList(*fsig1));
     RooFormulaVar *fsig2 = new RooFormulaVar("fsig2","fsig2","@0", (sym) ? RooArgList(*j1) : RooArgList(*j2) );
@@ -313,12 +319,12 @@ fit_output* fit_dataset(const char* inputfilename_ts, const char* inputfilename_
 
 
       //    RooExtendPdf *model_axis1_extended = new RooExtendPdf("model_axis1_extended","model_axis1_extended",*model_axis1,*nevents);
-      //    RooNLLVar *model_axis1_extended_nll = new RooNLLVar("model_axis1_extended_nll","model_axis1_extended_nll",*model_axis1_extended,*dataset_axis1,NumCPU(numcpu));
-      RooNLLVar *model_axis1_noextended_nll = new RooNLLVar("model_axis1_noextended_nll","model_axis1_noextended_nll",*model_axis1,*dataset_axis1,NumCPU(numcpu));
+      //    RooNLLVar *model_axis1_extended_nll = new RooNLLVar("model_axis1_extended_nll","model_axis1_extended_nll",*model_axis1_extended,*dataset_axis1,NumCPU(numcpu/2));
+      RooNLLVar *model_axis1_noextended_nll = new RooNLLVar("model_axis1_noextended_nll","model_axis1_noextended_nll",*model_axis1,*dataset_axis1,NumCPU(numcpu/2));
       RooNLLVar *model_axis1_nll = model_axis1_noextended_nll;
       //    RooExtendPdf *model_axis2_extended = new RooExtendPdf("model_axis2_extended","model_axis2_extended",*model_axis2,*nevents);
-      //    RooNLLVar *model_axis2_extended_nll = new RooNLLVar("model_axis2_extended_nll","model_axis2_extended_nll",*model_axis2_extended,*dataset_axis2,NumCPU(numcpu));
-      RooNLLVar *model_axis2_noextended_nll = new RooNLLVar("model_axis2_noextended_nll","model_axis2_noextended_nll",*model_axis2,*dataset_axis2,NumCPU(numcpu));
+      //    RooNLLVar *model_axis2_extended_nll = new RooNLLVar("model_axis2_extended_nll","model_axis2_extended_nll",*model_axis2_extended,*dataset_axis2,NumCPU(numcpu/2));
+      RooNLLVar *model_axis2_noextended_nll = new RooNLLVar("model_axis2_noextended_nll","model_axis2_noextended_nll",*model_axis2,*dataset_axis2,NumCPU(numcpu/2));
       RooNLLVar *model_axis2_nll = model_axis2_noextended_nll;
       
       RooAddition *model_2axes_nll = new RooAddition("model_2axes_nll","model_2axes_nll",RooArgSet(*model_axis1_nll,*model_axis2_nll));
@@ -327,8 +333,10 @@ fit_output* fit_dataset(const char* inputfilename_ts, const char* inputfilename_
       RooMinimizer *minuit_firstpass = new RooMinimizer(*model_2axes_nll);
       minuit_firstpass->migrad();
       minuit_firstpass->hesse();
+      minuit_firstpass->minos();
       firstpass = minuit_firstpass->save("firstpass","firstpass");
       firstpass->Print();
+
 
 
       delete model_axis1_nll;
@@ -353,6 +361,12 @@ fit_output* fit_dataset(const char* inputfilename_ts, const char* inputfilename_
     model_axis2->plotOn(frame2bla,Components("bkg2pdf"),LineStyle(kDashed),LineColor(kBlack));
     frame2bla->Draw();
     c1->GetPad(2)->SetLogy(1);
+
+
+    c1->SaveAs(Form("plots/fittingplot1_%s_%s_b%d.png",splitting.Data(),diffvariable.Data(),bin));
+    c1->SaveAs(Form("plots/fittingplot1_%s_%s_b%d.pdf",splitting.Data(),diffvariable.Data(),bin));
+    c1->SaveAs(Form("plots/fittingplot1_%s_%s_b%d.jpg",splitting.Data(),diffvariable.Data(),bin));
+    c1->SaveAs(Form("plots/fittingplot1_%s_%s_b%d.root",splitting.Data(),diffvariable.Data(),bin));
 
 
     float lowerbounds[4]={0,fsig1->getVal()-1,fsig2->getVal()-1,fsig1->getVal()+fsig2->getVal()-1};
@@ -395,6 +409,7 @@ fit_output* fit_dataset(const char* inputfilename_ts, const char* inputfilename_
     RooMinimizer *minuit_secondpass = new RooMinimizer(*model_2D_nll);
     minuit_secondpass->migrad();
     minuit_secondpass->hesse();
+    minuit_secondpass->minos();
     RooFitResult *secondpass = minuit_secondpass->save("secondpass","secondpass");
     secondpass->Print();
 
@@ -409,7 +424,7 @@ fit_output* fit_dataset(const char* inputfilename_ts, const char* inputfilename_
     model_2D->plotOn(frame1final,Components("bkgsigpdf"),LineStyle(kDashed),LineColor(kGreen+2));
     model_2D->plotOn(frame1final,Components("bkgbkgpdf"),LineStyle(kDashed),LineColor(kBlack));
     frame1final->Draw();
-    c2->GetPad(1)->SetLogy(1);
+    //    c2->GetPad(1)->SetLogy(1);
     c2->cd(2);
     RooPlot *frame2final = roovar2->frame();
     dataset->plotOn(frame2final);
@@ -419,12 +434,16 @@ fit_output* fit_dataset(const char* inputfilename_ts, const char* inputfilename_
     model_2D->plotOn(frame2final,Components("bkgsigpdf"),LineStyle(kDashed),LineColor(kGreen+2));
     model_2D->plotOn(frame2final,Components("bkgbkgpdf"),LineStyle(kDashed),LineColor(kBlack));
     frame2final->Draw();
-    c2->GetPad(2)->SetLogy(1);
+    //    c2->GetPad(2)->SetLogy(1);
 //    c2->cd(3);
 //    RooPlot *ppnllplot = pp->frame();
 //    model_2D_extended_nll_constrained->plotOn(ppnllplot);
 //    ppnllplot->Draw();
 
+    c2->SaveAs(Form("plots/fittingplot2_%s_%s_b%d.png",splitting.Data(),diffvariable.Data(),bin));
+    c2->SaveAs(Form("plots/fittingplot2_%s_%s_b%d.pdf",splitting.Data(),diffvariable.Data(),bin));
+    c2->SaveAs(Form("plots/fittingplot2_%s_%s_b%d.jpg",splitting.Data(),diffvariable.Data(),bin));
+    c2->SaveAs(Form("plots/fittingplot2_%s_%s_b%d.root",splitting.Data(),diffvariable.Data(),bin));
 
 
 //    std::cout << "expecting purities = " << pp_init << " " << pf_init << " " << fp_init << " " << 1-pp_init-pf_init-fp_init << std::endl;
@@ -449,18 +468,11 @@ fit_output* fit_dataset(const char* inputfilename_ts, const char* inputfilename_
     out->ff=fbkgbkg->getVal();
     out->ff_err=fbkgbkg->getPropagatedError(*secondpass);
 
-    c0->SaveAs(Form("plots/fittingplot0_%s_%s_b%d.png",splitting.Data(),diffvariable.Data(),bin));
-    c1->SaveAs(Form("plots/fittingplot1_%s_%s_b%d.png",splitting.Data(),diffvariable.Data(),bin));
-    c2->SaveAs(Form("plots/fittingplot2_%s_%s_b%d.png",splitting.Data(),diffvariable.Data(),bin));
-    c0->SaveAs(Form("plots/fittingplot0_%s_%s_b%d.pdf",splitting.Data(),diffvariable.Data(),bin));
-    c1->SaveAs(Form("plots/fittingplot1_%s_%s_b%d.pdf",splitting.Data(),diffvariable.Data(),bin));
-    c2->SaveAs(Form("plots/fittingplot2_%s_%s_b%d.pdf",splitting.Data(),diffvariable.Data(),bin));
-    c0->SaveAs(Form("plots/fittingplot0_%s_%s_b%d.jpg",splitting.Data(),diffvariable.Data(),bin));
-    c1->SaveAs(Form("plots/fittingplot1_%s_%s_b%d.jpg",splitting.Data(),diffvariable.Data(),bin));
-    c2->SaveAs(Form("plots/fittingplot2_%s_%s_b%d.jpg",splitting.Data(),diffvariable.Data(),bin));
-    c0->SaveAs(Form("plots/fittingplot0_%s_%s_b%d.root",splitting.Data(),diffvariable.Data(),bin));
-    c1->SaveAs(Form("plots/fittingplot1_%s_%s_b%d.root",splitting.Data(),diffvariable.Data(),bin));
-    c2->SaveAs(Form("plots/fittingplot2_%s_%s_b%d.root",splitting.Data(),diffvariable.Data(),bin));
+
+    RooWorkspace *wspace = new RooWorkspace("fittingwspace","fittingwspace");
+    wspace->import(*firstpass);
+    wspace->import(*secondpass);
+    wspace->writeToFile(Form("plots/fittingwspace_%s_%s_b%d.root",splitting.Data(),diffvariable.Data(),bin));
 
     delete model_2D_nll;
 
