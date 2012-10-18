@@ -49,10 +49,20 @@ using namespace RooFit;
 typedef struct {
   RooFitResult *fr;
   float tot_events;
+  float pp;
+  float pp_err;
+  float pf;
+  float pf_err;
+  float fp;
+  float fp_err;
+  float ff;
+  float ff_err;
 } fit_output; 
 
 bool study_templates=0;
 bool study_templates_plotting=0;
+
+const int numcpu=12;
 
 //typedef struct {
 //  RooAbsPdf *pdf;
@@ -69,11 +79,17 @@ fit_output* fit_dataset(const char* inputfilename_ts, const char* inputfilename_
 //  freopen("/dev/null","w",stdout);
 //  freopen("/dev/null","w",stderr);
 
-  bool dosingle=0;
-
   fit_output *out = new fit_output();
   out->fr=NULL;
   out->tot_events=0;
+  out->pp=0;
+  out->pp_err=0;
+  out->pf=0;
+  out->pf_err=0;
+  out->fp=0;
+  out->fp_err=0;
+  out->ff=0;
+  out->ff_err=0;
 
   TFile *inputfile_ts = TFile::Open(inputfilename_ts);
   TFile *inputfile_tb = TFile::Open(inputfilename_tb);
@@ -98,8 +114,7 @@ fit_output* fit_dataset(const char* inputfilename_ts, const char* inputfilename_
     if (splitting=="EBEB") {s1="EB"; s2="EB";}
     else if (splitting=="EEEE") {s1="EE"; s2="EE";}
     else if (splitting=="EBEE") {s1="EB"; s2="EE";}
-
-
+    bool sym  = (s1==s2);
      
     RooWorkspace *wspace_ts=NULL;
     RooWorkspace *wspace_tb=NULL;
@@ -234,14 +249,16 @@ fit_output* fit_dataset(const char* inputfilename_ts, const char* inputfilename_
 
 
 
-    //lm_sig1->setVal(5.65095e-01);
-    //lm_bkg1->setVal(1.92861e-01);
-    sig1pdf->fitTo(*sig1dset,NumCPU(4));
-    bkg1pdf->fitTo(*bkg1dset,NumCPU(4));
-    //    sig2pdf->fitTo(*sig2dset);
-    //    bkg2pdf->fitTo(*bkg2dset);        
-    lm_sig2->setVal(lm_sig1->getVal());
-    lm_bkg2->setVal(lm_bkg1->getVal());
+    sig1pdf->fitTo(*sig1dset,NumCPU(numcpu));
+    bkg1pdf->fitTo(*bkg1dset,NumCPU(numcpu));
+    if (sym) {
+      lm_sig2->setVal(lm_sig1->getVal());
+      lm_bkg2->setVal(lm_bkg1->getVal());
+    }
+    else {
+      sig2pdf->fitTo(*sig2dset);
+      bkg2pdf->fitTo(*bkg2dset);        
+    }
 
     lm_sig1->setConstant(kTRUE);
     lm_sig2->setConstant(kTRUE);
@@ -277,45 +294,48 @@ fit_output* fit_dataset(const char* inputfilename_ts, const char* inputfilename_
     c0->GetPad(4)->SetLogy(1);
 
     
-    
+    RooFormulaVar *fsig1 = new RooFormulaVar("fsig1","fsig1","j1",RooArgList(*j1));
+    //    RooFormulaVar *fbkg1 = new RooFormulaVar("fbkg1","fbkg1","1-fsig1",RooArgList(*fsig1));
+    RooFormulaVar *fsig2 = new RooFormulaVar("fsig2","fsig2","@0", (sym) ? RooArgList(*j1) : RooArgList(*j2) );
+    //    RooFormulaVar *fbkg2 = new RooFormulaVar("fbkg2","fbkg2","1-fsig2",RooArgList(*fsig2));
 
+    RooFormulaVar *fsigsig = new RooFormulaVar("fsigsig","fsigsig","pp",RooArgList(*pp));
+    RooFormulaVar *fsigbkg = new RooFormulaVar("fsigbkg","fsigbkg","fsig1-pp",RooArgList(*fsig1,*pp));  
+    RooFormulaVar *fbkgsig = new RooFormulaVar("fbkgsig","fbkgsig","fsig2-pp",RooArgList(*fsig2,*pp));
+    RooFormulaVar *fbkgbkg = new RooFormulaVar("fbkgbkg","fbkgbkg","1-fsigsig-fsigbkg-fbkgsig",RooArgList(*fsigsig,*fsigbkg,*fbkgsig));
+    
     RooProdPdf *sigsigpdf = new RooProdPdf("sigsigpdf","sigsigpdf",RooArgList(*sig1pdf,*sig2pdf));
     RooProdPdf *sigbkgpdf = new RooProdPdf("sigbkgpdf","sigbkgpdf",RooArgList(*sig1pdf,*bkg2pdf));
     RooProdPdf *bkgsigpdf = new RooProdPdf("bkgsigpdf","bkgsigpdf",RooArgList(*bkg1pdf,*sig2pdf));
     RooProdPdf *bkgbkgpdf = new RooProdPdf("bkgbkgpdf","bkgbkgpdf",RooArgList(*bkg1pdf,*bkg2pdf));
 
-    RooFormulaVar *fsigsig = new RooFormulaVar("fsigsig","fsigsig","pp",RooArgList(*pp));
-    RooFormulaVar *fsigbkg = new RooFormulaVar("fsigbkg","fsigbkg","j1-pp",RooArgList(*pp,*j1));  
-    RooFormulaVar *fbkgsig = new RooFormulaVar("fbkgsig","fbkgsig","j2-pp",RooArgList(*pp,*j2));
-    RooFormulaVar *fbkgbkg = new RooFormulaVar("fbkgbkg","fbkgbkg","1-fsigsig-fsigbkg-fbkgsig",RooArgList(*fsigsig,*fsigbkg,*fbkgsig));
-
-    RooFormulaVar *fsig1 = new RooFormulaVar("fsig1","fsig1","j1",RooArgList(*j1));
-    RooFormulaVar *fbkg1 = new RooFormulaVar("fbkg1","fbkg1","1-fsig1",RooArgList(*fsig1));
-    RooFormulaVar *fsig2 = new RooFormulaVar("fsig2","fsig2","j2",RooArgList(*j2));
-    RooFormulaVar *fbkg2 = new RooFormulaVar("fbkg2","fbkg2","1-fsig2",RooArgList(*fsig2));
-
-    RooRealVar *nevents = new RooRealVar("nevents","nevents",dataset->sumEntries(),0,1e6);
+    
+    //    RooRealVar *nevents = new RooRealVar("nevents","nevents",dataset->sumEntries(),0,1e6);
 
     RooAddPdf *model_2D = new RooAddPdf("model_2D","model_2D",RooArgList(*sigsigpdf,*sigbkgpdf,*bkgsigpdf,*bkgbkgpdf),RooArgList(*fsigsig,*fsigbkg,*fbkgsig,*fbkgbkg),kFALSE);
     //    RooExtendPdf *model_2D_extended = new RooExtendPdf("model_2D_extended","model_2D_extended",*model_2D,*nevents);
-    RooNLLVar *model_2D_extended_nll = new RooNLLVar("model_2D_extended_nll","model_2D_extended_nll",*model_2D,*dataset,NumCPU(4));
+    //    RooNLLVar *model_2D_extended_nll = new RooNLLVar("model_2D_extended_nll","model_2D_extended_nll",*model_2D_extended,*dataset,NumCPU(numcpu));
+    RooNLLVar *model_2D_noextended_nll = new RooNLLVar("model_2D_noextended_nll","model_2D_noextended_nll",*model_2D,*dataset,NumCPU(numcpu));
+    RooNLLVar *model_2D_nll = model_2D_noextended_nll;
 
     RooAddPdf *model_axis1 = new RooAddPdf("model_axis1","model_axis1",RooArgList(*sig1pdf,*bkg1pdf),RooArgList(*fsig1));
-    RooExtendPdf *model_axis1_extended = new RooExtendPdf("model_axis1_extended","model_axis1_extended",*model_axis1,*nevents);
-    //    RooNLLVar *model_axis1_extended_nll = new RooNLLVar("model_axis1_extended_nll","model_axis1_extended_nll",*model_axis1_extended,*dataset_axis1,NumCPU(4));
-    RooNLLVar *model_axis1_extended_nll = new RooNLLVar("model_axis1_extended_nll","model_axis1_extended_nll",*model_axis1,*dataset_axis1,NumCPU(4));
+    //    RooExtendPdf *model_axis1_extended = new RooExtendPdf("model_axis1_extended","model_axis1_extended",*model_axis1,*nevents);
+    //    RooNLLVar *model_axis1_extended_nll = new RooNLLVar("model_axis1_extended_nll","model_axis1_extended_nll",*model_axis1_extended,*dataset_axis1,NumCPU(numcpu));
+    RooNLLVar *model_axis1_noextended_nll = new RooNLLVar("model_axis1_noextended_nll","model_axis1_noextended_nll",*model_axis1,*dataset_axis1,NumCPU(numcpu));
+    RooNLLVar *model_axis1_nll = model_axis1_noextended_nll;
 
     RooAddPdf *model_axis2 = new RooAddPdf("model_axis2","model_axis2",RooArgList(*sig2pdf,*bkg2pdf),RooArgList(*fsig2));
-    RooExtendPdf *model_axis2_extended = new RooExtendPdf("model_axis2_extended","model_axis2_extended",*model_axis2,*nevents);
-    //    RooNLLVar *model_axis2_extended_nll = new RooNLLVar("model_axis2_extended_nll","model_axis2_extended_nll",*model_axis2_extended,*dataset_axis2,NumCPU(4));
-    RooNLLVar *model_axis2_extended_nll = new RooNLLVar("model_axis2_extended_nll","model_axis2_extended_nll",*model_axis2,*dataset_axis2,NumCPU(4));
+    //    RooExtendPdf *model_axis2_extended = new RooExtendPdf("model_axis2_extended","model_axis2_extended",*model_axis2,*nevents);
+    //    RooNLLVar *model_axis2_extended_nll = new RooNLLVar("model_axis2_extended_nll","model_axis2_extended_nll",*model_axis2_extended,*dataset_axis2,NumCPU(numcpu));
+    RooNLLVar *model_axis2_noextended_nll = new RooNLLVar("model_axis2_noextended_nll","model_axis2_noextended_nll",*model_axis2,*dataset_axis2,NumCPU(numcpu));
+    RooNLLVar *model_axis2_nll = model_axis2_noextended_nll;
 
-    RooFormulaVar *asym = new RooFormulaVar("asym","asym","TMath::Abs(j1-j2)",RooArgSet(*j1,*j2));
-    RooGaussian *constrain_asym = new RooGaussian("constrain_asym","constrain_asym",*asym,RooRealConstant::value(0),RooRealConstant::value(0.001));
-    RooConstraintSum *constrain_asym_nll = new RooConstraintSum("constrain_asym_nll","constrain_asym_nll",*constrain_asym,RooArgList(*asym));
+    //    RooFormulaVar *asym = new RooFormulaVar("asym","asym","TMath::Abs(j1-j2)",RooArgSet(*j1,*j2));
+    //    RooGaussian *constrain_asym = new RooGaussian("constrain_asym","constrain_asym",*asym,RooRealConstant::value(0),RooRealConstant::value(0.001));
+    //    RooConstraintSum *constrain_asym_nll = new RooConstraintSum("constrain_asym_nll","constrain_asym_nll",*constrain_asym,RooArgList(*asym));
 
-    RooAddition *model_2axes_extended_nll = new RooAddition("model_2axes_extended_nll","model_2axes_extended_nll",RooArgSet(*model_axis1_extended_nll,*model_axis2_extended_nll,*constrain_asym_nll));
-    RooAddition *model_2D_extended_nll_constrained = new RooAddition("model_2D_extended_nll_constrained","model_2D_extended_nll_constrained",RooArgSet(*model_2D_extended_nll,*constrain_asym_nll));
+    RooAddition *model_2axes_nll = new RooAddition("model_2axes_nll","model_2axes_nll",RooArgSet(*model_axis1_nll,*model_axis2_nll));
+    //    RooAddition *model_2D_nll_constrained = new RooAddition("model_2D_nll_constrained","model_2D_nll_constrained",RooArgSet(*model_2D_extended_nll,*constrain_asym_nll));
 
 
     
@@ -323,7 +343,7 @@ fit_output* fit_dataset(const char* inputfilename_ts, const char* inputfilename_
     RooFitResult *firstpass;
 
 
-    RooMinimizer *minuit_firstpass = new RooMinimizer(*model_2axes_extended_nll);
+    RooMinimizer *minuit_firstpass = new RooMinimizer(*model_2axes_nll);
     minuit_firstpass->migrad();
     minuit_firstpass->hesse();
     firstpass = minuit_firstpass->save("firstpass","firstpass");
@@ -355,26 +375,45 @@ fit_output* fit_dataset(const char* inputfilename_ts, const char* inputfilename_
     c1->GetPad(2)->SetLogy(1);
 
 
-
-
-    float lowerbounds[4]={0,j1->getVal()-1,j2->getVal()-1,j1->getVal()+j2->getVal()-1};
-    float upperbounds[4]={1,j1->getVal(),j2->getVal(),j1->getVal()+j2->getVal()};
+    float lowerbounds[4]={0,fsig1->getVal()-1,fsig2->getVal()-1,fsig1->getVal()+fsig2->getVal()-1};
+    float upperbounds[4]={1,fsig1->getVal(),fsig2->getVal(),fsig1->getVal()+fsig2->getVal()};
 
 
     float minpp = TMath::MaxElement(4,lowerbounds);
     float maxpp = TMath::MinElement(4,upperbounds);
     pp->setVal((minpp+maxpp)/2);
-    pp->setRange(minpp,maxpp);
+
 
     // DEBUUUUUUUUUUUUUUUUUUUUG
-    j1->setConstant(1);
-    j2->setConstant(2);
     //    std::cout << "j1 " << j1->getVal() << " " << j1->getPropagatedError(*firstpass) << std::endl;
     //    std::cout << "j2 " << j2->getVal() << " " << j2->getPropagatedError(*firstpass) << std::endl;
-    std::cout << "setting constrain pp val at " << pp->getVal() << " between " << minpp << " and " << maxpp << std::endl;
 
 
-    RooMinimizer *minuit_secondpass = new RooMinimizer(*model_2D_extended_nll_constrained);
+
+
+    {
+
+      float nsigma_tolerance = 3;
+
+      std::cout << "setting constrain pp val at " << pp->getVal() << " between " << minpp << " and " << maxpp << std::endl;
+      pp->setRange(minpp,maxpp);
+
+      std::cout << "setting constrain j1 val at " << j1->getVal() << " between " << j1->getVal()-nsigma_tolerance*j1->getPropagatedError(*firstpass) << " and " << j1->getVal()+nsigma_tolerance*j1->getPropagatedError(*firstpass) << std::endl;
+      j1->setRange(j1->getVal()-nsigma_tolerance*j1->getPropagatedError(*firstpass),j1->getVal()+nsigma_tolerance*j1->getPropagatedError(*firstpass));
+      
+      if (!sym){
+	std::cout << "setting constrain j2 val at " << j2->getVal() << " between " << j2->getVal()-nsigma_tolerance*j2->getPropagatedError(*firstpass) << " and " << j2->getVal()+nsigma_tolerance*j2->getPropagatedError(*firstpass) << std::endl;
+	j2->setRange(j2->getVal()-nsigma_tolerance*j2->getPropagatedError(*firstpass),j2->getVal()+nsigma_tolerance*j2->getPropagatedError(*firstpass));
+      }
+     
+    }
+
+
+
+
+
+
+    RooMinimizer *minuit_secondpass = new RooMinimizer(*model_2D_nll);
     minuit_secondpass->migrad();
     minuit_secondpass->hesse();
     RooFitResult *secondpass = minuit_secondpass->save("secondpass","secondpass");
@@ -407,7 +446,6 @@ fit_output* fit_dataset(const char* inputfilename_ts, const char* inputfilename_
 //    model_2D_extended_nll_constrained->plotOn(ppnllplot);
 //    ppnllplot->Draw();
 
-    return out;
 
 
 //    std::cout << "expecting purities = " << pp_init << " " << pf_init << " " << fp_init << " " << 1-pp_init-pf_init-fp_init << std::endl;
@@ -420,6 +458,24 @@ fit_output* fit_dataset(const char* inputfilename_ts, const char* inputfilename_
 //    out->fr=fr;
 //    out->tot_events=nevents->getVal();
 
+
+    out->fr=secondpass;
+    out->tot_events=dataset->sumEntries();
+    out->pp=fsigsig->getVal();
+    out->pp_err=fsigsig->getPropagatedError(*secondpass);
+    out->pf=fsigbkg->getVal();
+    out->pf_err=fsigbkg->getPropagatedError(*secondpass);
+    out->fp=fbkgsig->getVal();
+    out->fp_err=fbkgsig->getPropagatedError(*secondpass);
+    out->ff=fbkgbkg->getVal();
+    out->ff_err=fbkgbkg->getPropagatedError(*secondpass);
+
+
+
+
+    c0->SaveAs(Form("plots/fittingplot0_%s_%s_b%d.png",splitting.Data(),diffvariable.Data(),bin));
+    c1->SaveAs(Form("plots/fittingplot1_%s_%s_b%d.png",splitting.Data(),diffvariable.Data(),bin));
+    c2->SaveAs(Form("plots/fittingplot2_%s_%s_b%d.png",splitting.Data(),diffvariable.Data(),bin));
 
 
     return out;
@@ -537,16 +593,14 @@ fit_output* fit_dataset(const char* inputfilename_ts, const char* inputfilename_
 };
 
 
-/*
 
-void run_fits(TString inputfilename_t="templates.root", TString inputfilename_d="tobefitted.root", TString diffvariable="", TString splitting=""){
+
+void run_fits(TString inputfilename_ts="templates_sig.root", TString inputfilename_tb="templates_bkg.root",TString inputfilename_d="tobefitted.root", TString diffvariable="", TString splitting=""){
 
   TH1F::SetDefaultSumw2(kTRUE);
 
-  bool dosingle=0;
-
   int bins_to_run=0; 
-  float *binsdef;
+  float *binsdef=NULL;
 
   if (diffvariable=="invmass"){
     if (splitting=="EBEB")      bins_to_run=n_templates_invmass_EBEB;
@@ -580,35 +634,32 @@ void run_fits(TString inputfilename_t="templates.root", TString inputfilename_d=
     else if (splitting=="EBEE") binsdef=binsdef_diphoton_dphi_EBEE;
     else if (splitting=="EEEE") binsdef=binsdef_diphoton_dphi_EEEE;
   }
-  if (diffvariable=="dosingle"){
-    dosingle=1;
-    if (splitting=="EB")      bins_to_run=n_templates_EB;
-    else if (splitting=="EE") bins_to_run=n_templates_EE;
-    if (splitting=="EB")      binsdef=binsdef_single_gamma_EB_eta;
-    else if (splitting=="EE") binsdef=binsdef_single_gamma_EE_eta;
-  }
+//  if (diffvariable=="dosingle"){
+//    dosingle=1;
+//    if (splitting=="EB")      bins_to_run=n_templates_EB;
+//    else if (splitting=="EE") bins_to_run=n_templates_EE;
+//    if (splitting=="EB")      binsdef=binsdef_single_gamma_EB_eta;
+//    else if (splitting=="EE") binsdef=binsdef_single_gamma_EE_eta;
+//  }
 
   
   fit_output *fr[n_bins];
 
-  TH1F *purity[3];
+  TH1F *purity[4];
   TH1F *eff=NULL;
   TH1F *xsec;
 
-  TFile *eff_file = new TFile("efficiencies.root");
-  if (dosingle) eff_file->GetObject(Form("w_eff_sg_%s",splitting.Data()),eff);
-  else eff_file->GetObject(Form("w_eff_gg_%s_%s",splitting.Data(),diffvariable.Data()),eff);
+//  TFile *eff_file = new TFile("efficiencies.root");
+//  eff_file->GetObject(Form("w_eff_gg_%s_%s",splitting.Data(),diffvariable.Data()),eff);
+//  assert (eff!=NULL);
+//  eff->GetYaxis()->SetTitle("selection/ID efficiency");
+//  eff->GetXaxis()->SetTitle(diffvariable.Data());
 
-  assert (eff!=NULL);
+  int colors[4] = {kRed, kGreen, kGreen+2, kBlack};
 
-  eff->GetYaxis()->SetTitle("selection/ID efficiency");
-  eff->GetXaxis()->SetTitle(diffvariable.Data());
-
-  int colors[3] = {kRed, kGreen, kBlack};
-
-  for (int i=0; i<3; i++){
+  for (int i=0; i<4; i++){
     TString name = "purity_";
-    if (i==0) name.Append("sigsig"); else if (i==1) name.Append("sigbkg"); else if (i==2) name.Append("bkgbkg");
+    if (i==0) name.Append("sigsig"); else if (i==1) name.Append("sigbkg"); else if (i==2) name.Append("bkgsig"); else if (i==3) name.Append("bkgbkg");
     purity[i] = new TH1F(name.Data(),name.Data(),bins_to_run,binsdef);
     purity[i]->SetMarkerStyle(20);
     purity[i]->SetMarkerColor(colors[i]);
@@ -631,94 +682,57 @@ void run_fits(TString inputfilename_t="templates.root", TString inputfilename_d=
 
 
 
-
-  RooRealVar *rf1;
-  RooRealVar *rf2;
-
-  if (study_templates && !study_templates_plotting) bins_to_run=1;
-
   for (int bin=0; bin<bins_to_run; bin++) {
 
-    fr[bin]=fit_dataset(inputfilename_t.Data(),inputfilename_d.Data(),diffvariable,splitting,bin);
+    fr[bin]=fit_dataset(inputfilename_ts.Data(),inputfilename_tb.Data(),inputfilename_d.Data(),diffvariable,splitting,bin);
     
     if (!fr[bin]->fr) continue;
 
     float intlumi=4519.0;
 
-    if (dosingle) {
+    float pp = fr[bin]->pp;
+    float pp_err = fr[bin]->pp_err;
+    float pf = fr[bin]->pf;
+    float pf_err = fr[bin]->pf_err;
+    float fp = fr[bin]->fp;
+    float fp_err = fr[bin]->fp_err;
+    float ff = fr[bin]->ff;
+    float ff_err = fr[bin]->ff_err;
 
-	rf1=(RooRealVar*)(fr[bin]->fr->floatParsFinal().find("rf1"));
-	RooFormulaVar fsig("fsig","fsig","rf1",RooArgList(*rf1));
-	RooFormulaVar fbkg("fbkg","fbkg","1-fsig",RooArgList(fsig));
-	std::cout << "------------------------------" << std::endl;
-	std::cout << bin << " " << fsig.getVal() << " " << fbkg.getVal() << std::endl;
+    purity[0]->SetBinContent(bin+1,pp);
+    purity[0]->SetBinError(bin+1,pp_err);
+    purity[1]->SetBinContent(bin+1,pf);
+    purity[1]->SetBinError(bin+1,pf_err);
+    purity[2]->SetBinContent(bin+1,fp);
+    purity[2]->SetBinError(bin+1,fp_err);
+    purity[3]->SetBinContent(bin+1,ff);
+    purity[3]->SetBinError(bin+1,ff_err);
+      
+    //      xsec->SetBinContent(bin+1,pp->getVal()*fr[bin]->tot_events/xsec->GetBinWidth(bin+1)/intlumi);
+    //      xsec->SetBinContent(bin+1,pp->getVal()*fr[bin]->tot_events);
+    xsec->SetBinContent(bin+1,pp*fr[bin]->tot_events/xsec->GetBinWidth(bin+1)/intlumi);
 
-	purity[0]->SetBinContent(bin+1,fsig.getVal());
-	purity[0]->SetBinError(bin+1,fsig.getPropagatedError(*(fr[bin]->fr)));
-	purity[2]->SetBinContent(bin+1,fbkg.getVal());
-	purity[2]->SetBinError(bin+1,fbkg.getPropagatedError(*(fr[bin]->fr)));
-
-	xsec->SetBinContent(bin+1,fsig.getVal()*fr[bin]->tot_events/xsec->GetBinWidth(bin+1)/intlumi);
-	float err1=purity[0]->GetBinError(bin+1)/purity[0]->GetBinContent(bin+1);
-	float err2=1.0/sqrt(fr[bin]->tot_events);
-	float err=sqrt(err1*err1+err2*err2);
-	xsec->SetBinError(bin+1,err*xsec->GetBinContent(bin+1));
-	
-	xsec->Divide(eff);
-
-    }
-
-    else {
-
-      RooRealVar *pp;
-      pp=(RooRealVar*)(fr[bin]->fr->floatParsFinal().find("pp"));
-
-      purity[0]->SetBinContent(bin+1,pp->getVal());
-      purity[0]->SetBinError(bin+1,pp->getPropagatedError(*(fr[bin]->fr)));
-      //      xsec->SetBinContent(bin+1,pp->getVal()*fr[bin]->tot_events/xsec->GetBinWidth(bin+1)/intlumi);
-      xsec->SetBinContent(bin+1,pp->getVal()*fr[bin]->tot_events);
-//      float err1=purity[0]->GetBinError(bin+1)/purity[0]->GetBinContent(bin+1);
-//      float err2=1.0/sqrt(fr[bin]->tot_events);
-//      float err=sqrt(err1*err1+err2*err2);
-//      xsec->SetBinError(bin+1,err*xsec->GetBinContent(bin+1));
-
-//	rf1=(RooRealVar*)(fr[bin]->fr->floatParsFinal().find("rf1"));
-//	rf2=(RooRealVar*)(fr[bin]->fr->floatParsFinal().find("rf2"));
-//	RooFormulaVar fsigsig("fsigsig","fsigsig","rf1",RooArgList(*rf1));
-//	RooFormulaVar fsigbkg("fsigbkg","fsigbkg","(1-rf1)*rf2",RooArgList(*rf1,*rf2));
-//	RooFormulaVar fbkgbkg("fbkgbkg","fbkgbkg","1-fsigsig-fsigbkg",RooArgList(fsigsig,fsigbkg));
-//	std::cout << "------------------------------" << std::endl;
-//	std::cout << bin << " " << fsigsig.getVal() << " " << fsigbkg.getVal() << " " << fbkgbkg.getVal() << std::endl;
-//
-//	purity[0]->SetBinContent(bin+1,fsigsig.getVal());
-//	purity[0]->SetBinError(bin+1,fsigsig.getPropagatedError(*(fr[bin]->fr)));
-//	purity[1]->SetBinContent(bin+1,fsigbkg.getVal());
-//	purity[1]->SetBinError(bin+1,fsigbkg.getPropagatedError(*(fr[bin]->fr)));
-//	purity[2]->SetBinContent(bin+1,fbkgbkg.getVal());
-//	purity[2]->SetBinError(bin+1,fbkgbkg.getPropagatedError(*(fr[bin]->fr)));
-//
-//	xsec->SetBinContent(bin+1,fsigsig.getVal()*fr[bin]->tot_events/xsec->GetBinWidth(bin+1)/intlumi);
-//	float err1=purity[0]->GetBinError(bin+1)/purity[0]->GetBinContent(bin+1);
-//	float err2=1.0/sqrt(fr[bin]->tot_events);
-//	float err=sqrt(err1*err1+err2*err2);
-//	xsec->SetBinError(bin+1,err*xsec->GetBinContent(bin+1));
-//	
-//	xsec->Divide(eff);
-    }
-
+    float err1=purity[0]->GetBinError(bin+1)/purity[0]->GetBinContent(bin+1);
+    float err2=1.0/sqrt(fr[bin]->tot_events);
+    float err=sqrt(err1*err1+err2*err2);
+    xsec->SetBinError(bin+1,err*xsec->GetBinContent(bin+1));
+    
+    for (int k=0; k<100; k++) std::cout << "WARNING: NO EFFICIENCY CORRECTION!!!" << std::endl;
+    //    xsec->Divide(eff);
 
   }
 
-  if (study_templates && !study_templates_plotting) return;
 
+  
 
   TCanvas *output_canv = new TCanvas("output_canv","output_canv");
   output_canv->cd();
 
   purity[0]->Draw("e1");
-  //  if (!dosingle) purity[1]->Draw("e1same");
-  //  purity[2]->Draw("e1same");
-
+  purity[1]->Draw("e1same");
+  purity[2]->Draw("e1same");
+  purity[3]->Draw("e1same");
+  
   output_canv->Update();
 
 
@@ -738,8 +752,9 @@ void run_fits(TString inputfilename_t="templates.root", TString inputfilename_d=
   TFile *out1 = new TFile(Form("plots/purity_%s_%s.root",splitting.Data(),diffvariable.Data()),"recreate");
   out1->cd();
   purity[0]->Write();
-  if (!dosingle) purity[1]->Write();
+  purity[1]->Write();
   purity[2]->Write();
+  purity[3]->Write();
 
   TFile *outfile = new TFile(Form("plots/xsec_%s_%s.root",splitting.Data(),diffvariable.Data()),"recreate");
   outfile->cd();
@@ -749,4 +764,4 @@ void run_fits(TString inputfilename_t="templates.root", TString inputfilename_d=
 };
 
 
-*/
+
