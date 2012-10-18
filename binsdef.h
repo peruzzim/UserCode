@@ -11,7 +11,36 @@ std::vector<TString> diffvariables_list (__variables__, __variables__ + sizeof(_
 
 const Int_t n_histobins = 20;
 const Float_t leftrange = 0.0;
-const Float_t rightrange = 5.0;
+const Float_t rightrange = 10.0;
+//
+//const Double_t histobins[n_histobins+1]={\
+//0.0,\
+//0.25,\
+//0.5,\
+//0.75,\
+//1.0,\
+//1.25,\
+//1.5,\
+//1.75,\
+//2.0,\
+//2.25,\
+//2.5,\
+//2.75,\
+//3.0,\
+//3.5,\
+//4.0,\
+//4.5,\
+//5.0,\
+//6.0,\
+//7.0,\
+//8.0,\
+//9.0,\
+//10.0\
+//};
+//
+
+
+
 
 static const int n_bins=13;
 

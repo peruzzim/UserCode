@@ -37,6 +37,8 @@ void template_production::Loop()
     nb = fChain->GetEntry(jentry);   nbytes += nb;
     if (jentry%100000==0) std::cout << "Processing entry " << jentry << std::endl;
 
+    if (jentry==1e+4) break;
+
     // initial kinematic selection
     //    if (dodistribution) if (pholead_pt<40 || photrail_pt<30 || dipho_mgg_photon<80) continue;
     if (dodistribution) if (pholead_pt<40 || photrail_pt<30) continue;
@@ -237,7 +239,8 @@ void template_production::Loop()
     if (photrail_outvar<leftrange) photrail_outvar=leftrange;
     if (pholead_outvar>=rightrange) pholead_outvar=rightrange-1e-5; // overflow in last bin
     if (photrail_outvar>=rightrange) photrail_outvar=rightrange-1e-5; // overflow in last bin
-
+    if (pholead_outvar==0) pholead_outvar=randomgen->Uniform(0,0.1);
+    if (photrail_outvar==0) photrail_outvar=randomgen->Uniform(0,0.1);
 
     Float_t weight=event_luminormfactor*event_Kfactor*event_weight;
     float ptweight_lead = 1;
@@ -260,6 +263,11 @@ void template_production::Loop()
    
       if (dosignaltemplate){
 	template_signal[reg_lead][bin_lead]->Fill(pholead_outvar,weight*ptweight_lead);
+	roovar1->setVal(pholead_outvar);
+	roovar2->setVal(pholead_outvar);
+	rooweight->setVal(weight*ptweight_lead);
+	roodset_signal[reg_lead][bin_lead][0]->add(*roovar1,weight*ptweight_lead);
+	roodset_signal[reg_lead][bin_lead][1]->add(*roovar2,weight*ptweight_lead);
 	histo_pt[reg_lead]->Fill(pholead_pt,weight*ptweight_lead);
 	histo_eta->Fill(fabs(pholead_SCeta),weight*ptweight_lead);
 	histo_pt_eta->Fill(pholead_pt,fabs(pholead_SCeta),weight*ptweight_lead);
@@ -268,8 +276,22 @@ void template_production::Loop()
       
       if (dobackgroundtemplate){
 	if (mode=="sieiesideband"){ 
-	  if (fabs(pholead_SCeta)<1.4442 && pholead_sieie>0.011 && pholead_sieie<0.014) template_background[reg_lead][bin_lead]->Fill(pholead_outvar,weight*ptweight_lead);
-	  if (fabs(pholead_SCeta)>1.56 && pholead_sieie>0.030 && pholead_sieie<0.031) template_background[reg_lead][bin_lead]->Fill(pholead_outvar,weight*ptweight_lead);
+	  if (fabs(pholead_SCeta)<1.4442 && pholead_sieie>0.011 && pholead_sieie<0.014){
+	    template_background[reg_lead][bin_lead]->Fill(pholead_outvar,weight*ptweight_lead);
+	    roovar1->setVal(pholead_outvar);
+	    roovar2->setVal(pholead_outvar);
+	    rooweight->setVal(weight*ptweight_lead);
+	    roodset_background[reg_lead][bin_lead][0]->add(*roovar1,weight*ptweight_lead);
+	    roodset_background[reg_lead][bin_lead][1]->add(*roovar2,weight*ptweight_lead);
+	  }
+	  if (fabs(pholead_SCeta)>1.56 && pholead_sieie>0.030 && pholead_sieie<0.031){
+	    template_background[reg_lead][bin_lead]->Fill(pholead_outvar,weight*ptweight_lead);
+	    roovar1->setVal(pholead_outvar);
+	    roovar2->setVal(pholead_outvar);
+	    rooweight->setVal(weight*ptweight_lead);
+	    roodset_background[reg_lead][bin_lead][0]->add(*roovar1,weight*ptweight_lead);
+	    roodset_background[reg_lead][bin_lead][1]->add(*roovar2,weight*ptweight_lead);
+	  }
 	  if ((fabs(pholead_SCeta)<1.4442 && pholead_sieie>0.011 && pholead_sieie<0.014) || (fabs(pholead_SCeta)>1.56 && pholead_sieie>0.030 && pholead_sieie<0.031)){
 	    histo_pt[reg_lead]->Fill(pholead_pt,weight*ptweight_lead);
 	    histo_eta->Fill(fabs(pholead_SCeta),weight*ptweight_lead);
@@ -278,6 +300,11 @@ void template_production::Loop()
 	}
 	else {
 	  template_background[reg_lead][bin_lead]->Fill(pholead_outvar,weight*ptweight_lead);
+	  roovar1->setVal(pholead_outvar);
+	  roovar2->setVal(pholead_outvar);
+	  rooweight->setVal(weight*ptweight_lead);
+	  roodset_background[reg_lead][bin_lead][0]->add(*roovar1,weight*ptweight_lead);
+	  roodset_background[reg_lead][bin_lead][1]->add(*roovar2,weight*ptweight_lead);
 	  histo_pt[reg_lead]->Fill(pholead_pt,weight*ptweight_lead);
 	  histo_eta->Fill(fabs(pholead_SCeta),weight*ptweight_lead);
 	  histo_pt_eta->Fill(pholead_pt,fabs(pholead_SCeta),weight*ptweight_lead);
@@ -341,7 +368,10 @@ void template_production::Loop()
 	}
       
 	obs_hist[get_name_obs(event_ok_for_dataset,*diffvariable,bin_couple)]->Fill(in1,in2,weight);
-		 
+	roovar1->setVal(in1);
+	roovar2->setVal(in2);
+	rooweight->setVal(weight);
+	obs_roodset[get_name_obs_roodset(event_ok_for_dataset,*diffvariable,bin_couple)]->add(RooArgSet(*roovar1,*roovar2),weight);
 		 
       }
       

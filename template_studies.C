@@ -20,6 +20,28 @@
 #include "RooMCStudy.h"
 #include "RooGaussian.h"
 #include "RooExtendPdf.h"
+#include "RooGenericPdf.h"
+#include "RooSimultaneous.h"
+#include "RooCategory.h"
+#include <stdio.h>
+#include "RooNLLVar.h"
+#include "RooAbsReal.h"
+#include "RooMinimizer.h"
+#include "RooWorkspace.h"
+#include "RooDataSet.h"
+#include "RooRealVar.h"
+#include "RooPlot.h"
+#include "RooKeysPdf.h"
+#include "RooNDKeysPdf.h"
+#include "RooAddPdf.h"
+#include "RooArgList.h"
+#include "RooFitResult.h"
+#include "RooClassFactory.h"
+#include "TCanvas.h"
+#include "RooConstraintSum.h"
+#include "RooAddition.h"
+//#include "TThread.h"
+#include "firstbinpdf.cxx"
 
 using namespace std;
 using namespace RooFit;
@@ -32,17 +54,29 @@ typedef struct {
 bool study_templates=0;
 bool study_templates_plotting=0;
 
-fit_output* fit_dataset(const char* inputfilename_t, const char* inputfilename_d, TString diffvariable, TString splitting, int bin){
+//typedef struct {
+//  RooAbsPdf *pdf;
+//  RooAbsData *data;
+//} necessary_for_fit;
+//
+//void *threaded_fitter(void *arg){
+//  necessary_for_fit *input = (necessary_for_fit*)arg;
+//  return input->pdf->fitTo(*(input->data),Save());
+//};
+
+fit_output* fit_dataset(const char* inputfilename_ts, const char* inputfilename_tb, const char* inputfilename_d, TString diffvariable, TString splitting, int bin){
+
+//  freopen("/dev/null","w",stdout);
+//  freopen("/dev/null","w",stderr);
 
   bool dosingle=0;
-
-  if (diffvariable==TString("dosingle")) {dosingle=1;}
 
   fit_output *out = new fit_output();
   out->fr=NULL;
   out->tot_events=0;
 
-  TFile *inputfile_t = TFile::Open(inputfilename_t);
+  TFile *inputfile_ts = TFile::Open(inputfilename_ts);
+  TFile *inputfile_tb = TFile::Open(inputfilename_tb);
   TFile *inputfile_d = TFile::Open(inputfilename_d);
 
 
@@ -58,14 +92,6 @@ fit_output* fit_dataset(const char* inputfilename_t, const char* inputfilename_d
 
   if (splitting=="EEEB") splitting="EBEE";
 
-  TH1F *h_datahist_1D;
-  TH2F *h_datahist_2D;
-
-  TH1F *h_sig1hist;
-  TH1F *h_sig2hist;
-  TH1F *h_bkg1hist;
-  TH1F *h_bkg2hist;
-
   TH1::SetDefaultSumw2(kTRUE);
   
     TString s1; TString s2;
@@ -73,173 +99,398 @@ fit_output* fit_dataset(const char* inputfilename_t, const char* inputfilename_d
     else if (splitting=="EEEE") {s1="EE"; s2="EE";}
     else if (splitting=="EBEE") {s1="EB"; s2="EE";}
 
-    if (dosingle){
-      inputfile_t->GetObject(TString(sig_dir).Append(Form("template_signal_%s_b%d",splitting.Data(),n_bins)),h_sig1hist);
-      inputfile_t->GetObject(TString(bkg_dir).Append(Form("template_background_%s_b%d",splitting.Data(),n_bins)),h_bkg1hist);
-      inputfile_d->GetObject(TString(data_dir).Append(Form("obs_hist_single_%s_b%d",splitting.Data(),bin)),h_datahist_1D);
-      std::cout << inputfilename_d << std::endl;
-      std::cout << TString(data_dir).Append(Form("obs_hist_single_%s_b%d",splitting.Data(),bin)) << std::endl;
-      assert (h_sig1hist!=NULL);
-      assert (h_bkg1hist!=NULL);
-      assert (h_datahist_1D!=NULL);
-    }
-    else {
-      inputfile_t->GetObject(TString(sig_dir).Append(Form("template_signal_%s_b%d",s1.Data(),n_bins)),h_sig1hist);
-      inputfile_t->GetObject(TString(bkg_dir).Append(Form("template_background_%s_b%d",s1.Data(),n_bins)),h_bkg1hist);
-      inputfile_t->GetObject(TString(sig_dir).Append(Form("template_signal_%s_b%d",s2.Data(),n_bins)),h_sig2hist);
-      inputfile_t->GetObject(TString(bkg_dir).Append(Form("template_background_%s_b%d",s2.Data(),n_bins)),h_bkg2hist);
-      inputfile_d->GetObject(TString(data_dir).Append(Form("obs_hist_%s_%s_b%d",splitting.Data(),diffvariable.Data(),bin)),h_datahist_2D);
-      std::cout << inputfilename_d << std::endl;
-      std::cout << TString(data_dir).Append(Form("obs_hist_%s_%s_b%d",splitting.Data(),diffvariable.Data(),bin)) << std::endl;
-      assert (h_sig1hist!=NULL);
-      assert (h_bkg1hist!=NULL);
-      assert (h_sig2hist!=NULL);
-      assert (h_bkg2hist!=NULL);
-      assert (h_datahist_2D!=NULL);
-    }
+
+     
+    RooWorkspace *wspace_ts=NULL;
+    RooWorkspace *wspace_tb=NULL;
+    RooWorkspace *wspace_d=NULL;
+    inputfile_ts->GetObject(TString(sig_dir).Append("rooworkspace"),wspace_ts);
+    inputfile_tb->GetObject(TString(bkg_dir).Append("rooworkspace"),wspace_tb);
+    inputfile_d->GetObject(TString(data_dir).Append("rooworkspace"),wspace_d);
+    assert(wspace_ts); wspace_ts->Print();
+    assert(wspace_tb); wspace_tb->Print();
+    assert(wspace_d); wspace_d->Print();  
+
+    RooRealVar *roovar1 = wspace_d->var("roovar1");
+    RooRealVar *roovar2 = wspace_d->var("roovar2");
+    //    RooRealVar *roovar_helper = wspace_ts->var("roovar_helper");
+    assert (roovar1); roovar1->setBins(200); roovar1->Print();    
+    assert (roovar2); roovar2->setBins(200); roovar2->Print();    
+
+    const float pp_init = 0.4;
+    const float pf_init = 0.1;
+    const float fp_init = 0.1;
+    
+      // inversione:
+      //  pp = pp;
+      //  pf = j1 - pp;
+      //  fp = j2 - pp;
+      //  ff = (1-j1-j2)+pp
+      
+    RooRealVar *pp = new RooRealVar("pp","pp",pp_init,0,1);
+    RooRealVar *j1 = new RooRealVar("j1","j1",pp_init+pf_init,0,1);
+    RooRealVar *j2 = new RooRealVar("j2","j2",pp_init+fp_init,0,1);
+    
+
+    RooDataSet *sig1dset = (RooDataSet*)(wspace_ts->data(Form("roodset_signal_%s_b%d_rv%d",s1.Data(),n_bins,1)));
+    RooDataSet *bkg1dset = (RooDataSet*)(wspace_tb->data(Form("roodset_background_%s_b%d_rv%d",s1.Data(),n_bins,1)));
+    RooDataSet *sig2dset = (RooDataSet*)(wspace_ts->data(Form("roodset_signal_%s_b%d_rv%d",s2.Data(),n_bins,2)));
+    RooDataSet *bkg2dset = (RooDataSet*)(wspace_tb->data(Form("roodset_background_%s_b%d_rv%d",s2.Data(),n_bins,2)));
+    RooDataSet *dataset = (RooDataSet*)(wspace_d->data(Form("obs_roodset_%s_%s_b%d",splitting.Data(),diffvariable.Data(),bin)));    
+
+    sig1dset->Print();
+    bkg1dset->Print();
+    sig2dset->Print();
+    bkg2dset->Print();
+    dataset->Print(); 
+
+
+    /*
+    const int nev = 1e4; // DEBUUUUUUUUUUUUUUUUUUUUUUUUG!!!!!!!!!!!!!!!!
+    RooDataSet *sig1dset_red=(RooDataSet*)(sig1dset->reduce(EventRange(0,nev))); // DEBUUUUUUUUUUUUUUUUUUUUUUUUG!!!!!!!!!!!!!!!!
+    RooDataSet *bkg1dset_red=(RooDataSet*)(bkg1dset->reduce(EventRange(0,nev))); // DEBUUUUUUUUUUUUUUUUUUUUUUUUG!!!!!!!!!!!!!!!!
+    RooDataSet *sig2dset_red=(RooDataSet*)(sig2dset->reduce(EventRange(0,nev))); // DEBUUUUUUUUUUUUUUUUUUUUUUUUG!!!!!!!!!!!!!!!!
+    RooDataSet *bkg2dset_red=(RooDataSet*)(bkg2dset->reduce(EventRange(0,nev))); // DEBUUUUUUUUUUUUUUUUUUUUUUUUG!!!!!!!!!!!!!!!!
+    RooDataSet *dataset_red=(RooDataSet*)(dataset->reduce(EventRange(0,nev))); // DEBUUUUUUUUUUUUUUUUUUUUUUUUG!!!!!!!!!!!!!!!!
+    sig1dset=sig1dset_red;
+    bkg1dset=bkg1dset_red;
+    sig2dset=sig2dset_red;
+    bkg2dset=bkg2dset_red;
+    dataset=dataset_red;
+    */
+    sig1dset->Print();
+    bkg1dset->Print();
+    sig2dset->Print();
+    bkg2dset->Print();
+    dataset->Print(); 
+    
+
+    RooDataSet *dataset_axis1 = (RooDataSet*)(dataset->reduce(SelectVars(*roovar1)));
+    RooDataSet *dataset_axis2 = (RooDataSet*)(dataset->reduce(SelectVars(*roovar2)));
+
+
+    RooDataSet *sig1dset_nozero = (RooDataSet*)(sig1dset->reduce(Cut("roovar1>0.1")));
+    firstbinpdf *firstbin_sig1 = new firstbinpdf("firstbin_sig1","firstbin_sig1",*roovar1);
+    RooNDKeysPdf *kpdf_sig1 = new RooNDKeysPdf("kpdf_sig1","kpdf_sig1",*roovar1,*sig1dset_nozero,"av",1.0);
+    kpdf_sig1->fixShape(1);
+    RooRealVar *lm_sig1 = new RooRealVar("lm_sig1","lm_sig1",0.5,0,1);
+    RooAddPdf *sig1pdf = new RooAddPdf("sig1pdf","sig1pdf",RooArgList(*firstbin_sig1,*kpdf_sig1),*lm_sig1);
+
+    RooDataSet *sig2dset_nozero = (RooDataSet*)(sig2dset->reduce(Cut("roovar2>0.1")));
+    firstbinpdf *firstbin_sig2 = new firstbinpdf("firstbin_sig2","firstbin_sig2",*roovar2);
+    //RooAbsPdf *firstbin_sig2 = RooClassFactory::makePdfInstance("firstbin_sig2","(roovar2<0.1)",RooArgSet(*roovar2));
+    RooNDKeysPdf *kpdf_sig2 = new RooNDKeysPdf("kpdf_sig2","kpdf_sig2",*roovar2,*sig2dset_nozero,"av",1.0);
+    kpdf_sig2->fixShape(1);
+    RooRealVar *lm_sig2 = new RooRealVar("lm_sig2","lm_sig2",0.5,0,1);
+    RooAddPdf *sig2pdf = new RooAddPdf("sig2pdf","sig2pdf",RooArgList(*firstbin_sig2,*kpdf_sig2),*lm_sig2);
+
+    RooDataSet *bkg1dset_nozero = (RooDataSet*)(bkg1dset->reduce(Cut("roovar1>0.1")));
+    firstbinpdf *firstbin_bkg1 = new firstbinpdf("firstbin_bkg1","firstbin_bkg1",*roovar1);
+    //RooAbsPdf *firstbin_bkg1 = RooClassFactory::makePdfInstance("firstbin_bkg1","(roovar1<0.1)",RooArgSet(*roovar1));
+    RooNDKeysPdf *kpdf_bkg1 = new RooNDKeysPdf("kpdf_bkg1","kpdf_bkg1",*roovar1,*bkg1dset_nozero,"av",1.0);
+    kpdf_bkg1->fixShape(1);
+    RooRealVar *lm_bkg1 = new RooRealVar("lm_bkg1","lm_bkg1",0.5,0,1);
+    RooAddPdf *bkg1pdf = new RooAddPdf("bkg1pdf","bkg1pdf",RooArgList(*firstbin_bkg1,*kpdf_bkg1),*lm_bkg1);
+
+    RooDataSet *bkg2dset_nozero = (RooDataSet*)(bkg2dset->reduce(Cut("roovar2>0.1")));
+    firstbinpdf *firstbin_bkg2 = new firstbinpdf("firstbin_bkg2","firstbin_bkg2",*roovar2);
+    //RooAbsPdf *firstbin_bkg2 = RooClassFactory::makePdfInstance("firstbin_bkg2","(roovar2<0.1)",RooArgSet(*roovar2));
+    RooNDKeysPdf *kpdf_bkg2 = new RooNDKeysPdf("kpdf_bkg2","kpdf_bkg2",*roovar2,*bkg2dset_nozero,"av",1.0);
+    kpdf_bkg2->fixShape(1);
+    RooRealVar *lm_bkg2 = new RooRealVar("lm_bkg2","lm_bkg2",0.5,0,1);
+    RooAddPdf *bkg2pdf = new RooAddPdf("bkg2pdf","bkg2pdf",RooArgList(*firstbin_bkg2,*kpdf_bkg2),*lm_bkg2);
+
+
 
 
     
-  
-    RooRealVar roovar1("roovar1","roovar1",leftrange,rightrange);
-    roovar1.setBins(n_histobins);
-    RooRealVar roovar2("roovar2","roovar2",leftrange,rightrange);
-    roovar2.setBins(n_histobins);
+
+
+//    necessary_for_fit *input_thrsig1 = new necessary_for_fit(); input_thrsig1->pdf=sig1pdf; input_thrsig1->data=sig1dset;
+//    TThread *thrsig1 = new TThread("thrsig1", threaded_fitter, (void*)input_thrsig1);
+//    necessary_for_fit *input_thrsig2 = new necessary_for_fit(); input_thrsig2->pdf=sig2pdf; input_thrsig2->data=sig2dset;
+//    TThread *thrsig2 = new TThread("thrsig2", threaded_fitter, (void*)input_thrsig2);
+//    necessary_for_fit *input_thrbkg1 = new necessary_for_fit(); input_thrbkg1->pdf=bkg1pdf; input_thrbkg1->data=bkg1dset;
+//    TThread *thrbkg1 = new TThread("thrbkg1", threaded_fitter, (void*)input_thrbkg1);
+//    necessary_for_fit *input_thrbkg2 = new necessary_for_fit(); input_thrbkg2->pdf=bkg2pdf; input_thrbkg2->data=bkg2dset;
+//    TThread *thrbkg2 = new TThread("thrbkg2", threaded_fitter, (void*)input_thrbkg2);
+//
+//    thrsig1->Run();
+//    thrsig2->Run();
+//    thrbkg1->Run();
+//    thrbkg2->Run();
+//
+//    TThread::Ps();
+//
+//    thrsig1->Join();
+//    thrsig2->Join();
+//
+//    TThread::Ps();
+//
+//    thrbkg1->Join();
+//    thrbkg2->Join();
+//
+//    TThread::Ps();
+
+
+
+    //lm_sig1->setVal(5.65095e-01);
+    //lm_bkg1->setVal(1.92861e-01);
+    sig1pdf->fitTo(*sig1dset,NumCPU(4));
+    bkg1pdf->fitTo(*bkg1dset,NumCPU(4));
+    //    sig2pdf->fitTo(*sig2dset);
+    //    bkg2pdf->fitTo(*bkg2dset);        
+    lm_sig2->setVal(lm_sig1->getVal());
+    lm_bkg2->setVal(lm_bkg1->getVal());
+
+    lm_sig1->setConstant(kTRUE);
+    lm_sig2->setConstant(kTRUE);
+    lm_bkg1->setConstant(kTRUE);
+    lm_bkg2->setConstant(kTRUE);
+
     
-  RooRealVar rf1("rf1","rf1",1./3,0,1);
-  RooRealVar rf2("rf2","rf2",1./2,0,1);
+    TCanvas *c0 = new TCanvas("c0","c0",800,600);
+    c0->Divide(2,2);
+    c0->cd(1);
+    RooPlot *frame01sig = roovar1->frame();
+    sig1dset->plotOn(frame01sig);
+    sig1pdf->plotOn(frame01sig);
+    frame01sig->Draw();
+    c0->GetPad(1)->SetLogy(1);
+    c0->cd(2);
+    RooPlot *frame02sig = roovar2->frame();
+    sig2dset->plotOn(frame02sig);
+    sig2pdf->plotOn(frame02sig);
+    frame02sig->Draw();
+    c0->GetPad(2)->SetLogy(1);
+    c0->cd(3);
+    RooPlot *frame01bkg = roovar1->frame();
+    bkg1dset->plotOn(frame01bkg);
+    bkg1pdf->plotOn(frame01bkg);
+    frame01bkg->Draw();
+    c0->GetPad(3)->SetLogy(1);
+    c0->cd(4);
+    RooPlot *frame02bkg = roovar2->frame();
+    bkg2dset->plotOn(frame02bkg);
+    bkg2pdf->plotOn(frame02bkg);
+    frame02bkg->Draw();
+    c0->GetPad(4)->SetLogy(1);
 
-  RooDataHist *sig1hist;
-  RooDataHist *sig2hist;
-  RooDataHist *bkg1hist;
-  RooDataHist *bkg2hist;
-  RooDataHist *datahist;
+    
+    
 
-  RooHistPdf *sig1pdf;
-  RooHistPdf *sig2pdf;
-  RooHistPdf *bkg1pdf;
-  RooHistPdf *bkg2pdf;
+    RooProdPdf *sigsigpdf = new RooProdPdf("sigsigpdf","sigsigpdf",RooArgList(*sig1pdf,*sig2pdf));
+    RooProdPdf *sigbkgpdf = new RooProdPdf("sigbkgpdf","sigbkgpdf",RooArgList(*sig1pdf,*bkg2pdf));
+    RooProdPdf *bkgsigpdf = new RooProdPdf("bkgsigpdf","bkgsigpdf",RooArgList(*bkg1pdf,*sig2pdf));
+    RooProdPdf *bkgbkgpdf = new RooProdPdf("bkgbkgpdf","bkgbkgpdf",RooArgList(*bkg1pdf,*bkg2pdf));
 
-  RooProdPdf *sigsigpdf;
-  RooProdPdf *sigbkgpdf_order;
-  RooProdPdf *bkgsigpdf_order;
-  RooAddPdf *sigbkgpdf_noorder;
-  RooProdPdf *bkgbkgpdf;
+    RooFormulaVar *fsigsig = new RooFormulaVar("fsigsig","fsigsig","pp",RooArgList(*pp));
+    RooFormulaVar *fsigbkg = new RooFormulaVar("fsigbkg","fsigbkg","j1-pp",RooArgList(*pp,*j1));  
+    RooFormulaVar *fbkgsig = new RooFormulaVar("fbkgsig","fbkgsig","j2-pp",RooArgList(*pp,*j2));
+    RooFormulaVar *fbkgbkg = new RooFormulaVar("fbkgbkg","fbkgbkg","1-fsigsig-fsigbkg-fbkgsig",RooArgList(*fsigsig,*fsigbkg,*fbkgsig));
 
-  RooFormulaVar *fsigsig;
-  RooFormulaVar *fsigbkg;
-  RooFormulaVar *fbkgbkg;
-  RooFormulaVar *fsig;
-  RooFormulaVar *fbkg;
-  
-  RooAddPdf *model;
-  RooRealVar *nevents;
-  RooExtendPdf *model_extended;
+    RooFormulaVar *fsig1 = new RooFormulaVar("fsig1","fsig1","j1",RooArgList(*j1));
+    RooFormulaVar *fbkg1 = new RooFormulaVar("fbkg1","fbkg1","1-fsig1",RooArgList(*fsig1));
+    RooFormulaVar *fsig2 = new RooFormulaVar("fsig2","fsig2","j2",RooArgList(*j2));
+    RooFormulaVar *fbkg2 = new RooFormulaVar("fbkg2","fbkg2","1-fsig2",RooArgList(*fsig2));
 
-  if (dosingle){
-    sig1hist = new RooDataHist("sighist","sighist",RooArgList(roovar1),h_sig1hist,1.0/h_sig1hist->Integral());
-    bkg1hist = new RooDataHist("bkghist","bkghist",RooArgList(roovar1),h_bkg1hist,1.0/h_bkg1hist->Integral());
-    datahist = new RooDataHist("datahist","datahist",roovar1,h_datahist_1D);
+    RooRealVar *nevents = new RooRealVar("nevents","nevents",dataset->sumEntries(),0,1e6);
 
-    sig1pdf = new RooHistPdf("sig1pdf","sig1pdf",RooArgList(roovar1),*sig1hist);
-    bkg1pdf = new RooHistPdf("bkg1pdf","bkg1pdf",RooArgList(roovar1),*bkg1hist);
-    fsig = new RooFormulaVar("fsig","fsig","rf1",RooArgList(rf1));
-    fbkg = new RooFormulaVar("fbkg","fbkg","1-fsigsig",RooArgList(*fsig));
-    model = new RooAddPdf("model","model",RooArgList(*sig1pdf,*bkg1pdf),RooArgList(rf1),kTRUE);
-    nevents = new RooRealVar("nevents","nevents",h_datahist_1D->GetEntries(),1e1,1e5);
-    model_extended = new RooExtendPdf("model_extended","model_extended",*model,*nevents);
-  }
-  else {
-    sig1hist = new RooDataHist("sighist","sighist",RooArgList(roovar1),h_sig1hist,1.0/h_sig1hist->Integral());
-    sig2hist = new RooDataHist("sighist","sighist",RooArgList(roovar2),h_sig2hist,1.0/h_sig2hist->Integral());
-    bkg1hist = new RooDataHist("bkghist","bkghist",RooArgList(roovar1),h_bkg1hist,1.0/h_bkg1hist->Integral());
-    bkg2hist = new RooDataHist("bkghist","bkghist",RooArgList(roovar2),h_bkg2hist,1.0/h_bkg2hist->Integral());
-    datahist = new RooDataHist("datahist","datahist",RooArgList(roovar1,roovar2),h_datahist_2D);
+    RooAddPdf *model_2D = new RooAddPdf("model_2D","model_2D",RooArgList(*sigsigpdf,*sigbkgpdf,*bkgsigpdf,*bkgbkgpdf),RooArgList(*fsigsig,*fsigbkg,*fbkgsig,*fbkgbkg),kFALSE);
+    //    RooExtendPdf *model_2D_extended = new RooExtendPdf("model_2D_extended","model_2D_extended",*model_2D,*nevents);
+    RooNLLVar *model_2D_extended_nll = new RooNLLVar("model_2D_extended_nll","model_2D_extended_nll",*model_2D,*dataset,NumCPU(4));
 
-    sig1pdf = new RooHistPdf("sig1pdf","sig1pdf",RooArgList(roovar1),*sig1hist);
-    sig2pdf = new RooHistPdf("sig2pdf","sig2pdf",RooArgList(roovar2),*sig2hist);
-    bkg1pdf = new RooHistPdf("bkg1pdf","bkg1pdf",RooArgList(roovar1),*bkg1hist);
-    bkg2pdf = new RooHistPdf("bkg2pdf","bkg2pdf",RooArgList(roovar2),*bkg2hist);
+    RooAddPdf *model_axis1 = new RooAddPdf("model_axis1","model_axis1",RooArgList(*sig1pdf,*bkg1pdf),RooArgList(*fsig1));
+    RooExtendPdf *model_axis1_extended = new RooExtendPdf("model_axis1_extended","model_axis1_extended",*model_axis1,*nevents);
+    //    RooNLLVar *model_axis1_extended_nll = new RooNLLVar("model_axis1_extended_nll","model_axis1_extended_nll",*model_axis1_extended,*dataset_axis1,NumCPU(4));
+    RooNLLVar *model_axis1_extended_nll = new RooNLLVar("model_axis1_extended_nll","model_axis1_extended_nll",*model_axis1,*dataset_axis1,NumCPU(4));
 
-    sigsigpdf = new RooProdPdf("sigsigpdf","sigsigpdf",RooArgList(*sig1pdf,*sig2pdf));
-    sigbkgpdf_order = new RooProdPdf("sigbkgpdf_order","sigbkgpdf_order",RooArgList(*sig1pdf,*bkg2pdf));
-    bkgsigpdf_order = new RooProdPdf("bkgsigpdf_order","bkgsigpdf_order",RooArgList(*bkg1pdf,*sig2pdf));
-    sigbkgpdf_noorder = new RooAddPdf("sigbkgpdf","sigbkgpdf",RooArgList(*sigbkgpdf_order,*bkgsigpdf_order),RooArgList(RooRealConstant::value(0.5),RooRealConstant::value(0.5)));
-    bkgbkgpdf = new RooProdPdf("bkgbkgpdf","bkgbkgpdf",RooArgList(*bkg1pdf,*bkg2pdf));
+    RooAddPdf *model_axis2 = new RooAddPdf("model_axis2","model_axis2",RooArgList(*sig2pdf,*bkg2pdf),RooArgList(*fsig2));
+    RooExtendPdf *model_axis2_extended = new RooExtendPdf("model_axis2_extended","model_axis2_extended",*model_axis2,*nevents);
+    //    RooNLLVar *model_axis2_extended_nll = new RooNLLVar("model_axis2_extended_nll","model_axis2_extended_nll",*model_axis2_extended,*dataset_axis2,NumCPU(4));
+    RooNLLVar *model_axis2_extended_nll = new RooNLLVar("model_axis2_extended_nll","model_axis2_extended_nll",*model_axis2,*dataset_axis2,NumCPU(4));
 
-    fsigsig = new RooFormulaVar("fsigsig","fsigsig","rf1",RooArgList(rf1));
-    fsigbkg = new RooFormulaVar("fsigbkg","fsigbkg","(1-rf1)*rf2",RooArgList(rf1,rf2));
-    fbkgbkg = new RooFormulaVar("fbkgbkg","fbkgbkg","1-fsigsig-fsigbkg",RooArgList(*fsigsig,*fsigbkg));
+    RooFormulaVar *asym = new RooFormulaVar("asym","asym","TMath::Abs(j1-j2)",RooArgSet(*j1,*j2));
+    RooGaussian *constrain_asym = new RooGaussian("constrain_asym","constrain_asym",*asym,RooRealConstant::value(0),RooRealConstant::value(0.001));
+    RooConstraintSum *constrain_asym_nll = new RooConstraintSum("constrain_asym_nll","constrain_asym_nll",*constrain_asym,RooArgList(*asym));
 
-    model = new RooAddPdf("model","model",RooArgList(*sigsigpdf,*sigbkgpdf_noorder,*bkgbkgpdf),RooArgList(rf1,rf2),kTRUE);
-    nevents = new RooRealVar("nevents","nevents",h_datahist_2D->GetEntries(),1e1,1e5);
-    model_extended = new RooExtendPdf("model_extended","model_extended",*model,*nevents);
-  }
+    RooAddition *model_2axes_extended_nll = new RooAddition("model_2axes_extended_nll","model_2axes_extended_nll",RooArgSet(*model_axis1_extended_nll,*model_axis2_extended_nll,*constrain_asym_nll));
+    RooAddition *model_2D_extended_nll_constrained = new RooAddition("model_2D_extended_nll_constrained","model_2D_extended_nll_constrained",RooArgSet(*model_2D_extended_nll,*constrain_asym_nll));
 
-  RooMCStudy *mcstudy = NULL;
 
-  if (study_templates){
+    
 
-    rf1.setVal(0.6);
-    rf2.setVal(1./2);
-    int howmanyevents = 2e+3;
-    int howmanytoys = 500;
+    RooFitResult *firstpass;
 
-    if (!study_templates_plotting){
-    if (dosingle) mcstudy = new RooMCStudy(*model_extended,RooArgSet(roovar1),Silence(),Extended(),FitOptions(Save(kTRUE),PrintEvalErrors(0)));
-    else mcstudy = new RooMCStudy(*model_extended,RooArgSet(roovar1,roovar2),Silence(),Extended(),FitOptions(Save(kTRUE),PrintEvalErrors(0)));
-    mcstudy->generateAndFit(howmanytoys, howmanyevents);
 
-    TCanvas *c1 = new TCanvas();
-    c1->SetWindowSize(800,600);
-    c1->Divide(3);
+    RooMinimizer *minuit_firstpass = new RooMinimizer(*model_2axes_extended_nll);
+    minuit_firstpass->migrad();
+    minuit_firstpass->hesse();
+    firstpass = minuit_firstpass->save("firstpass","firstpass");
+    firstpass->Print();
 
-    c1->cd(1);    
-    RooPlot* frame3 = mcstudy->plotPull(rf1,FitGauss(kTRUE));
-    frame3->Draw();
 
-    TVirtualPad* subpad = c1->cd(3);
-    subpad->Divide(2,2);
+    /*
+    j1->setVal(7.17932e-01);
+    j2->setVal(7.17913e-01);
+    */
 
-    subpad->cd(1);    
-    RooPlot* frame1 = mcstudy->plotParam(rf1);
-    frame1->Draw();
-    subpad->cd(2);    
-    RooPlot* frame2 = mcstudy->plotError(rf1);
-    frame2->Draw();
+    TCanvas *c1 = new TCanvas("c1","c1",800,600);
+    c1->Divide(2);
+    c1->cd(1);
+    RooPlot *frame1bla = roovar1->frame();
+    dataset_axis1->plotOn(frame1bla);
+    model_axis1->plotOn(frame1bla);
+    model_axis1->plotOn(frame1bla,Components("sig1pdf"),LineStyle(kDashed),LineColor(kRed));
+    model_axis1->plotOn(frame1bla,Components("bkg1pdf"),LineStyle(kDashed),LineColor(kBlack));
+    frame1bla->Draw();
+    c1->GetPad(1)->SetLogy(1);
+    c1->cd(2);
+    RooPlot *frame2bla = roovar2->frame();
+    dataset_axis2->plotOn(frame2bla);
+    model_axis2->plotOn(frame2bla);
+    model_axis2->plotOn(frame2bla,Components("sig2pdf"),LineStyle(kDashed),LineColor(kRed));
+    model_axis2->plotOn(frame2bla,Components("bkg2pdf"),LineStyle(kDashed),LineColor(kBlack));
+    frame2bla->Draw();
+    c1->GetPad(2)->SetLogy(1);
 
-    if (!dosingle){
-      c1->cd(2);    
-      RooPlot* frame6 = mcstudy->plotPull(rf2,FitGauss(kTRUE));
-      frame6->Draw();
-      subpad->cd(3);    
-      RooPlot* frame4 = mcstudy->plotParam(rf2);
-      frame4->Draw();
-      subpad->cd(4);    
-      RooPlot* frame5 = mcstudy->plotError(rf2);
-      frame5->Draw();
-    }
 
-    c1->cd();
-    c1->SaveAs(Form("plots/biasstudy_%s_%s_b%d.png",splitting.Data(),diffvariable.Data(),bin));
+
+
+    float lowerbounds[4]={0,j1->getVal()-1,j2->getVal()-1,j1->getVal()+j2->getVal()-1};
+    float upperbounds[4]={1,j1->getVal(),j2->getVal(),j1->getVal()+j2->getVal()};
+
+
+    float minpp = TMath::MaxElement(4,lowerbounds);
+    float maxpp = TMath::MinElement(4,upperbounds);
+    pp->setVal((minpp+maxpp)/2);
+    pp->setRange(minpp,maxpp);
+
+    // DEBUUUUUUUUUUUUUUUUUUUUG
+    j1->setConstant(1);
+    j2->setConstant(2);
+    //    std::cout << "j1 " << j1->getVal() << " " << j1->getPropagatedError(*firstpass) << std::endl;
+    //    std::cout << "j2 " << j2->getVal() << " " << j2->getPropagatedError(*firstpass) << std::endl;
+    std::cout << "setting constrain pp val at " << pp->getVal() << " between " << minpp << " and " << maxpp << std::endl;
+
+
+    RooMinimizer *minuit_secondpass = new RooMinimizer(*model_2D_extended_nll_constrained);
+    minuit_secondpass->migrad();
+    minuit_secondpass->hesse();
+    RooFitResult *secondpass = minuit_secondpass->save("secondpass","secondpass");
+    secondpass->Print();
+
+    TCanvas *c2 = new TCanvas("c2","c2",800,600);
+    c2->Divide(2,2);
+    c2->cd(1);
+    RooPlot *frame1final = roovar1->frame();
+    dataset->plotOn(frame1final);
+    model_2D->plotOn(frame1final);
+    model_2D->plotOn(frame1final,Components("sigsigpdf"),LineStyle(kDashed),LineColor(kRed));
+    model_2D->plotOn(frame1final,Components("sigbkgpdf"),LineStyle(kDashed),LineColor(kGreen));
+    model_2D->plotOn(frame1final,Components("bkgsigpdf"),LineStyle(kDashed),LineColor(kGreen+2));
+    model_2D->plotOn(frame1final,Components("bkgbkgpdf"),LineStyle(kDashed),LineColor(kBlack));
+    frame1final->Draw();
+    c2->GetPad(1)->SetLogy(1);
+    c2->cd(2);
+    RooPlot *frame2final = roovar2->frame();
+    dataset->plotOn(frame2final);
+    model_2D->plotOn(frame2final);
+    model_2D->plotOn(frame2final,Components("sigsigpdf"),LineStyle(kDashed),LineColor(kRed));
+    model_2D->plotOn(frame2final,Components("sigbkgpdf"),LineStyle(kDashed),LineColor(kGreen));
+    model_2D->plotOn(frame2final,Components("bkgsigpdf"),LineStyle(kDashed),LineColor(kGreen+2));
+    model_2D->plotOn(frame2final,Components("bkgbkgpdf"),LineStyle(kDashed),LineColor(kBlack));
+    frame2final->Draw();
+    c2->GetPad(2)->SetLogy(1);
+//    c2->cd(3);
+//    RooPlot *ppnllplot = pp->frame();
+//    model_2D_extended_nll_constrained->plotOn(ppnllplot);
+//    ppnllplot->Draw();
 
     return out;
-  }
 
-    if (study_templates_plotting){
-    RooDataHist *datahist_toy;
-    datahist_toy = model_extended->generateBinned(RooArgSet(roovar1,roovar2),howmanyevents,Name("Toy_dataset"));
-    datahist=datahist_toy;
-    rf1.setVal(0);
-    rf2.setVal(0);
-    }
+
+//    std::cout << "expecting purities = " << pp_init << " " << pf_init << " " << fp_init << " " << 1-pp_init-pf_init-fp_init << std::endl;
+//    std::cout << "pp " << fsigsig->getVal() << " " << fsigsig->getPropagatedError(*fr) << " " << fabs(pp_init-fsigsig->getVal())/fsigsig->getPropagatedError(*fr) << std::endl;
+//    std::cout << "pf " << fsigbkg->getVal() << " " << fsigbkg->getPropagatedError(*fr) << " " << fabs(pf_init-fsigbkg->getVal())/fsigbkg->getPropagatedError(*fr) << std::endl;
+//    std::cout << "fp " << fbkgsig->getVal() << " " << fbkgsig->getPropagatedError(*fr) << " " << fabs(fp_init-fbkgsig->getVal())/fbkgsig->getPropagatedError(*fr) << std::endl;
+//    std::cout << "ff " << fbkgbkg->getVal() << " " << fbkgbkg->getPropagatedError(*fr) << " " << fabs(1-pp_init-pf_init-fp_init-fbkgbkg->getVal())/fbkgbkg->getPropagatedError(*fr) << std::endl;
+
+
+//    out->fr=fr;
+//    out->tot_events=nevents->getVal();
+
+
+
+    return out;
 
     
 
-  }
+//  RooMCStudy *mcstudy = NULL;
+//
+//  if (study_templates){
+//
+//    rf1.setVal(0.6);
+//    rf2.setVal(1./2);
+//    int howmanyevents = 2e+3;
+//    int howmanytoys = 500;
+//
+//    if (!study_templates_plotting){
+//    if (dosingle) mcstudy = new RooMCStudy(*model_extended,RooArgSet(roovar1),Silence(),Extended(),FitOptions(Save(kTRUE),PrintEvalErrors(0)));
+//    else mcstudy = new RooMCStudy(*model_extended,RooArgSet(roovar1,roovar2),Silence(),Extended(),FitOptions(Save(kTRUE),PrintEvalErrors(0)));
+//    mcstudy->generateAndFit(howmanytoys, howmanyevents);
+//
+//    TCanvas *c1 = new TCanvas();
+//    c1->SetWindowSize(800,600);
+//    c1->Divide(3);
+//
+//    c1->cd(1);    
+//    RooPlot* frame3 = mcstudy->plotPull(rf1,FitGauss(kTRUE));
+//    frame3->Draw();
+//
+//    TVirtualPad* subpad = c1->cd(3);
+//    subpad->Divide(2,2);
+//
+//    subpad->cd(1);    
+//    RooPlot* frame1 = mcstudy->plotParam(rf1);
+//    frame1->Draw();
+//    subpad->cd(2);    
+//    RooPlot* frame2 = mcstudy->plotError(rf1);
+//    frame2->Draw();
+//
+//    if (!dosingle){
+//      c1->cd(2);    
+//      RooPlot* frame6 = mcstudy->plotPull(rf2,FitGauss(kTRUE));
+//      frame6->Draw();
+//      subpad->cd(3);    
+//      RooPlot* frame4 = mcstudy->plotParam(rf2);
+//      frame4->Draw();
+//      subpad->cd(4);    
+//      RooPlot* frame5 = mcstudy->plotError(rf2);
+//      frame5->Draw();
+//    }
+//
+//    c1->cd();
+//    c1->SaveAs(Form("plots/biasstudy_%s_%s_b%d.png",splitting.Data(),diffvariable.Data(),bin));
+//
+//    return out;
+//  }
+//
+//    if (study_templates_plotting){
+//    RooDataHist *datahist_toy;
+//    datahist_toy = model_extended->generateBinned(RooArgSet(roovar1,roovar2),howmanyevents,Name("Toy_dataset"));
+//    datahist=datahist_toy;
+//    rf1.setVal(0);
+//    rf2.setVal(0);
+//    }
+//
+//    
+//
+//  }
+//
+//
 
-
-
+/*
   RooFitResult *fitres = model_extended->fitTo(*datahist,Save());
 
   model_extended->Print();
@@ -282,11 +533,11 @@ fit_output* fit_dataset(const char* inputfilename_t, const char* inputfilename_d
   canv->SaveAs(Form("plots/fittingplot_%s_%s_b%d.png",splitting.Data(),diffvariable.Data(),bin));
 
   return out;
-
+*/
 };
 
 
-
+/*
 
 void run_fits(TString inputfilename_t="templates.root", TString inputfilename_d="tobefitted.root", TString diffvariable="", TString splitting=""){
 
@@ -392,7 +643,7 @@ void run_fits(TString inputfilename_t="templates.root", TString inputfilename_d=
     
     if (!fr[bin]->fr) continue;
 
-    float intlumi=4.519;
+    float intlumi=4519.0;
 
     if (dosingle) {
 
@@ -418,28 +669,41 @@ void run_fits(TString inputfilename_t="templates.root", TString inputfilename_d=
     }
 
     else {
-	rf1=(RooRealVar*)(fr[bin]->fr->floatParsFinal().find("rf1"));
-	rf2=(RooRealVar*)(fr[bin]->fr->floatParsFinal().find("rf2"));
-	RooFormulaVar fsigsig("fsigsig","fsigsig","rf1",RooArgList(*rf1));
-	RooFormulaVar fsigbkg("fsigbkg","fsigbkg","(1-rf1)*rf2",RooArgList(*rf1,*rf2));
-	RooFormulaVar fbkgbkg("fbkgbkg","fbkgbkg","1-fsigsig-fsigbkg",RooArgList(fsigsig,fsigbkg));
-	std::cout << "------------------------------" << std::endl;
-	std::cout << bin << " " << fsigsig.getVal() << " " << fsigbkg.getVal() << " " << fbkgbkg.getVal() << std::endl;
 
-	purity[0]->SetBinContent(bin+1,fsigsig.getVal());
-	purity[0]->SetBinError(bin+1,fsigsig.getPropagatedError(*(fr[bin]->fr)));
-	purity[1]->SetBinContent(bin+1,fsigbkg.getVal());
-	purity[1]->SetBinError(bin+1,fsigbkg.getPropagatedError(*(fr[bin]->fr)));
-	purity[2]->SetBinContent(bin+1,fbkgbkg.getVal());
-	purity[2]->SetBinError(bin+1,fbkgbkg.getPropagatedError(*(fr[bin]->fr)));
+      RooRealVar *pp;
+      pp=(RooRealVar*)(fr[bin]->fr->floatParsFinal().find("pp"));
 
-	xsec->SetBinContent(bin+1,fsigsig.getVal()*fr[bin]->tot_events/xsec->GetBinWidth(bin+1)/intlumi);
-	float err1=purity[0]->GetBinError(bin+1)/purity[0]->GetBinContent(bin+1);
-	float err2=1.0/sqrt(fr[bin]->tot_events);
-	float err=sqrt(err1*err1+err2*err2);
-	xsec->SetBinError(bin+1,err*xsec->GetBinContent(bin+1));
-	
-	xsec->Divide(eff);
+      purity[0]->SetBinContent(bin+1,pp->getVal());
+      purity[0]->SetBinError(bin+1,pp->getPropagatedError(*(fr[bin]->fr)));
+      //      xsec->SetBinContent(bin+1,pp->getVal()*fr[bin]->tot_events/xsec->GetBinWidth(bin+1)/intlumi);
+      xsec->SetBinContent(bin+1,pp->getVal()*fr[bin]->tot_events);
+//      float err1=purity[0]->GetBinError(bin+1)/purity[0]->GetBinContent(bin+1);
+//      float err2=1.0/sqrt(fr[bin]->tot_events);
+//      float err=sqrt(err1*err1+err2*err2);
+//      xsec->SetBinError(bin+1,err*xsec->GetBinContent(bin+1));
+
+//	rf1=(RooRealVar*)(fr[bin]->fr->floatParsFinal().find("rf1"));
+//	rf2=(RooRealVar*)(fr[bin]->fr->floatParsFinal().find("rf2"));
+//	RooFormulaVar fsigsig("fsigsig","fsigsig","rf1",RooArgList(*rf1));
+//	RooFormulaVar fsigbkg("fsigbkg","fsigbkg","(1-rf1)*rf2",RooArgList(*rf1,*rf2));
+//	RooFormulaVar fbkgbkg("fbkgbkg","fbkgbkg","1-fsigsig-fsigbkg",RooArgList(fsigsig,fsigbkg));
+//	std::cout << "------------------------------" << std::endl;
+//	std::cout << bin << " " << fsigsig.getVal() << " " << fsigbkg.getVal() << " " << fbkgbkg.getVal() << std::endl;
+//
+//	purity[0]->SetBinContent(bin+1,fsigsig.getVal());
+//	purity[0]->SetBinError(bin+1,fsigsig.getPropagatedError(*(fr[bin]->fr)));
+//	purity[1]->SetBinContent(bin+1,fsigbkg.getVal());
+//	purity[1]->SetBinError(bin+1,fsigbkg.getPropagatedError(*(fr[bin]->fr)));
+//	purity[2]->SetBinContent(bin+1,fbkgbkg.getVal());
+//	purity[2]->SetBinError(bin+1,fbkgbkg.getPropagatedError(*(fr[bin]->fr)));
+//
+//	xsec->SetBinContent(bin+1,fsigsig.getVal()*fr[bin]->tot_events/xsec->GetBinWidth(bin+1)/intlumi);
+//	float err1=purity[0]->GetBinError(bin+1)/purity[0]->GetBinContent(bin+1);
+//	float err2=1.0/sqrt(fr[bin]->tot_events);
+//	float err=sqrt(err1*err1+err2*err2);
+//	xsec->SetBinError(bin+1,err*xsec->GetBinContent(bin+1));
+//	
+//	xsec->Divide(eff);
     }
 
 
@@ -485,3 +749,4 @@ void run_fits(TString inputfilename_t="templates.root", TString inputfilename_d=
 };
 
 
+*/

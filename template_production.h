@@ -33,12 +33,15 @@
 #include <map>
 #include "TVector3.h"
 #include "TLorentzVector.h"
+#include "RooDataSet.h"
+#include "RooWorkspace.h"
 
 using namespace std;
 using namespace RooFit;
 
 class template_production {
 public :
+
    TTree          *fChain;   //!pointer to the analyzed TTree or TChain
    Int_t           fCurrent; //!current Tree number in a TChain
 
@@ -412,6 +415,15 @@ public :
    TH1F *template_signal[2][n_templates+1];
    TH1F *template_background[2][n_templates+1];
 
+  RooWorkspace *rooworkspace;
+  RooRealVar *roovar1;
+  RooRealVar *roovar2;
+  //  RooRealVar *roovar_helper;
+  RooRealVar *rooweight;
+
+  RooDataSet *roodset_signal[2][n_templates+1][2];
+  RooDataSet *roodset_background[2][n_templates+1][2];
+
    //   TH1F *obs_hist_single[2][n_templates];
    //   TH2F *obs_hist[3][n_templates];
 
@@ -419,10 +431,11 @@ public :
 
    std::map<TString, TH1F*> obs_hist_single;
    std::map<TString, TH2F*> obs_hist;
+   std::map<TString, RooDataSet*> obs_roodset;
 
    TString get_name_obs_single(int region, int bin);
    TString get_name_obs(int region, TString diffvariable, int bin);
-
+   TString get_name_obs_roodset(int region, TString diffvariable, int bin);
 
    TH2F *hist2d_iso_ncand[2][n_templates+1];
 
@@ -544,6 +557,13 @@ void template_production::Setup(Bool_t _isdata, TString _mode, TString _differen
 
   randomgen = new TRandom3(0);
 
+  rooworkspace = new RooWorkspace("rooworkspace","rooworkspace");
+  roovar1 = new RooRealVar("roovar1","roovar1",leftrange,rightrange);
+  roovar2 = new RooRealVar("roovar2","roovar2",leftrange,rightrange);
+  //  roovar_helper = new RooRealVar("roovar_helper","roovar_helper",leftrange,rightrange);
+  rooweight = new RooRealVar("rooweight","rooweight",0,5);
+
+
   for (int i=0; i<2; i++){
     TString name="histo_pt_";
     TString reg;
@@ -558,21 +578,29 @@ void template_production::Setup(Bool_t _isdata, TString _mode, TString _differen
   // template_{signal,background}[EB,EE][n_templates]
   for (int i=0; i<2; i++)
     for (int j=0; j<n_templates+1; j++) {
-      TString name_signal="template_signal";
+      TString name_signal="signal";
       TString reg;
       if (i==0) reg="EB"; else if (i==1) reg="EE";
-      TString t=Form("%s_%s_b%d",name_signal.Data(),reg.Data(),j);
+      TString t=Form("template_%s_%s_b%d",name_signal.Data(),reg.Data(),j);
       template_signal[i][j] = new TH1F(t.Data(),t.Data(),n_histobins,leftrange,rightrange);
       template_signal[i][j]->Sumw2();
+      TString t2=Form("roodset_%s_%s_b%d_rv%d",name_signal.Data(),reg.Data(),j,1);
+      roodset_signal[i][j][0] = new RooDataSet(t2.Data(),t2.Data(),RooArgSet(*roovar1,*rooweight),WeightVar(*rooweight));
+      t2=Form("roodset_%s_%s_b%d_rv%d",name_signal.Data(),reg.Data(),j,2);
+      roodset_signal[i][j][1] = new RooDataSet(t2.Data(),t2.Data(),RooArgSet(*roovar2,*rooweight),WeightVar(*rooweight));
     }
   for (int i=0; i<2; i++)
     for (int j=0; j<n_templates+1; j++) {
-      TString name_background="template_background";
+      TString name_background="background";
       TString reg;
       if (i==0) reg="EB"; else if (i==1) reg="EE";
-      TString t=Form("%s_%s_b%d",name_background.Data(),reg.Data(),j);
+      TString t=Form("template_%s_%s_b%d",name_background.Data(),reg.Data(),j);
       template_background[i][j] = new TH1F(t.Data(),t.Data(),n_histobins,leftrange,rightrange);
       template_background[i][j]->Sumw2();
+      TString t2=Form("roodset_%s_%s_b%d_rv%d",name_background.Data(),reg.Data(),j,1);
+      roodset_background[i][j][0] = new RooDataSet(t2.Data(),t2.Data(),RooArgSet(*roovar1,*rooweight),WeightVar(*rooweight));
+      t2=Form("roodset_%s_%s_b%d_rv%d",name_background.Data(),reg.Data(),j,2);
+      roodset_background[i][j][1] = new RooDataSet(t2.Data(),t2.Data(),RooArgSet(*roovar2,*rooweight),WeightVar(*rooweight));
     }
   for (int i=0; i<2; i++)
     for (int j=0; j<n_templates+1; j++) {
@@ -623,12 +651,13 @@ void template_production::Setup(Bool_t _isdata, TString _mode, TString _differen
   for (std::vector<TString>::const_iterator diffvariable = diffvariables_list.begin(); diffvariable!=diffvariables_list.end(); diffvariable++){
     for (int i=0; i<3; i++)
       for (int j=0; j<n_templates+1; j++) {
-	TString name_signal="obs_hist";
 	TString reg;
 	if (i==0) reg="EBEB"; else if (i==1) reg="EBEE"; else if (i==2) reg="EEEE"; else if (i==3) reg="EEEB";
-	TString t=Form("%s_%s_%s_b%d",name_signal.Data(),reg.Data(),diffvariable->Data(),j);
+	TString t=Form("obs_hist_%s_%s_b%d",reg.Data(),diffvariable->Data(),j);
 	obs_hist[t] = new TH2F(t.Data(),t.Data(),n_histobins,leftrange,rightrange,n_histobins,leftrange,rightrange);
 	obs_hist[t]->Sumw2();
+	TString t2=Form("obs_roodset_%s_%s_b%d",reg.Data(),diffvariable->Data(),j);
+	obs_roodset[t2] = new RooDataSet(t2.Data(),t2.Data(),RooArgSet(*roovar1,*roovar2,*rooweight),WeightVar(*rooweight));
       }
   }
 
@@ -1172,11 +1201,16 @@ void template_production::WriteOutput(const char* filename, const TString _dirna
 
     for (int i=0; i<2; i++) for (int l=0; l<n_templates; l++) template_signal[i][n_templates]->Add(template_signal[i][l]);
     for (int i=0; i<2; i++) for (int l=0; l<n_templates; l++) template_background[i][n_templates]->Add(template_background[i][l]);
+    for (int k=0; k<2; k++) for (int i=0; i<2; i++) for (int l=0; l<n_templates; l++) roodset_signal[i][n_templates][k]->append(*(roodset_signal[i][l][k]));
+    for (int k=0; k<2; k++) for (int i=0; i<2; i++) for (int l=0; l<n_templates; l++) roodset_background[i][n_templates][k]->append(*(roodset_background[i][l][k]));
     for (int i=0; i<2; i++) for (int l=0; l<n_templates; l++) hist2d_iso_ncand[i][n_templates]->Add(hist2d_iso_ncand[i][l]);
 
     for (int i=0; i<2; i++) for (int l=0; l<n_templates+1; l++) template_signal[i][l]->Write();
     for (int i=0; i<2; i++) for (int l=0; l<n_templates+1; l++) template_background[i][l]->Write();
+    for (int k=0; k<2; k++) for (int i=0; i<2; i++) for (int l=0; l<n_templates+1; l++) rooworkspace->import(*(roodset_signal[i][l][k]));
+    for (int k=0; k<2; k++) for (int i=0; i<2; i++) for (int l=0; l<n_templates+1; l++) rooworkspace->import(*(roodset_background[i][l][k]));
     for (int i=0; i<2; i++) for (int l=0; l<n_templates+1; l++) hist2d_iso_ncand[i][l]->Write();
+
 
     hist2d_singlecandet->Write();
     hist2d_singlecandenergy->Write();
@@ -1199,14 +1233,18 @@ void template_production::WriteOutput(const char* filename, const TString _dirna
       for (int i=0; i<3; i++)
 	for (int j=0; j<n_templates; j++) {
 	  obs_hist[get_name_obs(i,*diffvariable,n_templates)]->Add(obs_hist[get_name_obs(i,*diffvariable,j)]);
+	  obs_roodset[get_name_obs_roodset(i,*diffvariable,n_templates)]->append(*(obs_roodset[get_name_obs_roodset(i,*diffvariable,j)]));
 	}
     }
 
     for (std::map<TString, TH1F*>::const_iterator it = obs_hist_single.begin(); it!=obs_hist_single.end(); it++) it->second->Write();
     for (std::map<TString, TH2F*>::const_iterator it = obs_hist.begin(); it!=obs_hist.end(); it++) it->second->Write();
+    for (std::map<TString, RooDataSet*>::const_iterator it = obs_roodset.begin(); it!=obs_roodset.end(); it++) rooworkspace->import(*(it->second));
   }
 
   std::cout << "output written" << std::endl;
+
+  rooworkspace->Write();
 
   out->Close();
 };
@@ -1222,6 +1260,14 @@ TString template_production::get_name_obs_single(int region, int bin){
 
 TString template_production::get_name_obs(int region, TString diffvariable, int bin){
   TString name_signal="obs_hist";
+  TString reg;
+  if (region==0) reg="EBEB"; else if (region==1) reg="EBEE"; else if (region==2) reg="EEEE"; else if (region==3) reg="EEEB";
+  TString t=Form("%s_%s_%s_b%d",name_signal.Data(),reg.Data(),diffvariable.Data(),bin);
+  return t;
+};
+
+TString template_production::get_name_obs_roodset(int region, TString diffvariable, int bin){
+  TString name_signal="obs_roodset";
   TString reg;
   if (region==0) reg="EBEB"; else if (region==1) reg="EBEE"; else if (region==2) reg="EEEE"; else if (region==3) reg="EEEB";
   TString t=Form("%s_%s_%s_b%d",name_signal.Data(),reg.Data(),diffvariable.Data(),bin);
