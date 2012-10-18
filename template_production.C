@@ -29,6 +29,8 @@ void template_production::Loop()
 
 
   Long64_t nentries = fChain->GetEntriesFast();
+  int limit_entries = 2e+4;
+  //int limit_entries = -1;
 
   Long64_t nbytes = 0, nb = 0;
   for (Long64_t jentry=0; jentry<nentries;jentry++) {
@@ -37,7 +39,11 @@ void template_production::Loop()
     nb = fChain->GetEntry(jentry);   nbytes += nb;
     if (jentry%100000==0) std::cout << "Processing entry " << jentry << std::endl;
 
-    if (jentry==1e+4) break;
+    if (limit_entries>0){
+      if (randomgen->Uniform(0,1) > float(limit_entries)/float(nentries)) continue;
+    }
+
+    //    if (jentry==1e+4) break;
 
     // initial kinematic selection
     //    if (dodistribution) if (pholead_pt<40 || photrail_pt<30 || dipho_mgg_photon<80) continue;
@@ -239,8 +245,8 @@ void template_production::Loop()
     if (photrail_outvar<leftrange) photrail_outvar=leftrange;
     if (pholead_outvar>=rightrange) pholead_outvar=rightrange-1e-5; // overflow in last bin
     if (photrail_outvar>=rightrange) photrail_outvar=rightrange-1e-5; // overflow in last bin
-    if (pholead_outvar==0) pholead_outvar=randomgen->Uniform(0,0.1);
-    if (photrail_outvar==0) photrail_outvar=randomgen->Uniform(0,0.1);
+    //    if (pholead_outvar==0) pholead_outvar=randomgen->Uniform(0,0.1);
+    //    if (photrail_outvar==0) photrail_outvar=randomgen->Uniform(0,0.1);
 
     Float_t weight=event_luminormfactor*event_Kfactor*event_weight;
     float ptweight_lead = 1;

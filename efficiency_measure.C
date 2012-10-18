@@ -164,7 +164,7 @@ void efficiency_measure::LoopOne(TString diffvariable, TFile *outf)
 
       if (!(pholead_PhoMCmatchexitcode==1 || pholead_PhoMCmatchexitcode==2)) pass1=false;
       if (!(photrail_PhoMCmatchexitcode==1 || photrail_PhoMCmatchexitcode==2)) pass1=false;
-      if (pholead_GenPhotonIsoDR04>5 || photrail_GenPhotonIsoDR04>5) pass1=false;
+      if (pholead_GenPhotonIsoDR04>10 || photrail_GenPhotonIsoDR04>10) pass1=false;
 
       if (!dosingle){
       float fillvar=0;
