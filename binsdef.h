@@ -9,12 +9,9 @@
 TString __variables__[] = {TString("invmass"),TString("diphotonpt"),TString("costhetastar"),TString("dphi")};
 std::vector<TString> diffvariables_list (__variables__, __variables__ + sizeof(__variables__) / sizeof(TString) );
 
-const Int_t n_histobins = 20;
-const Float_t leftrange = 0.0;
+const Int_t n_histobins = 60;
+const Float_t leftrange = -5.0;
 const Float_t rightrange = 10.0;
-
-
-
 
 
 static const int n_bins=13;
@@ -23,7 +20,7 @@ int n_templates_EB=7;
 int n_templates_EE=5;
 float binsdef_single_gamma_EB[n_bins+1]={30,40,50,60,70,80,90,110,140,150};
 float binsdef_single_gamma_EE[n_bins+1]={30,40,50,60,70,80,90,110,120};
-float binsdef_single_gamma_EB_eta[n_bins+1]={0,0.2,0.4,0.6,0.8,1,1.2,1.442};
+float binsdef_single_gamma_EB_eta[n_bins+1]={0,0.2,0.4,0.6,0.8,1,1.2,1.4442};
 float binsdef_single_gamma_EE_eta[n_bins+1]={1.56,1.653,1.8,2,2.2,2.5};
 
 int n_templates_invmass_EBEB=6;
@@ -69,9 +66,26 @@ float AbsDeltaPhi(double phi1, double phi2){
   return TMath::Abs(result);
 };
 
+//const int n_rho_cats=12; // = (rhobins-1)
+//const int n_sigma_cats=9; // = (sigmabins-1)
+//int n_rhosigma_cats=n_rho_cats*n_sigma_cats; // = (rhobins-1)*(sigmabins-1)
+//float rhobins[n_rho_cats+1]={0,2,4,6,8,10,12,14,16,18,20,25,100};
+//float sigmabins[n_sigma_cats+1]={0,1,2,3,4,5,6,7,8,100};
+const int n_rho_cats=1; // = (rhobins-1)
+//const int n_sigma_cats=7; // = (sigmabins-1)
+const int n_sigma_cats=1; // = (sigmabins-1)
+int n_rhosigma_cats=n_rho_cats*n_sigma_cats; // = (rhobins-1)*(sigmabins-1)
+float rhobins[n_rho_cats+1]={0,100};
+//float sigmabins[n_sigma_cats+1]={0,1,2,3,4,5,6,100};
+float sigmabins[n_sigma_cats+1]={0,100};
 
+const int n_eta_cats = n_templates_EB;
+int n_eta1eta2_cats = n_eta_cats*n_eta_cats;
+float *etabins = binsdef_single_gamma_EB_eta+0;
 
-
+// FOR PHOTON COMPONENT
+float eff_areas_EB[n_bins] = {2.004668e-01,2.000222e-01,2.083325e-01,2.129163e-01,2.082317e-01,1.982015e-01,1.383834e-01};
+float eff_areas_EE[n_bins] = {3.727486e-02,5.494237e-02,7.876623e-02,1.006998e-01,8.432818e-02};
 
 
 #endif

@@ -50,10 +50,12 @@ public :
    Float_t         event_Kfactor;
    Float_t         event_weight;
    Float_t         event_rho;
+   Float_t         event_sigma;
    Int_t           event_nPU;
    Int_t           event_PUOOTnumInteractionsEarly;
    Int_t           event_PUOOTnumInteractionsLate;
    Int_t           event_nRecVtx;
+   Int_t           event_pass12whoisrcone;
    Int_t           event_CSCTightHaloID;
    Int_t           event_NMuons;
    Int_t           event_NMuonsTot;
@@ -218,10 +220,12 @@ public :
    TBranch        *b_event_Kfactor;   //!
    TBranch        *b_event_weight;   //!
    TBranch        *b_event_rho;   //!
+   TBranch        *b_event_sigma;   //!
    TBranch        *b_event_nPU;   //!
    TBranch        *b_event_PUOOTnumInteractionsEarly;   //!
    TBranch        *b_event_PUOOTnumInteractionsLate;   //!
    TBranch        *b_event_nRecVtx;   //!
+   TBranch        *b_event_pass12whoisrcone;   //!
    TBranch        *b_event_CSCTightHaloID; //!
    TBranch        *b_event_NMuons; //!
    TBranch        *b_event_NMuonsTot; //!
@@ -398,7 +402,7 @@ public :
 
    TString differentialvariable;
 
-   TProfile** GetPUScaling(bool doEB, TString diffvar);
+   std::vector<std::vector<TProfile*> > GetPUScaling(bool doEB, TString diffvar);
 
    TRandom3 *randomgen;
 
@@ -411,13 +415,25 @@ public :
    TH1F *histo_pt[2];
    TH1F *histo_eta;
    TH2F *histo_pt_eta;
+   TH2F *histo_rho_sigma;
+   TH2F *histo_pu_nvtx;
 
    TH1F *template_signal[2][n_templates+1];
    TH1F *template_background[2][n_templates+1];
 
+   TH1F *histo_pu_rew;
+   float FindNewPUWeight(int npu);
+   void InitializeNewPUReweighting(TString source, TString target);
+
   RooWorkspace *rooworkspace;
   RooRealVar *roovar1;
   RooRealVar *roovar2;
+  RooRealVar *roopt1;
+  RooRealVar *roopt2;
+  RooRealVar *rooeta1;
+  RooRealVar *rooeta2;
+  RooRealVar *roorho;
+  RooRealVar *roosigma;
   //  RooRealVar *roovar_helper;
   RooRealVar *rooweight;
 
@@ -432,10 +448,12 @@ public :
    std::map<TString, TH1F*> obs_hist_single;
    std::map<TString, TH2F*> obs_hist;
    std::map<TString, RooDataSet*> obs_roodset;
+   std::map<TString, RooDataSet*> template2d_roodset;
 
    TString get_name_obs_single(int region, int bin);
    TString get_name_obs(int region, TString diffvariable, int bin);
    TString get_name_obs_roodset(int region, TString diffvariable, int bin);
+   TString get_name_template2d_roodset(int region, TString sigorbkg);
 
    TH2F *hist2d_iso_ncand[2][n_templates+1];
 
@@ -460,6 +478,8 @@ public :
    Float_t photrail_outvar;
    Int_t candcounter;
 
+   Bool_t purew_initialized;
+
    Bool_t initialized;
 
    Bool_t isdata;
@@ -469,6 +489,10 @@ public :
    Bool_t dosignaltemplate;
    Bool_t dobackgroundtemplate;
    Bool_t dodistribution;
+   Bool_t do2dtemplate;
+   Bool_t do2ptemplate;
+   Bool_t do1p1ftemplate;
+   Bool_t do2ftemplate;
 
    Int_t Choose_bin_invmass(float invmass, int region);
    Int_t Choose_bin_diphotonpt(float diphotonpt, int region);
@@ -490,6 +514,8 @@ public :
    float FindPtEtaWeight(float pt, float eta);
    void Initialize_Pt_Eta_Reweighting(TString dset1, TString dset2, TString temp1, TString temp2);
    void SetNoPtEtaReweighting();
+
+   float getpuenergy(int reg, float eta);
 
    TH1F *histo_pt_reweighting[2];
    TH1F *histo_eta_reweighting;
@@ -524,6 +550,10 @@ template_production::template_production(TTree *tree)
    dosignaltemplate=false;
    dobackgroundtemplate=false;
    dodistribution=false;
+   do2dtemplate = false;
+   do2ptemplate = false;
+   do1p1ftemplate = false;
+   do2ftemplate = false;
 
    pt_reweighting_initialized = 0;
    do_pt_reweighting = 0;
@@ -533,6 +563,8 @@ template_production::template_production(TTree *tree)
 
    pt_eta_reweighting_initialized = 0;
    do_pt_eta_reweighting = 0;
+
+   purew_initialized = 0;
 
 }
 
@@ -549,10 +581,15 @@ void template_production::Setup(Bool_t _isdata, TString _mode, TString _differen
 
   Init();
 
-  if (mode=="standard") dodistribution=true;
+  if (mode=="standard" || mode=="doublerandomcone") dodistribution=true;
   if (mode=="signal" || mode=="randomcone" || mode=="muon") dosignaltemplate=true;
   if (mode=="background" || mode=="impinging" || mode=="sieiesideband" || mode=="combisosideband") dobackgroundtemplate=true;
-   
+  if (mode=="sigsig") do2ptemplate=true; 
+  if (mode=="sigbkg") do1p1ftemplate=true; 
+  if (mode=="bkgbkg") do2ftemplate=true; 
+  do2dtemplate = (do2ptemplate || do1p1ftemplate || do2ftemplate);
+
+
   if (mode=="sieiesideband") for (int i=0; i<1; i++) std::cout << "Info: sieie sideband is (0.014/0.031)" << std::endl;
 
   randomgen = new TRandom3(0);
@@ -560,6 +597,12 @@ void template_production::Setup(Bool_t _isdata, TString _mode, TString _differen
   rooworkspace = new RooWorkspace("rooworkspace","rooworkspace");
   roovar1 = new RooRealVar("roovar1","roovar1",leftrange,rightrange);
   roovar2 = new RooRealVar("roovar2","roovar2",leftrange,rightrange);
+  rooeta1 = new RooRealVar("rooeta1","rooeta1",0,2.5);
+  rooeta2 = new RooRealVar("rooeta2","rooeta2",0,2.5);
+  roopt1 = new RooRealVar("roopt1","roopt1",25,1000);
+  roopt2 = new RooRealVar("roopt2","roopt2",25,1000);
+  roorho = new RooRealVar("roorho","roorho",0,50);
+  roosigma = new RooRealVar("roosigma","roosigma",0,50);
   //  roovar_helper = new RooRealVar("roovar_helper","roovar_helper",leftrange,rightrange);
   rooweight = new RooRealVar("rooweight","rooweight",0,5);
 
@@ -569,11 +612,13 @@ void template_production::Setup(Bool_t _isdata, TString _mode, TString _differen
     TString reg;
     if (i==0) reg="EB"; else if (i==1) reg="EE";
     name.Append(reg);
-    histo_pt[i] = new TH1F(name.Data(),name.Data(),135,30,300);
+    histo_pt[i] = new TH1F(name.Data(),name.Data(),55,25,300);
   }
 
   histo_eta = new TH1F("histo_eta","histo_eta",25,0,2.5);
-  histo_pt_eta = new TH2F("histo_pt_eta","histo_pt_eta",135,30,300,25,0,2.5);
+  histo_pt_eta = new TH2F("histo_pt_eta","histo_pt_eta",55,25,300,25,0,2.5);
+  histo_rho_sigma = new TH2F("histo_rho_sigma","histo_rho_sigma",n_rho_cats,rhobins,n_sigma_cats,sigmabins);
+  histo_pu_nvtx = new TH2F("histo_pu_nvtx","histo_pu_nvtx",50,0,50,50,0,50);
 
   // template_{signal,background}[EB,EE][n_templates]
   for (int i=0; i<2; i++)
@@ -585,9 +630,9 @@ void template_production::Setup(Bool_t _isdata, TString _mode, TString _differen
       template_signal[i][j] = new TH1F(t.Data(),t.Data(),n_histobins,leftrange,rightrange);
       template_signal[i][j]->Sumw2();
       TString t2=Form("roodset_%s_%s_b%d_rv%d",name_signal.Data(),reg.Data(),j,1);
-      roodset_signal[i][j][0] = new RooDataSet(t2.Data(),t2.Data(),RooArgSet(*roovar1,*rooweight),WeightVar(*rooweight));
+      roodset_signal[i][j][0] = new RooDataSet(t2.Data(),t2.Data(),RooArgSet(*roovar1,*roopt1,*rooeta1,*roorho,*roosigma,*rooweight),WeightVar(*rooweight));
       t2=Form("roodset_%s_%s_b%d_rv%d",name_signal.Data(),reg.Data(),j,2);
-      roodset_signal[i][j][1] = new RooDataSet(t2.Data(),t2.Data(),RooArgSet(*roovar2,*rooweight),WeightVar(*rooweight));
+      roodset_signal[i][j][1] = new RooDataSet(t2.Data(),t2.Data(),RooArgSet(*roovar2,*roopt2,*rooeta2,*roorho,*roosigma,*rooweight),WeightVar(*rooweight));
     }
   for (int i=0; i<2; i++)
     for (int j=0; j<n_templates+1; j++) {
@@ -598,9 +643,9 @@ void template_production::Setup(Bool_t _isdata, TString _mode, TString _differen
       template_background[i][j] = new TH1F(t.Data(),t.Data(),n_histobins,leftrange,rightrange);
       template_background[i][j]->Sumw2();
       TString t2=Form("roodset_%s_%s_b%d_rv%d",name_background.Data(),reg.Data(),j,1);
-      roodset_background[i][j][0] = new RooDataSet(t2.Data(),t2.Data(),RooArgSet(*roovar1,*rooweight),WeightVar(*rooweight));
+      roodset_background[i][j][0] = new RooDataSet(t2.Data(),t2.Data(),RooArgSet(*roovar1,*roopt1,*rooeta1,*roorho,*roosigma,*rooweight),WeightVar(*rooweight));
       t2=Form("roodset_%s_%s_b%d_rv%d",name_background.Data(),reg.Data(),j,2);
-      roodset_background[i][j][1] = new RooDataSet(t2.Data(),t2.Data(),RooArgSet(*roovar2,*rooweight),WeightVar(*rooweight));
+      roodset_background[i][j][1] = new RooDataSet(t2.Data(),t2.Data(),RooArgSet(*roovar2,*roopt2,*rooeta2,*roorho,*roosigma,*rooweight),WeightVar(*rooweight));
     }
   for (int i=0; i<2; i++)
     for (int j=0; j<n_templates+1; j++) {
@@ -657,9 +702,23 @@ void template_production::Setup(Bool_t _isdata, TString _mode, TString _differen
 	obs_hist[t] = new TH2F(t.Data(),t.Data(),n_histobins,leftrange,rightrange,n_histobins,leftrange,rightrange);
 	obs_hist[t]->Sumw2();
 	TString t2=Form("obs_roodset_%s_%s_b%d",reg.Data(),diffvariable->Data(),j);
-	obs_roodset[t2] = new RooDataSet(t2.Data(),t2.Data(),RooArgSet(*roovar1,*roovar2,*rooweight),WeightVar(*rooweight));
+	obs_roodset[t2] = new RooDataSet(t2.Data(),t2.Data(),RooArgSet(*roovar1,*roovar2,*roopt1,*rooeta1,*roopt2,*rooeta2,*roorho,*roosigma,*rooweight),WeightVar(*rooweight));
       }
   }
+
+
+
+  for (int i=0; i<3; i++)
+    for (int j=0; j<4; j++) {
+      //      TString reg;
+      //      if (i==0) reg="EBEB"; else if (i==1) reg="EBEE"; else if (i==2) reg="EEEE"; 
+      TString sigorbkg;
+      if (j==0) sigorbkg="sigsig"; if (j==1) sigorbkg="sigbkg"; if (j==2) sigorbkg="bkgsig"; if (j==3) sigorbkg="bkgbkg";
+      TString t2 = get_name_template2d_roodset(i,sigorbkg);
+      template2d_roodset[t2]= new RooDataSet(t2.Data(),t2.Data(),RooArgSet(*roovar1,*roovar2,*roopt1,*rooeta1,*roopt2,*rooeta2,*roorho,*roosigma,*rooweight),WeightVar(*rooweight));
+    }
+  
+
 
   
   initialized=true;
@@ -992,10 +1051,12 @@ void template_production::Init()
    fChain->SetBranchAddress("event_Kfactor", &event_Kfactor, &b_event_Kfactor);
    fChain->SetBranchAddress("event_weight", &event_weight, &b_event_weight);
    fChain->SetBranchAddress("event_rho", &event_rho, &b_event_rho);
+   fChain->SetBranchAddress("event_sigma", &event_sigma, &b_event_sigma);
    fChain->SetBranchAddress("event_nPU", &event_nPU, &b_event_nPU);
    fChain->SetBranchAddress("event_PUOOTnumInteractionsEarly", &event_PUOOTnumInteractionsEarly, &b_event_PUOOTnumInteractionsEarly);
    fChain->SetBranchAddress("event_PUOOTnumInteractionsLate", &event_PUOOTnumInteractionsLate, &b_event_PUOOTnumInteractionsLate);
    fChain->SetBranchAddress("event_nRecVtx", &event_nRecVtx, &b_event_nRecVtx);
+   fChain->SetBranchAddress("event_pass12whoisrcone", &event_pass12whoisrcone, &b_event_pass12whoisrcone);
    fChain->SetBranchAddress("event_CSCTightHaloID", &event_CSCTightHaloID, &b_event_CSCTightHaloID);
    fChain->SetBranchAddress("event_NMuons", &event_NMuons, &b_event_NMuons);
    fChain->SetBranchAddress("event_NMuonsTot", &event_NMuonsTot, &b_event_NMuonsTot);
@@ -1198,12 +1259,24 @@ void template_production::WriteOutput(const char* filename, const TString _dirna
     for (int i=0; i<2; i++) histo_pt[i]->Write();
     histo_eta->Write();
     histo_pt_eta->Write();
+    histo_rho_sigma->Write();
+    histo_pu_nvtx->Write();
 
     for (int i=0; i<2; i++) for (int l=0; l<n_templates; l++) template_signal[i][n_templates]->Add(template_signal[i][l]);
     for (int i=0; i<2; i++) for (int l=0; l<n_templates; l++) template_background[i][n_templates]->Add(template_background[i][l]);
     for (int k=0; k<2; k++) for (int i=0; i<2; i++) for (int l=0; l<n_templates; l++) roodset_signal[i][n_templates][k]->append(*(roodset_signal[i][l][k]));
     for (int k=0; k<2; k++) for (int i=0; i<2; i++) for (int l=0; l<n_templates; l++) roodset_background[i][n_templates][k]->append(*(roodset_background[i][l][k]));
     for (int i=0; i<2; i++) for (int l=0; l<n_templates; l++) hist2d_iso_ncand[i][n_templates]->Add(hist2d_iso_ncand[i][l]);
+
+    rooworkspace->import(*roovar1);
+    rooworkspace->import(*roovar2);
+    rooworkspace->import(*roopt1);
+    rooworkspace->import(*roopt2);
+    rooworkspace->import(*rooeta1);
+    rooworkspace->import(*rooeta2);
+    rooworkspace->import(*roorho);
+    rooworkspace->import(*roosigma);
+    rooworkspace->import(*rooweight);
 
     for (int i=0; i<2; i++) for (int l=0; l<n_templates+1; l++) template_signal[i][l]->Write();
     for (int i=0; i<2; i++) for (int l=0; l<n_templates+1; l++) template_background[i][l]->Write();
@@ -1240,6 +1313,7 @@ void template_production::WriteOutput(const char* filename, const TString _dirna
     for (std::map<TString, TH1F*>::const_iterator it = obs_hist_single.begin(); it!=obs_hist_single.end(); it++) it->second->Write();
     for (std::map<TString, TH2F*>::const_iterator it = obs_hist.begin(); it!=obs_hist.end(); it++) it->second->Write();
     for (std::map<TString, RooDataSet*>::const_iterator it = obs_roodset.begin(); it!=obs_roodset.end(); it++) rooworkspace->import(*(it->second));
+    for (std::map<TString, RooDataSet*>::const_iterator it = template2d_roodset.begin(); it!=template2d_roodset.end(); it++) rooworkspace->import(*(it->second));
   }
 
   std::cout << "output written" << std::endl;
@@ -1271,6 +1345,14 @@ TString template_production::get_name_obs_roodset(int region, TString diffvariab
   TString reg;
   if (region==0) reg="EBEB"; else if (region==1) reg="EBEE"; else if (region==2) reg="EEEE"; else if (region==3) reg="EEEB";
   TString t=Form("%s_%s_%s_b%d",name_signal.Data(),reg.Data(),diffvariable.Data(),bin);
+  return t;
+};
+
+TString template_production::get_name_template2d_roodset(int region, TString sigorbkg){
+  TString name_signal="template_roodset";
+  TString reg;
+  if (region==0) reg="EBEB"; else if (region==1) reg="EBEE"; else if (region==2) reg="EEEE"; else if (region==3) reg="EEEB";
+  TString t=Form("%s_%s_%s",name_signal.Data(),reg.Data(),sigorbkg.Data());
   return t;
 };
 
@@ -1474,6 +1556,39 @@ float template_production::AbsDeltaPhi(double phi1, double phi2){
   return TMath::Abs(result);
 }
 
+void template_production::InitializeNewPUReweighting(TString source, TString target){
+
+  TH1F *num;
+  TH1D *num_;
+  TH1F *den;
+
+  TFile *f1 = TFile::Open(target.Data(),"read");
+  TFile *f2 = TFile::Open(source.Data(),"read");
+
+  f1->GetObject("pileup",num_);
+  f2->GetObject("NumPU_noweight",den);
+  
+  num = new TH1F();
+  num_->Copy(*num);
+
+  num->Sumw2(); num->Scale(1.0/num->Integral());
+  den->Sumw2(); den->Scale(1.0/den->Integral());
+
+  num->Divide(den);
+
+  histo_pu_rew = num;
+  purew_initialized = 1;
+
+  std::cout << "WARNING: OVERWRITING OLD PU WEIGHTS WITH NEW REWEIGHTING" << std::endl;
+
+  return;
+
+};
+
+float template_production::FindNewPUWeight(int npu){
+  if (!purew_initialized) return -999;
+  return histo_pu_rew->GetBinContent(histo_pu_rew->FindBin(npu));
+};
 
 #endif // #ifdef template_production_cxx
 
