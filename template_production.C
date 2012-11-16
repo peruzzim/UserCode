@@ -5,7 +5,7 @@
 using namespace std;
 
 
-void template_production::Loop()
+void template_production::Loop(int maxevents)
 {
   //     This is the loop skeleton where:
   //    jentry is the global entry number in the chain
@@ -29,8 +29,12 @@ void template_production::Loop()
 
 
   Long64_t nentries = fChain->GetEntriesFast();
-  int limit_entries = 1e+6;
+  int limit_entries = maxevents;
+  //int limit_entries = 1e+4;
   //int limit_entries = -1;
+
+
+  for (int l=0; l<10; l++) std::cout << "WARNING: butto via under/overflow. Le efficienze sono sbagliate!!!!!" << std::endl;
 
   Long64_t nbytes = 0, nb = 0;
   for (Long64_t jentry=0; jentry<nentries;jentry++) {
@@ -238,27 +242,33 @@ void template_production::Loop()
 //    photrail_outvar/=scale_trail;
 
 
-    if (pholead_outvar<leftrange) pholead_outvar=leftrange;
-    if (photrail_outvar<leftrange) photrail_outvar=leftrange;
-    if (pholead_outvar>=rightrange) pholead_outvar=rightrange-1e-5; // overflow in last bin
-    if (photrail_outvar>=rightrange) photrail_outvar=rightrange-1e-5; // overflow in last bin
-//    if (pholead_outvar==0) pholead_outvar=randomgen->Uniform(0,0.1);
-//    if (photrail_outvar==0) photrail_outvar=randomgen->Uniform(0,0.1);
+//    if (pholead_outvar<leftrange) pholead_outvar=leftrange;
+//    if (photrail_outvar<leftrange) photrail_outvar=leftrange;
+//    if (pholead_outvar>=rightrange) pholead_outvar=rightrange-1e-5; // overflow in last bin
+//    if (photrail_outvar>=rightrange) photrail_outvar=rightrange-1e-5; // overflow in last bin
 
-    if (purew_initialized) event_weight=FindNewPUWeight(event_nPU);
+    if (pholead_outvar<leftrange)   continue;
+    if (photrail_outvar<leftrange)  continue;
+    if (pholead_outvar>=rightrange) continue;
+    if (photrail_outvar>=rightrange)continue;
+
+
+
+//    if (purew_initialized) event_weight=FindNewPUWeight(event_nPU);
     Float_t weight=event_luminormfactor*event_Kfactor*event_weight;
     float ptweight_lead = 1;
     float ptweight_trail = 1;
 
-    if (do_pt_reweighting) ptweight_lead*=FindPtWeight(pholead_pt,pholead_SCeta);
-    if (do_eta_reweighting) ptweight_lead*=FindEtaWeight(pholead_SCeta);
-    if (do_pt_reweighting) ptweight_trail*=FindPtWeight(photrail_pt,photrail_SCeta);
-    if (do_eta_reweighting) ptweight_trail*=FindEtaWeight(photrail_SCeta);
-
-    if (do_pt_eta_reweighting) {
-      ptweight_lead*=FindPtEtaWeight(pholead_pt,pholead_SCeta);
-      ptweight_trail*=FindPtEtaWeight(photrail_pt,photrail_SCeta);
-    }
+//    if (do_pt_reweighting) ptweight_lead*=FindPtWeight(pholead_pt,pholead_SCeta);
+//    if (do_eta_reweighting) ptweight_lead*=FindEtaWeight(pholead_SCeta);
+//    if (do_pt_reweighting) ptweight_trail*=FindPtWeight(photrail_pt,photrail_SCeta);
+//    if (do_eta_reweighting) ptweight_trail*=FindEtaWeight(photrail_SCeta);
+//
+//    if (do_pt_eta_reweighting) {
+//      ptweight_lead*=FindPtEtaWeight(pholead_pt,pholead_SCeta);
+//      ptweight_trail*=FindPtEtaWeight(photrail_pt,photrail_SCeta);
+//    }
+//
 
     histo_pu_nvtx->Fill(event_nPU,event_nRecVtx,weight);
 
@@ -363,7 +373,8 @@ void template_production::Loop()
 	if (do2ptemplate) sigorbkg=TString("sigsig");
 	if (do2ftemplate) sigorbkg=TString("bkgbkg");
 	if (do1p1ftemplate) sigorbkg=TString("sigbkg");
-	if (do1p1ftemplate && event_ok_for_dataset==1 && event_pass12whoisrcone==1) sigorbkg=TString("bkgsig");
+	//	if (do1p1ftemplate && event_ok_for_dataset==1 && event_pass12whoisrcone==1) sigorbkg=TString("bkgsig");
+	if (do1p1ftemplate && event_pass12whoisrcone==1) sigorbkg=TString("bkgsig");
 	
 	roovar1->setVal(in1);
 	roovar2->setVal(in2);
@@ -458,7 +469,7 @@ void template_production::Loop()
 
 #endif
 
-void gen_templates(TString filename="input.root", TString mode="", bool isdata=1, const char* outfile="out.root", TString differentialvariable="photoniso", TString targetpufile="", bool doreweight=false, TString dset1="", TString dset2="", TString temp1="", TString temp2=""){
+void gen_templates(TString filename="input.root", TString mode="", bool isdata=1, const char* outfile="out.root", TString differentialvariable="photoniso", int maxevents=-1){
   
   TFile *outF = TFile::Open(outfile,"recreate");
   outF->Close();
@@ -468,18 +479,7 @@ void gen_templates(TString filename="input.root", TString mode="", bool isdata=1
 
   TTree *t;
 
-  TString treename[11];
-  treename[0] = TString("Tree_standard_sel");
-  treename[1] = TString("Tree_signal_template");
-  treename[2] = TString("Tree_background_template");
-  treename[3] = TString("Tree_DY_sel");
-  treename[4] = TString("Tree_randomcone_signal_template");
-  treename[5] = TString("Tree_doublerandomcone_sel");
-  treename[6] = TString("Tree_singlephoton_sel_noimpingingcut");
-  treename[7] = TString("Tree_onlypreselection");
-  treename[8] = TString("Tree_sieiesideband_sel");
-  treename[9] = TString("Tree_combisosideband_sel");
-  treename[10] = TString("Tree_muoncone");
+  TString treename[14];
 
   treename[0] =  TString("Tree_standard_sel");
   treename[1] =  TString("Tree_signal_template");
@@ -507,26 +507,20 @@ void gen_templates(TString filename="input.root", TString mode="", bool isdata=1
   if (mode=="sigsig") treename_chosen=treename[5];
   if (mode=="sigbkg") treename_chosen=treename[12];
   if (mode=="bkgbkg") treename_chosen=treename[13];
+  if (mode=="doublerandomcone") treename_chosen=treename[5];
 
   file->GetObject(treename_chosen.Data(),t);
 
   std::cout << "Processing selection " << treename_chosen.Data() << std::endl;
+  
   template_production *temp = new template_production(t);
   temp->Setup(isdata,mode,differentialvariable);
-  if (targetpufile!="") temp->InitializeNewPUReweighting(filename,targetpufile);
-  if (!doreweight) {
-    temp->SetNoPtReweighting();
-    temp->SetNoEtaReweighting();
-    temp->SetNoPtEtaReweighting();
-  }
-  else {
-    temp->SetNoPtReweighting();
-    temp->SetNoEtaReweighting();
-    //    temp->Initialize_Pt_Reweighting(dset1,dset2,temp1,temp2);
-    //    temp->Initialize_Eta_Reweighting(dset1,dset2,temp1,temp2);
-    temp->Initialize_Pt_Eta_Reweighting(dset1,dset2,temp1,temp2);
-  }
-  temp->Loop();
+
+  temp->SetNoPtReweighting();
+  temp->SetNoEtaReweighting();
+  temp->SetNoPtEtaReweighting();
+
+  if (maxevents>0) temp->Loop(maxevents); else temp->Loop();
   std::cout << "exited from event loop" << std::endl;
   temp->WriteOutput(outfile,treename_chosen.Data());
   std::cout << "written output" << std::endl;
@@ -634,7 +628,7 @@ std::vector<std::vector<TProfile*> > template_production::GetPUScaling(bool doEB
 
     //    bool isbarrel = (fabs(pholead_SCeta)<1.4442);
 
-    event_weight = FindNewPUWeight(event_nPU);
+    //    event_weight = FindNewPUWeight(event_nPU);
 
 
     float pholead_phoiso=-999;

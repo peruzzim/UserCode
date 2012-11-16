@@ -9,9 +9,9 @@
 TString __variables__[] = {TString("invmass"),TString("diphotonpt"),TString("costhetastar"),TString("dphi")};
 std::vector<TString> diffvariables_list (__variables__, __variables__ + sizeof(__variables__) / sizeof(TString) );
 
-const Int_t n_histobins = 60;
-const Float_t leftrange = -5.0;
-const Float_t rightrange = 10.0;
+const Int_t n_histobins = 90;
+const Float_t leftrange = -3.0;
+const Float_t rightrange = 6.0;
 
 
 static const int n_bins=13;
