@@ -133,6 +133,7 @@ void template_production::Loop(int maxevents)
     if (dodistribution) {recalc_lead=true; recalc_trail=true;}
 
 
+
     if (recalc_lead){
       float et_recalc = 0;
       float e_recalc = 0;
@@ -228,9 +229,13 @@ void template_production::Loop(int maxevents)
 
     Int_t bin_lead = Choose_bin_eta(pholead_SCeta,reg_lead);
     Int_t bin_trail = dodistribution ? Choose_bin_eta(photrail_SCeta,reg_trail) : -999;
+
+    /*
     pholead_outvar-=getpuenergy(reg_lead,pholead_SCeta);
     if (dodistribution) photrail_outvar-=getpuenergy(reg_trail,photrail_SCeta);
     if (do2ptemplate || do1p1ftemplate || do2ftemplate) photrail_outvar-=getpuenergy(reg_trail,photrail_SCeta);
+    */
+
 
 
 //    float scale_lead = 1;
@@ -248,10 +253,11 @@ void template_production::Loop(int maxevents)
 //    if (photrail_outvar>=rightrange) photrail_outvar=rightrange-1e-5; // overflow in last bin
 
     if (pholead_outvar<leftrange)   continue;
-    if (photrail_outvar<leftrange)  continue;
     if (pholead_outvar>=rightrange) continue;
-    if (photrail_outvar>=rightrange)continue;
-
+    if (dodistribution||do2dtemplate){
+      if (photrail_outvar<leftrange)  continue;
+      if (photrail_outvar>=rightrange)continue;
+    }
 
 
 //    if (purew_initialized) event_weight=FindNewPUWeight(event_nPU);
@@ -290,7 +296,7 @@ void template_production::Loop(int maxevents)
 	histo_eta->Fill(fabs(pholead_SCeta),weight*ptweight_lead);
 	histo_pt_eta->Fill(pholead_pt,fabs(pholead_SCeta),weight*ptweight_lead);
 	histo_rho_sigma->Fill(event_rho,event_sigma,weight*ptweight_lead);
-	//      std::cout << weight << " " << weight*ptweight_lead << std::endl;
+	//	std::cout << weight << " " << weight*ptweight_lead << std::endl;
       }
       
       if (dobackgroundtemplate){

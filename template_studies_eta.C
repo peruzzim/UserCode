@@ -126,8 +126,8 @@ fit_output* fit_dataset(const char* inputfilename_ts, const char* inputfilename_
 
 
   //TString data_dir("mc_Tree_standard_sel/");
-  //TString data_dir("data_Tree_standard_sel/"); 
-  TString data_dir("data_Tree_doublerandomcone_sel/"); 
+  TString data_dir("data_Tree_standard_sel/"); 
+  //TString data_dir("data_Tree_doublerandomcone_sel/"); 
   
   TString sig_dir("data_Tree_randomcone_signal_template/");
   //  TString sig_dir("mc_Tree_signal_template/");
@@ -202,14 +202,14 @@ fit_output* fit_dataset(const char* inputfilename_ts, const char* inputfilename_
     RooDataSet *dataset = (RooDataSet*)(wspace_d->data(Form("obs_roodset_%s_%s_b%d",splitting.Data(),diffvariable.Data(),bin)));    
 
     
-    {
-      float etacut = 0.4;
-      sig1dset = (RooDataSet*)(sig1dset->reduce( Cut(Form("TMath::Abs(rooeta1)<%f",etacut)) ));
-      bkg1dset = (RooDataSet*)(bkg1dset->reduce( Cut(Form("TMath::Abs(rooeta1)<%f",etacut)) ));
-      sig2dset = (RooDataSet*)(sig2dset->reduce( Cut(Form("TMath::Abs(rooeta2)<%f",etacut)) ));
-      bkg2dset = (RooDataSet*)(bkg2dset->reduce( Cut(Form("TMath::Abs(rooeta2)<%f",etacut)) ));
-      dataset =  (RooDataSet*)(dataset->reduce( Cut(Form("TMath::Abs(rooeta1)<%f && TMath::Abs(rooeta2)<%f",etacut,etacut)) ));
-    }
+//    {
+//      float etacut = 0.4;
+//      sig1dset = (RooDataSet*)(sig1dset->reduce( Cut(Form("TMath::Abs(rooeta1)<%f",etacut)) ));
+//      bkg1dset = (RooDataSet*)(bkg1dset->reduce( Cut(Form("TMath::Abs(rooeta1)<%f",etacut)) ));
+//      sig2dset = (RooDataSet*)(sig2dset->reduce( Cut(Form("TMath::Abs(rooeta2)<%f",etacut)) ));
+//      bkg2dset = (RooDataSet*)(bkg2dset->reduce( Cut(Form("TMath::Abs(rooeta2)<%f",etacut)) ));
+//      dataset =  (RooDataSet*)(dataset->reduce( Cut(Form("TMath::Abs(rooeta1)<%f && TMath::Abs(rooeta2)<%f",etacut,etacut)) ));
+//    }
 //    {
 //      sig1dset = (RooDataSet*)(sig1dset->reduce( Cut("TMath::Abs(roosigma)>-1.0 && TMath::Abs(roosigma)<7.0") ));
 //      bkg1dset = (RooDataSet*)(bkg1dset->reduce( Cut("TMath::Abs(roosigma)>-1.0 && TMath::Abs(roosigma)<7.0") ));
@@ -332,18 +332,18 @@ fit_output* fit_dataset(const char* inputfilename_ts, const char* inputfilename_
 
 
 
-    { // validate reweighting
-      validate_reweighting(&sig1dset,dataset_axis1,1);
-      validate_reweighting(&bkg1dset,dataset_axis1,1);
-      validate_reweighting(&sig2dset,dataset_axis2,2);
-      validate_reweighting(&bkg2dset,dataset_axis2,2);
-      for (int k=0; k<n_eta_cats; k++) {
-	validate_reweighting(&(sig1dset_eta1binned[k]),dataset_eta1binned_axis1[k],1);
-	validate_reweighting(&(bkg1dset_eta1binned[k]),dataset_eta1binned_axis1[k],1);
-	validate_reweighting(&(sig2dset_eta2binned[k]),dataset_eta2binned_axis2[k],2);
-	validate_reweighting(&(bkg2dset_eta2binned[k]),dataset_eta2binned_axis2[k],2);
-      }
-    }
+//    { // validate reweighting
+//      validate_reweighting(&sig1dset,dataset_axis1,1);
+//      validate_reweighting(&bkg1dset,dataset_axis1,1);
+//      validate_reweighting(&sig2dset,dataset_axis2,2);
+//      validate_reweighting(&bkg2dset,dataset_axis2,2);
+//      for (int k=0; k<n_eta_cats; k++) {
+//	validate_reweighting(&(sig1dset_eta1binned[k]),dataset_eta1binned_axis1[k],1);
+//	validate_reweighting(&(bkg1dset_eta1binned[k]),dataset_eta1binned_axis1[k],1);
+//	validate_reweighting(&(sig2dset_eta2binned[k]),dataset_eta2binned_axis2[k],2);
+//	validate_reweighting(&(bkg2dset_eta2binned[k]),dataset_eta2binned_axis2[k],2);
+//      }
+//    }
 
 
 
@@ -461,7 +461,7 @@ fit_output* fit_dataset(const char* inputfilename_ts, const char* inputfilename_
     //    c0_incl->GetPad(4)->SetLogy(1);
     }
 
-    
+    /*
     for (int k=0; k<n_eta_cats; k++) {
       TCanvas *c0 = new TCanvas(Form("c0_%d",k),Form("c0_%d",k),1200,800);
     c0->Divide(2,2);
@@ -491,7 +491,7 @@ fit_output* fit_dataset(const char* inputfilename_ts, const char* inputfilename_
     //    c0->GetPad(4)->SetLogy(1);
 
     }
-    
+    */
 
 //    c0->SaveAs(Form("plots/fittingplot0_%s_%s_b%d.png",splitting.Data(),diffvariable.Data(),bin));
 //    c0->SaveAs(Form("plots/fittingplot0_%s_%s_b%d.pdf",splitting.Data(),diffvariable.Data(),bin));
@@ -563,6 +563,7 @@ fit_output* fit_dataset(const char* inputfilename_ts, const char* inputfilename_
       //      minuit_firstpass->minos();
       firstpass = minuit_firstpass->save("firstpass","firstpass");
       firstpass->Print();
+
       
       /*
       j1->setVal(6.00750e-01);
@@ -592,11 +593,16 @@ fit_output* fit_dataset(const char* inputfilename_ts, const char* inputfilename_
     frame2bla->Draw();
     c1->GetPad(2)->SetLogy(1);
 
+    dataset_axis1->Print();
+    dataset_axis2->Print();
 
-    c1->SaveAs(Form("plots/fittingplot1_%s_%s_b%d.png",splitting.Data(),diffvariable.Data(),bin));
-    c1->SaveAs(Form("plots/fittingplot1_%s_%s_b%d.pdf",splitting.Data(),diffvariable.Data(),bin));
-    c1->SaveAs(Form("plots/fittingplot1_%s_%s_b%d.jpg",splitting.Data(),diffvariable.Data(),bin));
-    c1->SaveAs(Form("plots/fittingplot1_%s_%s_b%d.root",splitting.Data(),diffvariable.Data(),bin));
+
+
+
+//    c1->SaveAs(Form("plots/fittingplot1_%s_%s_b%d.png",splitting.Data(),diffvariable.Data(),bin));
+//    c1->SaveAs(Form("plots/fittingplot1_%s_%s_b%d.pdf",splitting.Data(),diffvariable.Data(),bin));
+//    c1->SaveAs(Form("plots/fittingplot1_%s_%s_b%d.jpg",splitting.Data(),diffvariable.Data(),bin));
+//    c1->SaveAs(Form("plots/fittingplot1_%s_%s_b%d.root",splitting.Data(),diffvariable.Data(),bin));
 
 
 
@@ -674,11 +680,11 @@ fit_output* fit_dataset(const char* inputfilename_ts, const char* inputfilename_
 
     
     RooMinimizer *minuit_secondpass = new RooMinimizer(*model_2D_nll);
-    //    minuit_secondpass->migrad();
-    //    minuit_secondpass->hesse();
+    minuit_secondpass->migrad();
+    minuit_secondpass->hesse();
     RooFitResult *secondpass;
-    //    secondpass = minuit_secondpass->save("secondpass","secondpass");
-    //    secondpass->Print();
+    secondpass = minuit_secondpass->save("secondpass","secondpass");
+    secondpass->Print();
 
 
     
@@ -703,29 +709,29 @@ fit_output* fit_dataset(const char* inputfilename_ts, const char* inputfilename_
 
     TCanvas *c2 = new TCanvas("c2","c2",1200,800);
     c2->Divide(2,2);
-    
-    c2->cd(1);
-    RooPlot *frame1final = roovar1->frame();
-    dataset->plotOn(frame1final);
-    model_2D_summedeta1eta2binned->plotOn(frame1final);
-    model_2D_summedeta1eta2binned->plotOn(frame1final,Components("sigsigpdf_summedeta1eta2binned"),LineStyle(kDashed),LineColor(kRed));
-    model_2D_summedeta1eta2binned->plotOn(frame1final,Components("sigbkgpdf_summedeta1eta2binned"),LineStyle(kDashed),LineColor(kGreen));
-    model_2D_summedeta1eta2binned->plotOn(frame1final,Components("bkgsigpdf_summedeta1eta2binned"),LineStyle(kDashed),LineColor(kGreen+2));
-    model_2D_summedeta1eta2binned->plotOn(frame1final,Components("bkgbkgpdf_summedeta1eta2binned"),LineStyle(kDashed),LineColor(kBlack));
-    frame1final->Draw();
-    //    c2->GetPad(1)->SetLogy(1);
-
-    c2->cd(2);
-    RooPlot *frame2final = roovar2->frame();
-    dataset->plotOn(frame2final);
-    model_2D_summedeta1eta2binned->plotOn(frame2final);
-    model_2D_summedeta1eta2binned->plotOn(frame2final,Components("sigsigpdf_summedeta1eta2binned"),LineStyle(kDashed),LineColor(kRed));
-    model_2D_summedeta1eta2binned->plotOn(frame2final,Components("sigbkgpdf_summedeta1eta2binned"),LineStyle(kDashed),LineColor(kGreen));
-    model_2D_summedeta1eta2binned->plotOn(frame2final,Components("bkgsigpdf_summedeta1eta2binned"),LineStyle(kDashed),LineColor(kGreen+2));
-    model_2D_summedeta1eta2binned->plotOn(frame2final,Components("bkgbkgpdf_summedeta1eta2binned"),LineStyle(kDashed),LineColor(kBlack));
-    frame2final->Draw();
-    //    c2->GetPad(2)->SetLogy(1);
-
+//    
+//    c2->cd(1);
+//    RooPlot *frame1final = roovar1->frame();
+//    dataset->plotOn(frame1final);
+//    model_2D_summedeta1eta2binned->plotOn(frame1final);
+//    model_2D_summedeta1eta2binned->plotOn(frame1final,Components("sigsigpdf_summedeta1eta2binned"),LineStyle(kDashed),LineColor(kRed));
+//    model_2D_summedeta1eta2binned->plotOn(frame1final,Components("sigbkgpdf_summedeta1eta2binned"),LineStyle(kDashed),LineColor(kGreen));
+//    model_2D_summedeta1eta2binned->plotOn(frame1final,Components("bkgsigpdf_summedeta1eta2binned"),LineStyle(kDashed),LineColor(kGreen+2));
+//    model_2D_summedeta1eta2binned->plotOn(frame1final,Components("bkgbkgpdf_summedeta1eta2binned"),LineStyle(kDashed),LineColor(kBlack));
+//    frame1final->Draw();
+//    //    c2->GetPad(1)->SetLogy(1);
+//
+//    c2->cd(2);
+//    RooPlot *frame2final = roovar2->frame();
+//    dataset->plotOn(frame2final);
+//    model_2D_summedeta1eta2binned->plotOn(frame2final);
+//    model_2D_summedeta1eta2binned->plotOn(frame2final,Components("sigsigpdf_summedeta1eta2binned"),LineStyle(kDashed),LineColor(kRed));
+//    model_2D_summedeta1eta2binned->plotOn(frame2final,Components("sigbkgpdf_summedeta1eta2binned"),LineStyle(kDashed),LineColor(kGreen));
+//    model_2D_summedeta1eta2binned->plotOn(frame2final,Components("bkgsigpdf_summedeta1eta2binned"),LineStyle(kDashed),LineColor(kGreen+2));
+//    model_2D_summedeta1eta2binned->plotOn(frame2final,Components("bkgbkgpdf_summedeta1eta2binned"),LineStyle(kDashed),LineColor(kBlack));
+//    frame2final->Draw();
+//    //    c2->GetPad(2)->SetLogy(1);
+//
     /*
     c2->cd(3);
     RooPlot *ppnllplot = pp->frame();
@@ -738,8 +744,8 @@ fit_output* fit_dataset(const char* inputfilename_ts, const char* inputfilename_
     int colors[3] = {kBlack, kRed, kGreen};
     TH2F *h2[3];
     TH1F *h3[3];
-    for (int i=0; i<3; i++) h2[i] = new TH2F(Form("h2%d",i),Form("h2%d",i),60,leftrange,rightrange,60,leftrange,rightrange);
-    for (int i=0; i<3; i++) h3[i] = new TH1F(Form("h3%d",i),Form("h3%d",i),60,leftrange*sqrt(2),rightrange*sqrt(2));
+    for (int i=0; i<3; i++) h2[i] = new TH2F(Form("h2%d",i),Form("h2%d",i),n_histobins,leftrange,rightrange,n_histobins,leftrange,rightrange);
+    for (int i=0; i<3; i++) h3[i] = new TH1F(Form("h3%d",i),Form("h3%d",i),n_histobins,leftrange*sqrt(2),rightrange*sqrt(2));
 
 
     TRandom3 *randomgen = new TRandom3(0);
@@ -854,7 +860,7 @@ fit_output* fit_dataset(const char* inputfilename_ts, const char* inputfilename_
     c3->Update();
    
 
-    return;
+    return NULL;
 
 //    std::cout << "expecting purities = " << pp_init << " " << pf_init << " " << fp_init << " " << 1-pp_init-pf_init-fp_init << std::endl;
     std::cout << "pp " << fsigsig->getVal() << " " << fsigsig->getPropagatedError(*secondpass) << std::endl; 
