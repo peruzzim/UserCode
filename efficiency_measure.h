@@ -184,6 +184,22 @@ public :
    Int_t           pholead_PhoMCmatchexitcode;
    Int_t           photrail_PhoMCmatchindex;
    Int_t           photrail_PhoMCmatchexitcode;
+   Int_t           pholead_Npfcandphotonincone;
+   Int_t           pholead_Npfcandchargedincone;
+   Int_t           pholead_Npfcandneutralincone;
+   Int_t           photrail_Npfcandphotonincone;
+   Int_t           photrail_Npfcandchargedincone;
+   Int_t           photrail_Npfcandneutralincone;
+   Float_t         pholead_scareaSF;
+   Float_t         photrail_scareaSF;
+   Float_t         pholead_photonpfcandenergies[30];
+   Float_t         pholead_photonpfcandets[30];
+   Float_t         pholead_photonpfcanddetas[30];
+   Float_t         pholead_photonpfcanddphis[30];
+   Float_t         photrail_photonpfcandenergies[30];
+   Float_t         photrail_photonpfcandets[30];
+   Float_t         photrail_photonpfcanddetas[30];
+   Float_t         photrail_photonpfcanddphis[30];
 
    // List of branches
    TBranch        *b_event_luminormfactor;   //!
@@ -331,6 +347,22 @@ public :
    TBranch        *b_pholead_PhoMCmatchexitcode;   //!
    TBranch        *b_photrail_PhoMCmatchindex;   //!
    TBranch        *b_photrail_PhoMCmatchexitcode;   //!
+   TBranch        *b_pholead_Npfcandphotonincone;
+   TBranch        *b_pholead_Npfcandchargedincone;
+   TBranch        *b_pholead_Npfcandneutralincone;
+   TBranch        *b_photrail_Npfcandphotonincone;
+   TBranch        *b_photrail_Npfcandchargedincone;
+   TBranch        *b_photrail_Npfcandneutralincone;
+   TBranch        *b_pholead_scareaSF;
+   TBranch        *b_photrail_scareaSF;
+   TBranch        *b_pholead_photonpfcandets;
+   TBranch        *b_pholead_photonpfcandenergies;
+   TBranch        *b_pholead_photonpfcanddetas;
+   TBranch        *b_pholead_photonpfcanddphis;
+   TBranch        *b_photrail_photonpfcandets;
+   TBranch        *b_photrail_photonpfcandenergies;
+   TBranch        *b_photrail_photonpfcanddetas;
+   TBranch        *b_photrail_photonpfcanddphis;
 
    efficiency_measure(const char* filename, const char* outname);
    virtual ~efficiency_measure();
@@ -566,6 +598,22 @@ void efficiency_measure::Init(TTree *tree)
    fChain->SetBranchAddress("pholead_PhoMCmatchexitcode", &pholead_PhoMCmatchexitcode, &b_pholead_PhoMCmatchexitcode);
    fChain->SetBranchAddress("photrail_PhoMCmatchindex", &photrail_PhoMCmatchindex, &b_photrail_PhoMCmatchindex);
    fChain->SetBranchAddress("photrail_PhoMCmatchexitcode", &photrail_PhoMCmatchexitcode, &b_photrail_PhoMCmatchexitcode);
+   fChain->SetBranchAddress("pholead_Npfcandphotonincone",&pholead_Npfcandphotonincone, &b_pholead_Npfcandphotonincone);
+   fChain->SetBranchAddress("pholead_Npfcandchargedincone",&pholead_Npfcandchargedincone, &b_pholead_Npfcandchargedincone);
+   fChain->SetBranchAddress("pholead_Npfcandneutralincone",&pholead_Npfcandneutralincone, &b_pholead_Npfcandneutralincone);
+   fChain->SetBranchAddress("photrail_Npfcandphotonincone",&photrail_Npfcandphotonincone, &b_photrail_Npfcandphotonincone);
+   fChain->SetBranchAddress("photrail_Npfcandchargedincone",&photrail_Npfcandchargedincone, &b_photrail_Npfcandchargedincone);
+   fChain->SetBranchAddress("photrail_Npfcandneutralincone",&photrail_Npfcandneutralincone, &b_photrail_Npfcandneutralincone);
+   fChain->SetBranchAddress("pholead_scareaSF",&pholead_scareaSF, &b_pholead_scareaSF);
+   fChain->SetBranchAddress("photrail_scareaSF",&photrail_scareaSF, &b_photrail_scareaSF);
+   fChain->SetBranchAddress("pholead_photonpfcandenergies",&pholead_photonpfcandenergies, &b_pholead_photonpfcandenergies);
+   fChain->SetBranchAddress("pholead_photonpfcandets",&pholead_photonpfcandets, &b_pholead_photonpfcandets);
+   fChain->SetBranchAddress("pholead_photonpfcanddetas",&pholead_photonpfcanddetas, &b_pholead_photonpfcanddetas);
+   fChain->SetBranchAddress("pholead_photonpfcanddphis",&pholead_photonpfcanddphis, &b_pholead_photonpfcanddphis);
+   fChain->SetBranchAddress("photrail_photonpfcandenergies",&photrail_photonpfcandenergies, &b_photrail_photonpfcandenergies);
+   fChain->SetBranchAddress("photrail_photonpfcandets",&photrail_photonpfcandets, &b_photrail_photonpfcandets);
+   fChain->SetBranchAddress("photrail_photonpfcanddetas",&photrail_photonpfcanddetas, &b_photrail_photonpfcanddetas);
+   fChain->SetBranchAddress("photrail_photonpfcanddphis",&photrail_photonpfcanddphis, &b_photrail_photonpfcanddphis);
 
    Notify();
 }

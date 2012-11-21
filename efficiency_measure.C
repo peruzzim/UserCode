@@ -155,16 +155,118 @@ void efficiency_measure::LoopOne(TString diffvariable, TFile *outf)
 
       if (event_ok_for_dataset==3 || event_ok_for_dataset==4) event_ok_for_dataset=1;
 
-      //      if (pholead_pt<40 || photrail_pt<30 || dipho_mgg_photon<80) continue;
-      if (pholead_pt<40 || photrail_pt<30) continue;
+      //      if (pholead_pt<40 || photrail_pt<25 || dipho_mgg_photon<80) continue;
+      if (pholead_pt<40 || photrail_pt<25) continue;
 
+
+    bool recalc_lead =  true;
+    bool recalc_trail = true;
+
+    float pholead_outvar = -999;
+    float photrail_outvar = -999;
+
+
+    if (recalc_lead){
+      float et_recalc = 0;
+      float e_recalc = 0;
+      int number_recalc = 0;
+
+      bool printout=false;
+
+      if (printout) std::cout << "---" << std::endl;
+
+      for (int i=0; i<pholead_Npfcandphotonincone; i++) {
+
+	float et=pholead_photonpfcandets[i];
+	float e=pholead_photonpfcandenergies[i];
+	float deta=pholead_photonpfcanddetas[i];
+	float dphi=pholead_photonpfcanddphis[i];
+	float dR=sqrt(deta*deta+dphi*dphi);
+	float eta=fabs(TMath::ACosH(e/et));
+	if (printout) {
+	  std::cout << et << " " << e << " " << deta << " " << dphi << " " << dR << " " << eta << std::endl;
+	}
+	if (eta>1.4442 && eta<1.56) continue;
+	if (eta>2.5) continue;
+
+#include "cleaning.cc"
+
+	if (fabs(pholead_SCeta)<1.4442 && eta>1.4442) continue;
+	if (fabs(pholead_SCeta)>1.56 && eta<1.56) continue;
+	et_recalc+=et;
+	e_recalc+=e;
+	number_recalc++;
+
+	//	hist2d_singlecandet->Fill(et,eta,weight*ptweight_lead);
+	//	hist2d_singlecandenergy->Fill(e,eta,weight*ptweight_lead);
+	//	hist2d_singlecandet->Fill(et/pholead_pt,eta,weight*ptweight_lead);
+	//	hist2d_singlecandenergy->Fill(e/pholead_energy,eta,weight*ptweight_lead);
+	//	hist2d_singlecanddeta->Fill(deta,eta,weight*ptweight_lead);
+	//	hist2d_singlecanddphi->Fill(dphi,eta,weight*ptweight_lead);
+	//	hist2d_singlecanddR->Fill(dR,eta,weight*ptweight_lead);
+      }
+
+//      hist2d_coneet->Fill(et_recalc,fabs(pholead_SCeta),weight*ptweight_lead);
+//      hist2d_coneenergy->Fill(e_recalc,fabs(pholead_SCeta),weight*ptweight_lead);
+//      hist2d_iso_ncand[reg_lead][bin_lead]->Fill(et_recalc,number_recalc,weight*ptweight_lead);
+
+      pholead_outvar=et_recalc;
+
+      if (printout) std::cout << "---" << std::endl;
+
+    }
+
+    if (recalc_trail){
+      float et_recalc = 0;
+      float e_recalc = 0;
+      int number_recalc = 0;
+
+      bool printout=false;
+
+      if (printout) std::cout << "---" << std::endl;
+
+      for (int i=0; i<photrail_Npfcandphotonincone; i++) {
+
+	float et=photrail_photonpfcandets[i];
+	float e=photrail_photonpfcandenergies[i];
+	float deta=photrail_photonpfcanddetas[i];
+	float dphi=photrail_photonpfcanddphis[i];
+	float dR=sqrt(deta*deta+dphi*dphi);
+	float eta=fabs(TMath::ACosH(e/et));
+	if (printout) {
+	  std::cout << et << " " << e << " " << deta << " " << dphi << " " << dR << " " << eta << std::endl;
+	}
+	if (eta>1.4442 && eta<1.56) continue;
+	if (eta>2.5) continue;
+
+#include "cleaning.cc"
+
+	if (fabs(photrail_SCeta)<1.4442 && eta>1.4442) continue;
+	if (fabs(photrail_SCeta)>1.56 && eta<1.56) continue;
+	et_recalc+=et;
+	e_recalc+=e;
+	number_recalc++;
+
+      }
+
+
+      photrail_outvar=et_recalc;
+
+      if (printout) std::cout << "---" << std::endl;
+
+    }
+     
 
 
       bool pass1=true;
-
       if (!(pholead_PhoMCmatchexitcode==1 || pholead_PhoMCmatchexitcode==2)) pass1=false;
       if (!(photrail_PhoMCmatchexitcode==1 || photrail_PhoMCmatchexitcode==2)) pass1=false;
       if (pholead_GenPhotonIsoDR04>10 || photrail_GenPhotonIsoDR04>10) pass1=false;
+      if (pholead_outvar<leftrange)   pass1=false;
+      if (pholead_outvar>=rightrange) pass1=false;
+      if (photrail_outvar<leftrange)  pass1=false;
+      if (photrail_outvar>=rightrange)pass1=false;
+
 
       if (!dosingle){
       float fillvar=0;
