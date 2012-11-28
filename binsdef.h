@@ -87,5 +87,9 @@ float *etabins = binsdef_single_gamma_EB_eta+0;
 float eff_areas_EB[n_bins] = {2.004668e-01,2.000222e-01,2.083325e-01,2.129163e-01,2.082317e-01,1.982015e-01,1.383834e-01};
 float eff_areas_EE[n_bins] = {3.727486e-02,5.494237e-02,7.876623e-02,1.006998e-01,8.432818e-02};
 
+const int n_ptbins_forreweighting = 2;
+//Float_t ptbins_forreweighting[n_ptbins_forreweighting+1]={0,40,60,300};
+//Float_t ptbins_forreweighting[n_ptbins_forreweighting+1]={0,20,40,60,80,100,120,140,160,180,200,300};
+Float_t ptbins_forreweighting[n_ptbins_forreweighting+1]={0,30,300};
 
 #endif

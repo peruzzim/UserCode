@@ -34,7 +34,7 @@ void template_production::Loop(int maxevents)
   //int limit_entries = -1;
 
 
-  for (int l=0; l<10; l++) std::cout << "WARNING: butto via under/overflow. Le efficienze sono sbagliate!!!!!" << std::endl;
+
 
   Long64_t nbytes = 0, nb = 0;
   for (Long64_t jentry=0; jentry<nentries;jentry++) {
@@ -230,11 +230,11 @@ void template_production::Loop(int maxevents)
     Int_t bin_lead = Choose_bin_eta(pholead_SCeta,reg_lead);
     Int_t bin_trail = dodistribution ? Choose_bin_eta(photrail_SCeta,reg_trail) : -999;
 
-    /*
+    
     pholead_outvar-=getpuenergy(reg_lead,pholead_SCeta);
     if (dodistribution) photrail_outvar-=getpuenergy(reg_trail,photrail_SCeta);
     if (do2ptemplate || do1p1ftemplate || do2ftemplate) photrail_outvar-=getpuenergy(reg_trail,photrail_SCeta);
-    */
+    
 
 
 
