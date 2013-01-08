@@ -101,8 +101,10 @@ void plot_datasets_axis1(RooDataSet *dset1, RooDataSet *dset2, RooDataSet *dset3
 void plot_template_dependency_axis1(RooDataSet *dset, TString variable, float min, float max, int bins, bool dobinned=0);
 void produce_category_binning(RooDataSet **dset);
 void randomize_dataset_statistically_binned(RooDataSet **dset);
-void* create_histo_from_dataset_binned(RooDataSet *dset);
-void* create_histo_from_dataset_variablebins(RooDataSet *dset);
+void create_histo_from_dataset_binned(RooDataSet *dset, TH1F **h1out, TH2F **h2out);
+void create_histo_from_dataset_variablebins(RooDataSet *dset, TH1F **h1out, TH2F **h2out);
+void generate_toy_dataset_1d(RooDataSet **target, RooHistPdf *sigpdf, RooHistPdf *bkgpdf, float fsig1toy);
+void generate_toy_dataset_2d(RooDataSet **target, RooHistPdf *sigsigpdf, RooHistPdf *sigbkgpdf, RooHistPdf *bkgsigpdf, RooHistPdf *bkgbkgpdf, float pptoy, float pftoy, float fptoy);
 
 RooRealVar *roovar1=NULL;
 RooRealVar *roovar2=NULL;
@@ -441,8 +443,19 @@ for (int i=1; i<n_templatebins+1; i++) binning_roovar2_threshold->addThreshold(t
     produce_category_binning(&dataset_axis1);
     produce_category_binning(&dataset_axis2);
 
-    ((TH1F*)(create_histo_from_dataset_variablebins(dataset_sig_axis1)))->Draw();
-    return 0;
+    bool do_syst_templatestatistics=false;
+    if (do_syst_templatestatistics){
+      randomize_dataset_statistically_binned(&dataset_sigsig);
+      randomize_dataset_statistically_binned(&dataset_sigbkg);
+      randomize_dataset_statistically_binned(&dataset_bkgsig);
+      randomize_dataset_statistically_binned(&dataset_bkgbkg);
+      randomize_dataset_statistically_binned(&dataset_sig_axis1);
+      randomize_dataset_statistically_binned(&dataset_bkg_axis1);
+      randomize_dataset_statistically_binned(&dataset_sig_axis2);
+      randomize_dataset_statistically_binned(&dataset_bkg_axis2);
+    }
+
+    
 
     RooDataHist *sigsigdhist = new RooDataHist("sigsigdhist","sigsigdhist",RooArgList(*binning_roovar1,*binning_roovar2),*dataset_sigsig);
     RooDataHist *sigbkgdhist = new RooDataHist("sigbkgdhist","sigbkgdhist",RooArgList(*binning_roovar1,*binning_roovar2),*dataset_sigbkg);
@@ -477,8 +490,13 @@ for (int i=1; i<n_templatebins+1; i++) binning_roovar2_threshold->addThreshold(t
     RooDataHist *bkgdhist_axis2_unbinned = new RooDataHist("bkgdhist_axis2_unbinned","bkgdhist_axis2_unbinned",RooArgList(*roovar2),*dataset_bkg_axis2);
     RooHistPdf *sigpdf_axis2_unbinned = new RooHistPdf("sigpdf_axis2_unbinned","sigpdf_axis2_unbinned",RooArgList(*roovar2),*sigdhist_axis2_unbinned);
     RooHistPdf *bkgpdf_axis2_unbinned = new RooHistPdf("bkgpdf_axis2_unbinned","bkgpdf_axis2_unbinned",RooArgList(*roovar2),*bkgdhist_axis2_unbinned);
-    
 
+    bool do_syst_purefitbias=false;
+    if (do_syst_purefitbias) {
+      generate_toy_dataset_1d(&dataset_axis1,sigpdf_axis1,bkgpdf_axis1,0.5);
+      generate_toy_dataset_1d(&dataset_axis2,sigpdf_axis2,bkgpdf_axis2,0.5);
+      generate_toy_dataset_2d(&dataset,sigsigpdf,sigbkgpdf,bkgsigpdf,bkgbkgpdf,0.5,0.2,0.3);
+    }
 
     
     if (doplots) {
@@ -1994,17 +2012,16 @@ void randomize_dataset_statistically_binned(RooDataSet **dset){
   else code=2;
   assert (code>0);
 
+  std::cout << code << std::endl;
+
   TH1F *hnum1d = new TH1F("hnum1d","hnum1d",n_templatebins,0.5,0.5+n_templatebins);
   TH1F *hden1d = NULL;
   hnum1d->Sumw2();
-  hden1d->Sumw2();
   TH2F *hnum2d = new TH2F("hnum2d","hnum2d",n_templatebins,0.5,0.5+n_templatebins,n_templatebins,0.5,0.5+n_templatebins);
   TH2F *hden2d = NULL;
   hnum2d->Sumw2();
-  hden2d->Sumw2();
 
-
-  if (code==3) hden2d = (TH2F*)(create_histo_from_dataset_binned(*dset)); else hden1d = (TH1F*)(create_histo_from_dataset_binned(*dset));
+  if (code==3) create_histo_from_dataset_binned(*dset,NULL,&hden2d); else create_histo_from_dataset_binned(*dset,&hden1d,NULL);
 
 
   if (code==3){  
@@ -2066,7 +2083,7 @@ void randomize_dataset_statistically_binned(RooDataSet **dset){
 };
 
 
-void* create_histo_from_dataset_binned(RooDataSet *dset){
+void create_histo_from_dataset_binned(RooDataSet *dset, TH1F** h1out, TH2F** h2out){
 
   assert (dset->numEntries()>0);  
   RooArgSet initialvars = *(dset->get(0));
@@ -2095,13 +2112,13 @@ void* create_histo_from_dataset_binned(RooDataSet *dset){
   
   //  if (code==3) h2d->Print("v"); else h1d->Print("v");
 
-  if (code==3) {delete h1d; return h2d;}
-  else {delete h2d; return h1d;}
+  if (code==3) {delete h1d; *h2out=h2d;}
+  else {delete h2d; *h1out=h1d;}
 
 
 };
 
-void* create_histo_from_dataset_variablebins(RooDataSet *dset){
+void create_histo_from_dataset_variablebins(RooDataSet *dset, TH1F** h1out, TH2F** h2out){
 
   assert (dset->numEntries()>0);  
   RooArgSet initialvars = *(dset->get(0));
@@ -2121,7 +2138,7 @@ void* create_histo_from_dataset_variablebins(RooDataSet *dset){
   TH2F *hnew2d = (code==3) ? new TH2F(nametitle+TString("_histo2dvb"),nametitle+TString("_histo2dvb"),n_templatebins,templatebinsboundaries,n_templatebins,templatebinsboundaries) : NULL;
 
 
-  if (code==3) h2d = (TH2F*)(create_histo_from_dataset_binned(dset)); else h1d = (TH1F*)(create_histo_from_dataset_binned(dset));
+  if (code==3) create_histo_from_dataset_binned(dset,NULL,&h2d); else create_histo_from_dataset_binned(dset,&h1d,NULL);
 
   if (code==3){  
     for (int i=0; i<h2d->GetNbinsX()+1; i++)
@@ -2139,8 +2156,62 @@ void* create_histo_from_dataset_variablebins(RooDataSet *dset){
     hnew1d->GetYaxis()->SetTitle("ev. / GeV");
   }
 
-  if (code==3) {delete h2d; return hnew2d;}
-  else {delete h1d; return hnew1d;}
+  if (code==3) {delete h2d; *h2out=hnew2d;}
+  else {delete h1d; *h1out=hnew1d;}
 
 
 };
+
+
+void generate_toy_dataset_1d(RooDataSet **target, RooHistPdf *sigpdf, RooHistPdf *bkgpdf, float fsig1toy){
+
+  assert ((*target)->numEntries()>0);  
+  RooArgSet initialvars = *((*target)->get(0));
+  assert (initialvars.find("binning_roovar1") || initialvars.find("binning_roovar2"));
+  int code = 0;
+  if (initialvars.find("binning_roovar1")) code=1;
+  else if (initialvars.find("binning_roovar2")) code=2;
+  assert (code>0);
+
+  RooAddPdf *addpdf = new RooAddPdf("addpdf","addpdf",*sigpdf,*bkgpdf,RooRealConstant::value(fsig1toy));
+
+  RooDataSet *generated = addpdf->generate((code==1) ? RooArgSet(*binning_roovar1) : RooArgSet(*binning_roovar2),Name(Form("toy_dset_1d_axis%d",code)),NumEvents((*target)->numEntries()),AutoBinned(kTRUE),Extended());
+
+//  {
+//    std::cout << "TOY GENERATION DEBUG:" << std::endl;
+//    (*target)->Print();
+//    (*target)->Print("v");
+//    generated->Print();
+//    generated->Print("v");
+//  }
+
+  delete *target;
+  *target = generated;
+
+};
+
+void generate_toy_dataset_2d(RooDataSet **target, RooHistPdf *sigsigpdf, RooHistPdf *sigbkgpdf, RooHistPdf *bkgsigpdf, RooHistPdf *bkgbkgpdf, float pptoy, float pftoy, float fptoy){
+
+  assert (pptoy+pftoy+fptoy<=1);
+
+  assert ((*target)->numEntries()>0);  
+  RooArgSet initialvars = *((*target)->get(0));
+  assert (initialvars.find("binning_roovar1") && initialvars.find("binning_roovar2"));
+
+  RooAddPdf *addpdf = new RooAddPdf("addpdf","addpdf",RooArgList(*sigsigpdf,*sigbkgpdf,*bkgsigpdf,*bkgbkgpdf),RooArgList(RooRealConstant::value(pptoy),RooRealConstant::value(pftoy),RooRealConstant::value(fptoy)),kFALSE);
+
+  RooDataSet *generated = addpdf->generate(RooArgSet(*binning_roovar1,*binning_roovar2),Name("toy_dset_2d"),NumEvents((*target)->numEntries()),AutoBinned(kTRUE),Extended());
+
+//  {
+//    std::cout << "TOY GENERATION DEBUG:" << std::endl;
+//    (*target)->Print();
+//    (*target)->Print("v");
+//    generated->Print();
+//    generated->Print("v");
+//  }
+
+  delete *target;
+  *target = generated;
+
+};
+
