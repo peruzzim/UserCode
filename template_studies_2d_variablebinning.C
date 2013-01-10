@@ -52,7 +52,7 @@
 //#include "TThread.h"
 //#include "firstbinpdf.cxx"
 //#include "MVASmoothingPdf.cxx"
-
+#include "TSystem.h"
 
 using namespace std;
 using namespace RooFit;
@@ -84,7 +84,7 @@ bool study_templates_plotting=0;
 
 const int numcpu=1;
 
-
+ProcInfo_t procinfo;
 
 //RooDataSet** split_in_eta_cats(RooDataSet *dset, int numvar);
 //RooDataSet** split_in_eta1eta2_cats(RooDataSet *dset);
@@ -95,16 +95,17 @@ void reweight_eta_2d(RooDataSet **dset, RooDataSet *dsetdestination);
 void reweight_eta_1d(RooDataSet **dset, RooDataSet *dsetdestination, int numvar);
 void reweight_rho(RooDataSet **dset, RooDataSet *dsetdestination, RooPlot *plot);
 void reweight_sigma(RooDataSet **dset, RooDataSet *dsetdestination);
-void reweight_rhosigma(RooDataSet **dset, RooDataSet *dsetdestination);
+void reweight_rhosigma(RooDataSet **dset, RooDataSet *dsetdestination, bool deleteold = kTRUE);
 void validate_reweighting(RooDataSet *dset, RooDataSet *dsetdestination, int numvar);
 void plot_datasets_axis1(RooDataSet *dset1, RooDataSet *dset2, RooDataSet *dset3, TString outname, legend_struct legdata);
 void plot_template_dependency_axis1(RooDataSet *dset, TString variable, float min, float max, int bins, bool dobinned=0);
-void produce_category_binning(RooDataSet **dset);
+void produce_category_binning(RooDataSet **dset, bool deleteold=kTRUE);
 void randomize_dataset_statistically_binned(RooDataSet **dset);
 void create_histo_from_dataset_binned(RooDataSet *dset, TH1F **h1out, TH2F **h2out);
 void create_histo_from_dataset_variablebins(RooDataSet *dset, TH1F **h1out, TH2F **h2out);
 void generate_toy_dataset_1d(RooDataSet **target, RooHistPdf *sigpdf, RooHistPdf *bkgpdf, float fsig1toy);
 void generate_toy_dataset_2d(RooDataSet **target, RooHistPdf *sigsigpdf, RooHistPdf *sigbkgpdf, RooHistPdf *bkgsigpdf, RooHistPdf *bkgbkgpdf, float pptoy, float pftoy, float fptoy);
+void print_mem();
 
 RooRealVar *roovar1=NULL;
 RooRealVar *roovar2=NULL;
@@ -122,15 +123,22 @@ RooRealVar *binning_roovar2=NULL;
 
 bool doplots = false;
 
+TFile *inputfile_t2p  = NULL;
+TFile *inputfile_t1p1f = NULL;
+TFile *inputfile_t2f   = NULL;
+TFile *inputfile_d = NULL;
+RooWorkspace *wspace_t2p=NULL;
+RooWorkspace *wspace_t1p1f=NULL;
+RooWorkspace *wspace_t2f=NULL;
+RooWorkspace *wspace_d=NULL;
 
 
-fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename_t1p1f, const char* inputfilename_t2f, const char* inputfilename_d, TString diffvariable, TString splitting, int bin){
+fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename_t1p1f, const char* inputfilename_t2f, const char* inputfilename_d, TString diffvariable, TString splitting, int bin, const TString do_syst_string=TString("")){
 
 
   for (int k=0; k<2; k++) std::cout << std::endl;
   std::cout << "Process " << diffvariable.Data() << " bin " << bin << std::endl;
   for (int k=0; k<2; k++) std::cout << std::endl;
-
 
   fit_output *out = new fit_output();
   out->fr_pass1=NULL;
@@ -146,11 +154,10 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
   out->ff=0;
   out->ff_err=0;
 
-  TFile *inputfile_t2p  = TFile::Open(inputfilename_t2p);
-  TFile *inputfile_t1p1f = TFile::Open(inputfilename_t1p1f);
-  TFile *inputfile_t2f   = TFile::Open(inputfilename_t2f);
-
-  TFile *inputfile_d = TFile::Open(inputfilename_d);
+  if ((!inputfile_t2p)   ||  (TString(inputfile_t2p->GetName())   != TString(inputfilename_t2p)  )) inputfile_t2p = TFile::Open(inputfilename_t2p);    
+  if ((!inputfile_t1p1f) ||  (TString(inputfile_t1p1f->GetName()) != TString(inputfilename_t1p1f))) inputfile_t1p1f = TFile::Open(inputfilename_t1p1f);
+  if ((!inputfile_t2f)   ||  (TString(inputfile_t2f->GetName())   != TString(inputfilename_t2f)  )) inputfile_t2f = TFile::Open(inputfilename_t2f);    
+  if ((!inputfile_d)     ||  (TString(inputfile_d->GetName())     != TString(inputfilename_d)    )) inputfile_d = TFile::Open(inputfilename_d);        
 
   if (splitting=="EEEB") splitting="EBEE";
 
@@ -162,21 +169,17 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
     else if (splitting=="EBEE") {s1="EB"; s2="EE";}
     bool sym  = (s1==s2);
     
-    RooWorkspace *wspace_t2p=NULL;
-    RooWorkspace *wspace_t1p1f=NULL;
-    RooWorkspace *wspace_t2f=NULL;
-    RooWorkspace *wspace_d=NULL;
 
-    inputfile_t2p->GetObject("data_Tree_doublerandomcone_sel/rooworkspace",wspace_t2p);
-    inputfile_t1p1f->GetObject("data_Tree_randomconesideband_sel/rooworkspace",wspace_t1p1f);
-    inputfile_t2f->GetObject("data_Tree_doublesieiesideband_sel/rooworkspace",wspace_t2f);
-    inputfile_d->GetObject("data_Tree_standard_sel/rooworkspace",wspace_d);
+    if(!wspace_t2p)   inputfile_t2p->GetObject("data_Tree_doublerandomcone_sel/rooworkspace",wspace_t2p);
+    if(!wspace_t1p1f) inputfile_t1p1f->GetObject("data_Tree_randomconesideband_sel/rooworkspace",wspace_t1p1f);
+    if(!wspace_t2f)   inputfile_t2f->GetObject("data_Tree_doublesieiesideband_sel/rooworkspace",wspace_t2f);
+    if(!wspace_d)     inputfile_d->GetObject("data_Tree_standard_sel/rooworkspace",wspace_d);
 
-    assert(wspace_t2p); //wspace_ts->Print();
-    assert(wspace_t1p1f); //wspace_ts->Print();
-    assert(wspace_t2f); //wspace_ts->Print();
-
-    assert(wspace_d); //wspace_d->Print();  
+    
+    assert(wspace_t2p);
+    assert(wspace_t1p1f);
+    assert(wspace_t2f);
+    assert(wspace_d);
 
 
     //RooBinning *testbinning = new RooBinning(10,testboundaries);
@@ -242,13 +245,16 @@ for (int i=1; i<n_templatebins+1; i++) binning_roovar2_threshold->addThreshold(t
     RooRealVar *j1 = new RooRealVar("j1","j1",pp_init+pf_init,0,1);
     RooRealVar *j2 = new RooRealVar("j2","j2",pp_init+fp_init,0,1);
     
-
-
-    RooDataSet *dataset_sigsig = (RooDataSet*)(wspace_t2p->data(Form("template_roodset_%s_sigsig",splitting.Data())));    
-    RooDataSet *dataset_sigbkg = (RooDataSet*)(wspace_t1p1f->data(Form("template_roodset_%s_sigbkg",splitting.Data())));    
-    RooDataSet *dataset_bkgsig = (RooDataSet*)(wspace_t1p1f->data(Form("template_roodset_%s_bkgsig",splitting.Data())));
-    RooDataSet *dataset_bkgbkg = (RooDataSet*)(wspace_t2f->data(Form("template_roodset_%s_bkgbkg",splitting.Data())));    
-    RooDataSet *dataset = (RooDataSet*)(wspace_d->data(Form("obs_roodset_%s_%s_b%d",splitting.Data(),diffvariable.Data(),bin)));    
+    RooDataSet *dataset_sigsig = (RooDataSet*)((RooDataSet*)(wspace_t2p->data(Form("template_roodset_%s_sigsig",splitting.Data())))->Clone("dataset_sigsig"));
+    RooDataSet *dataset_sigbkg = (RooDataSet*)((RooDataSet*)(wspace_t1p1f->data(Form("template_roodset_%s_sigbkg",splitting.Data())))->Clone("dataset_sigbkg"));
+    RooDataSet *dataset_bkgsig = (RooDataSet*)((RooDataSet*)(wspace_t1p1f->data(Form("template_roodset_%s_bkgsig",splitting.Data())))->Clone("dataset_bkgsig"));
+    RooDataSet *dataset_bkgbkg = (RooDataSet*)((RooDataSet*)(wspace_t2f->data(Form("template_roodset_%s_bkgbkg",splitting.Data())))->Clone("dataset_bkgbkg"));
+    RooDataSet *dataset = (RooDataSet*)((RooDataSet*)(wspace_d->data(Form("obs_roodset_%s_%s_b%d",splitting.Data(),diffvariable.Data(),bin)))->Clone("dataset"));
+    assert(dataset_sigsig);
+    assert(dataset_sigbkg);
+    assert(dataset_bkgsig);
+    assert(dataset_bkgbkg);
+    assert(dataset);
 
     std::cout << "2D datasets" << std::endl;
     dataset_sigsig->Print();
@@ -312,11 +318,8 @@ for (int i=1; i<n_templatebins+1; i++) binning_roovar2_threshold->addThreshold(t
 
     */
 
-    assert(dataset_sigsig);
-    assert(dataset_sigbkg);
-    assert(dataset_bkgsig);
-    assert(dataset_bkgbkg);
-    assert(dataset);
+
+
 
 
 //    { // sigma reweighting
@@ -330,10 +333,10 @@ for (int i=1; i<n_templatebins+1; i++) binning_roovar2_threshold->addThreshold(t
 //      reweight_sigma(&dataset_bkg_axis2,dataset_axis2);
 //    }
     { // rhosigma reweighting
-      reweight_rhosigma(&dataset_sigsig,dataset);
-      reweight_rhosigma(&dataset_sigbkg,dataset);
-      reweight_rhosigma(&dataset_bkgsig,dataset);
-      reweight_rhosigma(&dataset_bkgbkg,dataset);
+      reweight_rhosigma(&dataset_sigsig,dataset,kTRUE);
+      reweight_rhosigma(&dataset_sigbkg,dataset,kTRUE);
+      reweight_rhosigma(&dataset_bkgsig,dataset,kTRUE);
+      reweight_rhosigma(&dataset_bkgbkg,dataset,kTRUE);
       reweight_rhosigma(&dataset_sig_axis1,dataset_axis1);
       reweight_rhosigma(&dataset_bkg_axis1,dataset_axis1);
       reweight_rhosigma(&dataset_sig_axis2,dataset_axis2);
@@ -400,7 +403,7 @@ for (int i=1; i<n_templatebins+1; i++) binning_roovar2_threshold->addThreshold(t
     }
     */
 
-
+    print_mem();
 
     //    sigpdf_axis1->createHistogram("histo_sig",*roovar1)->SaveAs("plots/histo_sig.root");
     //    bkgpdf_axis1->createHistogram("histo_bkg",*roovar1)->SaveAs("plots/histo_bkg.root");
@@ -439,12 +442,11 @@ for (int i=1; i<n_templatebins+1; i++) binning_roovar2_threshold->addThreshold(t
     produce_category_binning(&dataset_bkg_axis1);
     produce_category_binning(&dataset_sig_axis2);
     produce_category_binning(&dataset_bkg_axis2);
-    produce_category_binning(&dataset);
+    produce_category_binning(&dataset,kTRUE);
     produce_category_binning(&dataset_axis1);
     produce_category_binning(&dataset_axis2);
 
-    bool do_syst_templatestatistics=false;
-    if (do_syst_templatestatistics){
+    if (do_syst_string==TString("templatestatistics")){
       randomize_dataset_statistically_binned(&dataset_sigsig);
       randomize_dataset_statistically_binned(&dataset_sigbkg);
       randomize_dataset_statistically_binned(&dataset_bkgsig);
@@ -455,7 +457,7 @@ for (int i=1; i<n_templatebins+1; i++) binning_roovar2_threshold->addThreshold(t
       randomize_dataset_statistically_binned(&dataset_bkg_axis2);
     }
 
-    
+    print_mem();
 
     RooDataHist *sigsigdhist = new RooDataHist("sigsigdhist","sigsigdhist",RooArgList(*binning_roovar1,*binning_roovar2),*dataset_sigsig);
     RooDataHist *sigbkgdhist = new RooDataHist("sigbkgdhist","sigbkgdhist",RooArgList(*binning_roovar1,*binning_roovar2),*dataset_sigbkg);
@@ -491,8 +493,8 @@ for (int i=1; i<n_templatebins+1; i++) binning_roovar2_threshold->addThreshold(t
     RooHistPdf *sigpdf_axis2_unbinned = new RooHistPdf("sigpdf_axis2_unbinned","sigpdf_axis2_unbinned",RooArgList(*roovar2),*sigdhist_axis2_unbinned);
     RooHistPdf *bkgpdf_axis2_unbinned = new RooHistPdf("bkgpdf_axis2_unbinned","bkgpdf_axis2_unbinned",RooArgList(*roovar2),*bkgdhist_axis2_unbinned);
 
-    bool do_syst_purefitbias=false;
-    if (do_syst_purefitbias) {
+
+    if (do_syst_string==TString("purefitbias")) {
       generate_toy_dataset_1d(&dataset_axis1,sigpdf_axis1,bkgpdf_axis1,0.5);
       generate_toy_dataset_1d(&dataset_axis2,sigpdf_axis2,bkgpdf_axis2,0.5);
       generate_toy_dataset_2d(&dataset,sigsigpdf,sigbkgpdf,bkgsigpdf,bkgbkgpdf,0.5,0.2,0.3);
@@ -985,6 +987,7 @@ for (int i=1; i<n_templatebins+1; i++) binning_roovar2_threshold->addThreshold(t
 
 
 
+    print_mem();
     delete minuit_secondpass;
     delete minuit_secondpass_constraint;
     delete model_2D_uncorrelated_noextended_nll_constraint;
@@ -1056,14 +1059,18 @@ for (int i=1; i<n_templatebins+1; i++) binning_roovar2_threshold->addThreshold(t
     delete binning_roovar1;
     delete binning_roovar2_threshold;
     delete binning_roovar1_threshold;
+    delete dataset;
+    delete dataset_bkgbkg;
+    delete dataset_bkgsig;
+    delete dataset_sigbkg;
+    delete dataset_sigsig;
+    delete firstpass;
+    delete secondpass_constraint;
+    delete secondpass;
 
-
-
-    inputfile_t2p->Close();
-    inputfile_t1p1f->Close();
-    inputfile_t2f->Close();
-    inputfile_d->Close();
     myfile.close();
+
+    print_mem();
 
     return out;
 
@@ -1437,7 +1444,7 @@ void reweight_pteta(RooDataSet **dset, RooDataSet *dsetdestination, int numvar){
 };
 */
 
-void reweight_rhosigma(RooDataSet **dset, RooDataSet *dsetdestination){
+void reweight_rhosigma(RooDataSet **dset, RooDataSet *dsetdestination, bool deleteold){
 
   TH2F *hnum = new TH2F("hnum","hnum",30,0,30,20,0,10);
   TH2F *hden = new TH2F("hden","hden",30,0,30,20,0,10);
@@ -1480,7 +1487,7 @@ void reweight_rhosigma(RooDataSet **dset, RooDataSet *dsetdestination){
   *dset=newdset;
   std::cout << "RhoSigma2D rew: norm from " << old_dset->sumEntries() << " to " << newdset->sumEntries() << std::endl;
 
-  delete old_dset;
+  if (deleteold) delete old_dset;
 
 };
 
@@ -1944,7 +1951,7 @@ void plot_datasets_axis1(RooDataSet *dset1, RooDataSet *dset2, RooDataSet *dset3
 
 };
 
-void produce_category_binning(RooDataSet **dset){
+void produce_category_binning(RooDataSet **dset, bool deleteold){
 
   assert ((*dset)->numEntries()>0);
   RooArgSet newargs;
@@ -1992,7 +1999,7 @@ void produce_category_binning(RooDataSet **dset){
 
     std::cout << "Dataset rebinned from "; old_dset->Print();  std::cout << " to "; newdset->Print();
 
-    delete old_dset;
+    if (deleteold) delete old_dset;
 
 };
 
@@ -2011,8 +2018,6 @@ void randomize_dataset_statistically_binned(RooDataSet **dset){
   else if (initialvars.find("binning_roovar1")) code=1;
   else code=2;
   assert (code>0);
-
-  std::cout << code << std::endl;
 
   TH1F *hnum1d = new TH1F("hnum1d","hnum1d",n_templatebins,0.5,0.5+n_templatebins);
   TH1F *hden1d = NULL;
@@ -2215,3 +2220,10 @@ void generate_toy_dataset_2d(RooDataSet **target, RooHistPdf *sigsigpdf, RooHist
 
 };
 
+void print_mem(){
+
+  gSystem->GetProcInfo(&procinfo); 
+  std::cout << "Resident mem (kB): " << procinfo.fMemResident << std::endl; 
+  std::cout << "Virtual mem (kB):  " << procinfo.fMemVirtual << std::endl; 
+  gSystem->Sleep(1e3);
+};
