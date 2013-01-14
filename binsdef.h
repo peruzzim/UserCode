@@ -88,12 +88,18 @@ int n_eta1eta2_cats = n_eta_cats*n_eta_cats;
 float *etabins = binsdef_single_gamma_EB_eta+0;
 
 // FOR PHOTON COMPONENT
-float eff_areas_EB[n_bins] = {2.004668e-01,2.000222e-01,2.083325e-01,2.129163e-01,2.082317e-01,1.982015e-01,1.383834e-01};
-float eff_areas_EE[n_bins] = {3.727486e-02,5.494237e-02,7.876623e-02,1.006998e-01,8.432818e-02};
+// 020616 from data, no cleaning
+float eff_areas_EB[n_bins] = {2.601118e-01,2.584915e-01,2.640072e-01,2.656851e-01,2.564615e-01,2.396511e-01,1.645776e-01};
+float eff_areas_EE[n_bins] = {5.783452e-02,8.321881e-02,1.177009e-01,1.422445e-01,1.139434e-01};
 
-const int n_ptbins_forreweighting = 2;
+// 020615rho with cleaning numbers
+//float eff_areas_EB[n_bins] = {2.004668e-01,2.000222e-01,2.083325e-01,2.129163e-01,2.082317e-01,1.982015e-01,1.383834e-01};
+//float eff_areas_EE[n_bins] = {3.727486e-02,5.494237e-02,7.876623e-02,1.006998e-01,8.432818e-02};
+
+const int n_ptbins_forreweighting = 1;
 //Float_t ptbins_forreweighting[n_ptbins_forreweighting+1]={0,40,60,300};
 //Float_t ptbins_forreweighting[n_ptbins_forreweighting+1]={0,20,40,60,80,100,120,140,160,180,200,300};
-Float_t ptbins_forreweighting[n_ptbins_forreweighting+1]={0,30,300};
+Float_t ptbins_forreweighting[n_ptbins_forreweighting+1]={0,300};
+//Float_t ptbins_forreweighting[n_ptbins_forreweighting+1]={0,30,300};
 
 #endif
