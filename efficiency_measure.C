@@ -7,7 +7,7 @@
 
 void efficiency_measure::Loop(){
   TFile *outf = new TFile(outname.Data(),"recreate");
-  diffvariables_list.push_back(TString("dosingle"));
+  //  diffvariables_list.push_back(TString("dosingle"));
   for (std::vector<TString>::const_iterator diffvariable = diffvariables_list.begin(); diffvariable!=diffvariables_list.end(); diffvariable++){
     LoopOne(*diffvariable,outf);
   }
@@ -256,16 +256,16 @@ void efficiency_measure::LoopOne(TString diffvariable, TFile *outf)
 
     }
      
-
+    assert (pholead_outvar>-100 && photrail_outvar>-100);
 
       bool pass1=true;
       if (!(pholead_PhoMCmatchexitcode==1 || pholead_PhoMCmatchexitcode==2)) pass1=false;
       if (!(photrail_PhoMCmatchexitcode==1 || photrail_PhoMCmatchexitcode==2)) pass1=false;
-      if (pholead_GenPhotonIsoDR04>10 || photrail_GenPhotonIsoDR04>10) pass1=false;
-      if (pholead_outvar<leftrange)   pass1=false;
-      if (pholead_outvar>=rightrange) pass1=false;
-      if (photrail_outvar<leftrange)  pass1=false;
-      if (photrail_outvar>=rightrange)pass1=false;
+      if (pholead_GenPhotonIsoDR04>5 || photrail_GenPhotonIsoDR04>5) pass1=false;
+//      if (pholead_outvar<leftrange)   pass1=false;
+//      if (pholead_outvar>=rightrange) pass1=false;
+//      if (photrail_outvar<leftrange)  pass1=false;
+//      if (photrail_outvar>=rightrange)pass1=false;
 
 
       if (!dosingle){
@@ -362,7 +362,7 @@ void divide_eff_histosOne(TString numerator, TString denominator, TString diffva
 
 void divide_eff_histos(TString numerator, TString denominator){
   TFile *outf = new TFile("efficiencies.root","recreate");
-  diffvariables_list.push_back(TString("dosingle"));
+  //  diffvariables_list.push_back(TString("dosingle"));
   for (std::vector<TString>::const_iterator diffvariable = diffvariables_list.begin(); diffvariable!=diffvariables_list.end(); diffvariable++){
     divide_eff_histosOne(numerator,denominator,*diffvariable,outf);
   }  

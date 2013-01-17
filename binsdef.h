@@ -88,9 +88,9 @@ int n_eta1eta2_cats = n_eta_cats*n_eta_cats;
 float *etabins = binsdef_single_gamma_EB_eta+0;
 
 // FOR PHOTON COMPONENT
-// 020616 from data, no cleaning
-float eff_areas_EB[n_bins] = {2.601118e-01,2.584915e-01,2.640072e-01,2.656851e-01,2.564615e-01,2.396511e-01,1.645776e-01};
-float eff_areas_EE[n_bins] = {5.783452e-02,8.321881e-02,1.177009e-01,1.422445e-01,1.139434e-01};
+// 020616 from data, no cleaning, no pf charged cut in presel
+float eff_areas_EB[n_bins] = {2.616660e-01,2.588560e-01,2.640709e-01,2.638014e-01,2.568367e-01,2.395006e-01,1.652021e-01};
+float eff_areas_EE[n_bins] = {5.842267e-02,8.426653e-02,1.188972e-01,1.447404e-01,1.147304e-01};
 
 // 020615rho with cleaning numbers
 //float eff_areas_EB[n_bins] = {2.004668e-01,2.000222e-01,2.083325e-01,2.129163e-01,2.082317e-01,1.982015e-01,1.383834e-01};

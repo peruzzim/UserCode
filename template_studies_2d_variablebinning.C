@@ -74,9 +74,6 @@ typedef struct {
   float ff_err;
 } fit_output; 
 
-bool study_templates=0;
-bool study_templates_plotting=0;
-
 const int numcpu=1;
 
 ProcInfo_t procinfo;
@@ -115,8 +112,8 @@ RooThresholdCategory *binning_roovar2_threshold=NULL;
 RooRealVar *binning_roovar1=NULL;
 RooRealVar *binning_roovar2=NULL;
 
-bool doplots = true;
-bool doxcheckstemplates = false;
+bool doplots = false;
+bool doxcheckstemplates = true;
 
 
 TFile *inputfile_t2p  = NULL;
@@ -419,7 +416,7 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
   produce_category_binning(&dataset_axis2);
 
   int times_to_run = 1;
-  const int ntoys = 10;
+  const int ntoys = 3;
 
   std::vector<fit_output*> do_syst_templatestatistics_outputvector;
   std::vector<fit_output*> do_syst_purefitbias_outputvector;
@@ -809,7 +806,7 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
     out->ff=fbkgbkg->getVal();
     out->ff_err=fbkgbkg->getPropagatedError(*secondpass);
 
-    if (doplots){
+    if (doplots && false){
       TCanvas *c2_ub = new TCanvas("c2_ub","c2_ub",1200,800);
       c2_ub->Divide(2);   
        
@@ -881,12 +878,13 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
       j1nllplot->Draw();
       */
 
+      /*
       c2->cd(3);
       RooPlot *contourplot = minuit_secondpass->contour(*pp,*j1,1,0,0,0,0,0);
       contourplot->SetAxisRange(out->pp-0.05,out->pp+0.05,"X");
       contourplot->SetAxisRange(j1->getVal()-0.05,j1->getVal()+0.05,"Y");
       contourplot->Draw();
-
+      */
 
       TH2F *h2d;
       TH2F *h2f;
@@ -1188,6 +1186,9 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
       dsetx.add(fittedx);
       dsetpull.add(fittedpull);
     }
+
+    dsetx.Print();
+    dsetpull.Print();
     
 //    gaus.fitTo(dsetx);
 //    gauspull.fitTo(dsetpull);

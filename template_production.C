@@ -57,6 +57,11 @@ void template_production::Loop(int maxevents)
     if (do2dtemplate) if (pholead_pt<40 || photrail_pt<25) continue;
     float cutpt = (mode=="muon") ? 10 : 25;
     if (dosignaltemplate || dobackgroundtemplate) if (pholead_pt<cutpt) continue;
+    if (mode=="zeetemplate") {
+      if (fabs(dipho_mgg_photon-91.2)>10) continue;
+    }
+    //    if (mode=="background") if (pholead_PhoMCmatchexitcode!=3) continue;
+    //    if (mode=="background") if (pholead_PhoMCmatchexitcode!=1 && pholead_PhoMCmatchexitcode!=2) continue;
 
     if (isdata && event_CSCTightHaloID>0) continue;
     //if (mode!="muon" && event_NMuons>0) continue;
@@ -230,13 +235,12 @@ void template_production::Loop(int maxevents)
     Int_t bin_lead = Choose_bin_eta(pholead_SCeta,reg_lead);
     Int_t bin_trail = dodistribution ? Choose_bin_eta(photrail_SCeta,reg_trail) : -999;
 
+    //    std::cout << pholead_outvar << " " << photrail_outvar << std::endl;
     
     pholead_outvar-=getpuenergy(reg_lead,pholead_SCeta);
     if (dodistribution) photrail_outvar-=getpuenergy(reg_trail,photrail_SCeta);
     if (do2ptemplate || do1p1ftemplate || do2ftemplate) photrail_outvar-=getpuenergy(reg_trail,photrail_SCeta);
     
-
-
 
 //    float scale_lead = 1;
 //    float scale_trail = 1;
@@ -246,18 +250,30 @@ void template_production::Loop(int maxevents)
 //    pholead_outvar/=scale_lead;
 //    photrail_outvar/=scale_trail;
 
+    if (recalc_lead){
+      if (pholead_outvar<-100) std::cout << "PROBLEM WITH ISOLATION CALCULATION!!!" << std::endl;
+      assert (pholead_outvar>=-100);
+      if (pholead_outvar<leftrange) {pholead_outvar=leftrange; std::cout << "Warning: fixing underflow " << pholead_outvar << std::endl;}
+      if (pholead_outvar>=rightrange) pholead_outvar=rightrange-1e-5; // overflow in last bin 
+    }
+    if (recalc_trail){
+      if (photrail_outvar<-100) std::cout << "PROBLEM WITH ISOLATION CALCULATION!!!" << std::endl;
+      assert (photrail_outvar>=-100);
+      if (photrail_outvar<leftrange) {photrail_outvar=leftrange; std::cout << "Warning: fixing underflow " << photrail_outvar << std::endl;}
+      if (photrail_outvar>=rightrange) photrail_outvar=rightrange-1e-5; // overflow in last bin 
+    }
 
+//    if (pholead_outvar<-10 || photrail_outvar<-10) std::cout << "PROBLEM WITH ISOLATION CALCULATION!!!" << std::endl;
 //    if (pholead_outvar<leftrange) pholead_outvar=leftrange;
 //    if (photrail_outvar<leftrange) photrail_outvar=leftrange;
 //    if (pholead_outvar>=rightrange) pholead_outvar=rightrange-1e-5; // overflow in last bin
 //    if (photrail_outvar>=rightrange) photrail_outvar=rightrange-1e-5; // overflow in last bin
-
-    if (pholead_outvar<leftrange)   continue;
-    if (pholead_outvar>=rightrange) continue;
-    if (dodistribution||do2dtemplate){
-      if (photrail_outvar<leftrange)  continue;
-      if (photrail_outvar>=rightrange)continue;
-    }
+//    if (pholead_outvar<leftrange)   continue;
+//    if (pholead_outvar>=rightrange) continue;
+//    if (dodistribution||do2dtemplate){
+//      if (photrail_outvar<leftrange)  continue;
+//      if (photrail_outvar>=rightrange)continue;
+//    }
 
 
 //    if (purew_initialized) event_weight=FindNewPUWeight(event_nPU);
@@ -287,11 +303,13 @@ void template_production::Loop(int maxevents)
 	roovar2->setVal(pholead_outvar);
 	roopt1->setVal(pholead_pt);
 	roopt2->setVal(pholead_pt);
+	roosieie1->setVal(pholead_sieie);
+	roosieie2->setVal(pholead_sieie);
 	rooeta1->setVal(fabs(pholead_SCeta));
 	rooeta2->setVal(fabs(pholead_SCeta));
 	rooweight->setVal(weight*ptweight_lead);
-	roodset_signal[reg_lead][bin_lead][0]->add(RooArgList(*roovar1,*roopt1,*rooeta1,*roorho,*roosigma),weight*ptweight_lead);
-	roodset_signal[reg_lead][bin_lead][1]->add(RooArgList(*roovar2,*roopt2,*rooeta2,*roorho,*roosigma),weight*ptweight_lead);
+	roodset_signal[reg_lead][bin_lead][0]->add(RooArgList(*roovar1,*roopt1,*roosieie1,*rooeta1,*roorho,*roosigma),weight*ptweight_lead);
+	roodset_signal[reg_lead][bin_lead][1]->add(RooArgList(*roovar2,*roopt2,*roosieie2,*rooeta2,*roorho,*roosigma),weight*ptweight_lead);
 	histo_pt[reg_lead]->Fill(pholead_pt,weight*ptweight_lead);
 	histo_eta->Fill(fabs(pholead_SCeta),weight*ptweight_lead);
 	histo_pt_eta->Fill(pholead_pt,fabs(pholead_SCeta),weight*ptweight_lead);
@@ -307,11 +325,13 @@ void template_production::Loop(int maxevents)
 	    roovar2->setVal(pholead_outvar);
 	    roopt1->setVal(pholead_pt);
 	    roopt2->setVal(pholead_pt);
+	    roosieie1->setVal(pholead_sieie);
+	    roosieie2->setVal(pholead_sieie);
 	    rooeta1->setVal(fabs(pholead_SCeta));
 	    rooeta2->setVal(fabs(pholead_SCeta));
 	    rooweight->setVal(weight*ptweight_lead);
-	    roodset_background[reg_lead][bin_lead][0]->add(RooArgList(*roovar1,*roopt1,*rooeta1,*roorho,*roosigma),weight*ptweight_lead);
-	    roodset_background[reg_lead][bin_lead][1]->add(RooArgList(*roovar2,*roopt2,*rooeta2,*roorho,*roosigma),weight*ptweight_lead);
+	    roodset_background[reg_lead][bin_lead][0]->add(RooArgList(*roovar1,*roopt1,*roosieie1,*rooeta1,*roorho,*roosigma),weight*ptweight_lead);
+	    roodset_background[reg_lead][bin_lead][1]->add(RooArgList(*roovar2,*roopt2,*roosieie2,*rooeta2,*roorho,*roosigma),weight*ptweight_lead);
 	  }
 	  if (fabs(pholead_SCeta)>1.56 && pholead_sieie>0.030 && pholead_sieie<0.031){
 	    template_background[reg_lead][bin_lead]->Fill(pholead_outvar,weight*ptweight_lead);
@@ -319,11 +339,13 @@ void template_production::Loop(int maxevents)
 	    roovar2->setVal(pholead_outvar);
 	    roopt1->setVal(pholead_pt);
 	    roopt2->setVal(pholead_pt);
+	    roosieie1->setVal(pholead_sieie);
+	    roosieie2->setVal(pholead_sieie);
 	    rooeta1->setVal(fabs(pholead_SCeta));
 	    rooeta2->setVal(fabs(pholead_SCeta));
 	    rooweight->setVal(weight*ptweight_lead);
-	    roodset_background[reg_lead][bin_lead][0]->add(RooArgList(*roovar1,*roopt1,*rooeta1,*roorho,*roosigma),weight*ptweight_lead);
-	    roodset_background[reg_lead][bin_lead][1]->add(RooArgList(*roovar2,*roopt2,*rooeta2,*roorho,*roosigma),weight*ptweight_lead);
+	    roodset_background[reg_lead][bin_lead][0]->add(RooArgList(*roovar1,*roopt1,*roosieie1,*rooeta1,*roorho,*roosigma),weight*ptweight_lead);
+	    roodset_background[reg_lead][bin_lead][1]->add(RooArgList(*roovar2,*roopt2,*roosieie2,*rooeta2,*roorho,*roosigma),weight*ptweight_lead);
 	  }
 	  if ((fabs(pholead_SCeta)<1.4442 && pholead_sieie>0.011 && pholead_sieie<0.014) || (fabs(pholead_SCeta)>1.56 && pholead_sieie>0.030 && pholead_sieie<0.031)){
 	    histo_pt[reg_lead]->Fill(pholead_pt,weight*ptweight_lead);
@@ -338,11 +360,13 @@ void template_production::Loop(int maxevents)
 	  roovar2->setVal(pholead_outvar); 
 	  roopt1->setVal(pholead_pt);
 	  roopt2->setVal(pholead_pt);
+	  roosieie1->setVal(pholead_sieie);
+	  roosieie2->setVal(pholead_sieie);
 	  rooeta1->setVal(fabs(pholead_SCeta));
 	  rooeta2->setVal(fabs(pholead_SCeta));
 	  rooweight->setVal(weight*ptweight_lead);
-	  roodset_background[reg_lead][bin_lead][0]->add(RooArgList(*roovar1,*roopt1,*rooeta1,*roorho,*roosigma),weight*ptweight_lead);
-	  roodset_background[reg_lead][bin_lead][1]->add(RooArgList(*roovar2,*roopt2,*rooeta2,*roorho,*roosigma),weight*ptweight_lead);
+	  roodset_background[reg_lead][bin_lead][0]->add(RooArgList(*roovar1,*roopt1,*roosieie1,*rooeta1,*roorho,*roosigma),weight*ptweight_lead);
+	  roodset_background[reg_lead][bin_lead][1]->add(RooArgList(*roovar2,*roopt2,*roosieie2,*rooeta2,*roorho,*roosigma),weight*ptweight_lead);
 	  histo_pt[reg_lead]->Fill(pholead_pt,weight*ptweight_lead);
 	  histo_eta->Fill(fabs(pholead_SCeta),weight*ptweight_lead);
 	  histo_pt_eta->Fill(pholead_pt,fabs(pholead_SCeta),weight*ptweight_lead);
@@ -359,6 +383,8 @@ void template_production::Loop(int maxevents)
 	float in2=photrail_outvar;
 	float ptin1=pholead_pt;
 	float ptin2=photrail_pt;
+	float sieiein1=pholead_sieie;
+	float sieiein2=photrail_sieie;	
 	float etain1=fabs(pholead_SCeta);
 	float etain2=fabs(photrail_SCeta);
 
@@ -371,6 +397,7 @@ void template_production::Loop(int maxevents)
 	  float temp;
 	  temp=in1; in1=in2; in2=temp;
 	  temp=ptin1; ptin1=ptin2; ptin2=temp;
+	  temp=sieiein1; sieiein1=sieiein2; sieiein2=temp;
 	  temp=etain1; etain1=etain2; etain2=temp;
 	  event_pass12whoisrcone=!event_pass12whoisrcone;
 	}
@@ -386,10 +413,14 @@ void template_production::Loop(int maxevents)
 	roovar2->setVal(in2);
 	roopt1->setVal(ptin1);
 	roopt2->setVal(ptin2);
+	roosieie1->setVal(sieiein1);
+	roosieie2->setVal(sieiein2);
 	rooeta1->setVal(etain1);
 	rooeta2->setVal(etain2);
 	rooweight->setVal(weight);
-	template2d_roodset[get_name_template2d_roodset(event_ok_for_dataset,sigorbkg)]->add(RooArgSet(*roovar1,*roovar2,*roopt1,*roopt2,*rooeta1,*rooeta2,*roorho,*roosigma),weight);
+	RooArgSet args(*roovar1,*roovar2,*roopt1,*roopt2,*roosieie1,*roosieie2,*rooeta1,*rooeta2);
+	args.add(RooArgSet(*roorho,*roosigma));
+	template2d_roodset[get_name_template2d_roodset(event_ok_for_dataset,sigorbkg)]->add(args,weight);
 
     }
 
@@ -404,12 +435,18 @@ void template_production::Loop(int maxevents)
 
 	Int_t bin_couple = -999;
 	
-	if (*diffvariable==TString("invmass")) bin_couple = Choose_bin_invmass(dipho_mgg_photon,event_ok_for_dataset);
+	float value_diffvariable;
+
+	if (*diffvariable==TString("invmass")) {
+	  bin_couple = Choose_bin_invmass(dipho_mgg_photon,event_ok_for_dataset);
+	  value_diffvariable=dipho_mgg_photon;
+	}
 	if (*diffvariable==TString("diphotonpt")){
 	  float px = pholead_px+photrail_px;
 	  float py = pholead_py+photrail_py;
 	  float pt = sqrt(px*px+py*py);
 	  bin_couple = Choose_bin_diphotonpt(pt,event_ok_for_dataset);
+	  value_diffvariable=pt;
 	}
 	if (*diffvariable==TString("costhetastar")){
 	  TLorentzVector pho1(pholead_px,pholead_py,pholead_pz,pholead_energy);
@@ -420,12 +457,14 @@ void template_production::Loop(int maxevents)
 	  float thetastar1 = boostedpho1.Angle(boost);
 	  if (thetastar1>TMath::Pi()/2) thetastar1 = TMath::Pi()-thetastar1;
 	  bin_couple = Choose_bin_costhetastar(TMath::Cos(thetastar1),event_ok_for_dataset);
+	  value_diffvariable=TMath::Cos(thetastar1);
 	}
 	if (*diffvariable==TString("dphi")){
 	  float phi1 = pholead_SCphi;
 	  float phi2 = photrail_SCphi;
 	  float dphi = AbsDeltaPhi(phi1,phi2);
 	  bin_couple = Choose_bin_dphi(dphi,event_ok_for_dataset);
+	  value_diffvariable=dphi;
 	}
       
 	
@@ -433,6 +472,8 @@ void template_production::Loop(int maxevents)
 	float in2=photrail_outvar;
 	float ptin1=pholead_pt;
 	float ptin2=photrail_pt;
+	float sieiein1=pholead_sieie;
+	float sieiein2=photrail_sieie;
 	float etain1=fabs(pholead_SCeta);
 	float etain2=fabs(photrail_SCeta);
 
@@ -448,18 +489,24 @@ void template_production::Loop(int maxevents)
 	  float temp;
 	  temp=in1; in1=in2; in2=temp;
 	  temp=ptin1; ptin1=ptin2; ptin2=temp;
+	  temp=sieiein1; sieiein1=sieiein2; sieiein2=temp;
 	  temp=etain1; etain1=etain2; etain2=temp;
 	}
       
+	obs_hist_distribution[get_name_obs_distribution(event_ok_for_dataset,*diffvariable)]->Fill(value_diffvariable,weight);
 	obs_hist[get_name_obs(event_ok_for_dataset,*diffvariable,bin_couple)]->Fill(in1,in2,weight);
 	roovar1->setVal(in1);
 	roovar2->setVal(in2);
 	roopt1->setVal(ptin1);
 	roopt2->setVal(ptin2);
+	roosieie1->setVal(sieiein1);
+	roosieie2->setVal(sieiein2);
 	rooeta1->setVal(etain1);
 	rooeta2->setVal(etain2);
 	rooweight->setVal(weight);
-	obs_roodset[get_name_obs_roodset(event_ok_for_dataset,*diffvariable,bin_couple)]->add(RooArgSet(*roovar1,*roovar2,*roopt1,*roopt2,*rooeta1,*rooeta2,*roorho,*roosigma),weight);
+	RooArgSet args(*roovar1,*roovar2,*roopt1,*roopt2,*roosieie1,*roosieie2,*rooeta1,*rooeta2);
+	args.add(RooArgSet(*roorho,*roosigma));
+	obs_roodset[get_name_obs_roodset(event_ok_for_dataset,*diffvariable,bin_couple)]->add(args,weight);
 		 
       }
       
@@ -514,6 +561,7 @@ void gen_templates(TString filename="input.root", TString mode="", bool isdata=1
   if (mode=="sigbkg") treename_chosen=treename[12];
   if (mode=="bkgbkg") treename_chosen=treename[13];
   if (mode=="doublerandomcone") treename_chosen=treename[5];
+  if (mode=="zeetemplate") treename_chosen=treename[3];
 
   file->GetObject(treename_chosen.Data(),t);
 
@@ -648,8 +696,8 @@ std::vector<std::vector<TProfile*> > template_production::GetPUScaling(bool doEB
 
 	float et=pholead_photonpfcandets[i];
 	float e=pholead_photonpfcandenergies[i];
-	float deta=pholead_photonpfcanddetas[i];
-	float dphi=pholead_photonpfcanddphis[i];
+//	float deta=pholead_photonpfcanddetas[i];
+//	float dphi=pholead_photonpfcanddphis[i];
 	//	float dR=sqrt(deta*deta+dphi*dphi);
 	float eta=fabs(TMath::ACosH(e/et));
 
@@ -673,11 +721,10 @@ std::vector<std::vector<TProfile*> > template_production::GetPUScaling(bool doEB
 
 
     if (diffvar=="photoniso"){
-      //      pholead_outvar=pholead_pho_Cone04PhotonIso_dEta015EB_dR070EE_mvVtx;
       pholead_outvar=pholead_phoiso;
+      assert (pholead_outvar>-100);
     }
     else if (diffvar=="combiso"){
-      //      pholead_outvar=pholead_pho_Cone04PFCombinedIso;
       pholead_outvar=pholead_phoiso+pholead_pho_Cone04ChargedHadronIso_dR02_dz02_dxy01+pholead_pho_Cone04NeutralHadronIso_mvVtx;
     }
     else if (diffvar=="chargediso"){
@@ -686,12 +733,6 @@ std::vector<std::vector<TProfile*> > template_production::GetPUScaling(bool doEB
     else if (diffvar=="neutraliso"){
       pholead_outvar=pholead_pho_Cone04NeutralHadronIso_mvVtx;
     }
-
-
-    if (pholead_outvar==-999) continue;
-
-    //    if (pholead_PhoMCmatchexitcode!=1 && pholead_PhoMCmatchexitcode!=2) continue;
-    //    if (dipho_mgg_photon>95 || dipho_mgg_photon<85) continue;
 
     if (pholead_pt<25) continue;
 
@@ -738,8 +779,6 @@ std::vector<std::vector<TProfile*> > template_production::GetPUScaling(bool doEB
 };
 
 float template_production::getpuenergy(int reg, float eta){
-
-  //  return 0;
 
   int bin = Choose_bin_eta(fabs(eta),reg);
   float eff_area = (reg==0) ? eff_areas_EB[bin] : eff_areas_EE[bin];
