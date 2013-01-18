@@ -1,3 +1,6 @@
+bool doplots = true;
+bool doxcheckstemplates = false;
+
 #include <assert.h>
 
 #include "binsdef.h"
@@ -112,8 +115,6 @@ RooThresholdCategory *binning_roovar2_threshold=NULL;
 RooRealVar *binning_roovar1=NULL;
 RooRealVar *binning_roovar2=NULL;
 
-bool doplots = false;
-bool doxcheckstemplates = true;
 
 
 TFile *inputfile_t2p  = NULL;
@@ -126,26 +127,14 @@ RooWorkspace *wspace_t2f=NULL;
 RooWorkspace *wspace_d=NULL;
 
 
-fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename_t1p1f, const char* inputfilename_t2f, const char* inputfilename_d, TString diffvariable, TString splitting, int bin, const TString do_syst_string=TString("")){
+fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename_t1p1f, const char* inputfilename_t2f, const char* inputfilename_d, TString diffvariable, TString splitting, int bin, const TString do_syst_string=TString(""), int bins_to_run=0, float* binsdef=NULL){
 
+  fit_output *out=NULL;
 
   for (int k=0; k<2; k++) std::cout << std::endl;
   std::cout << "Process " << diffvariable.Data() << " bin " << bin << std::endl;
   for (int k=0; k<2; k++) std::cout << std::endl;
 
-  fit_output *out = new fit_output();
-  out->fr_pass1=NULL;
-  out->fr_pass2constraint=NULL;
-  out->fr=NULL;
-  out->tot_events=0;
-  out->pp=0;
-  out->pp_err=0;
-  out->pf=0;
-  out->pf_err=0;
-  out->fp=0;
-  out->fp_err=0;
-  out->ff=0;
-  out->ff_err=0;
 
   if ((!inputfile_t2p)   ||  (TString(inputfile_t2p->GetName())   != TString(inputfilename_t2p)  )) {inputfile_t2p = TFile::Open(inputfilename_t2p);     wspace_t2p=NULL;  }
   if ((!inputfile_t1p1f) ||  (TString(inputfile_t1p1f->GetName()) != TString(inputfilename_t1p1f))) {inputfile_t1p1f = TFile::Open(inputfilename_t1p1f); wspace_t1p1f=NULL;}
@@ -162,12 +151,24 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
   else if (splitting=="EBEE") {s1="EB"; s2="EE";}
   bool sym  = (s1==s2);
   
-
-  if(!wspace_t2p)   inputfile_t2p->GetObject("data_Tree_doublerandomcone_sel/rooworkspace",wspace_t2p);
-  if(!wspace_t1p1f) inputfile_t1p1f->GetObject("data_Tree_randomconesideband_sel/rooworkspace",wspace_t1p1f);
-  if(!wspace_t2f)   inputfile_t2f->GetObject("data_Tree_doublesieiesideband_sel/rooworkspace",wspace_t2f);
-  if(!wspace_d)     inputfile_d->GetObject("data_Tree_standard_sel/rooworkspace",wspace_d);
-  
+  if (do_syst_string=="templateshapeMCtrue"){
+    if(!wspace_t2p)   inputfile_t2p->GetObject("mc_Tree_standard_sel/rooworkspace",wspace_t2p);
+    if(!wspace_t1p1f) inputfile_t1p1f->GetObject("mc_Tree_standard_sel/rooworkspace",wspace_t1p1f);
+    if(!wspace_t2f)   inputfile_t2f->GetObject("mc_Tree_standard_sel/rooworkspace",wspace_t2f);
+    if(!wspace_d)     inputfile_d->GetObject("mc_Tree_standard_sel/rooworkspace",wspace_d);
+  }
+  else if (do_syst_string=="templateshapeMCdriven"){
+    if(!wspace_t2p)   inputfile_t2p->GetObject("mc_Tree_doublerandomcone_sel/rooworkspace",wspace_t2p);
+    if(!wspace_t1p1f) inputfile_t1p1f->GetObject("mc_Tree_randomconesideband_sel/rooworkspace",wspace_t1p1f);
+    if(!wspace_t2f)   inputfile_t2f->GetObject("mc_Tree_doublesieiesideband_sel/rooworkspace",wspace_t2f);
+    if(!wspace_d)     inputfile_d->GetObject("mc_Tree_standard_sel/rooworkspace",wspace_d);
+  }
+  else {
+    if(!wspace_t2p)   inputfile_t2p->GetObject("data_Tree_doublerandomcone_sel/rooworkspace",wspace_t2p);
+    if(!wspace_t1p1f) inputfile_t1p1f->GetObject("data_Tree_randomconesideband_sel/rooworkspace",wspace_t1p1f);
+    if(!wspace_t2f)   inputfile_t2f->GetObject("data_Tree_doublesieiesideband_sel/rooworkspace",wspace_t2f);
+    if(!wspace_d)     inputfile_d->GetObject("data_Tree_standard_sel/rooworkspace",wspace_d);
+  }  
     
   assert(wspace_t2p);
   assert(wspace_t1p1f);
@@ -213,9 +214,9 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
   assert (roosigma);
   assert (rooweight);
 
-  const float pp_init = 0.5;
-  const float pf_init = 0.2;
-  const float fp_init = 0.1;
+  const float pp_init = 0.2;
+  const float pf_init = 0.23;
+  const float fp_init = 0.23;
     
     
   RooDataSet *dataset_sigsig = (RooDataSet*)((RooDataSet*)(wspace_t2p->data(Form("template_roodset_%s_sigsig",splitting.Data())))->Clone("dataset_sigsig"));
@@ -267,13 +268,13 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
 
   if (doxcheckstemplates) {
 
-  TFile *fmctrue_s = new TFile("outphoton_gjet_sig.root","read");
+  TFile *fmctrue_s = new TFile("outphoton_allmc_sig.root","read");
   fmctrue_s->GetObject("mc_Tree_signal_template/rooworkspace",wspace_compare_mctrue_s);
   assert(wspace_compare_mctrue_s);
   dset_mctrue_s = (RooDataSet*)(wspace_compare_mctrue_s->data(Form("roodset_signal_%s_b%d_rv1",s1.Data(),bin)));
   
   
-  TFile *fmcrcone_s = new TFile("outphoton_gjet_rcone.root","read");
+  TFile *fmcrcone_s = new TFile("outphoton_allmc_rcone.root","read");
   fmcrcone_s->GetObject("mc_Tree_randomcone_signal_template/rooworkspace",wspace_compare_mcrcone_s);
   assert(wspace_compare_mcrcone_s);
   dset_mcrcone_s = (RooDataSet*)(wspace_compare_mcrcone_s->data(Form("roodset_signal_%s_b%d_rv1",s1.Data(),bin)));
@@ -283,13 +284,13 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
   assert(wspace_compare_zee_s);
   dset_zee_s = (RooDataSet*)(wspace_compare_zee_s->data(Form("roodset_signal_%s_b%d_rv1",s1.Data(),bin)));
   
-  TFile *fmctrue_b = new TFile("outphoton_gjet_bkg.root","read");
+  TFile *fmctrue_b = new TFile("outphoton_allmc_bkg.root","read");
   fmctrue_b->GetObject("mc_Tree_background_template/rooworkspace",wspace_compare_mctrue_b);
   assert(wspace_compare_mctrue_b);
   dset_mctrue_b = (RooDataSet*)(wspace_compare_mctrue_b->data(Form("roodset_background_%s_b%d_rv1",s1.Data(),bin)));
   
 
-  TFile *fmcrcone_b = new TFile("outphoton_gjet_sieiesideband.root","read");
+  TFile *fmcrcone_b = new TFile("outphoton_allmc_sieiesideband.root","read");
   fmcrcone_b->GetObject("mc_Tree_sieiesideband_sel/rooworkspace",wspace_compare_mcrcone_b);
   assert(wspace_compare_mcrcone_b);
   dset_mcrcone_b = (RooDataSet*)(wspace_compare_mcrcone_b->data(Form("roodset_background_%s_b%d_rv1",s1.Data(),bin)));
@@ -416,7 +417,7 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
   produce_category_binning(&dataset_axis2);
 
   int times_to_run = 1;
-  const int ntoys = 3;
+  const int ntoys = 50;
 
   std::vector<fit_output*> do_syst_templatestatistics_outputvector;
   std::vector<fit_output*> do_syst_purefitbias_outputvector;
@@ -509,9 +510,9 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
     RooHistPdf *bkgpdf_axis2_unbinned = new RooHistPdf("bkgpdf_axis2_unbinned","bkgpdf_axis2_unbinned",RooArgList(*roovar2),*bkgdhist_axis2_unbinned);
 
     if (do_syst_string==TString("purefitbias")) {
-      generate_toy_dataset_1d(&dataset_axis1,sigpdf_axis1,bkgpdf_axis1,0.5);
-      generate_toy_dataset_1d(&dataset_axis2,sigpdf_axis2,bkgpdf_axis2,0.5);
-      generate_toy_dataset_2d(&dataset,sigsigpdf,sigbkgpdf,bkgsigpdf,bkgbkgpdf,0.5,0.2,0.3);
+      generate_toy_dataset_1d(&dataset_axis1,sigpdf_axis1,bkgpdf_axis1,0.43);
+      generate_toy_dataset_1d(&dataset_axis2,sigpdf_axis2,bkgpdf_axis2,0.43);
+      generate_toy_dataset_2d(&dataset,sigsigpdf,sigbkgpdf,bkgsigpdf,bkgbkgpdf,0.2,0.23,0.23);
     }
 
     
@@ -615,6 +616,21 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
     //  fp = j2 - pp;
     //  ff = (1-j1-j2)+pp
    
+    out = new fit_output();
+    out->fr_pass1=NULL;
+    out->fr_pass2constraint=NULL;
+    out->fr=NULL;
+    out->tot_events=0;
+    out->pp=0;
+    out->pp_err=0;
+    out->pf=0;
+    out->pf_err=0;
+    out->fp=0;
+    out->fp_err=0;
+    out->ff=0;
+    out->ff_err=0;
+
+
     RooRealVar *pp = new RooRealVar("pp","pp",pp_init,0,1);
     RooRealVar *j1 = new RooRealVar("j1","j1",pp_init+pf_init,0,1);
     RooRealVar *j2 = new RooRealVar("j2","j2",pp_init+fp_init,0,1);
@@ -715,9 +731,6 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
     }
   
   
-
-  
-  
     RooFormulaVar *fsigsig = new RooFormulaVar("fsigsig","fsigsig","pp",RooArgList(*pp));
     RooFormulaVar *fsigbkg = new RooFormulaVar("fsigbkg","fsigbkg","fsig1-pp",RooArgList(*fsig1,*pp));  
     RooFormulaVar *fbkgsig = new RooFormulaVar("fbkgsig","fbkgsig","fsig2-pp",RooArgList(*fsig2,*pp));
@@ -813,21 +826,21 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
       c2_ub->cd(1);
       RooPlot *frame1final = roovar1->frame();
       dataset->plotOn(frame1final);
-      model_2D_uncorrelated_unbinned->plotOn(frame1final);
-      sigsigpdf->plotOn(frame1final,Normalization(fsigsig->getVal(),RooAbsPdf::Relative),LineStyle(kDashed),LineColor(kRed));	  
-      sigbkgpdf->plotOn(frame1final,Normalization(fsigbkg->getVal(),RooAbsPdf::Relative),LineStyle(kDashed),LineColor(kGreen));  
-      bkgsigpdf->plotOn(frame1final,Normalization(fbkgsig->getVal(),RooAbsPdf::Relative),LineStyle(kDashed),LineColor(kGreen+2));
-      bkgbkgpdf->plotOn(frame1final,Normalization(fbkgbkg->getVal(),RooAbsPdf::Relative),LineStyle(kDashed),LineColor(kBlack));  
+      model_2D_uncorrelated_unbinned->plotOn(frame1final,Normalization(1.0,RooAbsPdf::Relative));
+      sigsigpdf_unbinned->plotOn(frame1final,Normalization(fsigsig->getVal(),RooAbsPdf::Relative),LineStyle(kDashed),LineColor(kRed));	  
+      sigbkgpdf_unbinned->plotOn(frame1final,Normalization(fsigbkg->getVal(),RooAbsPdf::Relative),LineStyle(kDashed),LineColor(kGreen));  
+      bkgsigpdf_unbinned->plotOn(frame1final,Normalization(fbkgsig->getVal(),RooAbsPdf::Relative),LineStyle(kDashed),LineColor(kGreen+2));
+      bkgbkgpdf_unbinned->plotOn(frame1final,Normalization(fbkgbkg->getVal(),RooAbsPdf::Relative),LineStyle(kDashed),LineColor(kBlack));  
       frame1final->Draw();
   
       c2_ub->cd(2);
       RooPlot *frame2final = roovar2->frame();
       dataset->plotOn(frame2final);
-      model_2D_uncorrelated_unbinned->plotOn(frame2final);
-      sigsigpdf->plotOn(frame2final,Normalization(fsigsig->getVal(),RooAbsPdf::Relative),LineStyle(kDashed),LineColor(kRed));	  
-      sigbkgpdf->plotOn(frame2final,Normalization(fsigbkg->getVal(),RooAbsPdf::Relative),LineStyle(kDashed),LineColor(kGreen));  
-      bkgsigpdf->plotOn(frame2final,Normalization(fbkgsig->getVal(),RooAbsPdf::Relative),LineStyle(kDashed),LineColor(kGreen+2));
-      bkgbkgpdf->plotOn(frame2final,Normalization(fbkgbkg->getVal(),RooAbsPdf::Relative),LineStyle(kDashed),LineColor(kBlack));  
+      //      model_2D_uncorrelated_unbinned->plotOn(frame2final);
+      sigsigpdf_unbinned->plotOn(frame2final,Normalization(fsigsig->getVal(),RooAbsPdf::Relative),LineStyle(kDashed),LineColor(kRed));	  
+      sigbkgpdf_unbinned->plotOn(frame2final,Normalization(fsigbkg->getVal(),RooAbsPdf::Relative),LineStyle(kDashed),LineColor(kGreen));  
+      bkgsigpdf_unbinned->plotOn(frame2final,Normalization(fbkgsig->getVal(),RooAbsPdf::Relative),LineStyle(kDashed),LineColor(kGreen+2));
+      bkgbkgpdf_unbinned->plotOn(frame2final,Normalization(fbkgbkg->getVal(),RooAbsPdf::Relative),LineStyle(kDashed),LineColor(kBlack));  
       frame2final->Draw();
       c2_ub->SaveAs(Form("plots/fittingplot2unbinned_%s_%s_b%d.png",splitting.Data(),diffvariable.Data(),bin));   
       c2_ub->SaveAs(Form("plots/fittingplot2unbinned_%s_%s_b%d.jpg",splitting.Data(),diffvariable.Data(),bin));   
@@ -1173,16 +1186,25 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
     RooDataSet dsetpull("dsetpull","dsetpull",fittedpull);
 
     RooRealVar meangaus("meangaus","meangaus",0,1);
-    RooRealVar sigmagaus("sigmagaus","sigmagaus",0,2);
+    RooRealVar sigmagaus("sigmagaus","sigmagaus",0,0.3);
     RooGaussian gaus("gaus","gaus",fittedx,meangaus,sigmagaus);
 
+    meangaus.setVal(0.2);
+    sigmagaus.setVal(0.03);
+
     RooRealVar meangauspull("meangauspull","meangauspull",-5,5);
-    RooRealVar sigmagauspull("sigmagauspull","sigmagauspull",0,2);
+    RooRealVar sigmagauspull("sigmagauspull","sigmagauspull",0,3);
     RooGaussian gauspull("gauspull","gauspull",fittedpull,meangauspull,sigmagauspull);
+
+    float mean=0;
+    for (int i=0; i<times_to_run; i++) mean+=do_syst_vector->at(i)->pp;
+    mean/=times_to_run;
+    std::cout << "Mean pp " << mean << std::endl;
 
     for (int i=0; i<times_to_run; i++){
       fittedx.setVal(do_syst_vector->at(i)->pp);
-      fittedpull.setVal((do_syst_vector->at(i)->pp-do_syst_vector->at(0)->pp)/do_syst_vector->at(i)->pp_err);
+      fittedpull.setVal((do_syst_vector->at(i)->pp-0.2)/do_syst_vector->at(i)->pp_err);
+      std::cout << "Toy nr. " << i << " " << fittedx.getVal() << " " << do_syst_vector->at(i)->pp_err << " " << fittedpull.getVal() << std::endl;
       dsetx.add(fittedx);
       dsetpull.add(fittedpull);
     }
@@ -1190,22 +1212,101 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
     dsetx.Print();
     dsetpull.Print();
     
-//    gaus.fitTo(dsetx);
-//    gauspull.fitTo(dsetpull);
+    RooFitResult *biasfitresult = gaus.fitTo(dsetx,Save());
+    RooFitResult *biasfitresultpull = gauspull.fitTo(dsetpull,Save());
 
+    fittedx.setRange(mean-0.05,mean+0.05);
+    RooPlot *framefittedx = fittedx.frame();
+    dsetx.plotOn(framefittedx);
+    gaus.plotOn(framefittedx);
+    gaus.paramOn(framefittedx);
+    fittedpull.setRange(-5,5);
+    RooPlot *framefittedpull = fittedpull.frame();
+    dsetpull.plotOn(framefittedpull);
+    gauspull.plotOn(framefittedpull);
+    gauspull.paramOn(framefittedpull);
+
+    TFile *file_bias = new TFile(Form("plots/bias_%s_%s_%s_b%d.root",do_syst_string.Data(),diffvariable.Data(),splitting.Data(),bin),"recreate");
+    file_bias->cd();
+    framefittedx->Write();
+    framefittedpull->Write();
+    fittedx.Write();
+    fittedpull.Write();
+    dsetx.Write();
+    dsetpull.Write();
+    file_bias->Close();
+
+    TH1F *histo_bias = new TH1F(Form("histo_bias_%s",do_syst_string.Data()),Form("histo_bias_%s",do_syst_string.Data()),n_bins,0,n_bins);
+    histo_bias->SetMarkerStyle(20);
+    if (do_syst_string==TString("templatestatistics")) {    
+      histo_bias->GetYaxis()->SetTitle("sigma of template fluctuation toys");
+      histo_bias->SetBinContent(bin+1,sigmagaus.getVal());
+      histo_bias->SetBinError(bin+1,sigmagaus.getPropagatedError(*biasfitresult));
+    }
+    if (do_syst_string==TString("purefitbias")) {
+      histo_bias->GetYaxis()->SetTitle("fitted mean of the pull (0.2 pp purity toys)");
+      histo_bias->SetBinContent(bin+1,meangauspull.getVal());
+      histo_bias->SetBinError(bin+1,meangauspull.getPropagatedError(*biasfitresultpull));
+    }
+    histo_bias->SaveAs(Form("plots/histo_bias_%s_%s_%s_b%d.root",do_syst_string.Data(),diffvariable.Data(),splitting.Data(),bin));    
 
   }
 
   print_mem();
+
+  bool writeoutpurity = (do_syst_string!=TString("purefitbias") && do_syst_string!=TString("templatestatistics"));
+
+  if (writeoutpurity){
+
+    TH1F *purity[4];
+    TH1F *eventshisto;
+    if (bins_to_run>0) eventshisto = new TH1F("eventshisto","eventshisto",bins_to_run,binsdef);
+    else eventshisto = new TH1F("eventshisto","eventshisto",n_bins,0,n_bins);
+
+    int colors[4] = {kRed, kGreen, kGreen+2, kBlack};
+    
+    for (int i=0; i<4; i++){
+      TString name = "purity_";
+      if (do_syst_string==TString("templateshapeMCtrue") || do_syst_string==TString("templateshapeMCdriven")) {name+=do_syst_string; name.Append("_");}
+      if (i==0) name.Append("sigsig"); else if (i==1) name.Append("sigbkg"); else if (i==2) name.Append("bkgsig"); else if (i==3) name.Append("bkgbkg");
+      if (bins_to_run>0) purity[i] = new TH1F(name.Data(),name.Data(),bins_to_run,binsdef);
+      else purity[i] = new TH1F(name.Data(),name.Data(),n_bins,0,n_bins);
+      purity[i]->SetMarkerStyle(20);
+      purity[i]->SetMarkerColor(colors[i]);
+      purity[i]->SetLineColor(colors[i]);
+      purity[i]->SetLineWidth(2);
+      purity[i]->GetYaxis()->SetRangeUser(0,1);
+      purity[i]->GetYaxis()->SetTitle("purity");
+      purity[i]->GetXaxis()->SetTitle(diffvariable.Data());
+    }
+
+    purity[0]->SetBinContent(bin+1,out->pp);
+    purity[0]->SetBinError(bin+1,out->pp_err);
+    purity[1]->SetBinContent(bin+1,out->pf);
+    purity[1]->SetBinError(bin+1,out->pf_err);
+    purity[2]->SetBinContent(bin+1,out->fp);
+    purity[2]->SetBinError(bin+1,out->fp_err);
+    purity[3]->SetBinContent(bin+1,out->ff);
+    purity[3]->SetBinError(bin+1,out->ff_err);
+    eventshisto->SetBinContent(bin+1,out->tot_events);
+
+    TString helper("");
+    if (do_syst_string==TString("templateshapeMCtrue")|| do_syst_string==TString("templateshapeMCdriven")) {helper = do_syst_string; helper+=TString("_");}
+    
+    TFile *purityfile = new TFile(Form("plots/histo_purity_%s%s_%s_b%d.root",helper.Data(),diffvariable.Data(),splitting.Data(),bin),"recreate");
+    purityfile->cd();
+    for (int i=0; i<4; i++) purity[i]->Write();
+    eventshisto->Write();
+    purityfile->Close();
+
+  }
 
   return out;
     
 
 };
 
-
-
-void run_fits(TString inputfilename_t2p, TString inputfilename_t1p1f, TString inputfilename_t2f, TString inputfilename_d="tobefitted.root", TString diffvariable="", TString splitting=""){
+void fit_dataset_allbins(TString inputfilename_t2p, TString inputfilename_t1p1f, TString inputfilename_t2f, TString inputfilename_d="tobefitted.root", TString diffvariable="", TString splitting="", TString do_syst_string=TString("")){
 
   bool sym = false;
   {
@@ -1253,92 +1354,141 @@ void run_fits(TString inputfilename_t2p, TString inputfilename_t1p1f, TString in
     else if (splitting=="EBEE") binsdef=binsdef_diphoton_dphi_EBEE;
     else if (splitting=="EEEE") binsdef=binsdef_diphoton_dphi_EEEE;
   }
-//  if (diffvariable=="dosingle"){
-//    dosingle=1;
-//    if (splitting=="EB")      bins_to_run=n_templates_EB;
-//    else if (splitting=="EE") bins_to_run=n_templates_EE;
-//    if (splitting=="EB")      binsdef=binsdef_single_gamma_EB_eta;
-//    else if (splitting=="EE") binsdef=binsdef_single_gamma_EE_eta;
-//  }
+
+  
+  fit_output *fr[n_bins];
+
+  for (int bin=0; bin<bins_to_run; bin++) {
+    fr[bin]=fit_dataset(inputfilename_t2p.Data(),inputfilename_t1p1f.Data(),inputfilename_t2f.Data(),inputfilename_d.Data(),diffvariable,splitting,bin,do_syst_string,bins_to_run,binsdef);
+  }
+
+};
+
+
+void post_process(TString diffvariable="", TString splitting=""){
+
+  bool sym = false;
+  {
+    TString s1; TString s2;
+    if (splitting=="EBEB") {s1="EB"; s2="EB";}
+    else if (splitting=="EEEE") {s1="EE"; s2="EE";}
+    else if (splitting=="EBEE") {s1="EB"; s2="EE";}
+    sym  = (s1==s2);
+  }
+
+  TH1F::SetDefaultSumw2(kTRUE);
+
+  int bins_to_run=0; 
+  float *binsdef=NULL;
+
+  if (diffvariable=="invmass"){
+    if (splitting=="EBEB")      bins_to_run=n_templates_invmass_EBEB;
+    else if (splitting=="EBEE") bins_to_run=n_templates_invmass_EBEE;
+    else if (splitting=="EEEE") bins_to_run=n_templates_invmass_EEEE; 
+    if (splitting=="EBEB")      binsdef=binsdef_diphoton_invmass_EBEB;
+    else if (splitting=="EBEE") binsdef=binsdef_diphoton_invmass_EBEE;
+    else if (splitting=="EEEE") binsdef=binsdef_diphoton_invmass_EEEE;
+  }
+  if (diffvariable=="diphotonpt"){
+    if (splitting=="EBEB")      bins_to_run=n_templates_diphotonpt_EBEB;
+    else if (splitting=="EBEE") bins_to_run=n_templates_diphotonpt_EBEE;
+    else if (splitting=="EEEE") bins_to_run=n_templates_diphotonpt_EEEE; 
+    if (splitting=="EBEB")      binsdef=binsdef_diphoton_diphotonpt_EBEB;
+    else if (splitting=="EBEE") binsdef=binsdef_diphoton_diphotonpt_EBEE;
+    else if (splitting=="EEEE") binsdef=binsdef_diphoton_diphotonpt_EEEE;
+  }
+  if (diffvariable=="costhetastar"){
+    if (splitting=="EBEB")      bins_to_run=n_templates_costhetastar_EBEB;
+    else if (splitting=="EBEE") bins_to_run=n_templates_costhetastar_EBEE;
+    else if (splitting=="EEEE") bins_to_run=n_templates_costhetastar_EEEE; 
+    if (splitting=="EBEB")      binsdef=binsdef_diphoton_costhetastar_EBEB;
+    else if (splitting=="EBEE") binsdef=binsdef_diphoton_costhetastar_EBEE;
+    else if (splitting=="EEEE") binsdef=binsdef_diphoton_costhetastar_EEEE;
+  }
+  if (diffvariable=="dphi"){
+    if (splitting=="EBEB")      bins_to_run=n_templates_dphi_EBEB;
+    else if (splitting=="EBEE") bins_to_run=n_templates_dphi_EBEE;
+    else if (splitting=="EEEE") bins_to_run=n_templates_dphi_EEEE; 
+    if (splitting=="EBEB")      binsdef=binsdef_diphoton_dphi_EBEB;
+    else if (splitting=="EBEE") binsdef=binsdef_diphoton_dphi_EBEE;
+    else if (splitting=="EEEE") binsdef=binsdef_diphoton_dphi_EEEE;
+  }
 
   
   fit_output *fr[n_bins];
 
   TH1F *purity[4];
+  TH1F *eventshisto;
   TH1F *eff=NULL;
   TH1F *xsec;
 
   TFile *eff_file = new TFile("efficiencies.root");
-//  eff_file->GetObject(Form("w_eff_gg_%s_%s",splitting.Data(),diffvariable.Data()),eff);
-//  assert (eff!=NULL);
-//  eff->GetYaxis()->SetTitle("selection/ID efficiency");
-//  eff->GetXaxis()->SetTitle(diffvariable.Data());
+  eff_file->GetObject(Form("w_eff_gg_%s_%s",splitting.Data(),diffvariable.Data()),eff);
+  assert (eff!=NULL);
+  eff->GetYaxis()->SetTitle("selection/ID efficiency");
+  eff->GetXaxis()->SetTitle(diffvariable.Data());
 
-  int colors[4] = {kRed, kGreen, kGreen+2, kBlack};
+  TFile *purity_file = new TFile(Form("plots/histo_purity_%s_%s_allbins.root",diffvariable.Data(),splitting.Data()));
+  purity_file->GetObject("purity_sigsig",purity[0]);
+  purity_file->GetObject("purity_sigbkg",purity[1]);
+  purity_file->GetObject("purity_bkgsig",purity[2]);
+  purity_file->GetObject("purity_bkgbkg",purity[3]);
+  purity_file->GetObject("eventshisto",eventshisto);
 
-  for (int i=0; i<4; i++){
-    TString name = "purity_";
-    if (i==0) name.Append("sigsig"); else if (i==1) name.Append("sigbkg"); else if (i==2) name.Append("bkgsig"); else if (i==3) name.Append("bkgbkg");
-    purity[i] = new TH1F(name.Data(),name.Data(),bins_to_run,binsdef);
-    purity[i]->SetMarkerStyle(20);
-    purity[i]->SetMarkerColor(colors[i]);
-    purity[i]->SetLineColor(colors[i]);
-    purity[i]->SetLineWidth(2);
-    purity[i]->GetYaxis()->SetRangeUser(0,1);
-    purity[i]->GetYaxis()->SetTitle("purity");
-    purity[i]->GetXaxis()->SetTitle(diffvariable.Data());
-  }
+  std::cout << "Purity histos imported" << std::endl;
+  for (int i=0; i<4; i++) purity[i]->Print(); eventshisto->Print();
+
+  TH1F *histo_bias_purefitbias;
+  TFile *file_bias_purefitbias  = new TFile(Form("plots/histo_bias_purefitbias_%s_%s_allbins.root",diffvariable.Data(),splitting.Data()));
+  file_bias_purefitbias->GetObject("histo_bias_purefitbias",histo_bias_purefitbias);
+
+  TH1F *histo_bias_templatestatistics;
+  TFile *file_bias_templatestatistics  = new TFile(Form("plots/histo_bias_templatestatistics_%s_%s_allbins.root",diffvariable.Data(),splitting.Data()));
+  file_bias_templatestatistics->GetObject("histo_bias_templatestatistics",histo_bias_templatestatistics);
 
     xsec = new TH1F("xsec","xsec",bins_to_run,binsdef);
     xsec->SetMarkerStyle(20);
-    xsec->SetMarkerColor(kGreen);
-    xsec->SetLineColor(kGreen);
+    xsec->SetMarkerColor(kBlack);
+    xsec->SetLineColor(kBlack);
     xsec->SetLineWidth(2);
-
-
+    
     //    xsec->GetYaxis()->SetTitle("");
     xsec->GetXaxis()->SetTitle(diffvariable.Data());
 
+    TH1F *xsec_withsyst = (TH1F*)(xsec->Clone("xsec_withsyst"));
+    xsec_withsyst->SetLineColor(kRed);
 
 
   for (int bin=0; bin<bins_to_run; bin++) {
 
-    fr[bin]=fit_dataset(inputfilename_t2p.Data(),inputfilename_t1p1f.Data(),inputfilename_t2f.Data(),inputfilename_d.Data(),diffvariable,splitting,bin);
+    float intlumi=5.06;
 
-    if (!fr[bin]->fr) continue;
+    float pp = 	       purity[0]->GetBinContent(bin+1);
+    float pp_err =     purity[0]->GetBinError(bin+1);
+    float pf = 	       purity[1]->GetBinContent(bin+1);
+    float pf_err =     purity[1]->GetBinError(bin+1);
+    float fp = 	       purity[2]->GetBinContent(bin+1);
+    float fp_err =     purity[2]->GetBinError(bin+1);
+    float ff = 	       purity[3]->GetBinContent(bin+1);
+    float ff_err =     purity[3]->GetBinError(bin+1);
+    float tot_events = eventshisto->GetBinContent(bin+1);
 
-    for (int k=0; k<100; k++) std::cout << "WARNING: PUT THE RIGHT LUMI NUMBER HERE!!!" << std::endl;
-    float intlumi=1; // DEBUG
+    xsec->SetBinContent(bin+1,pp*tot_events/xsec->GetBinWidth(bin+1)/intlumi);
+    xsec_withsyst->SetBinContent(bin+1,xsec->GetBinContent(bin+1));
 
-    float pp = fr[bin]->pp;
-    float pp_err = fr[bin]->pp_err;
-    float pf = fr[bin]->pf;
-    float pf_err = fr[bin]->pf_err;
-    float fp = fr[bin]->fp;
-    float fp_err = fr[bin]->fp_err;
-    float ff = fr[bin]->ff;
-    float ff_err = fr[bin]->ff_err;
+    float purity_error_withsyst = sqrt(pow(pp_err,2) + pow(histo_bias_templatestatistics->GetBinContent(bin+1),2) + pow(pp_err*histo_bias_purefitbias->GetBinContent(bin+1),2));
 
-    purity[0]->SetBinContent(bin+1,pp);
-    purity[0]->SetBinError(bin+1,pp_err);
-    purity[1]->SetBinContent(bin+1,pf);
-    purity[1]->SetBinError(bin+1,pf_err);
-    purity[2]->SetBinContent(bin+1,fp);
-    purity[2]->SetBinError(bin+1,fp_err);
-    purity[3]->SetBinContent(bin+1,ff);
-    purity[3]->SetBinError(bin+1,ff_err);
-      
-    //      xsec->SetBinContent(bin+1,pp->getVal()*fr[bin]->tot_events/xsec->GetBinWidth(bin+1)/intlumi);
-    //      xsec->SetBinContent(bin+1,pp->getVal()*fr[bin]->tot_events);
-    xsec->SetBinContent(bin+1,pp*fr[bin]->tot_events/xsec->GetBinWidth(bin+1)/intlumi);
-
-    float err1=purity[0]->GetBinError(bin+1)/purity[0]->GetBinContent(bin+1);
-    float err2=1.0/sqrt(fr[bin]->tot_events);
-    float err=sqrt(err1*err1+err2*err2);
+    float errpoiss=1.0/sqrt(tot_events);
+    float err=sqrt(pow(pp_err/pp,2)+pow(errpoiss,2));
+    float err_withsyst=sqrt(pow(purity_error_withsyst/pp,2)+pow(errpoiss,2) + pow(0.05,2));
+    for (int i=0; i<10; i++) std::cout << "SISTEMATICA SU TEMPLATE SHAPE MESSA A CASO" << std::endl;
     xsec->SetBinError(bin+1,err*xsec->GetBinContent(bin+1));
+    xsec_withsyst->SetBinError(bin+1,err_withsyst*xsec->GetBinContent(bin+1));
     
-    for (int k=0; k<100; k++) std::cout << "WARNING: NO EFFICIENCY CORRECTION!!!" << std::endl;
-    //xsec->Divide(eff);
+    std::cout << err << " " << err_withsyst << std::endl;
+
+    xsec->Divide(eff);
+    xsec_withsyst->Divide(eff);
 
   }
 
@@ -1365,31 +1515,21 @@ void run_fits(TString inputfilename_t2p, TString inputfilename_t1p1f, TString in
 
   TCanvas *xsec_canv = new TCanvas("xsec_canv","xsec_canv");
   xsec_canv->cd();
-  xsec->Draw("e1");
+  xsec_withsyst->Draw("e1");
+  xsec->Draw("e1same");
   xsec_canv->Update();
 
 
-//  TCanvas *eff_canv = new TCanvas("eff_canv","eff_canv");
-//  eff_canv->cd();
-//  eff->Draw("e1");
-//  eff_canv->Update();
 
-  TFile *out1 = new TFile(Form("plots/purityhistos_%s_%s.root",splitting.Data(),diffvariable.Data()),"recreate");
-  out1->cd();
-  purity[0]->Write();
-  purity[1]->Write();
-  purity[2]->Write();
-  purity[3]->Write();
+  output_canv->SaveAs(Form("plots/plot_purity_%s_%s.png", diffvariable.Data(),splitting.Data()));
+  output_canv->SaveAs(Form("plots/plot_purity_%s_%s.jpg", diffvariable.Data(),splitting.Data()));
+  output_canv->SaveAs(Form("plots/plot_purity_%s_%s.root",diffvariable.Data(),splitting.Data()));
+  output_canv->SaveAs(Form("plots/plot_purity_%s_%s.pdf", diffvariable.Data(),splitting.Data()));
 
-  output_canv->SaveAs(Form("plots/purity_%s_%s.png",splitting.Data(),diffvariable.Data()));
-  output_canv->SaveAs(Form("plots/purity_%s_%s.jpg",splitting.Data(),diffvariable.Data()));
-  output_canv->SaveAs(Form("plots/purity_%s_%s.root",splitting.Data(),diffvariable.Data()));
-  output_canv->SaveAs(Form("plots/purity_%s_%s.pdf",splitting.Data(),diffvariable.Data()));
-
-  xsec->SaveAs(Form("plots/xsec_%s_%s.png",splitting.Data(),diffvariable.Data()));
-  xsec->SaveAs(Form("plots/xsec_%s_%s.jpg",splitting.Data(),diffvariable.Data()));
-  xsec->SaveAs(Form("plots/xsec_%s_%s.root",splitting.Data(),diffvariable.Data()));
-  xsec->SaveAs(Form("plots/xsec_%s_%s.pdf",splitting.Data(),diffvariable.Data()));
+  xsec_canv->SaveAs(Form("plots/plot_xsec_%s_%s.png", diffvariable.Data(),splitting.Data()));
+  xsec_canv->SaveAs(Form("plots/plot_xsec_%s_%s.jpg", diffvariable.Data(),splitting.Data()));
+  xsec_canv->SaveAs(Form("plots/plot_xsec_%s_%s.root",diffvariable.Data(),splitting.Data()));
+  xsec_canv->SaveAs(Form("plots/plot_xsec_%s_%s.pdf", diffvariable.Data(),splitting.Data()));
   
 
 };

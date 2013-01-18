@@ -101,9 +101,6 @@ void template_production::Loop(int maxevents)
     else std::cout << "We have a problem here!!!" << std::endl;
 
 
-
-
-
 //    if (differentialvariable=="photoniso"){
 //      pholead_outvar=pholead_pho_Cone04PhotonIso_dEta015EB_dR070EE_mvVtx;
 //      photrail_outvar=photrail_pho_Cone04PhotonIso_dEta015EB_dR070EE_mvVtx;
@@ -253,13 +250,15 @@ void template_production::Loop(int maxevents)
     if (recalc_lead){
       if (pholead_outvar<-100) std::cout << "PROBLEM WITH ISOLATION CALCULATION!!!" << std::endl;
       assert (pholead_outvar>=-100);
-      if (pholead_outvar<leftrange) {pholead_outvar=leftrange; std::cout << "Warning: fixing underflow " << pholead_outvar << std::endl;}
+      if (pholead_outvar<leftrange) {/*std::cout << "Warning: fixing underflow " << pholead_outvar << std::endl;*/ pholead_outvar=leftrange+1e-5;}
+      if (pholead_outvar>=rightrange) continue;
       if (pholead_outvar>=rightrange) pholead_outvar=rightrange-1e-5; // overflow in last bin 
     }
     if (recalc_trail){
       if (photrail_outvar<-100) std::cout << "PROBLEM WITH ISOLATION CALCULATION!!!" << std::endl;
       assert (photrail_outvar>=-100);
-      if (photrail_outvar<leftrange) {photrail_outvar=leftrange; std::cout << "Warning: fixing underflow " << photrail_outvar << std::endl;}
+      if (photrail_outvar<leftrange) {/*std::cout << "Warning: fixing underflow " << photrail_outvar << std::endl;*/ photrail_outvar=leftrange+1e-5;}
+      if (photrail_outvar>=rightrange) continue;
       if (photrail_outvar>=rightrange) photrail_outvar=rightrange-1e-5; // overflow in last bin 
     }
 
@@ -280,6 +279,8 @@ void template_production::Loop(int maxevents)
     Float_t weight=event_luminormfactor*event_Kfactor*event_weight;
     float ptweight_lead = 1;
     float ptweight_trail = 1;
+
+    if (maxevents>0) assert (weight==1);
 
 //    if (do_pt_reweighting) ptweight_lead*=FindPtWeight(pholead_pt,pholead_SCeta);
 //    if (do_eta_reweighting) ptweight_lead*=FindEtaWeight(pholead_SCeta);
@@ -376,8 +377,16 @@ void template_production::Loop(int maxevents)
       
     }
 
+    bool leadistruesig = 0;
+    bool trailistruesig = 0;
+    if (!isdata){
+      leadistruesig = (pholead_PhoMCmatchexitcode==1 || pholead_PhoMCmatchexitcode==2) && (pholead_GenPhotonIsoDR04<5);
+      trailistruesig = (photrail_PhoMCmatchexitcode==1 || photrail_PhoMCmatchexitcode==2) && (photrail_GenPhotonIsoDR04<5);
+    }
 
     if (do2dtemplate){
+
+	int event_ok_for_dataset_local = event_ok_for_dataset;
 
 	float in1=pholead_outvar;
 	float in2=photrail_outvar;
@@ -389,10 +398,21 @@ void template_production::Loop(int maxevents)
 	float etain2=fabs(photrail_SCeta);
 
 	bool doswap = false;
-	if ((event_ok_for_dataset==0 || event_ok_for_dataset==2) && (randomgen->Uniform()>0.5)) doswap=true;
-	if (event_ok_for_dataset==4) doswap=true;
-	if (event_ok_for_dataset==3 || event_ok_for_dataset==4) event_ok_for_dataset=1;
+	if ((event_ok_for_dataset_local==0 || event_ok_for_dataset_local==2) && (randomgen->Uniform()>0.5)) doswap=true;
+	if (event_ok_for_dataset_local==4) doswap=true;
+	if (event_ok_for_dataset_local==3 || event_ok_for_dataset_local==4) event_ok_for_dataset_local=1;
 
+	if (mode=="2pgen" || mode=="1p1fgen" || mode=="2fgen"){
+	  assert (!isdata);
+	  TString wmode("");
+	  if (leadistruesig && trailistruesig) {event_pass12whoisrcone=0; wmode=TString("2pgen");}
+	  else if (!leadistruesig && !trailistruesig) {event_pass12whoisrcone=0; wmode=TString("2fgen");}
+	  else if (leadistruesig && !trailistruesig) {event_pass12whoisrcone=0; wmode=TString("1p1fgen");}
+	  else {event_pass12whoisrcone=1; wmode=TString("1p1fgen");}
+	  if (wmode!=mode) continue;
+	}
+
+    
 	if (doswap){
 	  float temp;
 	  temp=in1; in1=in2; in2=temp;
@@ -406,7 +426,7 @@ void template_production::Loop(int maxevents)
 	if (do2ptemplate) sigorbkg=TString("sigsig");
 	if (do2ftemplate) sigorbkg=TString("bkgbkg");
 	if (do1p1ftemplate) sigorbkg=TString("sigbkg");
-	//	if (do1p1ftemplate && event_ok_for_dataset==1 && event_pass12whoisrcone==1) sigorbkg=TString("bkgsig");
+	//	if (do1p1ftemplate && event_ok_for_dataset_local==1 && event_pass12whoisrcone==1) sigorbkg=TString("bkgsig");
 	if (do1p1ftemplate && event_pass12whoisrcone==1) sigorbkg=TString("bkgsig");
 	
 	roovar1->setVal(in1);
@@ -420,10 +440,9 @@ void template_production::Loop(int maxevents)
 	rooweight->setVal(weight);
 	RooArgSet args(*roovar1,*roovar2,*roopt1,*roopt2,*roosieie1,*roosieie2,*rooeta1,*rooeta2);
 	args.add(RooArgSet(*roorho,*roosigma));
-	template2d_roodset[get_name_template2d_roodset(event_ok_for_dataset,sigorbkg)]->add(args,weight);
+	template2d_roodset[get_name_template2d_roodset(event_ok_for_dataset_local,sigorbkg)]->add(args,weight);
 
     }
-
 
     if (dodistribution && event_ok_for_dataset>-1){
 
@@ -436,16 +455,17 @@ void template_production::Loop(int maxevents)
 	Int_t bin_couple = -999;
 	
 	float value_diffvariable;
+	int event_ok_for_dataset_local = event_ok_for_dataset;
 
 	if (*diffvariable==TString("invmass")) {
-	  bin_couple = Choose_bin_invmass(dipho_mgg_photon,event_ok_for_dataset);
+	  bin_couple = Choose_bin_invmass(dipho_mgg_photon,event_ok_for_dataset_local);
 	  value_diffvariable=dipho_mgg_photon;
 	}
 	if (*diffvariable==TString("diphotonpt")){
 	  float px = pholead_px+photrail_px;
 	  float py = pholead_py+photrail_py;
 	  float pt = sqrt(px*px+py*py);
-	  bin_couple = Choose_bin_diphotonpt(pt,event_ok_for_dataset);
+	  bin_couple = Choose_bin_diphotonpt(pt,event_ok_for_dataset_local);
 	  value_diffvariable=pt;
 	}
 	if (*diffvariable==TString("costhetastar")){
@@ -456,14 +476,14 @@ void template_production::Loop(int maxevents)
 	  boostedpho1.Boost(-boost);
 	  float thetastar1 = boostedpho1.Angle(boost);
 	  if (thetastar1>TMath::Pi()/2) thetastar1 = TMath::Pi()-thetastar1;
-	  bin_couple = Choose_bin_costhetastar(TMath::Cos(thetastar1),event_ok_for_dataset);
+	  bin_couple = Choose_bin_costhetastar(TMath::Cos(thetastar1),event_ok_for_dataset_local);
 	  value_diffvariable=TMath::Cos(thetastar1);
 	}
 	if (*diffvariable==TString("dphi")){
 	  float phi1 = pholead_SCphi;
 	  float phi2 = photrail_SCphi;
 	  float dphi = AbsDeltaPhi(phi1,phi2);
-	  bin_couple = Choose_bin_dphi(dphi,event_ok_for_dataset);
+	  bin_couple = Choose_bin_dphi(dphi,event_ok_for_dataset_local);
 	  value_diffvariable=dphi;
 	}
       
@@ -479,11 +499,12 @@ void template_production::Loop(int maxevents)
 
 	bool doswap=false;
 
-	if ((event_ok_for_dataset==0 || event_ok_for_dataset==2) && (randomgen->Uniform()>0.5)) doswap=true;
-	
-	if (event_ok_for_dataset==4) doswap=true;
 
-	if (event_ok_for_dataset==3 || event_ok_for_dataset==4) event_ok_for_dataset=1;
+	if ((event_ok_for_dataset_local==0 || event_ok_for_dataset_local==2) && (randomgen->Uniform()>0.5)) doswap=true;
+	
+	if (event_ok_for_dataset_local==4) doswap=true;
+
+	if (event_ok_for_dataset_local==3 || event_ok_for_dataset_local==4) event_ok_for_dataset_local=1;
 
 	if (doswap){
 	  float temp;
@@ -493,8 +514,9 @@ void template_production::Loop(int maxevents)
 	  temp=etain1; etain1=etain2; etain2=temp;
 	}
       
-	obs_hist_distribution[get_name_obs_distribution(event_ok_for_dataset,*diffvariable)]->Fill(value_diffvariable,weight);
-	obs_hist[get_name_obs(event_ok_for_dataset,*diffvariable,bin_couple)]->Fill(in1,in2,weight);
+
+	obs_hist_distribution[get_name_obs_distribution(event_ok_for_dataset_local,*diffvariable)]->Fill(value_diffvariable,weight);
+	obs_hist[get_name_obs(event_ok_for_dataset_local,*diffvariable,bin_couple)]->Fill(in1,in2,weight);
 	roovar1->setVal(in1);
 	roovar2->setVal(in2);
 	roopt1->setVal(ptin1);
@@ -506,8 +528,15 @@ void template_production::Loop(int maxevents)
 	rooweight->setVal(weight);
 	RooArgSet args(*roovar1,*roovar2,*roopt1,*roopt2,*roosieie1,*roosieie2,*rooeta1,*rooeta2);
 	args.add(RooArgSet(*roorho,*roosigma));
-	obs_roodset[get_name_obs_roodset(event_ok_for_dataset,*diffvariable,bin_couple)]->add(args,weight);
-		 
+	obs_roodset[get_name_obs_roodset(event_ok_for_dataset_local,*diffvariable,bin_couple)]->add(args,weight);
+
+	if (!isdata) {
+	  if (leadistruesig && trailistruesig) weights_2p[event_ok_for_dataset_local][*diffvariable][bin_couple]+=weight;
+	  else if (!leadistruesig && !trailistruesig) weights_2f[event_ok_for_dataset_local][*diffvariable][bin_couple]+=weight;
+	  else weights_1p1f[event_ok_for_dataset_local][*diffvariable][bin_couple]+=weight;
+	}
+
+
       }
       
     }
@@ -517,6 +546,23 @@ void template_production::Loop(int maxevents)
 
   } // end event loop
   std::cout << "ended event loop" << std::endl;
+
+  // gen-level purities printout
+  for (int k=0; k<3; k++){
+    if (k==0) std::cout << "EBEB" << std::endl;
+    if (k==1) std::cout << "EBEE" << std::endl;
+    if (k==2) std::cout << "EEEE" << std::endl;
+    for (std::vector<TString>::const_iterator diffvariable = diffvariables_list.begin(); diffvariable!=diffvariables_list.end(); diffvariable++){
+      std::cout << diffvariable->Data() << std::endl;
+      for (int i=0; i<n_bins; i++) {
+	if (weights_2p[k][*diffvariable][i]==0) continue;
+	std::cout << "bin " << i << " " << weights_2p[k][*diffvariable][i] << " " << weights_1p1f[k][*diffvariable][i] << " " << weights_2f[k][*diffvariable][i] << std::endl;
+	std::cout << "bin " << i << " " << weights_2p[k][*diffvariable][i]/(weights_2p[k][*diffvariable][i]+weights_1p1f[k][*diffvariable][i]+weights_2f[k][*diffvariable][i]) << std::endl;
+      }
+    }
+  }
+
+
 };
 
 
@@ -562,6 +608,9 @@ void gen_templates(TString filename="input.root", TString mode="", bool isdata=1
   if (mode=="bkgbkg") treename_chosen=treename[13];
   if (mode=="doublerandomcone") treename_chosen=treename[5];
   if (mode=="zeetemplate") treename_chosen=treename[3];
+  if (mode=="2pgen") treename_chosen=treename[0];
+  if (mode=="1p1fgen") treename_chosen=treename[0];
+  if (mode=="2fgen") treename_chosen=treename[0];
 
   file->GetObject(treename_chosen.Data(),t);
 
@@ -781,7 +830,9 @@ std::vector<std::vector<TProfile*> > template_production::GetPUScaling(bool doEB
 float template_production::getpuenergy(int reg, float eta){
 
   int bin = Choose_bin_eta(fabs(eta),reg);
-  float eff_area = (reg==0) ? eff_areas_EB[bin] : eff_areas_EE[bin];
+  float eff_area;
+  if (isdata) eff_area = (reg==0) ? eff_areas_EB_data[bin] : eff_areas_EE_data[bin];
+  else eff_area = (reg==0) ? eff_areas_EB_mc[bin] : eff_areas_EE_mc[bin];
 
   return 0.4*0.4*3.14*event_rho*eff_area;
 

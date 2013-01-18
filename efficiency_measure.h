@@ -18,6 +18,7 @@
 #include "TMath.h"
 #include "TLorentzVector.h"
 #include "TVector3.h"
+#include "binsdef.h"
 
 using namespace std;
 
@@ -380,6 +381,9 @@ public :
 
    //   std::vector<TString> diffvariables_list;
 
+   float getpuenergy(int reg, float eta);
+   Int_t Choose_bin_eta(float eta, int region);
+
 };
 
 #endif
@@ -643,4 +647,35 @@ void efficiency_measure::Show(Long64_t entry)
 //// returns -1 otherwise.
 //   return 1;
 //}
+
+Int_t efficiency_measure::Choose_bin_eta(float eta, int region){
+
+  eta=fabs(eta);
+
+  int index;
+
+  float *cuts=NULL;
+
+  if (region==0) {cuts=binsdef_single_gamma_EB_eta; index=n_templates_EB;}
+  if (region==1) {cuts=binsdef_single_gamma_EE_eta; index=n_templates_EE;}
+
+  assert (cuts!=NULL);
+  assert (index!=0);
+
+  cuts[index]=9999;
+
+  if (eta<cuts[0]){
+    std::cout << "WARNING: called bin choice for out-of-range value " << eta << " cuts[0]=" << cuts[0] << std::endl;
+    return -999;
+  }
+
+  for (int i=0; i<index; i++) if ((eta>=cuts[i]) && (eta<cuts[i+1])) return i;
+
+  std::cout << "WARNING: called bin choice for out-of-range value " << eta << std::endl;
+  return -999;
+
+};
+
+
+
 #endif // #ifdef efficiency_measure_cxx

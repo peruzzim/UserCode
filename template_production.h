@@ -430,6 +430,8 @@ public :
   RooRealVar *roovar2;
   RooRealVar *roopt1;
   RooRealVar *roopt2;
+  RooRealVar *roosieie1;
+  RooRealVar *roosieie2;
   RooRealVar *rooeta1;
   RooRealVar *rooeta2;
   RooRealVar *roorho;
@@ -447,11 +449,17 @@ public :
 
    std::map<TString, TH1F*> obs_hist_single;
    std::map<TString, TH2F*> obs_hist;
+   std::map<TString, TH1F*> obs_hist_distribution;
    std::map<TString, RooDataSet*> obs_roodset;
    std::map<TString, RooDataSet*> template2d_roodset;
 
+   std::map<TString, std::vector<float> > weights_2p[3];
+   std::map<TString, std::vector<float> > weights_2f[3];
+   std::map<TString, std::vector<float> > weights_1p1f[3];
+
    TString get_name_obs_single(int region, int bin);
    TString get_name_obs(int region, TString diffvariable, int bin);
+   TString get_name_obs_distribution(int region, TString diffvariable);
    TString get_name_obs_roodset(int region, TString diffvariable, int bin);
    TString get_name_template2d_roodset(int region, TString sigorbkg);
 
@@ -579,14 +587,28 @@ void template_production::Setup(Bool_t _isdata, TString _mode, TString _differen
 //  diffvariables_list.push_back(TString("costhetastar"));
 //  diffvariables_list.push_back(TString("dphi"));
 
+  for (int k=0; k<3; k++){
+    for (std::vector<TString>::const_iterator diffvariable = diffvariables_list.begin(); diffvariable!=diffvariables_list.end(); diffvariable++){
+      weights_2p[k][*diffvariable].clear();
+      weights_2f[k][*diffvariable].clear();
+      weights_1p1f[k][*diffvariable].clear();
+      for (int i=0; i<n_bins; i++) {
+	weights_2p[k][*diffvariable].push_back(0);
+	weights_2f[k][*diffvariable].push_back(0);
+	weights_1p1f[k][*diffvariable].push_back(0);
+    }
+    }
+  }
+
+
   Init();
 
   if (mode=="standard" || mode=="doublerandomcone") dodistribution=true;
-  if (mode=="signal" || mode=="randomcone" || mode=="muon") dosignaltemplate=true;
+  if (mode=="signal" || mode=="randomcone" || mode=="muon" || mode=="zeetemplate") dosignaltemplate=true;
   if (mode=="background" || mode=="impinging" || mode=="sieiesideband" || mode=="combisosideband") dobackgroundtemplate=true;
-  if (mode=="sigsig") do2ptemplate=true; 
-  if (mode=="sigbkg") do1p1ftemplate=true; 
-  if (mode=="bkgbkg") do2ftemplate=true; 
+  if (mode=="sigsig" || mode=="2pgen") do2ptemplate=true; 
+  if (mode=="sigbkg" || mode=="1p1fgen") do1p1ftemplate=true; 
+  if (mode=="bkgbkg" || mode=="2fgen") do2ftemplate=true; 
   do2dtemplate = (do2ptemplate || do1p1ftemplate || do2ftemplate);
 
 
@@ -601,6 +623,8 @@ void template_production::Setup(Bool_t _isdata, TString _mode, TString _differen
   rooeta2 = new RooRealVar("rooeta2","rooeta2",0,2.5);
   roopt1 = new RooRealVar("roopt1","roopt1",25,1000);
   roopt2 = new RooRealVar("roopt2","roopt2",25,1000);
+  roosieie1 = new RooRealVar("roosieie1","roosieie1",0,0.045);
+  roosieie2 = new RooRealVar("roosieie2","roosieie2",0,0.045);
   roorho = new RooRealVar("roorho","roorho",0,50);
   roosigma = new RooRealVar("roosigma","roosigma",0,50);
   //  roovar_helper = new RooRealVar("roovar_helper","roovar_helper",leftrange,rightrange);
@@ -630,9 +654,9 @@ void template_production::Setup(Bool_t _isdata, TString _mode, TString _differen
       template_signal[i][j] = new TH1F(t.Data(),t.Data(),n_histobins,leftrange,rightrange);
       template_signal[i][j]->Sumw2();
       TString t2=Form("roodset_%s_%s_b%d_rv%d",name_signal.Data(),reg.Data(),j,1);
-      roodset_signal[i][j][0] = new RooDataSet(t2.Data(),t2.Data(),RooArgSet(*roovar1,*roopt1,*rooeta1,*roorho,*roosigma,*rooweight),WeightVar(*rooweight));
+      roodset_signal[i][j][0] = new RooDataSet(t2.Data(),t2.Data(),RooArgSet(*roovar1,*roopt1,*roosieie1,*rooeta1,*roorho,*roosigma,*rooweight),WeightVar(*rooweight));
       t2=Form("roodset_%s_%s_b%d_rv%d",name_signal.Data(),reg.Data(),j,2);
-      roodset_signal[i][j][1] = new RooDataSet(t2.Data(),t2.Data(),RooArgSet(*roovar2,*roopt2,*rooeta2,*roorho,*roosigma,*rooweight),WeightVar(*rooweight));
+      roodset_signal[i][j][1] = new RooDataSet(t2.Data(),t2.Data(),RooArgSet(*roovar2,*roopt2,*roosieie2,*rooeta2,*roorho,*roosigma,*rooweight),WeightVar(*rooweight));
     }
   for (int i=0; i<2; i++)
     for (int j=0; j<n_templates+1; j++) {
@@ -643,9 +667,9 @@ void template_production::Setup(Bool_t _isdata, TString _mode, TString _differen
       template_background[i][j] = new TH1F(t.Data(),t.Data(),n_histobins,leftrange,rightrange);
       template_background[i][j]->Sumw2();
       TString t2=Form("roodset_%s_%s_b%d_rv%d",name_background.Data(),reg.Data(),j,1);
-      roodset_background[i][j][0] = new RooDataSet(t2.Data(),t2.Data(),RooArgSet(*roovar1,*roopt1,*rooeta1,*roorho,*roosigma,*rooweight),WeightVar(*rooweight));
+      roodset_background[i][j][0] = new RooDataSet(t2.Data(),t2.Data(),RooArgSet(*roovar1,*roopt1,*roosieie1,*rooeta1,*roorho,*roosigma,*rooweight),WeightVar(*rooweight));
       t2=Form("roodset_%s_%s_b%d_rv%d",name_background.Data(),reg.Data(),j,2);
-      roodset_background[i][j][1] = new RooDataSet(t2.Data(),t2.Data(),RooArgSet(*roovar2,*roopt2,*rooeta2,*roorho,*roosigma,*rooweight),WeightVar(*rooweight));
+      roodset_background[i][j][1] = new RooDataSet(t2.Data(),t2.Data(),RooArgSet(*roovar2,*roopt2,*roosieie2,*rooeta2,*roorho,*roosigma,*rooweight),WeightVar(*rooweight));
     }
   for (int i=0; i<2; i++)
     for (int j=0; j<n_templates+1; j++) {
@@ -701,11 +725,17 @@ void template_production::Setup(Bool_t _isdata, TString _mode, TString _differen
 	TString t=Form("obs_hist_%s_%s_b%d",reg.Data(),diffvariable->Data(),j);
 	obs_hist[t] = new TH2F(t.Data(),t.Data(),n_histobins,leftrange,rightrange,n_histobins,leftrange,rightrange);
 	obs_hist[t]->Sumw2();
+	if (j==0){
+	  TString tb=Form("obs_hist_distribution_%s_%s",reg.Data(),diffvariable->Data());
+	  obs_hist_distribution[tb] = new TH1F(tb.Data(),tb.Data(),100,binsdef_diphoton_invmass_EBEB[0],binsdef_diphoton_invmass_EBEB[n_templates_invmass_EBEB]);
+	  obs_hist_distribution[tb]->Sumw2();
+	}
 	TString t2=Form("obs_roodset_%s_%s_b%d",reg.Data(),diffvariable->Data(),j);
-	obs_roodset[t2] = new RooDataSet(t2.Data(),t2.Data(),RooArgSet(*roovar1,*roovar2,*roopt1,*rooeta1,*roopt2,*rooeta2,*roorho,*roosigma,*rooweight),WeightVar(*rooweight));
+	RooArgSet args(*roovar1,*roovar2,*roopt1,*roosieie1,*rooeta1,*roopt2,*roosieie2,*rooeta2);
+	args.add(RooArgSet(*roorho,*roosigma,*rooweight));
+	obs_roodset[t2] = new RooDataSet(t2.Data(),t2.Data(),args,WeightVar(*rooweight));
       }
   }
-
 
   std::vector<TString> tobuild;
   if (do2ptemplate) tobuild.push_back(TString("sigsig"));
@@ -718,7 +748,9 @@ void template_production::Setup(Bool_t _isdata, TString _mode, TString _differen
       //      if (i==0) reg="EBEB"; else if (i==1) reg="EBEE"; else if (i==2) reg="EEEE"; 
       //      if (i!=1 && tobuild[j]=="bkgsig") continue;
       TString t2 = get_name_template2d_roodset(i,tobuild[j]);
-      template2d_roodset[t2]= new RooDataSet(t2.Data(),t2.Data(),RooArgSet(*roovar1,*roovar2,*roopt1,*rooeta1,*roopt2,*rooeta2,*roorho,*roosigma,*rooweight),WeightVar(*rooweight));
+      RooArgSet args(*roovar1,*roovar2,*roopt1,*roosieie1,*rooeta1,*roopt2,*roosieie2,*rooeta2);
+      args.add(RooArgSet(*roorho,*roosigma,*rooweight));
+      template2d_roodset[t2]= new RooDataSet(t2.Data(),t2.Data(),args,WeightVar(*rooweight));
     }
   
 
@@ -1261,6 +1293,8 @@ void template_production::WriteOutput(const char* filename, const TString _dirna
   rooworkspace->import(*roovar2);
   rooworkspace->import(*roopt1);
   rooworkspace->import(*roopt2);
+  rooworkspace->import(*roosieie1);
+  rooworkspace->import(*roosieie2);
   rooworkspace->import(*rooeta1);
   rooworkspace->import(*rooeta2);
   rooworkspace->import(*roorho);
@@ -1323,6 +1357,7 @@ void template_production::WriteOutput(const char* filename, const TString _dirna
 
     for (std::map<TString, TH1F*>::const_iterator it = obs_hist_single.begin(); it!=obs_hist_single.end(); it++) it->second->Write();
     for (std::map<TString, TH2F*>::const_iterator it = obs_hist.begin(); it!=obs_hist.end(); it++) it->second->Write();
+    for (std::map<TString, TH1F*>::const_iterator it = obs_hist_distribution.begin(); it!=obs_hist_distribution.end(); it++) it->second->Write();
     for (std::map<TString, RooDataSet*>::const_iterator it = obs_roodset.begin(); it!=obs_roodset.end(); it++) rooworkspace->import(*(it->second));
   }
 
@@ -1347,6 +1382,14 @@ TString template_production::get_name_obs(int region, TString diffvariable, int 
   TString reg;
   if (region==0) reg="EBEB"; else if (region==1) reg="EBEE"; else if (region==2) reg="EEEE"; else if (region==3) reg="EEEB";
   TString t=Form("%s_%s_%s_b%d",name_signal.Data(),reg.Data(),diffvariable.Data(),bin);
+  return t;
+};
+
+TString template_production::get_name_obs_distribution(int region, TString diffvariable){
+  TString name_signal="obs_hist_distribution";
+  TString reg;
+  if (region==0) reg="EBEB"; else if (region==1) reg="EBEE"; else if (region==2) reg="EEEE"; else if (region==3) reg="EEEB";
+  TString t=Form("%s_%s_%s",name_signal.Data(),reg.Data(),diffvariable.Data());
   return t;
 };
 

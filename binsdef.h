@@ -27,16 +27,11 @@ float binsdef_single_gamma_EB_eta[n_bins+1]={0,0.2,0.4,0.6,0.8,1,1.2,1.4442};
 float binsdef_single_gamma_EE_eta[n_bins+1]={1.56,1.653,1.8,2,2.2,2.5};
 
 int n_templates_invmass_EBEB=13;
-int n_templates_invmass_EBEE=6;
-int n_templates_invmass_EEEE=6;
-//float binsdef_diphoton_invmass_EBEB[n_bins+1]={0,80,90,100,120,160,200};
+int n_templates_invmass_EBEE=13;
+int n_templates_invmass_EEEE=13;
 float binsdef_diphoton_invmass_EBEB[n_bins+1]={0,50,60,70,80,90,100,110,120,130,140,150,170,200};
-float binsdef_diphoton_invmass_EBEE[n_bins+1]={0,80,90,100,120,160,200};
-float binsdef_diphoton_invmass_EEEE[n_bins+1]={0,80,90,100,120,160,200};
-//float binsdef_diphoton_invmass_EEEE[n_bins+1]={0,20,40,60,80,90,100,110,120,130,140,160,190,200};
-//float binsdef_diphoton_invmass_EBEB[n_bins+1]={80,90,100,110,120,130,140,160,190,200};
-//float binsdef_diphoton_invmass_EBEE[n_bins+1]={80,90,100,110,120,130,140,160,190,200};
-//float binsdef_diphoton_invmass_EEEE[n_bins+1]={80,90,100,110,120,130,140,160,190,200};
+float binsdef_diphoton_invmass_EBEE[n_bins+1]={0,50,60,70,80,90,100,110,120,130,140,150,170,200};
+float binsdef_diphoton_invmass_EEEE[n_bins+1]={0,50,60,70,80,90,100,110,120,130,140,150,170,200};
 
 int n_templates_diphotonpt_EBEB=5;
 int n_templates_diphotonpt_EBEE=5;
@@ -89,12 +84,12 @@ float *etabins = binsdef_single_gamma_EB_eta+0;
 
 // FOR PHOTON COMPONENT
 // 020616 from data, no cleaning, no pf charged cut in presel
-float eff_areas_EB[n_bins] = {2.616660e-01,2.588560e-01,2.640709e-01,2.638014e-01,2.568367e-01,2.395006e-01,1.652021e-01};
-float eff_areas_EE[n_bins] = {5.842267e-02,8.426653e-02,1.188972e-01,1.447404e-01,1.147304e-01};
+float eff_areas_EB_data[n_bins] = {2.615381e-01,2.587228e-01,2.641340e-01,2.640072e-01,2.569331e-01,2.395977e-01,1.651901e-01};
+float eff_areas_EE_data[n_bins] = {5.848781e-02,8.411012e-02,1.189097e-01,1.446802e-01,1.148867e-01};
+float eff_areas_EB_mc[n_bins] = {2.719313e-01,2.748353e-01,2.746818e-01,2.704172e-01,2.662482e-01,2.427560e-01,1.708246e-01};
+float eff_areas_EE_mc[n_bins] = {5.107922e-02,8.485798e-02,1.354249e-01,1.671490e-01,1.454153e-01};
 
-// 020615rho with cleaning numbers
-//float eff_areas_EB[n_bins] = {2.004668e-01,2.000222e-01,2.083325e-01,2.129163e-01,2.082317e-01,1.982015e-01,1.383834e-01};
-//float eff_areas_EE[n_bins] = {3.727486e-02,5.494237e-02,7.876623e-02,1.006998e-01,8.432818e-02};
+
 
 const int n_ptbins_forreweighting = 1;
 //Float_t ptbins_forreweighting[n_ptbins_forreweighting+1]={0,40,60,300};

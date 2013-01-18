@@ -3,7 +3,7 @@
 #include <TH2.h>
 #include <TStyle.h>
 #include <TCanvas.h>
-#include "binsdef.h"
+
 
 void efficiency_measure::Loop(){
   TFile *outf = new TFile(outname.Data(),"recreate");
@@ -256,6 +256,9 @@ void efficiency_measure::LoopOne(TString diffvariable, TFile *outf)
 
     }
      
+    pholead_outvar-=getpuenergy(reg_lead,pholead_SCeta);
+    photrail_outvar-=getpuenergy(reg_trail,photrail_SCeta);
+
     assert (pholead_outvar>-100 && photrail_outvar>-100);
 
       bool pass1=true;
@@ -263,9 +266,9 @@ void efficiency_measure::LoopOne(TString diffvariable, TFile *outf)
       if (!(photrail_PhoMCmatchexitcode==1 || photrail_PhoMCmatchexitcode==2)) pass1=false;
       if (pholead_GenPhotonIsoDR04>5 || photrail_GenPhotonIsoDR04>5) pass1=false;
 //      if (pholead_outvar<leftrange)   pass1=false;
-//      if (pholead_outvar>=rightrange) pass1=false;
+      if (pholead_outvar>=rightrange) pass1=false;
 //      if (photrail_outvar<leftrange)  pass1=false;
-//      if (photrail_outvar>=rightrange)pass1=false;
+      if (photrail_outvar>=rightrange)pass1=false;
 
 
       if (!dosingle){
@@ -367,4 +370,15 @@ void divide_eff_histos(TString numerator, TString denominator){
     divide_eff_histosOne(numerator,denominator,*diffvariable,outf);
   }  
   outf->Close();
+};
+
+float efficiency_measure::getpuenergy(int reg, float eta){
+
+  int bin = Choose_bin_eta(fabs(eta),reg);
+  float eff_area;
+  // MC eff areas
+  eff_area = (reg==0) ? eff_areas_EB_mc[bin] : eff_areas_EE_mc[bin];
+
+  return 0.4*0.4*3.14*event_rho*eff_area;
+
 };
