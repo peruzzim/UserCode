@@ -319,43 +319,6 @@ void template_production::Loop(int maxevents)
       }
       
       if (dobackgroundtemplate){
-	if (mode=="sieiesideband"){ 
-	  if (fabs(pholead_SCeta)<1.4442 && pholead_sieie>0.011 && pholead_sieie<0.014){
-	    template_background[reg_lead][bin_lead]->Fill(pholead_outvar,weight*ptweight_lead);
-	    roovar1->setVal(pholead_outvar);
-	    roovar2->setVal(pholead_outvar);
-	    roopt1->setVal(pholead_pt);
-	    roopt2->setVal(pholead_pt);
-	    roosieie1->setVal(pholead_sieie);
-	    roosieie2->setVal(pholead_sieie);
-	    rooeta1->setVal(fabs(pholead_SCeta));
-	    rooeta2->setVal(fabs(pholead_SCeta));
-	    rooweight->setVal(weight*ptweight_lead);
-	    roodset_background[reg_lead][bin_lead][0]->add(RooArgList(*roovar1,*roopt1,*roosieie1,*rooeta1,*roorho,*roosigma),weight*ptweight_lead);
-	    roodset_background[reg_lead][bin_lead][1]->add(RooArgList(*roovar2,*roopt2,*roosieie2,*rooeta2,*roorho,*roosigma),weight*ptweight_lead);
-	  }
-	  if (fabs(pholead_SCeta)>1.56 && pholead_sieie>0.030 && pholead_sieie<0.031){
-	    template_background[reg_lead][bin_lead]->Fill(pholead_outvar,weight*ptweight_lead);
-	    roovar1->setVal(pholead_outvar);
-	    roovar2->setVal(pholead_outvar);
-	    roopt1->setVal(pholead_pt);
-	    roopt2->setVal(pholead_pt);
-	    roosieie1->setVal(pholead_sieie);
-	    roosieie2->setVal(pholead_sieie);
-	    rooeta1->setVal(fabs(pholead_SCeta));
-	    rooeta2->setVal(fabs(pholead_SCeta));
-	    rooweight->setVal(weight*ptweight_lead);
-	    roodset_background[reg_lead][bin_lead][0]->add(RooArgList(*roovar1,*roopt1,*roosieie1,*rooeta1,*roorho,*roosigma),weight*ptweight_lead);
-	    roodset_background[reg_lead][bin_lead][1]->add(RooArgList(*roovar2,*roopt2,*roosieie2,*rooeta2,*roorho,*roosigma),weight*ptweight_lead);
-	  }
-	  if ((fabs(pholead_SCeta)<1.4442 && pholead_sieie>0.011 && pholead_sieie<0.014) || (fabs(pholead_SCeta)>1.56 && pholead_sieie>0.030 && pholead_sieie<0.031)){
-	    histo_pt[reg_lead]->Fill(pholead_pt,weight*ptweight_lead);
-	    histo_eta->Fill(fabs(pholead_SCeta),weight*ptweight_lead);
-	    histo_pt_eta->Fill(pholead_pt,fabs(pholead_SCeta),weight*ptweight_lead);
-	    histo_rho_sigma->Fill(event_rho,event_sigma,weight*ptweight_lead);
-	  }
-	}
-	else {
 	  template_background[reg_lead][bin_lead]->Fill(pholead_outvar,weight*ptweight_lead);
 	  roovar1->setVal(pholead_outvar);
 	  roovar2->setVal(pholead_outvar); 
@@ -372,7 +335,6 @@ void template_production::Loop(int maxevents)
 	  histo_eta->Fill(fabs(pholead_SCeta),weight*ptweight_lead);
 	  histo_pt_eta->Fill(pholead_pt,fabs(pholead_SCeta),weight*ptweight_lead);
 	  histo_rho_sigma->Fill(event_rho,event_sigma,weight*ptweight_lead);
-	}
       }
       
     }

@@ -425,7 +425,7 @@ public :
    //   float FindNewPUWeight(int npu);
    //   void InitializeNewPUReweighting(TString source, TString target);
 
-  RooWorkspace *rooworkspace;
+
   RooRealVar *roovar1;
   RooRealVar *roovar2;
   RooRealVar *roopt1;
@@ -612,11 +612,8 @@ void template_production::Setup(Bool_t _isdata, TString _mode, TString _differen
   do2dtemplate = (do2ptemplate || do1p1ftemplate || do2ftemplate);
 
 
-  if (mode=="sieiesideband") for (int i=0; i<1; i++) std::cout << "Info: sieie sideband is (0.014/0.031)" << std::endl;
-
   randomgen = new TRandom3(0);
 
-  rooworkspace = new RooWorkspace("rooworkspace","rooworkspace");
   roovar1 = new RooRealVar("roovar1","roovar1",leftrange,rightrange);
   roovar2 = new RooRealVar("roovar2","roovar2",leftrange,rightrange);
   rooeta1 = new RooRealVar("rooeta1","rooeta1",0,2.5);
@@ -1289,17 +1286,17 @@ void template_production::WriteOutput(const char* filename, const TString _dirna
   out->mkdir(dirname.Data());
   out->cd(dirname.Data());
 
-  rooworkspace->import(*roovar1);
-  rooworkspace->import(*roovar2);
-  rooworkspace->import(*roopt1);
-  rooworkspace->import(*roopt2);
-  rooworkspace->import(*roosieie1);
-  rooworkspace->import(*roosieie2);
-  rooworkspace->import(*rooeta1);
-  rooworkspace->import(*rooeta2);
-  rooworkspace->import(*roorho);
-  rooworkspace->import(*roosigma);
-  rooworkspace->import(*rooweight);
+  roovar1->Write();
+  roovar2->Write();
+  roopt1->Write();
+  roopt2->Write();
+  roosieie1->Write();
+  roosieie2->Write();
+  rooeta1->Write();
+  rooeta2->Write();
+  roorho->Write();
+  roosigma->Write();
+  rooweight->Write();
 
 
   if (dosignaltemplate || dobackgroundtemplate) {
@@ -1319,8 +1316,8 @@ void template_production::WriteOutput(const char* filename, const TString _dirna
 
     for (int i=0; i<2; i++) for (int l=0; l<n_templates+1; l++) template_signal[i][l]->Write();
     for (int i=0; i<2; i++) for (int l=0; l<n_templates+1; l++) template_background[i][l]->Write();
-    for (int k=0; k<2; k++) for (int i=0; i<2; i++) for (int l=0; l<n_templates+1; l++) rooworkspace->import(*(roodset_signal[i][l][k]));
-    for (int k=0; k<2; k++) for (int i=0; i<2; i++) for (int l=0; l<n_templates+1; l++) rooworkspace->import(*(roodset_background[i][l][k]));
+    for (int k=0; k<2; k++) for (int i=0; i<2; i++) for (int l=0; l<n_templates+1; l++) (roodset_signal[i][l][k])->Write();
+    for (int k=0; k<2; k++) for (int i=0; i<2; i++) for (int l=0; l<n_templates+1; l++) (roodset_background[i][l][k])->Write();
     for (int i=0; i<2; i++) for (int l=0; l<n_templates+1; l++) hist2d_iso_ncand[i][l]->Write();
 
 
@@ -1337,7 +1334,7 @@ void template_production::WriteOutput(const char* filename, const TString _dirna
 
   if (do2dtemplate){ 
 
-    for (std::map<TString, RooDataSet*>::const_iterator it = template2d_roodset.begin(); it!=template2d_roodset.end(); it++) rooworkspace->import(*(it->second));
+    for (std::map<TString, RooDataSet*>::const_iterator it = template2d_roodset.begin(); it!=template2d_roodset.end(); it++) (it->second)->Write();
 
   }
 
@@ -1358,12 +1355,11 @@ void template_production::WriteOutput(const char* filename, const TString _dirna
     for (std::map<TString, TH1F*>::const_iterator it = obs_hist_single.begin(); it!=obs_hist_single.end(); it++) it->second->Write();
     for (std::map<TString, TH2F*>::const_iterator it = obs_hist.begin(); it!=obs_hist.end(); it++) it->second->Write();
     for (std::map<TString, TH1F*>::const_iterator it = obs_hist_distribution.begin(); it!=obs_hist_distribution.end(); it++) it->second->Write();
-    for (std::map<TString, RooDataSet*>::const_iterator it = obs_roodset.begin(); it!=obs_roodset.end(); it++) rooworkspace->import(*(it->second));
+    for (std::map<TString, RooDataSet*>::const_iterator it = obs_roodset.begin(); it!=obs_roodset.end(); it++) (it->second)->Write();
   }
 
-  std::cout << "output written" << std::endl;
+  std::cout << "Writing output..." << std::endl;
 
-  rooworkspace->Write();
 
   out->Close();
 };
