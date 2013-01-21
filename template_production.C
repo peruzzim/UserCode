@@ -57,13 +57,13 @@ void template_production::Loop(int maxevents)
     if (do2dtemplate) if (pholead_pt<40 || photrail_pt<25) continue;
     float cutpt = (mode=="muon") ? 10 : 25;
     if (dosignaltemplate || dobackgroundtemplate) if (pholead_pt<cutpt) continue;
-    if (mode=="zeetemplate") {
+    if (mode=="zee") {
       if (fabs(dipho_mgg_photon-91.2)>10) continue;
     }
     //    if (mode=="background") if (pholead_PhoMCmatchexitcode!=3) continue;
     //    if (mode=="background") if (pholead_PhoMCmatchexitcode!=1 && pholead_PhoMCmatchexitcode!=2) continue;
 
-    if (isdata && event_CSCTightHaloID>0) continue;
+    //    if (isdata && event_CSCTightHaloID>0) continue;
     //if (mode!="muon" && event_NMuons>0) continue;
     //if (mode!="muon" && event_NMuonsTot>0) continue;
     //    if (!isdata && (event_PUOOTnumInteractionsEarly<20 && event_PUOOTnumInteractionsLate<20)) continue;
@@ -339,13 +339,6 @@ void template_production::Loop(int maxevents)
       
     }
 
-    bool leadistruesig = 0;
-    bool trailistruesig = 0;
-    if (!isdata){
-      leadistruesig = (pholead_PhoMCmatchexitcode==1 || pholead_PhoMCmatchexitcode==2) && (pholead_GenPhotonIsoDR04<5);
-      trailistruesig = (photrail_PhoMCmatchexitcode==1 || photrail_PhoMCmatchexitcode==2) && (photrail_GenPhotonIsoDR04<5);
-    }
-
     if (do2dtemplate){
 
 	int event_ok_for_dataset_local = event_ok_for_dataset;
@@ -364,32 +357,20 @@ void template_production::Loop(int maxevents)
 	if (event_ok_for_dataset_local==4) doswap=true;
 	if (event_ok_for_dataset_local==3 || event_ok_for_dataset_local==4) event_ok_for_dataset_local=1;
 
-	if (mode=="2pgen" || mode=="1p1fgen" || mode=="2fgen"){
-	  assert (!isdata);
-	  TString wmode("");
-	  if (leadistruesig && trailistruesig) {event_pass12whoisrcone=0; wmode=TString("2pgen");}
-	  else if (!leadistruesig && !trailistruesig) {event_pass12whoisrcone=0; wmode=TString("2fgen");}
-	  else if (leadistruesig && !trailistruesig) {event_pass12whoisrcone=0; wmode=TString("1p1fgen");}
-	  else {event_pass12whoisrcone=1; wmode=TString("1p1fgen");}
-	  if (wmode!=mode) continue;
-	}
-
-    
 	if (doswap){
 	  float temp;
 	  temp=in1; in1=in2; in2=temp;
 	  temp=ptin1; ptin1=ptin2; ptin2=temp;
 	  temp=sieiein1; sieiein1=sieiein2; sieiein2=temp;
 	  temp=etain1; etain1=etain2; etain2=temp;
-	  event_pass12whoisrcone=!event_pass12whoisrcone;
+	  event_pass12whoissiglike=!event_pass12whoissiglike;
 	}
 
 	TString sigorbkg;
 	if (do2ptemplate) sigorbkg=TString("sigsig");
 	if (do2ftemplate) sigorbkg=TString("bkgbkg");
-	if (do1p1ftemplate) sigorbkg=TString("sigbkg");
-	//	if (do1p1ftemplate && event_ok_for_dataset_local==1 && event_pass12whoisrcone==1) sigorbkg=TString("bkgsig");
-	if (do1p1ftemplate && event_pass12whoisrcone==1) sigorbkg=TString("bkgsig");
+	if (do1p1ftemplate && event_pass12whoissiglike==0) sigorbkg=TString("sigbkg");
+	if (do1p1ftemplate && event_pass12whoissiglike==1) sigorbkg=TString("bkgsig");
 	
 	roovar1->setVal(in1);
 	roovar2->setVal(in2);
@@ -492,12 +473,11 @@ void template_production::Loop(int maxevents)
 	args.add(RooArgSet(*roorho,*roosigma));
 	obs_roodset[get_name_obs_roodset(event_ok_for_dataset_local,*diffvariable,bin_couple)]->add(args,weight);
 
-	if (!isdata) {
-	  if (leadistruesig && trailistruesig) weights_2p[event_ok_for_dataset_local][*diffvariable][bin_couple]+=weight;
-	  else if (!leadistruesig && !trailistruesig) weights_2f[event_ok_for_dataset_local][*diffvariable][bin_couple]+=weight;
-	  else weights_1p1f[event_ok_for_dataset_local][*diffvariable][bin_couple]+=weight;
-	}
-
+//	if (!isdata) { SISTEMARE;
+//	  if (leadistruesig && trailistruesig) weights_2p[event_ok_for_dataset_local][*diffvariable][bin_couple]+=weight;
+//	  else if (!leadistruesig && !trailistruesig) weights_2f[event_ok_for_dataset_local][*diffvariable][bin_couple]+=weight;
+//	  else weights_1p1f[event_ok_for_dataset_local][*diffvariable][bin_couple]+=weight;
+//	}
 
       }
       
@@ -509,20 +489,20 @@ void template_production::Loop(int maxevents)
   } // end event loop
   std::cout << "ended event loop" << std::endl;
 
-  // gen-level purities printout
-  for (int k=0; k<3; k++){
-    if (k==0) std::cout << "EBEB" << std::endl;
-    if (k==1) std::cout << "EBEE" << std::endl;
-    if (k==2) std::cout << "EEEE" << std::endl;
-    for (std::vector<TString>::const_iterator diffvariable = diffvariables_list.begin(); diffvariable!=diffvariables_list.end(); diffvariable++){
-      std::cout << diffvariable->Data() << std::endl;
-      for (int i=0; i<n_bins; i++) {
-	if (weights_2p[k][*diffvariable][i]==0) continue;
-	std::cout << "bin " << i << " " << weights_2p[k][*diffvariable][i] << " " << weights_1p1f[k][*diffvariable][i] << " " << weights_2f[k][*diffvariable][i] << std::endl;
-	std::cout << "bin " << i << " " << weights_2p[k][*diffvariable][i]/(weights_2p[k][*diffvariable][i]+weights_1p1f[k][*diffvariable][i]+weights_2f[k][*diffvariable][i]) << std::endl;
-      }
-    }
-  }
+//  // gen-level purities printout
+//  for (int k=0; k<3; k++){
+//    if (k==0) std::cout << "EBEB" << std::endl;
+//    if (k==1) std::cout << "EBEE" << std::endl;
+//    if (k==2) std::cout << "EEEE" << std::endl;
+//    for (std::vector<TString>::const_iterator diffvariable = diffvariables_list.begin(); diffvariable!=diffvariables_list.end(); diffvariable++){
+//      std::cout << diffvariable->Data() << std::endl;
+//      for (int i=0; i<n_bins; i++) {
+//	if (weights_2p[k][*diffvariable][i]==0) continue;
+//	std::cout << "bin " << i << " " << weights_2p[k][*diffvariable][i] << " " << weights_1p1f[k][*diffvariable][i] << " " << weights_2f[k][*diffvariable][i] << std::endl;
+//	std::cout << "bin " << i << " " << weights_2p[k][*diffvariable][i]/(weights_2p[k][*diffvariable][i]+weights_1p1f[k][*diffvariable][i]+weights_2f[k][*diffvariable][i]) << std::endl;
+//      }
+//    }
+//  }
 
 
 };
@@ -540,39 +520,45 @@ void gen_templates(TString filename="input.root", TString mode="", bool isdata=1
 
   TTree *t;
 
-  TString treename[14];
+  TString treename[18];
 
-  treename[0] =  TString("Tree_standard_sel");
-  treename[1] =  TString("Tree_signal_template");
-  treename[2] =  TString("Tree_background_template");
-  treename[3] =  TString("Tree_DY_sel");
-  treename[4] =  TString("Tree_randomcone_signal_template");
-  treename[5] =  TString("Tree_doublerandomcone_sel");
-  treename[6] =  TString("Tree_DYnocombisowithinvmasscut_sel");
-  treename[7] =  TString("Tree_onlypreselection");
-  treename[8] =  TString("Tree_sieiesideband_sel");
-  treename[9] =  TString("Tree_nocombisocut_sel");
-  treename[10] = TString("Tree_randomcone_nocombisocut");
-  treename[11] = TString("Tree_muoncone");
-  treename[12] = TString("Tree_randomconesideband_sel");
-  treename[13] = TString("Tree_doublesieiesideband_sel");
+  treename[0] = TString("Tree_2Dstandard_selection");
+  treename[1] = TString("Tree_1Drandomcone_template");
+  treename[2] = TString("Tree_1Dsideband_template");
+  treename[3] = TString("Tree_2DZee_pixelvetoreversed_selection");
+  treename[4] = TString("Tree_1Dpreselection");
+  treename[5] = TString("Tree_1Dselection");
+  treename[6] = TString("Tree_2Drandomcone_template");
+  treename[7] = TString("Tree_2Drandomconesideband_template");
+  treename[8] = TString("Tree_2Dsideband_template");
+  treename[9] = TString("Tree_2Dstandard_preselection");
+  treename[10] = TString("Tree_2DZmumu_selection");
+  treename[11] = TString("Tree_1Dsignal_template");
+  treename[12] = TString("Tree_1Dbackground_template");
+  treename[13] = TString("Tree_2Dtruesigsig_template");
+  treename[14] = TString("Tree_2Dtruesigbkg_template");
+  treename[15] = TString("Tree_2Dtruebkgbkg_template");
+  treename[16] = TString("Tree_2Drconeplusgenfake_template");
+  treename[17] = TString("Tree_2Dgenpromptplussideband_template");
 
 
   TString treename_chosen="";
   if (mode=="standard") treename_chosen=treename[0];
-  if (mode=="signal") treename_chosen=treename[1];
-  if (mode=="background") treename_chosen=treename[2];
-  if (mode=="randomcone") treename_chosen=treename[4];
-  if (mode=="sieiesideband") treename_chosen=treename[8];
-  if (mode=="muon") treename_chosen=treename[11];
-  if (mode=="sigsig") treename_chosen=treename[5];
-  if (mode=="sigbkg") treename_chosen=treename[12];
-  if (mode=="bkgbkg") treename_chosen=treename[13];
-  if (mode=="doublerandomcone") treename_chosen=treename[5];
-  if (mode=="zeetemplate") treename_chosen=treename[3];
-  if (mode=="2pgen") treename_chosen=treename[0];
-  if (mode=="1p1fgen") treename_chosen=treename[0];
-  if (mode=="2fgen") treename_chosen=treename[0];
+  if (mode=="signal") treename_chosen=treename[11];
+  if (mode=="background") treename_chosen=treename[12];
+  if (mode=="randomcone") treename_chosen=treename[1];
+  if (mode=="sieiesideband") treename_chosen=treename[2];
+  if (mode=="zmumu") treename_chosen=treename[10];
+  if (mode=="sigsig") treename_chosen=treename[6];
+  if (mode=="sigbkg") treename_chosen=treename[7];
+  if (mode=="bkgbkg") treename_chosen=treename[8];
+  if (mode=="zee") treename_chosen=treename[3];
+  if (mode=="2pgen") treename_chosen=treename[13];
+  if (mode=="1p1fbothgen") treename_chosen=treename[14];
+  if (mode=="2fgen") treename_chosen=treename[15];
+  if (mode=="1prcone1fgen") treename_chosen=treename[16];
+  if (mode=="1pgen1fside") treename_chosen=treename[17];
+
 
   file->GetObject(treename_chosen.Data(),t);
 
@@ -609,9 +595,7 @@ void get_eff_area(TString filename, bool doEB, TString comp){
   TTree *t;
 
   TString treename;
-  //  treename = TString("Tree_randomcone_signal_template");
-  //  treename[3] = TString("Tree_DYnocombisowithinvmasscut_sel");
-  treename = TString("Tree_randomcone_nocombisocut");
+  treename = TString("Tree_1Drandomcone_template");
 
 
   std::vector<std::vector<TProfile*> > output;

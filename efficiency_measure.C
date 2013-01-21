@@ -17,8 +17,8 @@ void efficiency_measure::Loop(){
 void efficiency_measure::LoopOne(TString diffvariable, TFile *outf)
 {
 
-  assert (outf->GetName()=="eff_ggjets_num.root" || outf->GetName()=="eff_ggjets_den.root");
-  bool isnum = (outf->GetName()=="eff_ggjets_num.root");
+  assert (TString(outf->GetName())==TString("eff_ggjets_num.root") || TString(outf->GetName())==TString("eff_ggjets_den.root"));
+  bool isnum = (TString(outf->GetName())==TString("eff_ggjets_num.root"));
 
 //   In a ROOT session, you can do:
 //      Root > .L efficiency_measure.C

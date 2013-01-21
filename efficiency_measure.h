@@ -401,7 +401,7 @@ efficiency_measure::efficiency_measure(const char* filename, const char* _outnam
       if (!f || !f->IsOpen()) {
          f = new TFile(filename);
       }
-      f->GetObject("Tree_standard_sel",tree);
+      f->GetObject("Tree_2Dstandard_selection",tree);
 
    }
    Init(tree);

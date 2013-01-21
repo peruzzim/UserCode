@@ -55,7 +55,7 @@ public :
    Int_t           event_PUOOTnumInteractionsEarly;
    Int_t           event_PUOOTnumInteractionsLate;
    Int_t           event_nRecVtx;
-   Int_t           event_pass12whoisrcone;
+   Int_t           event_pass12whoissiglike;
    Int_t           event_CSCTightHaloID;
    Int_t           event_NMuons;
    Int_t           event_NMuonsTot;
@@ -225,7 +225,7 @@ public :
    TBranch        *b_event_PUOOTnumInteractionsEarly;   //!
    TBranch        *b_event_PUOOTnumInteractionsLate;   //!
    TBranch        *b_event_nRecVtx;   //!
-   TBranch        *b_event_pass12whoisrcone;   //!
+   TBranch        *b_event_pass12whoissiglike;   //!
    TBranch        *b_event_CSCTightHaloID; //!
    TBranch        *b_event_NMuons; //!
    TBranch        *b_event_NMuonsTot; //!
@@ -603,11 +603,11 @@ void template_production::Setup(Bool_t _isdata, TString _mode, TString _differen
 
   Init();
 
-  if (mode=="standard" || mode=="doublerandomcone") dodistribution=true;
-  if (mode=="signal" || mode=="randomcone" || mode=="muon" || mode=="zeetemplate") dosignaltemplate=true;
-  if (mode=="background" || mode=="impinging" || mode=="sieiesideband" || mode=="combisosideband") dobackgroundtemplate=true;
-  if (mode=="sigsig" || mode=="2pgen") do2ptemplate=true; 
-  if (mode=="sigbkg" || mode=="1p1fgen") do1p1ftemplate=true; 
+  if (mode=="standard" || mode=="preselection_diphoton") dodistribution=true;
+  if (mode=="signal" || mode=="randomcone") dosignaltemplate=true;
+  if (mode=="background" || mode=="sieiesideband") dobackgroundtemplate=true;
+  if (mode=="sigsig" || mode=="2pgen" || mode=="zmumu" || mode=="zee") do2ptemplate=true; 
+  if (mode=="sigbkg" || mode=="1p1fbothgen" || mode=="1prcone1fgen" || mode=="1pgen1fside") do1p1ftemplate=true; 
   if (mode=="bkgbkg" || mode=="2fgen") do2ftemplate=true; 
   do2dtemplate = (do2ptemplate || do1p1ftemplate || do2ftemplate);
 
@@ -1088,7 +1088,7 @@ void template_production::Init()
    fChain->SetBranchAddress("event_PUOOTnumInteractionsEarly", &event_PUOOTnumInteractionsEarly, &b_event_PUOOTnumInteractionsEarly);
    fChain->SetBranchAddress("event_PUOOTnumInteractionsLate", &event_PUOOTnumInteractionsLate, &b_event_PUOOTnumInteractionsLate);
    fChain->SetBranchAddress("event_nRecVtx", &event_nRecVtx, &b_event_nRecVtx);
-   fChain->SetBranchAddress("event_pass12whoisrcone", &event_pass12whoisrcone, &b_event_pass12whoisrcone);
+   fChain->SetBranchAddress("event_pass12whoissiglike", &event_pass12whoissiglike, &b_event_pass12whoissiglike);
    fChain->SetBranchAddress("event_CSCTightHaloID", &event_CSCTightHaloID, &b_event_CSCTightHaloID);
    fChain->SetBranchAddress("event_NMuons", &event_NMuons, &b_event_NMuons);
    fChain->SetBranchAddress("event_NMuonsTot", &event_NMuonsTot, &b_event_NMuonsTot);
