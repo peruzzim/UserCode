@@ -1,5 +1,5 @@
 bool doplots = false;
-bool doxcheckstemplates = false;
+bool doxcheckstemplates = true;
 
 #include <assert.h>
 
@@ -152,22 +152,28 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
   bool sym  = (s1==s2);
   
   if (do_syst_string=="templateshapeMCtrue"){
-    if(!dir_t2p)   inputfile_t2p->GetObject("mc_Tree_standard_sel",dir_t2p);
-    if(!dir_t1p1f) inputfile_t1p1f->GetObject("mc_Tree_standard_sel",dir_t1p1f);
-    if(!dir_t2f)   inputfile_t2f->GetObject("mc_Tree_standard_sel",dir_t2f);
-    if(!dir_d)     inputfile_d->GetObject("mc_Tree_standard_sel",dir_d);
+    if(!dir_t2p)   inputfile_t2p->GetObject("mc_Tree_2Dtruesigsig_template",dir_t2p);
+    if(!dir_t1p1f) inputfile_t1p1f->GetObject("mc_Tree_2Dtruesigbkg_template",dir_t1p1f);
+    if(!dir_t2f)   inputfile_t2f->GetObject("mc_Tree_2Dtruebkgbkg_template",dir_t2f);
+    if(!dir_d)     inputfile_d->GetObject("mc_Tree_2Dstandard_selection",dir_d);
   }
-  else if (do_syst_string=="templateshapeMCdriven"){
-    if(!dir_t2p)   inputfile_t2p->GetObject("mc_Tree_doublerandomcone_sel",dir_t2p);
-    if(!dir_t1p1f) inputfile_t1p1f->GetObject("mc_Tree_randomconesideband_sel",dir_t1p1f);
-    if(!dir_t2f)   inputfile_t2f->GetObject("mc_Tree_doublesieiesideband_sel",dir_t2f);
-    if(!dir_d)     inputfile_d->GetObject("mc_Tree_standard_sel",dir_d);
+  else if (do_syst_string=="templateshapeMCpromptdriven"){
+    if(!dir_t2p)   inputfile_t2p->GetObject("mc_Tree_2Drandomcone_template",dir_t2p);
+    if(!dir_t1p1f) inputfile_t1p1f->GetObject("mc_Tree_2Drconeplusgenfake_template",dir_t1p1f);
+    if(!dir_t2f)   inputfile_t2f->GetObject("mc_Tree_2Dtruebkgbkg_template",dir_t2f);
+    if(!dir_d)     inputfile_d->GetObject("mc_Tree_2Dstandard_selection",dir_d);
+  }
+  else if (do_syst_string=="templateshapeMCfakedriven"){
+    if(!dir_t2p)   inputfile_t2p->GetObject("mc_Tree_2Dtruesigsig_template",dir_t2p);
+    if(!dir_t1p1f) inputfile_t1p1f->GetObject("mc_Tree_2Dgenpromptplussideband_template",dir_t1p1f);
+    if(!dir_t2f)   inputfile_t2f->GetObject("mc_Tree_2Dsideband_template",dir_t2f);
+    if(!dir_d)     inputfile_d->GetObject("mc_Tree_2Dstandard_selection",dir_d);
   }
   else {
-    if(!dir_t2p)   inputfile_t2p->GetObject("data_Tree_doublerandomcone_sel",dir_t2p);
-    if(!dir_t1p1f) inputfile_t1p1f->GetObject("data_Tree_randomconesideband_sel",dir_t1p1f);
-    if(!dir_t2f)   inputfile_t2f->GetObject("data_Tree_doublesieiesideband_sel",dir_t2f);
-    if(!dir_d)     inputfile_d->GetObject("data_Tree_standard_sel",dir_d);
+    if(!dir_t2p)   inputfile_t2p->GetObject("data_Tree_2Drandomcone_template",dir_t2p);
+    if(!dir_t1p1f) inputfile_t1p1f->GetObject("data_Tree_2Drandomconesideband_template",dir_t1p1f);
+    if(!dir_t2f)   inputfile_t2f->GetObject("data_Tree_2Dsideband_template",dir_t2f);
+    if(!dir_d)     inputfile_d->GetObject("data_Tree_2Dstandard_selection",dir_d);
   }  
     
   assert(dir_t2p);
@@ -273,23 +279,26 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
   if (doxcheckstemplates) {
 
   TFile *fmctrue_s = new TFile("outphoton_allmc_sig.root","read");
-  fmctrue_s->GetObject(Form("mc_Tree_signal_template/roodset_signal_%s_b%d_rv1",s1.Data(),bin),dset_mctrue_s);
+  fmctrue_s->GetObject(Form("mc_Tree_1Dsignal_template/roodset_signal_%s_b%d_rv1",s1.Data(),bin),dset_mctrue_s);
   assert(dset_mctrue_s);
   
   TFile *fmcrcone_s = new TFile("outphoton_allmc_rcone.root","read");
-  fmcrcone_s->GetObject(Form("mc_Tree_randomcone_signal_template/roodset_signal_%s_b%d_rv1",s1.Data(),bin),dset_mcrcone_s);
+  fmcrcone_s->GetObject(Form("mc_Tree_1Drandomcone_template/roodset_signal_%s_b%d_rv1",s1.Data(),bin),dset_mcrcone_s);
   assert(dset_mcrcone_s);
   
-  TFile *fzee_s = new TFile("outphoton_data_zeetemplate.root","read");
-  fzee_s->GetObject(Form("data_Tree_DY_sel/roodset_signal_%s_b%d_rv1",s1.Data(),bin),dset_zee_s);
+  TFile *fzee_s = new TFile("outphoton_data_zee.root","read");
+  RooDataSet *dset_zee_s_2d = NULL;
+  fzee_s->GetObject(Form("data_Tree_2DZee_pixelvetoreversed_selection/template_roodset_%s_sigsig",splitting.Data()),dset_zee_s_2d);
+  assert(dset_zee_s_2d);
+  dset_zee_s = (RooDataSet*)(dset_zee_s_2d->reduce(Name("dset_zee_s"),SelectVars(RooArgList(*roovar1,*roopt1,*roosieie1,*rooeta1,*roorho,*roosigma))));
   assert(dset_zee_s);
-  
+
   TFile *fmctrue_b = new TFile("outphoton_allmc_bkg.root","read");
-  fmctrue_b->GetObject(Form("mc_Tree_background_template/roodset_background_%s_b%d_rv1",s1.Data(),bin),dset_mctrue_b);
+  fmctrue_b->GetObject(Form("mc_Tree_1Dbackground_template/roodset_background_%s_b%d_rv1",s1.Data(),bin),dset_mctrue_b);
   assert(dset_mctrue_b);
 
   TFile *fmcrcone_b = new TFile("outphoton_allmc_sieiesideband.root","read");
-  fmcrcone_b->GetObject(Form("mc_Tree_sieiesideband_sel/roodset_background_%s_b%d_rv1",s1.Data(),bin),dset_mcrcone_b);
+  fmcrcone_b->GetObject(Form("mc_Tree_1Dsideband_template/roodset_background_%s_b%d_rv1",s1.Data(),bin),dset_mcrcone_b);
   assert(dset_mcrcone_b);
   
   std::cout << "MC datasets" << std::endl;
@@ -1261,7 +1270,7 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
     
     for (int i=0; i<4; i++){
       TString name = "purity_";
-      if (do_syst_string==TString("templateshapeMCtrue") || do_syst_string==TString("templateshapeMCdriven")) {name+=do_syst_string; name.Append("_");}
+      if (do_syst_string==TString("templateshapeMCtrue") || do_syst_string==TString("templateshapeMCpromptdriven") || do_syst_string==TString("templateshapeMCfakedriven")) {name+=do_syst_string; name.Append("_");}
       if (i==0) name.Append("sigsig"); else if (i==1) name.Append("sigbkg"); else if (i==2) name.Append("bkgsig"); else if (i==3) name.Append("bkgbkg");
       if (bins_to_run>0) purity[i] = new TH1F(name.Data(),name.Data(),bins_to_run,binsdef);
       else purity[i] = new TH1F(name.Data(),name.Data(),n_bins,0,n_bins);
@@ -1285,7 +1294,7 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
     eventshisto->SetBinContent(bin+1,out->tot_events);
 
     TString helper("");
-    if (do_syst_string==TString("templateshapeMCtrue")|| do_syst_string==TString("templateshapeMCdriven")) {helper = do_syst_string; helper+=TString("_");}
+    if (do_syst_string==TString("templateshapeMCtrue") || do_syst_string==TString("templateshapeMCpromptdriven") || do_syst_string==TString("templateshapeMCfakedriven")) {helper = do_syst_string; helper+=TString("_");}
     
     TFile *purityfile = new TFile(Form("plots/histo_purity_%s%s_%s_b%d.root",helper.Data(),diffvariable.Data(),splitting.Data(),bin),"recreate");
     purityfile->cd();
