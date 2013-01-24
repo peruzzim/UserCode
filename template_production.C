@@ -61,7 +61,10 @@ void template_production::Loop(int maxevents)
       if (fabs(dipho_mgg_photon-91.2)>10) continue;
     }
     //    if (mode=="background") if (pholead_PhoMCmatchexitcode!=3) continue;
+
     //    if (mode=="background") if (pholead_PhoMCmatchexitcode!=1 && pholead_PhoMCmatchexitcode!=2) continue;
+
+    //    if (mode=="background") if (pholead_PhoMCmatchexitcode!=0) continue;  
 
     //    if (isdata && event_CSCTightHaloID>0) continue;
     //if (mode!="muon" && event_NMuons>0) continue;
@@ -99,6 +102,8 @@ void template_production::Loop(int maxevents)
       reg_trail=0;
     }
     else std::cout << "We have a problem here!!!" << std::endl;
+
+    //    std::cout << event_ok_for_dataset << " " << fabs(pholead_SCeta) << " " << fabs(photrail_SCeta) << std::endl;
 
 
 //    if (differentialvariable=="photoniso"){
@@ -251,14 +256,14 @@ void template_production::Loop(int maxevents)
       if (pholead_outvar<-100) std::cout << "PROBLEM WITH ISOLATION CALCULATION!!!" << std::endl;
       assert (pholead_outvar>=-100);
       if (pholead_outvar<leftrange) {/*std::cout << "Warning: fixing underflow " << pholead_outvar << std::endl;*/ pholead_outvar=leftrange+1e-5;}
-      if (pholead_outvar>=rightrange) continue;
+      //      if (pholead_outvar>=rightrange) continue;
       if (pholead_outvar>=rightrange) pholead_outvar=rightrange-1e-5; // overflow in last bin 
     }
     if (recalc_trail){
       if (photrail_outvar<-100) std::cout << "PROBLEM WITH ISOLATION CALCULATION!!!" << std::endl;
       assert (photrail_outvar>=-100);
       if (photrail_outvar<leftrange) {/*std::cout << "Warning: fixing underflow " << photrail_outvar << std::endl;*/ photrail_outvar=leftrange+1e-5;}
-      if (photrail_outvar>=rightrange) continue;
+      //      if (photrail_outvar>=rightrange) continue;
       if (photrail_outvar>=rightrange) photrail_outvar=rightrange-1e-5; // overflow in last bin 
     }
 

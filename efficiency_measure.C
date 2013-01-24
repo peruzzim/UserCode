@@ -17,9 +17,6 @@ void efficiency_measure::Loop(){
 void efficiency_measure::LoopOne(TString diffvariable, TFile *outf)
 {
 
-  assert (TString(outf->GetName())==TString("eff_ggjets_num.root") || TString(outf->GetName())==TString("eff_ggjets_den.root"));
-  bool isnum = (TString(outf->GetName())==TString("eff_ggjets_num.root"));
-
 //   In a ROOT session, you can do:
 //      Root > .L efficiency_measure.C
 //      Root > efficiency_measure t
@@ -271,11 +268,10 @@ void efficiency_measure::LoopOne(TString diffvariable, TFile *outf)
       if (pholead_GenPhotonIsoDR04>5 || photrail_GenPhotonIsoDR04>5) pass1=false;
 //      if (pholead_outvar<leftrange)   pass1=false;
 //      if (photrail_outvar<leftrange)  pass1=false;
-
-      if (isnum){
-	if (pholead_outvar>=rightrange) pass1=false;
-	if (photrail_outvar>=rightrange)pass1=false;
-      }
+//      if (isnum){
+//	if (pholead_outvar>=rightrange) pass1=false;
+//	if (photrail_outvar>=rightrange)pass1=false;
+//      }
 
       if (!dosingle){
       float fillvar=0;

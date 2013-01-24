@@ -1,5 +1,5 @@
 bool doplots = false;
-bool doxcheckstemplates = true;
+bool doxcheckstemplates = false;
 
 #include <assert.h>
 
@@ -75,6 +75,7 @@ typedef struct {
   float fp_err;
   float ff;
   float ff_err;
+  float eff_overflow_removal_pp;
 } fit_output; 
 
 const int numcpu=1;
@@ -127,7 +128,47 @@ TDirectoryFile *dir_t2f=NULL;
 TDirectoryFile *dir_d=NULL;
 
 
-fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename_t1p1f, const char* inputfilename_t2f, const char* inputfilename_d, TString diffvariable, TString splitting, int bin, const TString do_syst_string=TString(""), int bins_to_run=0, float* binsdef=NULL){
+fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename_t1p1f, const char* inputfilename_t2f, const char* inputfilename_d, TString diffvariable, TString splitting, int bin, const TString do_syst_string=TString("")){
+
+  TH1F::SetDefaultSumw2(kTRUE);
+
+  int bins_to_run=0; 
+  float *binsdef=NULL;
+
+  if (diffvariable=="invmass"){
+    if (splitting=="EBEB")      bins_to_run=n_templates_invmass_EBEB;
+    else if (splitting=="EBEE") bins_to_run=n_templates_invmass_EBEE;
+    else if (splitting=="EEEE") bins_to_run=n_templates_invmass_EEEE; 
+    if (splitting=="EBEB")      binsdef=binsdef_diphoton_invmass_EBEB;
+    else if (splitting=="EBEE") binsdef=binsdef_diphoton_invmass_EBEE;
+    else if (splitting=="EEEE") binsdef=binsdef_diphoton_invmass_EEEE;
+  }
+  if (diffvariable=="diphotonpt"){
+    if (splitting=="EBEB")      bins_to_run=n_templates_diphotonpt_EBEB;
+    else if (splitting=="EBEE") bins_to_run=n_templates_diphotonpt_EBEE;
+    else if (splitting=="EEEE") bins_to_run=n_templates_diphotonpt_EEEE; 
+    if (splitting=="EBEB")      binsdef=binsdef_diphoton_diphotonpt_EBEB;
+    else if (splitting=="EBEE") binsdef=binsdef_diphoton_diphotonpt_EBEE;
+    else if (splitting=="EEEE") binsdef=binsdef_diphoton_diphotonpt_EEEE;
+  }
+  if (diffvariable=="costhetastar"){
+    if (splitting=="EBEB")      bins_to_run=n_templates_costhetastar_EBEB;
+    else if (splitting=="EBEE") bins_to_run=n_templates_costhetastar_EBEE;
+    else if (splitting=="EEEE") bins_to_run=n_templates_costhetastar_EEEE; 
+    if (splitting=="EBEB")      binsdef=binsdef_diphoton_costhetastar_EBEB;
+    else if (splitting=="EBEE") binsdef=binsdef_diphoton_costhetastar_EBEE;
+    else if (splitting=="EEEE") binsdef=binsdef_diphoton_costhetastar_EEEE;
+  }
+  if (diffvariable=="dphi"){
+    if (splitting=="EBEB")      bins_to_run=n_templates_dphi_EBEB;
+    else if (splitting=="EBEE") bins_to_run=n_templates_dphi_EBEE;
+    else if (splitting=="EEEE") bins_to_run=n_templates_dphi_EEEE; 
+    if (splitting=="EBEB")      binsdef=binsdef_diphoton_dphi_EBEB;
+    else if (splitting=="EBEE") binsdef=binsdef_diphoton_dphi_EBEE;
+    else if (splitting=="EEEE") binsdef=binsdef_diphoton_dphi_EEEE;
+  }
+
+  if (bins_to_run==bin) bins_to_run=0;
 
   fit_output *out=NULL;
 
@@ -197,7 +238,6 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
   for (int i=1; i<n_templatebins+1; i++) binning_roovar2_threshold->addThreshold(templatebinsboundaries[i],Form("rv2_templatebin_thr_%d",i));
   binning_roovar1 = new RooRealVar("binning_roovar1","binning_roovar1",0.5,n_templatebins+0.5); binning_roovar1->setBins(n_templatebins);
   binning_roovar2 = new RooRealVar("binning_roovar2","binning_roovar2",0.5,n_templatebins+0.5); binning_roovar2->setBins(n_templatebins);
-    
 
   dir_d->GetObject("roopt1",roopt1); 
   dir_d->GetObject("roosieie1",roosieie1); 
@@ -241,18 +281,29 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
   assert(dataset_bkgbkg_orig);
   assert(dataset_orig);
 
-  RooDataSet *dataset_sigsig = (RooDataSet*)(dataset_sigsig_orig->Clone("dataset_sigsig"));
-  RooDataSet *dataset_sigbkg = (RooDataSet*)(dataset_sigbkg_orig->Clone("dataset_sigbkg"));
-  RooDataSet *dataset_bkgsig = (RooDataSet*)(dataset_bkgsig_orig->Clone("dataset_bkgsig"));
-  RooDataSet *dataset_bkgbkg = (RooDataSet*)(dataset_bkgbkg_orig->Clone("dataset_bkgbkg"));
-  RooDataSet *dataset =        (RooDataSet*)(dataset_orig->Clone("dataset"));
+  RooDataSet *dataset_sigsig = (RooDataSet*)(dataset_sigsig_orig->reduce(Name("dataset_sigsig"),Cut(Form("roovar1<%f && roovar2<%f",rightrange-1e-5,rightrange-1e-5))));
+  RooDataSet *dataset_sigbkg = (RooDataSet*)(dataset_sigbkg_orig->reduce(Name("dataset_sigbkg"),Cut(Form("roovar1<%f && roovar2<%f",rightrange-1e-5,rightrange-1e-5))));
+  RooDataSet *dataset_bkgsig = (RooDataSet*)(dataset_bkgsig_orig->reduce(Name("dataset_bkgsig"),Cut(Form("roovar1<%f && roovar2<%f",rightrange-1e-5,rightrange-1e-5))));
+  RooDataSet *dataset_bkgbkg = (RooDataSet*)(dataset_bkgbkg_orig->reduce(Name("dataset_bkgbkg"),Cut(Form("roovar1<%f && roovar2<%f",rightrange-1e-5,rightrange-1e-5))));
+  RooDataSet *dataset =        (RooDataSet*)(dataset_orig->reduce(Name("dataset"),Cut(Form("roovar1<%f && roovar2<%f",rightrange-1e-5,rightrange-1e-5))));
+
+//  RooDataSet *dataset_sigsig = (RooDataSet*)(dataset_sigsig_orig->Clone("dataset_sigsig"));
+//  RooDataSet *dataset_sigbkg = (RooDataSet*)(dataset_sigbkg_orig->Clone("dataset_sigbkg"));
+//  RooDataSet *dataset_bkgsig = (RooDataSet*)(dataset_bkgsig_orig->Clone("dataset_bkgsig"));
+//  RooDataSet *dataset_bkgbkg = (RooDataSet*)(dataset_bkgbkg_orig->Clone("dataset_bkgbkg"));
+//  RooDataSet *dataset =        (RooDataSet*)(dataset_orig->Clone("dataset"));
 
   std::cout << "2D datasets" << std::endl;
   dataset_sigsig->Print();
   dataset_sigbkg->Print();
   dataset_bkgsig->Print();
   dataset_bkgbkg->Print();
+  dataset_orig->Print();
   dataset->Print();
+  const float eff_overflow_removal = dataset_sigsig->sumEntries()/dataset_sigsig_orig->sumEntries();
+  std::cout << "TO BE DONE BETTER AFTER REWEIGHTING: Efficiency of overflow removal: " << eff_overflow_removal << std::endl;
+  assert (eff_overflow_removal>0.995);
+
 
   RooDataSet *dataset_sig_axis1 = (RooDataSet*)(dataset_sigsig->reduce(Name("dataset_sig_axis1"),SelectVars(RooArgList(*roovar1,*roopt1,*roosieie1,*rooeta1,*roorho,*roosigma))));
   RooDataSet *dataset_bkg_axis1 = (RooDataSet*)(dataset_bkgsig->reduce(Name("dataset_bkg_axis1"),SelectVars(RooArgList(*roovar1,*roopt1,*roosieie1,*rooeta1,*roorho,*roosigma))));
@@ -635,7 +686,7 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
     out->fp_err=0;
     out->ff=0;
     out->ff_err=0;
-
+    out->eff_overflow_removal_pp=eff_overflow_removal;
 
     RooRealVar *pp = new RooRealVar("pp","pp",pp_init,0,1);
     RooRealVar *j1 = new RooRealVar("j1","j1",pp_init+pf_init,0,1);
@@ -1265,6 +1316,9 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
     TH1F *eventshisto;
     if (bins_to_run>0) eventshisto = new TH1F("eventshisto","eventshisto",bins_to_run,binsdef);
     else eventshisto = new TH1F("eventshisto","eventshisto",n_bins,0,n_bins);
+    TH1F *overflowremovaleffhisto;
+    if (bins_to_run>0) overflowremovaleffhisto = new TH1F("overflowremovaleffhisto","overflowremovaleffhisto",bins_to_run,binsdef);
+    else overflowremovaleffhisto = new TH1F("overflowremovaleffhisto","overflowremovaleffhisto",n_bins,0,n_bins);
 
     int colors[4] = {kRed, kGreen, kGreen+2, kBlack};
     
@@ -1292,6 +1346,7 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
     purity[3]->SetBinContent(bin+1,out->ff);
     purity[3]->SetBinError(bin+1,out->ff_err);
     eventshisto->SetBinContent(bin+1,out->tot_events);
+    overflowremovaleffhisto->SetBinContent(bin+1,out->eff_overflow_removal_pp);
 
     TString helper("");
     if (do_syst_string==TString("templateshapeMCtrue") || do_syst_string==TString("templateshapeMCpromptdriven") || do_syst_string==TString("templateshapeMCfakedriven")) {helper = do_syst_string; helper+=TString("_");}
@@ -1300,6 +1355,7 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
     purityfile->cd();
     for (int i=0; i<4; i++) purity[i]->Write();
     eventshisto->Write();
+    overflowremovaleffhisto->Write();
     purityfile->Close();
 
   }
@@ -1310,17 +1366,6 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
 };
 
 void fit_dataset_allbins(TString inputfilename_t2p, TString inputfilename_t1p1f, TString inputfilename_t2f, TString inputfilename_d="tobefitted.root", TString diffvariable="", TString splitting="", TString do_syst_string=TString("")){
-
-  bool sym = false;
-  {
-    TString s1; TString s2;
-    if (splitting=="EBEB") {s1="EB"; s2="EB";}
-    else if (splitting=="EEEE") {s1="EE"; s2="EE";}
-    else if (splitting=="EBEE") {s1="EB"; s2="EE";}
-    sym  = (s1==s2);
-  }
-
-  TH1F::SetDefaultSumw2(kTRUE);
 
   int bins_to_run=0; 
   float *binsdef=NULL;
@@ -1357,12 +1402,11 @@ void fit_dataset_allbins(TString inputfilename_t2p, TString inputfilename_t1p1f,
     else if (splitting=="EBEE") binsdef=binsdef_diphoton_dphi_EBEE;
     else if (splitting=="EEEE") binsdef=binsdef_diphoton_dphi_EEEE;
   }
-
   
   fit_output *fr[n_bins];
 
   for (int bin=0; bin<bins_to_run; bin++) {
-    fr[bin]=fit_dataset(inputfilename_t2p.Data(),inputfilename_t1p1f.Data(),inputfilename_t2f.Data(),inputfilename_d.Data(),diffvariable,splitting,bin,do_syst_string,bins_to_run,binsdef);
+    fr[bin]=fit_dataset(inputfilename_t2p.Data(),inputfilename_t1p1f.Data(),inputfilename_t2f.Data(),inputfilename_d.Data(),diffvariable,splitting,bin,do_syst_string);
   }
 
 };
@@ -1422,6 +1466,7 @@ void post_process(TString diffvariable="", TString splitting=""){
 
   TH1F *purity[4];
   TH1F *eventshisto;
+  TH1F *overflowremovaleffhisto;
   TH1F *eff=NULL;
   TH1F *xsec;
 
@@ -1437,9 +1482,10 @@ void post_process(TString diffvariable="", TString splitting=""){
   purity_file->GetObject("purity_bkgsig",purity[2]);
   purity_file->GetObject("purity_bkgbkg",purity[3]);
   purity_file->GetObject("eventshisto",eventshisto);
+  purity_file->GetObject("overflowremovaleffhisto",overflowremovaleffhisto);
 
   std::cout << "Purity histos imported" << std::endl;
-  for (int i=0; i<4; i++) purity[i]->Print(); eventshisto->Print();
+  for (int i=0; i<4; i++) purity[i]->Print(); eventshisto->Print(); overflowremovaleffhisto->Print(); 
 
     xsec = new TH1F("xsec","xsec",bins_to_run,binsdef);
     xsec->SetMarkerStyle(20);
@@ -1470,8 +1516,9 @@ void post_process(TString diffvariable="", TString splitting=""){
     float ff = 	       purity[3]->GetBinContent(bin+1);
     float ff_err =     purity[3]->GetBinError(bin+1);
     float tot_events = eventshisto->GetBinContent(bin+1);
+    float eff_overflow = overflowremovaleffhisto->GetBinContent(bin+1);
 
-    xsec->SetBinContent(bin+1,pp*tot_events/xsec->GetBinWidth(bin+1)/intlumi);
+    xsec->SetBinContent(bin+1,pp*tot_events/eff_overflow/xsec->GetBinWidth(bin+1)/intlumi);
 
     float err1=purity[0]->GetBinError(bin+1)/purity[0]->GetBinContent(bin+1);
     float err2=1.0/sqrt(tot_events);
@@ -2325,7 +2372,6 @@ void generate_toy_dataset_2d(RooDataSet **target, RooHistPdf *sigsigpdf, RooHist
 };
 
 void print_mem(){
-
   gSystem->GetProcInfo(&procinfo); 
   std::cout << "Resident mem (kB): " << procinfo.fMemResident << std::endl; 
   std::cout << "Virtual mem (kB):  " << procinfo.fMemVirtual << std::endl; 

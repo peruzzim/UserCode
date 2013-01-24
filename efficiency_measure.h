@@ -365,7 +365,7 @@ public :
    TBranch        *b_photrail_photonpfcanddetas;
    TBranch        *b_photrail_photonpfcanddphis;
 
-   efficiency_measure(const char* filename, const char* outname);
+   efficiency_measure(const char* filename, const char* outname, bool isnum);
    virtual ~efficiency_measure();
    //   virtual Int_t    Cut(Long64_t entry);
    virtual Int_t    GetEntry(Long64_t entry);
@@ -389,7 +389,7 @@ public :
 #endif
 
 #ifdef efficiency_measure_cxx
-efficiency_measure::efficiency_measure(const char* filename, const char* _outname) : fChain(0) 
+efficiency_measure::efficiency_measure(const char* filename, const char* _outname, bool isnum) : fChain(0) 
 {
 // if parameter tree is not specified (or zero), connect the file
 // used to generate this class and read the Tree.
@@ -401,7 +401,8 @@ efficiency_measure::efficiency_measure(const char* filename, const char* _outnam
       if (!f || !f->IsOpen()) {
          f = new TFile(filename);
       }
-      f->GetObject("Tree_2Dstandard_selection",tree);
+      if (isnum) f->GetObject("Tree_2Dstandard_selection",tree);
+      else f->GetObject("Tree_2Dstandard_preselection",tree);
 
    }
    Init(tree);
