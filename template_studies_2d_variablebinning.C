@@ -1222,7 +1222,22 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
   delete dataset_bkgsig;
   delete dataset_sigbkg;
   delete dataset_sigsig;
-   
+  delete dataset_sigsig_orig;
+  delete dataset_sigbkg_orig;
+  delete dataset_bkgsig_orig;
+  delete dataset_bkgbkg_orig;
+  delete dataset_orig;
+  delete roovar1;
+  delete roopt1;
+  delete rooeta1;
+  delete roosieie1;
+  delete roovar2;
+  delete roopt2;
+  delete rooeta2;
+  delete roosieie2;
+  delete roorho;                                                                                                       
+
+
 //  delete firstpass;
 //  delete secondpass_constraint;
 //  delete secondpass;
@@ -1309,6 +1324,8 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
   print_mem();
 
   bool writeoutpurity = (do_syst_string!=TString("purefitbias") && do_syst_string!=TString("templatestatistics"));
+
+  writeoutpurity=false;
 
   if (writeoutpurity){
 
@@ -1984,11 +2001,11 @@ void validate_reweighting(RooDataSet *dset, RooDataSet *dsetdestination, int num
 
   test[0] = new TH1F("test_rho","test_rho",30,0,30);
   test[1] = new TH1F("test_sigma","test_sigma",20,0,10);
-  test[2] = new TH1F("test_pt","test_pt",10,0,300);
+  test[2] = new TH1F("test_pt","test_pt",30,0,300);
   test[3] = new TH1F("test_eta","test_eta",25,0,2.5);
   target[0] = new TH1F("target_rho","target_rho",30,0,30);
   target[1] = new TH1F("target_sigma","target_sigma",20,0,10);
-  target[2] = new TH1F("target_pt","target_pt",10,0,300);
+  target[2] = new TH1F("target_pt","target_pt",30,0,300);
   target[3] = new TH1F("target_eta","target_eta",25,0,2.5);
 
   const char* ptname=Form("roopt%d",numvar);
