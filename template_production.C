@@ -435,6 +435,7 @@ void template_production::Loop(int maxevents)
 	  value_diffvariable=dphi;
 	}
       
+	if (bin_couple<0) continue;
 	
 	float in1=pholead_outvar;
 	float in2=photrail_outvar;

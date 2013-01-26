@@ -13,9 +13,12 @@ const Int_t n_histobins = 96;
 const Float_t leftrange = -3;
 const Float_t rightrange = 9;
 
-const int n_templatebins = 10; 
-Double_t templatebinsboundaries[n_templatebins+1] = {-3,-0.75,-0.5,-0.25,0,0.5,1,2,4,6,9};
-
+const int n_templatebins_full = 10; 
+Double_t templatebinsboundaries_full[n_templatebins_full+1] = {-3,-0.75,-0.5,-0.25,0,0.5,1,2,4,6,9};
+const int n_templatebins_reduced = 5; 
+Double_t templatebinsboundaries_reduced[n_templatebins_reduced+1] = {-3,-0.5,0,1,4,9};
+int n_templatebins = 0;
+Double_t *templatebinsboundaries = NULL;
 
 static const int n_bins=26;
 
@@ -26,26 +29,26 @@ float binsdef_single_gamma_EE[n_bins+1]={30,40,50,60,70,80,90,110,120};
 float binsdef_single_gamma_EB_eta[n_bins+1]={0,0.2,0.4,0.6,0.8,1,1.2,1.4442};
 float binsdef_single_gamma_EE_eta[n_bins+1]={1.56,1.653,1.8,2,2.2,2.5};
 
-int n_templates_invmass_EBEB=16;
-int n_templates_invmass_EBEE=16;
-int n_templates_invmass_EEEE=16;
-float binsdef_diphoton_invmass_EBEB[n_bins+1]={0,60,70,75,80,85,90,95,100,105,115,125,145,200,250,300,310};
-float binsdef_diphoton_invmass_EBEE[n_bins+1]={0,60,70,75,80,85,90,95,100,105,115,125,145,200,250,300,310};
-float binsdef_diphoton_invmass_EEEE[n_bins+1]={0,60,70,75,80,85,90,95,100,105,115,125,145,200,250,300,310};
+int n_templates_invmass_EBEB=13;
+int n_templates_invmass_EBEE=13;
+int n_templates_invmass_EEEE=13;
+float binsdef_diphoton_invmass_EBEB[n_bins+1]={0,60,75,80,85,90,95,100,110,120,150,250,400,401};
+float binsdef_diphoton_invmass_EBEE[n_bins+1]={0,60,75,80,85,90,95,100,110,120,150,250,400,401};
+float binsdef_diphoton_invmass_EEEE[n_bins+1]={0,60,75,80,85,90,95,100,110,120,150,250,400,401};
 
 int n_templates_diphotonpt_EBEB=17;
 int n_templates_diphotonpt_EBEE=17;
 int n_templates_diphotonpt_EEEE=17;
-float binsdef_diphoton_diphotonpt_EBEB[n_bins+1]={0,6,10,12,14,16,18,20,22,24,28,34,40,50,60,80,120,130};
-float binsdef_diphoton_diphotonpt_EBEE[n_bins+1]={0,6,10,12,14,16,18,20,22,24,28,34,40,50,60,80,120,130};
-float binsdef_diphoton_diphotonpt_EEEE[n_bins+1]={0,6,10,12,14,16,18,20,22,24,28,34,40,50,60,80,120,130};
+float binsdef_diphoton_diphotonpt_EBEB[n_bins+1]={0,6,10,12,14,16,18,20,22,24,28,34,40,50,60,80,120,121};
+float binsdef_diphoton_diphotonpt_EBEE[n_bins+1]={0,6,10,12,14,16,18,20,22,24,28,34,40,50,60,80,120,121};
+float binsdef_diphoton_diphotonpt_EEEE[n_bins+1]={0,6,10,12,14,16,18,20,22,24,28,34,40,50,60,80,120,121};
 
-int n_templates_costhetastar_EBEB=15;
-int n_templates_costhetastar_EBEE=15;
-int n_templates_costhetastar_EEEE=15;
-float binsdef_diphoton_costhetastar_EBEB[n_bins+1]={0,0.05,0.1,0.15,0.2,0.25,0.3,0.35,0.4,0.45,0.5,0.6,0.75,0.9,0.95,1};
-float binsdef_diphoton_costhetastar_EBEE[n_bins+1]={0,0.05,0.1,0.15,0.2,0.25,0.3,0.35,0.4,0.45,0.5,0.6,0.75,0.9,0.95,1};
-float binsdef_diphoton_costhetastar_EEEE[n_bins+1]={0,0.05,0.1,0.15,0.2,0.25,0.3,0.35,0.4,0.45,0.5,0.6,0.75,0.9,0.95,1};
+int n_templates_costhetastar_EBEB=13;
+int n_templates_costhetastar_EBEE=13;
+int n_templates_costhetastar_EEEE=13;
+float binsdef_diphoton_costhetastar_EBEB[n_bins+1]={0,0.05,0.1,0.15,0.2,0.25,0.3,0.35,0.4,0.45,0.5,0.6,0.8,1};
+float binsdef_diphoton_costhetastar_EBEE[n_bins+1]={0,0.05,0.1,0.15,0.2,0.25,0.3,0.35,0.4,0.45,0.5,0.6,0.8,1};
+float binsdef_diphoton_costhetastar_EEEE[n_bins+1]={0,0.05,0.1,0.15,0.2,0.25,0.3,0.35,0.4,0.45,0.5,0.6,0.8,1};
 
 
 int n_templates_dphi_EBEB=13;
@@ -92,9 +95,10 @@ float eff_areas_EE_mc[n_bins] = {5.107922e-02,8.485798e-02,1.354249e-01,1.671490
 
 
 const int n_ptbins_forreweighting = 1;
-//Float_t ptbins_forreweighting[n_ptbins_forreweighting+1]={0,40,60,300};
-//Float_t ptbins_forreweighting[n_ptbins_forreweighting+1]={0,20,40,60,80,100,120,140,160,180,200,300};
 Float_t ptbins_forreweighting[n_ptbins_forreweighting+1]={0,300};
-//Float_t ptbins_forreweighting[n_ptbins_forreweighting+1]={0,30,300};
+
+//const int n_ptbins_forreweighting = 6;
+//Float_t ptbins_forreweighting[n_ptbins_forreweighting+1]={0,35,45,55,65,85,999};
+
 
 #endif

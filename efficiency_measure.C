@@ -273,8 +273,12 @@ void efficiency_measure::LoopOne(TString diffvariable, TFile *outf)
 //	if (photrail_outvar>=rightrange)pass1=false;
 //      }
 
+
+
       if (!dosingle){
+
       float fillvar=0;
+
       if (diffvariable==TString("invmass")) fillvar=dipho_mgg_photon;
 	if (diffvariable==TString("diphotonpt")){
 	  float px = pholead_px+photrail_px;
@@ -298,9 +302,16 @@ void efficiency_measure::LoopOne(TString diffvariable, TFile *outf)
 	  float dphi = AbsDeltaPhi(phi1,phi2);
 	  fillvar=dphi;
 	}
-	
 
-      if (pass1) w_tot_gg[event_ok_for_dataset]->Fill(fillvar,weight);
+	if (fillvar>=(binsdef_gg[event_ok_for_dataset])[n_templates_gg[event_ok_for_dataset]]) {
+	  //	  std::cout << fillvar << std::endl;
+	  fillvar=(binsdef_gg[event_ok_for_dataset])[n_templates_gg[event_ok_for_dataset]]-0.5;		
+	  //	  std::cout << fillvar << std::endl;
+	}
+
+
+	if (pass1) w_tot_gg[event_ok_for_dataset]->Fill(fillvar,weight);
+
       }
 
       if (dosingle){

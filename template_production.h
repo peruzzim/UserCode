@@ -1423,13 +1423,13 @@ Int_t template_production::Choose_bin_invmass(float invmass, int region){
   cuts[index]=9999;
 
   if (invmass<cuts[0]){
-    std::cout << "WARNING: called bin choice for out-of-range value " << invmass << " cuts[0]= " << cuts[0] << std::endl;
+    std::cout << "WARNING: called bin choice for out-of-range value mass " << invmass << " cuts[0]= " << cuts[0] << std::endl;
     return -999;
   }
 
   for (int i=0; i<index; i++) if ((invmass>=cuts[i]) && (invmass<cuts[i+1])) return i;
   
-  std::cout << "WARNING: called bin choice for out-of-range value " << invmass << std::endl;
+  std::cout << "WARNING: called bin choice for out-of-range value mass " << invmass << std::endl;
   return -999;
 
 
@@ -1453,13 +1453,13 @@ Int_t template_production::Choose_bin_diphotonpt(float diphotonpt, int region){
   cuts[index]=9999;
 
   if (diphotonpt<cuts[0]){
-    std::cout << "WARNING: called bin choice for out-of-range value " << diphotonpt << " cuts[0]= " << cuts[0] << std::endl;
+    std::cout << "WARNING: called bin choice for out-of-range value diphotonpt " << diphotonpt << " cuts[0]= " << cuts[0] << std::endl;
     return -999;
   }
 
   for (int i=0; i<index; i++) if ((diphotonpt>=cuts[i]) && (diphotonpt<cuts[i+1])) return i;
   
-  std::cout << "WARNING: called bin choice for out-of-range value " << diphotonpt << std::endl;
+  std::cout << "WARNING: called bin choice for out-of-range value diphotonpt " << diphotonpt << std::endl;
   return -999;
 
 

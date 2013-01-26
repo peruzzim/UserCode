@@ -1,4 +1,4 @@
-bool doplots = false;
+bool doplots = true;
 bool doxcheckstemplates = false;
 
 #include <assert.h>
@@ -229,7 +229,14 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
   roovar1->setBins(n_histobins);
   roovar2->setBins(n_histobins);
 
-  Double_t templatebinsboundaries_diagonal[n_templatebins+1];
+  bool islowstatcat = false;
+  if (splitting=="invmass" && bin==12) islowstatcat=true;
+  if (splitting=="costhetastar" && bin==12) islowstatcat=true;
+
+  const int n_templatebins_const = (islowstatcat) ? n_templatebins_reduced : n_templatebins_full;
+  n_templatebins = n_templatebins_const;
+  templatebinsboundaries = (islowstatcat) ? templatebinsboundaries_reduced+0 : templatebinsboundaries_full+0;
+  Double_t templatebinsboundaries_diagonal[n_templatebins_const+1];
   for (int i=0; i<n_templatebins+1; i++) templatebinsboundaries_diagonal[i]=templatebinsboundaries[i]*sqrt(2);
     
   binning_roovar1_threshold = new RooThresholdCategory("binning_roovar1_threshold","binning_roovar1_threshold",*roovar1);
@@ -879,33 +886,35 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
     out->ff=fbkgbkg->getVal();
     out->ff_err=fbkgbkg->getPropagatedError(*secondpass);
 
-    if (doplots && false){
+    if (doplots){
       TCanvas *c2_ub = new TCanvas("c2_ub","c2_ub",1200,800);
       c2_ub->Divide(2);   
        
       c2_ub->cd(1);
-      RooPlot *frame1final = roovar1->frame();
-      dataset->plotOn(frame1final);
-      model_2D_uncorrelated_unbinned->plotOn(frame1final);
-      sigsigpdf->plotOn(frame1final,Normalization(fsigsig->getVal(),RooAbsPdf::Relative),LineStyle(kDashed),LineColor(kRed));	  
-      sigbkgpdf->plotOn(frame1final,Normalization(fsigbkg->getVal(),RooAbsPdf::Relative),LineStyle(kDashed),LineColor(kGreen));  
-      bkgsigpdf->plotOn(frame1final,Normalization(fbkgsig->getVal(),RooAbsPdf::Relative),LineStyle(kDashed),LineColor(kGreen+2));
-      bkgbkgpdf->plotOn(frame1final,Normalization(fbkgbkg->getVal(),RooAbsPdf::Relative),LineStyle(kDashed),LineColor(kBlack));  
-      frame1final->Draw();
-  
+      RooPlot *frame1bla = roovar1->frame();
+      dataset->plotOn(frame1bla);
+      model_axis1_unbinned->plotOn(frame1bla);
+      model_axis1_unbinned->plotOn(frame1bla,Components("sigpdf_axis1_unbinned"),Normalization(fsigsig->getVal()/fsig1->getVal(),RooAbsPdf::Relative),LineStyle(kDashed),LineColor(kRed));
+      model_axis1_unbinned->plotOn(frame1bla,Components("sigpdf_axis1_unbinned"),Normalization(fsigbkg->getVal()/fsig1->getVal(),RooAbsPdf::Relative),LineStyle(kDashed),LineColor(kGreen));
+      model_axis1_unbinned->plotOn(frame1bla,Components("bkgpdf_axis1_unbinned"),Normalization(fbkgsig->getVal()/(1-fsig1->getVal()),RooAbsPdf::Relative),LineStyle(kDashed),LineColor(kGreen+2));
+      model_axis1_unbinned->plotOn(frame1bla,Components("bkgpdf_axis1_unbinned"),Normalization(fbkgbkg->getVal()/(1-fsig1->getVal()),RooAbsPdf::Relative),LineStyle(kDashed),LineColor(kBlack));
+      frame1bla->Draw();
+
       c2_ub->cd(2);
-      RooPlot *frame2final = roovar2->frame();
-      dataset->plotOn(frame2final);
-      model_2D_uncorrelated_unbinned->plotOn(frame2final);
-      sigsigpdf->plotOn(frame2final,Normalization(fsigsig->getVal(),RooAbsPdf::Relative),LineStyle(kDashed),LineColor(kRed));	  
-      sigbkgpdf->plotOn(frame2final,Normalization(fsigbkg->getVal(),RooAbsPdf::Relative),LineStyle(kDashed),LineColor(kGreen));  
-      bkgsigpdf->plotOn(frame2final,Normalization(fbkgsig->getVal(),RooAbsPdf::Relative),LineStyle(kDashed),LineColor(kGreen+2));
-      bkgbkgpdf->plotOn(frame2final,Normalization(fbkgbkg->getVal(),RooAbsPdf::Relative),LineStyle(kDashed),LineColor(kBlack));  
-      frame2final->Draw();
+      RooPlot *frame2bla = roovar2->frame();
+      dataset->plotOn(frame2bla);
+      model_axis2_unbinned->plotOn(frame2bla);
+      model_axis2_unbinned->plotOn(frame2bla,Components("sigpdf_axis2_unbinned"),Normalization(fsigsig->getVal()/fsig2->getVal(),RooAbsPdf::Relative),LineStyle(kDashed),LineColor(kRed));
+      model_axis2_unbinned->plotOn(frame2bla,Components("sigpdf_axis2_unbinned"),Normalization(fbkgsig->getVal()/fsig2->getVal(),RooAbsPdf::Relative),LineStyle(kDashed),LineColor(kGreen));
+      model_axis2_unbinned->plotOn(frame2bla,Components("bkgpdf_axis2_unbinned"),Normalization(fsigbkg->getVal()/(1-fsig2->getVal()),RooAbsPdf::Relative),LineStyle(kDashed),LineColor(kGreen+2));
+      model_axis2_unbinned->plotOn(frame2bla,Components("bkgpdf_axis2_unbinned"),Normalization(fbkgbkg->getVal()/(1-fsig2->getVal()),RooAbsPdf::Relative),LineStyle(kDashed),LineColor(kBlack));
+      frame2bla->Draw();
+
       c2_ub->SaveAs(Form("plots/fittingplot2unbinned_%s_%s_b%d.png",splitting.Data(),diffvariable.Data(),bin));   
       c2_ub->SaveAs(Form("plots/fittingplot2unbinned_%s_%s_b%d.jpg",splitting.Data(),diffvariable.Data(),bin));   
       c2_ub->SaveAs(Form("plots/fittingplot2unbinned_%s_%s_b%d.pdf",splitting.Data(),diffvariable.Data(),bin));   
       c2_ub->SaveAs(Form("plots/fittingplot2unbinned_%s_%s_b%d.root",splitting.Data(),diffvariable.Data(),bin));   
+
 
     }
 
@@ -1325,8 +1334,6 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
 
   bool writeoutpurity = (do_syst_string!=TString("purefitbias") && do_syst_string!=TString("templatestatistics"));
 
-  writeoutpurity=false;
-
   if (writeoutpurity){
 
     TH1F *purity[4];
@@ -1336,6 +1343,8 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
     TH1F *overflowremovaleffhisto;
     if (bins_to_run>0) overflowremovaleffhisto = new TH1F("overflowremovaleffhisto","overflowremovaleffhisto",bins_to_run,binsdef);
     else overflowremovaleffhisto = new TH1F("overflowremovaleffhisto","overflowremovaleffhisto",n_bins,0,n_bins);
+
+    std::cout << "Output histos created" << std::endl;
 
     int colors[4] = {kRed, kGreen, kGreen+2, kBlack};
     
@@ -1354,6 +1363,8 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
       purity[i]->GetXaxis()->SetTitle(diffvariable.Data());
     }
 
+    std::cout << "Output histos formatted" << std::endl;
+
     purity[0]->SetBinContent(bin+1,out->pp);
     purity[0]->SetBinError(bin+1,out->pp_err);
     purity[1]->SetBinContent(bin+1,out->pf);
@@ -1365,6 +1376,8 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
     eventshisto->SetBinContent(bin+1,out->tot_events);
     overflowremovaleffhisto->SetBinContent(bin+1,out->eff_overflow_removal_pp);
 
+    std::cout << "Output histos filled" << std::endl;
+
     TString helper("");
     if (do_syst_string==TString("templateshapeMCtrue") || do_syst_string==TString("templateshapeMCpromptdriven") || do_syst_string==TString("templateshapeMCfakedriven")) {helper = do_syst_string; helper+=TString("_");}
     
@@ -1374,6 +1387,8 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
     eventshisto->Write();
     overflowremovaleffhisto->Write();
     purityfile->Close();
+
+    std::cout << "Output histos written" << std::endl;
 
   }
 
@@ -1429,7 +1444,34 @@ void fit_dataset_allbins(TString inputfilename_t2p, TString inputfilename_t1p1f,
 };
 
 
-void post_process(TString diffvariable="", TString splitting=""){
+void post_process(TString diffvariable="", TString splitting="", bool skipsystematics=false){
+
+  TString xunit;
+  if (diffvariable==TString("invmass") || diffvariable==TString("diphotonpt")) xunit=TString("GeV");
+  if (diffvariable==TString("costhetastar") || diffvariable==TString("dphi")) xunit=TString("1");
+
+  TH1F *xsec;
+  TH1F *xsec_withsyst;
+
+  if (splitting=="inclusive"){
+    TString sp[3]={"EBEB","EBEE","EEEE"};
+    TFile *axsec_file[3];
+    TH1F *axsec[3];
+    TH1F *axsec_withsyst[3];
+    for (int i=0; i<3; i++) {
+      axsec_file[i] = new TFile(Form("plots/histo_xsec_%s_%s.root", diffvariable.Data(),sp[i].Data()));
+      axsec_file[i]->GetObject("xsec",axsec[i]);
+      axsec_file[i]->GetObject("xsec_withsyst",axsec_withsyst[i]);
+    }
+    for (int i=1; i<3; i++) {
+      axsec[0]->Add(axsec[i]);
+      axsec_withsyst[0]->Add(axsec_withsyst[i]);
+    }
+    xsec=axsec[0];
+    xsec_withsyst=axsec_withsyst[0];
+  }
+
+  else {
 
   bool sym = false;
   {
@@ -1485,7 +1527,7 @@ void post_process(TString diffvariable="", TString splitting=""){
   TH1F *eventshisto;
   TH1F *overflowremovaleffhisto;
   TH1F *eff=NULL;
-  TH1F *xsec;
+
 
   TFile *eff_file = new TFile("efficiencies.root");
   eff_file->GetObject(Form("w_eff_gg_%s_%s",splitting.Data(),diffvariable.Data()),eff);
@@ -1504,17 +1546,28 @@ void post_process(TString diffvariable="", TString splitting=""){
   std::cout << "Purity histos imported" << std::endl;
   for (int i=0; i<4; i++) purity[i]->Print(); eventshisto->Print(); overflowremovaleffhisto->Print(); 
 
+  TH1F *histo_bias_purefitbias;
+  TH1F *histo_bias_templatestatistics;
+
+  if (!skipsystematics){
+    TFile *file_bias_purefitbias  = new TFile(Form("plots/histo_bias_purefitbias_%s_%s_allbins.root",diffvariable.Data(),splitting.Data()));
+    file_bias_purefitbias->GetObject("histo_bias_purefitbias",histo_bias_purefitbias);
+    TFile *file_bias_templatestatistics  = new TFile(Form("plots/histo_bias_templatestatistics_%s_%s_allbins.root",diffvariable.Data(),splitting.Data()));
+    file_bias_templatestatistics->GetObject("histo_bias_templatestatistics",histo_bias_templatestatistics);
+  }
+  
     xsec = new TH1F("xsec","xsec",bins_to_run,binsdef);
     xsec->SetMarkerStyle(20);
-    xsec->SetMarkerColor(kGreen);
-    xsec->SetLineColor(kGreen);
+    xsec->SetMarkerColor(kBlack);
+    xsec->SetLineColor(kBlack);
     xsec->SetLineWidth(2);
 
-
+  
     //    xsec->GetYaxis()->SetTitle("");
     xsec->GetXaxis()->SetTitle(diffvariable.Data());
 
-
+    xsec_withsyst = (TH1F*)(xsec->Clone("xsec_withsyst"));
+    xsec_withsyst->SetLineColor(kRed);
 
   for (int bin=0; bin<bins_to_run; bin++) {
 
@@ -1522,7 +1575,7 @@ void post_process(TString diffvariable="", TString splitting=""){
 
     //    if (!fr[bin]->fr) continue;
 
-    float intlumi=5.06;
+    float intlumi=5.093;
 
     float pp = 	       purity[0]->GetBinContent(bin+1);
     float pp_err =     purity[0]->GetBinError(bin+1);
@@ -1536,22 +1589,30 @@ void post_process(TString diffvariable="", TString splitting=""){
     float eff_overflow = overflowremovaleffhisto->GetBinContent(bin+1);
 
     xsec->SetBinContent(bin+1,pp*tot_events/eff_overflow/xsec->GetBinWidth(bin+1)/intlumi);
+    xsec_withsyst->SetBinContent(bin+1,xsec->GetBinContent(bin+1));
 
-    float err1=purity[0]->GetBinError(bin+1)/purity[0]->GetBinContent(bin+1);
-    float err2=1.0/sqrt(tot_events);
-    float err=sqrt(err1*err1+err2*err2);
+    float purity_error_withsyst = (!skipsystematics) ? sqrt(pow(pp_err,2) + pow(histo_bias_templatestatistics->GetBinContent(bin+1),2) + pow(pp_err*histo_bias_purefitbias->GetBinContent(bin+1),2) + pow(0.05,2)) : pp_err;
+
+    float errpoiss=1.0/sqrt(tot_events);
+    float err=sqrt(pow(pp_err/pp,2)+pow(errpoiss,2));
+    float err_withsyst=sqrt(pow(purity_error_withsyst/pp,2)+pow(errpoiss,2));
+    for (int i=0; i<10; i++) std::cout << "SISTEMATICA SU TEMPLATE SHAPE MESSA A CASO" << std::endl;
     xsec->SetBinError(bin+1,err*xsec->GetBinContent(bin+1));
-    
-    xsec->Divide(eff);
+    xsec_withsyst->SetBinError(bin+1,err_withsyst*xsec->GetBinContent(bin+1));
+
+    std::cout << err << " " << err_withsyst << std::endl;
 
   }
-
+  
+  xsec->Divide(eff);  
+  xsec_withsyst->Divide(eff);
 
   
-
   TCanvas *output_canv = new TCanvas("output_canv","output_canv");
   output_canv->cd();
 
+  purity[0]->SetStats(0);
+  purity[0]->SetTitle("");
   purity[0]->Draw("e1");
 
   if (!sym){
@@ -1564,19 +1625,20 @@ void post_process(TString diffvariable="", TString splitting=""){
   }
   purity[3]->Draw("e1same");
   
+  TLegend *leg = new TLegend(0.7,0.7,0.9,0.9,Form("purity %s",splitting.Data()));
+  leg->AddEntry(purity[0],"prompt-prompt","lp");
+  leg->AddEntry(purity[1],"prompt-fake","lp");
+  if (!sym) leg->AddEntry(purity[2],"fake-prompt","lp");
+  leg->AddEntry(purity[3],"fake-fake","lp");
+  leg->SetFillColor(kWhite);
+  leg->Draw();
+
   output_canv->Update();
 
-
-  TCanvas *xsec_canv = new TCanvas("xsec_canv","xsec_canv");
-  xsec_canv->cd();
-  xsec->Draw("e1");
-  xsec_canv->Update();
-
-
-//  TCanvas *eff_canv = new TCanvas("eff_canv","eff_canv");
-//  eff_canv->cd();
-//  eff->Draw("e1");
-//  eff_canv->Update();
+  output_canv->SaveAs(Form("plots/plot_purity_%s_%s.png", diffvariable.Data(),splitting.Data()));
+  output_canv->SaveAs(Form("plots/plot_purity_%s_%s.jpg", diffvariable.Data(),splitting.Data()));
+  output_canv->SaveAs(Form("plots/plot_purity_%s_%s.root",diffvariable.Data(),splitting.Data()));
+  output_canv->SaveAs(Form("plots/plot_purity_%s_%s.pdf", diffvariable.Data(),splitting.Data()));
 
   TFile *out1 = new TFile(Form("plots/purityhistos_%s_%s.root",splitting.Data(),diffvariable.Data()),"recreate");
   out1->cd();
@@ -1584,21 +1646,49 @@ void post_process(TString diffvariable="", TString splitting=""){
   purity[1]->Write();
   purity[2]->Write();
   purity[3]->Write();
+  out1->Close();
 
-  output_canv->SaveAs(Form("plots/purity_%s_%s.png",splitting.Data(),diffvariable.Data()));
-  output_canv->SaveAs(Form("plots/purity_%s_%s.jpg",splitting.Data(),diffvariable.Data()));
-  output_canv->SaveAs(Form("plots/purity_%s_%s.root",splitting.Data(),diffvariable.Data()));
-  output_canv->SaveAs(Form("plots/purity_%s_%s.pdf",splitting.Data(),diffvariable.Data()));
+  }
 
-  xsec->SaveAs(Form("plots/xsec_%s_%s.png",splitting.Data(),diffvariable.Data()));
-  xsec->SaveAs(Form("plots/xsec_%s_%s.jpg",splitting.Data(),diffvariable.Data()));
-  xsec->SaveAs(Form("plots/xsec_%s_%s.root",splitting.Data(),diffvariable.Data()));
-  xsec->SaveAs(Form("plots/xsec_%s_%s.pdf",splitting.Data(),diffvariable.Data()));
+  TCanvas *xsec_canv = new TCanvas("xsec_canv","xsec_canv");
+  xsec_canv->cd();
+  xsec_withsyst->SetStats(0);
+  xsec_withsyst->SetTitle(Form("Cross section %s",splitting.Data()));
+  xsec_withsyst->GetYaxis()->SetTitle(Form("d#sigma /fb /%s",xunit.Data()));
+  xsec_withsyst->SetMinimum(0);
+  xsec_withsyst->Draw("e1");
+  xsec->Draw("e1same");
+
+
+  TLegend *legxsec = new TLegend(0.7,0.7,0.9,0.9);
+  legxsec->AddEntry(xsec,"stat only","l");
+  legxsec->AddEntry(xsec_withsyst,"stat + syst","l");
+  legxsec->SetFillColor(kWhite);
+  legxsec->Draw();
+
+  xsec_canv->Update();
   
-
+  xsec_canv->SaveAs(Form("plots/plot_xsec_%s_%s.png", diffvariable.Data(),splitting.Data()));
+  xsec_canv->SaveAs(Form("plots/plot_xsec_%s_%s.jpg", diffvariable.Data(),splitting.Data()));
+  xsec_canv->SaveAs(Form("plots/plot_xsec_%s_%s.root",diffvariable.Data(),splitting.Data()));
+  xsec_canv->SaveAs(Form("plots/plot_xsec_%s_%s.pdf", diffvariable.Data(),splitting.Data()));
+  
+  TFile *xsec_file = new TFile(Form("plots/histo_xsec_%s_%s.root", diffvariable.Data(),splitting.Data()),"recreate");
+  xsec_file->cd();
+  xsec->Write();
+  xsec_withsyst->Write();
+  xsec_file->Close();  
+  
 };
 
-
+void post_process_all(bool skipsystematics = false){
+  for (std::vector<TString>::const_iterator it = diffvariables_list.begin(); it!=diffvariables_list.end(); it++){
+    post_process(it->Data(),"EBEB",skipsystematics);
+    post_process(it->Data(),"EBEE",skipsystematics);
+    post_process(it->Data(),"EEEE",skipsystematics);
+    post_process(it->Data(),"inclusive",skipsystematics);
+  }
+}
 
 void reweight_rhosigma(RooDataSet **dset, RooDataSet *dsetdestination, bool deleteold){
 
@@ -2485,3 +2575,7 @@ void reweight_pteta(RooDataSet **dset, RooDataSet *dsetdestination, int numvar){
 
 };
 */
+
+fit_output* template_studies_2d_variablebinning(const char* inputfilename_t2p, const char* inputfilename_t1p1f, const char* inputfilename_t2f, const char* inputfilename_d, TString diffvariable, TString splitting, int bin, const TString do_syst_string=TString("")){
+  return fit_dataset(inputfilename_t2p,inputfilename_t1p1f,inputfilename_t2f,inputfilename_d,diffvariable,splitting,bin,do_syst_string);
+};
