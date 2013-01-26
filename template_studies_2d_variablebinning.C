@@ -1591,12 +1591,12 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
     xsec->SetBinContent(bin+1,pp*tot_events/eff_overflow/xsec->GetBinWidth(bin+1)/intlumi);
     xsec_withsyst->SetBinContent(bin+1,xsec->GetBinContent(bin+1));
 
-    float purity_error_withsyst = (!skipsystematics) ? sqrt(pow(pp_err,2) + pow(histo_bias_templatestatistics->GetBinContent(bin+1),2) + pow(pp_err*histo_bias_purefitbias->GetBinContent(bin+1),2) + pow(0.05,2)) : pp_err;
+    float purity_error_withsyst = (!skipsystematics) ? sqrt(pow(pp_err,2) + pow(histo_bias_templatestatistics->GetBinContent(bin+1),2) + pow(pp_err*histo_bias_purefitbias->GetBinContent(bin+1),2)) : pp_err;
 
     float errpoiss=1.0/sqrt(tot_events);
     float err=sqrt(pow(pp_err/pp,2)+pow(errpoiss,2));
     float err_withsyst=sqrt(pow(purity_error_withsyst/pp,2)+pow(errpoiss,2));
-    for (int i=0; i<10; i++) std::cout << "SISTEMATICA SU TEMPLATE SHAPE MESSA A CASO" << std::endl;
+    for (int i=0; i<10; i++) std::cout << "SISTEMATICA SU TEMPLATE SHAPE E PT ASSENTE" << std::endl;
     xsec->SetBinError(bin+1,err*xsec->GetBinContent(bin+1));
     xsec_withsyst->SetBinError(bin+1,err_withsyst*xsec->GetBinContent(bin+1));
 

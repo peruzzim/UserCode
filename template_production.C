@@ -285,7 +285,6 @@ void template_production::Loop(int maxevents)
     float ptweight_lead = 1;
     float ptweight_trail = 1;
 
-    if (maxevents>0) assert (weight==1);
 
 //    if (do_pt_reweighting) ptweight_lead*=FindPtWeight(pholead_pt,pholead_SCeta);
 //    if (do_eta_reweighting) ptweight_lead*=FindEtaWeight(pholead_SCeta);
