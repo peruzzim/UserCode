@@ -1,5 +1,5 @@
 bool doplots = true;
-bool doxcheckstemplates = false;
+bool doxcheckstemplates = true;
 
 #include <assert.h>
 
@@ -359,6 +359,12 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
   fmcrcone_b->GetObject(Form("mc_Tree_1Dsideband_template/roodset_background_%s_b%d_rv1",s1.Data(),bin),dset_mcrcone_b);
   assert(dset_mcrcone_b);
   
+  dset_mctrue_s = (RooDataSet*)(dset_mctrue_s->reduce(Name("dset_mctrue_s"),Cut(Form("roovar1<%f",rightrange-1e-5))));
+  dset_mcrcone_s = (RooDataSet*)(dset_mcrcone_s->reduce(Name("dset_mcrcone_s"),Cut(Form("roovar1<%f",rightrange-1e-5))));
+  dset_mctrue_b = (RooDataSet*)(dset_mctrue_b->reduce(Name("dset_mctrue_b"),Cut(Form("roovar1<%f",rightrange-1e-5))));
+  dset_mcrcone_b = (RooDataSet*)(dset_mcrcone_b->reduce(Name("dset_mcrcone_b"),Cut(Form("roovar1<%f",rightrange-1e-5))));
+  dset_zee_s = (RooDataSet*)(dset_zee_s->reduce(Name("dset_zee_s"),Cut(Form("roovar1<%f",rightrange-1e-5))));
+
   std::cout << "MC datasets" << std::endl;
   dset_mctrue_s->Print();
   dset_mcrcone_s->Print();
