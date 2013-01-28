@@ -289,12 +289,13 @@ void efficiency_measure::LoopOne(TString diffvariable, TFile *outf)
 	if (diffvariable==TString("costhetastar")){
 	  TLorentzVector pho1(pholead_px,pholead_py,pholead_pz,pholead_energy);
 	  TLorentzVector pho2(photrail_px,photrail_py,photrail_pz,photrail_energy);
-	  TVector3 boost = (pho1+pho2).BoostVector();
-	  TLorentzVector boostedpho1 = pho1;
-	  boostedpho1.Boost(-boost);
-	  float thetastar1 = boostedpho1.Angle(boost);
-	  if (thetastar1>TMath::Pi()/2) thetastar1 = TMath::Pi()-thetastar1;
-	  fillvar=TMath::Cos(thetastar1);
+//	  TVector3 boost = (pho1+pho2).BoostVector();
+//	  TLorentzVector boostedpho1 = pho1;
+//	  boostedpho1.Boost(-boost);
+//	  float thetastar1 = boostedpho1.Angle(boost);
+//	  if (thetastar1>TMath::Pi()/2) thetastar1 = TMath::Pi()-thetastar1;
+//	  fillvar=TMath::Cos(thetastar1);
+	  fillvar = fabs(TMath::TanH((pho1.Rapidity()-pho2.Rapidity())/2));
 	}
 	if (diffvariable==TString("dphi")){
 	  float phi1 = pholead_SCphi;
