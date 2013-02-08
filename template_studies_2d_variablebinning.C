@@ -1,5 +1,5 @@
-bool doplots = true;
-bool doxcheckstemplates = true;
+bool doplots = false;
+bool doxcheckstemplates = false;
 
 #include <assert.h>
 
@@ -54,6 +54,8 @@ bool doxcheckstemplates = true;
 #include "TLegend.h"
 #include "TSystem.h"
 
+TRandom3 *_random_generator = new TRandom3(0);
+
 using namespace std;
 using namespace RooFit;
 
@@ -76,6 +78,7 @@ typedef struct {
   float ff;
   float ff_err;
   float eff_overflow_removal_pp;
+  RooHistPdf *pdf_forgen[4];
 } fit_output; 
 
 const int numcpu=1;
@@ -129,6 +132,8 @@ TDirectoryFile *dir_d=NULL;
 
 
 fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename_t1p1f, const char* inputfilename_t2f, const char* inputfilename_d, TString diffvariable, TString splitting, int bin, const TString do_syst_string=TString("")){
+
+  if (do_syst_string=="savepdfMCtrue") std::cout << "RUNNING FOR SAVE PDF" << std::endl;
 
   TH1F::SetDefaultSumw2(kTRUE);
 
@@ -192,7 +197,7 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
   else if (splitting=="EBEE") {s1="EB"; s2="EE";}
   bool sym  = (s1==s2);
   
-  if (do_syst_string=="templateshapeMCtrue"){
+  if (do_syst_string=="templateshapeMCtrue" || do_syst_string=="savepdfMCtrue"){
     if(!dir_t2p)   inputfile_t2p->GetObject("mc_Tree_2Dtruesigsig_template",dir_t2p);
     if(!dir_t1p1f) inputfile_t1p1f->GetObject("mc_Tree_2Dtruesigbkg_template",dir_t1p1f);
     if(!dir_t2f)   inputfile_t2f->GetObject("mc_Tree_2Dtruebkgbkg_template",dir_t2f);
@@ -487,11 +492,21 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
   produce_category_binning(&dataset_axis2);
 
   int times_to_run = 1;
-  const int ntoys = 50;
+  const int ntoys = 100;
 
   std::vector<fit_output*> do_syst_templatestatistics_outputvector;
   std::vector<fit_output*> do_syst_purefitbias_outputvector;
-  if (do_syst_string==TString("templatestatistics") || do_syst_string==TString("purefitbias")) times_to_run = ntoys;
+  std::vector<fit_output*> do_syst_MCtrue_outputvector;
+  std::vector<fit_output*> do_syst_MCpromptdriven_outputvector;
+  std::vector<fit_output*> do_syst_MCfakedriven_outputvector;
+
+  if (do_syst_string==TString("templatestatistics") || do_syst_string==TString("purefitbias") || do_syst_string==TString("templateshapeMCtrue") || do_syst_string==TString("templateshapeMCpromptdriven") || do_syst_string==TString("templateshapeMCfakedriven")) times_to_run = ntoys;
+
+  RooHistPdf *sigsigpdf_forgen = NULL;
+  RooHistPdf *sigbkgpdf_forgen = NULL;
+  RooHistPdf *bkgsigpdf_forgen = NULL;
+  RooHistPdf *bkgbkgpdf_forgen = NULL;
+  fit_output *mctruthfr = NULL;
 
   for (int runcount=0; runcount<times_to_run; runcount++){
 
@@ -507,42 +522,42 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
       RooDataSet* original_dataset_axis2=NULL;
       RooDataSet* original_dataset=NULL;
 
-    if (do_syst_string==TString("templatestatistics") || do_syst_string==TString("purefitbias")){
-      original_dataset_sigsig   =dataset_sigsig   ;
-      original_dataset_sigbkg   =dataset_sigbkg   ;
-      original_dataset_bkgsig   =dataset_bkgsig   ;
-      original_dataset_bkgbkg   =dataset_bkgbkg   ;
-      original_dataset_sig_axis1=dataset_sig_axis1;
-      original_dataset_bkg_axis1=dataset_bkg_axis1;
-      original_dataset_sig_axis2=dataset_sig_axis2;
-      original_dataset_bkg_axis2=dataset_bkg_axis2;
-      original_dataset_axis1    =dataset_axis1;
-      original_dataset_axis2    =dataset_axis2;
-      original_dataset          =dataset;
 
-      dataset_sigsig   =(RooDataSet*)(original_dataset_sigsig->Clone("dataset_sigsig_forsyst"));
-      dataset_sigbkg   =(RooDataSet*)(original_dataset_sigbkg->Clone("dataset_sigbkg_forsyst"));
-      dataset_bkgsig   =(RooDataSet*)(original_dataset_bkgsig->Clone("dataset_bkgsig_forsyst"));
-      dataset_bkgbkg   =(RooDataSet*)(original_dataset_bkgbkg->Clone("dataset_bkgbkg_forsyst"));
-      dataset_sig_axis1=(RooDataSet*)(original_dataset_sig_axis1->Clone("dataset_sig_axis1_forsyst"));
-      dataset_bkg_axis1=(RooDataSet*)(original_dataset_bkg_axis1->Clone("dataset_bkg_axis1_forsyst"));
-      dataset_sig_axis2=(RooDataSet*)(original_dataset_sig_axis2->Clone("dataset_sig_axis2_forsyst"));
-      dataset_bkg_axis2=(RooDataSet*)(original_dataset_bkg_axis2->Clone("dataset_bkg_axis2_forsyst"));
-      dataset_axis1    =(RooDataSet*)(original_dataset_axis1->Clone("dataset_axis1_forsyst"));
-      dataset_axis2    =(RooDataSet*)(original_dataset_axis2->Clone("dataset_axis2_forsyst"));
-      dataset          =(RooDataSet*)(original_dataset->Clone("dataset_forsyst"));
-    }
-
-    if (do_syst_string==TString("templatestatistics")){
-      randomize_dataset_statistically_binned(&dataset_sigsig);
-      randomize_dataset_statistically_binned(&dataset_sigbkg);
-      randomize_dataset_statistically_binned(&dataset_bkgsig);
-      randomize_dataset_statistically_binned(&dataset_bkgbkg);
-      randomize_dataset_statistically_binned(&dataset_sig_axis1);
-      randomize_dataset_statistically_binned(&dataset_bkg_axis1);
-      randomize_dataset_statistically_binned(&dataset_sig_axis2);
-      randomize_dataset_statistically_binned(&dataset_bkg_axis2);
-    }
+      if (do_syst_string==TString("templatestatistics") || do_syst_string==TString("purefitbias") || do_syst_string==TString("templateshapeMCtrue") || do_syst_string==TString("templateshapeMCpromptdriven") || do_syst_string==TString("templateshapeMCfakedriven")){
+	original_dataset_sigsig   =dataset_sigsig   ;
+        original_dataset_sigbkg   =dataset_sigbkg   ;
+        original_dataset_bkgsig   =dataset_bkgsig   ;
+        original_dataset_bkgbkg   =dataset_bkgbkg   ;
+        original_dataset_sig_axis1=dataset_sig_axis1;
+        original_dataset_bkg_axis1=dataset_bkg_axis1;
+        original_dataset_sig_axis2=dataset_sig_axis2;
+        original_dataset_bkg_axis2=dataset_bkg_axis2;
+	dataset_sigsig   =(RooDataSet*)(original_dataset_sigsig->Clone("dataset_sigsig_forsyst"));
+        dataset_sigbkg   =(RooDataSet*)(original_dataset_sigbkg->Clone("dataset_sigbkg_forsyst"));
+        dataset_bkgsig   =(RooDataSet*)(original_dataset_bkgsig->Clone("dataset_bkgsig_forsyst"));
+        dataset_bkgbkg   =(RooDataSet*)(original_dataset_bkgbkg->Clone("dataset_bkgbkg_forsyst"));
+        dataset_sig_axis1=(RooDataSet*)(original_dataset_sig_axis1->Clone("dataset_sig_axis1_forsyst"));
+        dataset_bkg_axis1=(RooDataSet*)(original_dataset_bkg_axis1->Clone("dataset_bkg_axis1_forsyst"));
+        dataset_sig_axis2=(RooDataSet*)(original_dataset_sig_axis2->Clone("dataset_sig_axis2_forsyst"));
+        dataset_bkg_axis2=(RooDataSet*)(original_dataset_bkg_axis2->Clone("dataset_bkg_axis2_forsyst"));
+	original_dataset_axis1    =dataset_axis1;
+	original_dataset_axis2    =dataset_axis2;
+	original_dataset          =dataset;
+	dataset_axis1    =(RooDataSet*)(original_dataset_axis1->Clone("dataset_axis1_forsyst"));
+	dataset_axis2    =(RooDataSet*)(original_dataset_axis2->Clone("dataset_axis2_forsyst"));
+	dataset          =(RooDataSet*)(original_dataset->Clone("dataset_forsyst"));
+      }
+      
+      if (do_syst_string==TString("templatestatistics") || do_syst_string==TString("templateshapeMCtrue") || do_syst_string==TString("templateshapeMCpromptdriven") || do_syst_string==TString("templateshapeMCfakedriven")){
+	randomize_dataset_statistically_binned(&dataset_sigsig);
+	randomize_dataset_statistically_binned(&dataset_sigbkg);
+	randomize_dataset_statistically_binned(&dataset_bkgsig);
+	randomize_dataset_statistically_binned(&dataset_bkgbkg);
+	randomize_dataset_statistically_binned(&dataset_sig_axis1);
+	randomize_dataset_statistically_binned(&dataset_bkg_axis1);
+	randomize_dataset_statistically_binned(&dataset_sig_axis2);
+	randomize_dataset_statistically_binned(&dataset_bkg_axis2);
+      }
 
 
     RooDataHist *sigsigdhist = new RooDataHist("sigsigdhist","sigsigdhist",RooArgList(*binning_roovar1,*binning_roovar2),*dataset_sigsig);
@@ -580,11 +595,32 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
     RooHistPdf *bkgpdf_axis2_unbinned = new RooHistPdf("bkgpdf_axis2_unbinned","bkgpdf_axis2_unbinned",RooArgList(*roovar2),*bkgdhist_axis2_unbinned);
 
     if (do_syst_string==TString("purefitbias")) {
-      generate_toy_dataset_1d(&dataset_axis1,sigpdf_axis1,bkgpdf_axis1,0.43);
-      generate_toy_dataset_1d(&dataset_axis2,sigpdf_axis2,bkgpdf_axis2,0.43);
       generate_toy_dataset_2d(&dataset,sigsigpdf,sigbkgpdf,bkgsigpdf,bkgbkgpdf,0.2,0.23,0.23);
+      delete dataset_axis1;
+      delete dataset_axis2;
+      dataset_axis1 = (RooDataSet*)(dataset->reduce(Name("dataset_axis1"),SelectVars(RooArgList(*binning_roovar1))));
+      dataset_axis2 = (RooDataSet*)(dataset->reduce(Name("dataset_axis2"),SelectVars(RooArgList(*binning_roovar2))));
+    }
+    
+    if (do_syst_string==TString("templateshapeMCtrue") || do_syst_string==TString("templateshapeMCpromptdriven") || do_syst_string==TString("templateshapeMCfakedriven")) {
+      
+      if (runcount==0){
+	mctruthfr = fit_dataset("outphoton_allmc_2pgen.root","outphoton_allmc_1p1fbothgen.root","outphoton_allmc_2fgen.root","outphoton_allmc_standard.root",diffvariable.Data(),splitting.Data(),n_bins,"savepdfMCtrue");
+	sigsigpdf_forgen = mctruthfr->pdf_forgen[0];
+	sigbkgpdf_forgen = mctruthfr->pdf_forgen[1];
+	bkgsigpdf_forgen = mctruthfr->pdf_forgen[2];
+	bkgbkgpdf_forgen = mctruthfr->pdf_forgen[3];
+      }
+      
+      generate_toy_dataset_2d(&dataset,sigsigpdf_forgen,sigbkgpdf_forgen,bkgsigpdf_forgen,bkgbkgpdf_forgen,mctruthfr->pp,mctruthfr->pf,mctruthfr->fp);
+      delete dataset_axis1;
+      delete dataset_axis2;
+      dataset_axis1 = (RooDataSet*)(dataset->reduce(Name("dataset_axis1"),SelectVars(RooArgList(*binning_roovar1))));
+      dataset_axis2 = (RooDataSet*)(dataset->reduce(Name("dataset_axis2"),SelectVars(RooArgList(*binning_roovar2))));
     }
 
+
+    
     
     if (doplots) {
       TCanvas *c0 = new TCanvas(Form("c0"),Form("c0"),1200,800);
@@ -680,6 +716,7 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
 //    }
 
 
+
     // inversione:
     //  pp = pp;
     //  pf = j1 - pp;
@@ -700,6 +737,7 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
     out->ff=0;
     out->ff_err=0;
     out->eff_overflow_removal_pp=eff_overflow_removal;
+    for (int l=0; l<4; l++) out->pdf_forgen[l]=NULL;
 
     RooRealVar *pp = new RooRealVar("pp","pp",pp_init,0,1);
     RooRealVar *j1 = new RooRealVar("j1","j1",pp_init+pf_init,0,1);
@@ -1178,6 +1216,16 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
     delete sigpdf_axis1;
     delete bkgdhist_axis1;
     delete sigdhist_axis1;
+
+    if (do_syst_string==TString("savepdfMCtrue")){
+      out->pdf_forgen[0] = sigsigpdf;
+      out->pdf_forgen[1] = sigbkgpdf;
+      out->pdf_forgen[2] = bkgsigpdf;
+      out->pdf_forgen[3] = bkgbkgpdf;
+      std::cout << "RUN FOR SAVE PDF FINISHED" << std::endl;
+      return out;
+    }
+
     delete bkgbkgpdf;
     delete bkgsigpdf;
     delete sigbkgpdf;
@@ -1192,6 +1240,10 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
 
     if (do_syst_string==TString("templatestatistics")) do_syst_templatestatistics_outputvector.push_back(out);
     if (do_syst_string==TString("purefitbias")) do_syst_purefitbias_outputvector.push_back(out);
+    if (do_syst_string==TString("templateshapeMCtrue")) do_syst_MCtrue_outputvector.push_back(out);
+    if (do_syst_string==TString("templateshapeMCpromptdriven")) do_syst_MCpromptdriven_outputvector.push_back(out);
+    if (do_syst_string==TString("templateshapeMCfakedriven")) do_syst_MCfakedriven_outputvector.push_back(out);
+
 
     delete dataset_sigsig   ;
     delete dataset_sigbkg   ;
@@ -1217,9 +1269,11 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
     dataset_axis2    =original_dataset_axis2    ;
     dataset          =original_dataset          ;
 
+  print_mem();
     
   }
   
+
 
   delete dataset_axis2;
   delete dataset_axis1;
@@ -1253,15 +1307,26 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
   delete roorho;                                                                                                       
 
 
-//  delete firstpass;
-//  delete secondpass_constraint;
-//  delete secondpass;
-  //    myfile.close();
-  
-  
-  if (do_syst_string==TString("templatestatistics") || do_syst_string==TString("purefitbias")) {
 
-    std::vector<fit_output*> *do_syst_vector = (do_syst_string==TString("templatestatistics")) ? &do_syst_templatestatistics_outputvector : &do_syst_purefitbias_outputvector;
+
+  if (do_syst_string==TString("templatestatistics") || do_syst_string==TString("purefitbias") || do_syst_string==TString("templateshapeMCtrue") || do_syst_string==TString("templateshapeMCpromptdriven") || do_syst_string==TString("templateshapeMCfakedriven")){
+
+    std::vector<fit_output*> *do_syst_vector = NULL;
+    if (do_syst_string==TString("templatestatistics")){
+      do_syst_vector = &do_syst_templatestatistics_outputvector;
+    }
+    else if (do_syst_string==TString("purefitbias")){
+      do_syst_vector = &do_syst_purefitbias_outputvector;
+    }
+    else if (do_syst_string==TString("templateshapeMCtrue")){
+      do_syst_vector = &do_syst_MCtrue_outputvector;
+    }
+    else if (do_syst_string==TString("templateshapeMCpromptdriven")){
+      do_syst_vector = &do_syst_MCpromptdriven_outputvector;
+    }
+    else if (do_syst_string==TString("templateshapeMCfakedriven")){
+      do_syst_vector = &do_syst_MCfakedriven_outputvector;
+    }
     assert (do_syst_vector);
 
     RooRealVar fittedx("fittedx","fittedx",0,1);
@@ -1287,7 +1352,7 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
 
     for (int i=0; i<times_to_run; i++){
       fittedx.setVal(do_syst_vector->at(i)->pp);
-      fittedpull.setVal((do_syst_vector->at(i)->pp-0.2)/do_syst_vector->at(i)->pp_err);
+      fittedpull.setVal((do_syst_vector->at(i)->pp-mctruthfr->pp)/do_syst_vector->at(i)->pp_err);
       std::cout << "Toy nr. " << i << " " << fittedx.getVal() << " " << do_syst_vector->at(i)->pp_err << " " << fittedpull.getVal() << std::endl;
       dsetx.add(fittedx);
       dsetpull.add(fittedpull);
@@ -1332,11 +1397,16 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
       histo_bias->SetBinContent(bin+1,meangauspull.getVal());
       histo_bias->SetBinError(bin+1,meangauspull.getPropagatedError(*biasfitresultpull));
     }
+    if (do_syst_string==TString("templateshapeMCtrue") || do_syst_string==TString("templateshapeMCpromptdriven") || do_syst_string==TString("templateshapeMCfakedriven")){
+      histo_bias->GetYaxis()->SetTitle(Form("Fitted purity on %f purity toys",mctruthfr->pp));
+      histo_bias->SetBinContent(bin+1,meangaus.getVal());
+      histo_bias->SetBinError(bin+1,meangaus.getPropagatedError(*biasfitresult));
+    }
     histo_bias->SaveAs(Form("plots/histo_bias_%s_%s_%s_b%d.root",do_syst_string.Data(),diffvariable.Data(),splitting.Data(),bin));    
 
   }
 
-  print_mem();
+
 
   bool writeoutpurity = (do_syst_string!=TString("purefitbias") && do_syst_string!=TString("templatestatistics"));
 
@@ -1356,7 +1426,7 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
     
     for (int i=0; i<4; i++){
       TString name = "purity_";
-      if (do_syst_string==TString("templateshapeMCtrue") || do_syst_string==TString("templateshapeMCpromptdriven") || do_syst_string==TString("templateshapeMCfakedriven")) {name+=do_syst_string; name.Append("_");}
+      if (do_syst_string==TString("templateshapeMCtrue") || do_syst_string==TString("templateshapeMCpromptdriven") || do_syst_string==TString("templateshapeMCfakedriven") || do_syst_string==TString("templateshapeMCfulldriven")) {name+=do_syst_string; name.Append("_");}
       if (i==0) name.Append("sigsig"); else if (i==1) name.Append("sigbkg"); else if (i==2) name.Append("bkgsig"); else if (i==3) name.Append("bkgbkg");
       if (bins_to_run>0) purity[i] = new TH1F(name.Data(),name.Data(),bins_to_run,binsdef);
       else purity[i] = new TH1F(name.Data(),name.Data(),n_bins,0,n_bins);
@@ -1371,21 +1441,21 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
 
     std::cout << "Output histos formatted" << std::endl;
 
-    purity[0]->SetBinContent(bin+1,out->pp);
-    purity[0]->SetBinError(bin+1,out->pp_err);
-    purity[1]->SetBinContent(bin+1,out->pf);
-    purity[1]->SetBinError(bin+1,out->pf_err);
-    purity[2]->SetBinContent(bin+1,out->fp);
-    purity[2]->SetBinError(bin+1,out->fp_err);
-    purity[3]->SetBinContent(bin+1,out->ff);
-    purity[3]->SetBinError(bin+1,out->ff_err);
-    eventshisto->SetBinContent(bin+1,out->tot_events);
-    overflowremovaleffhisto->SetBinContent(bin+1,out->eff_overflow_removal_pp);
+    purity[0]->SetBinContent((bin!=n_bins) ? bin+1 : 1,out->pp);
+    purity[0]->SetBinError((bin!=n_bins) ? bin+1 : 1,out->pp_err);
+    purity[1]->SetBinContent((bin!=n_bins) ? bin+1 : 1,out->pf);
+    purity[1]->SetBinError((bin!=n_bins) ? bin+1 : 1,out->pf_err);
+    purity[2]->SetBinContent((bin!=n_bins) ? bin+1 : 1,out->fp);
+    purity[2]->SetBinError((bin!=n_bins) ? bin+1 : 1,out->fp_err);
+    purity[3]->SetBinContent((bin!=n_bins) ? bin+1 : 1,out->ff);
+    purity[3]->SetBinError((bin!=n_bins) ? bin+1 : 1,out->ff_err);
+    eventshisto->SetBinContent((bin!=n_bins) ? bin+1 : 1,out->tot_events);
+    overflowremovaleffhisto->SetBinContent((bin!=n_bins) ? bin+1 : 1,out->eff_overflow_removal_pp);
 
     std::cout << "Output histos filled" << std::endl;
 
     TString helper("");
-    if (do_syst_string==TString("templateshapeMCtrue") || do_syst_string==TString("templateshapeMCpromptdriven") || do_syst_string==TString("templateshapeMCfakedriven")) {helper = do_syst_string; helper+=TString("_");}
+    if (do_syst_string==TString("templateshapeMCtrue") || do_syst_string==TString("templateshapeMCpromptdriven") || do_syst_string==TString("templateshapeMCfakedriven") || do_syst_string==TString("templateshapeMCfulldriven")) {helper = do_syst_string; helper+=TString("_");}
     
     TFile *purityfile = new TFile(Form("plots/histo_purity_%s%s_%s_b%d.root",helper.Data(),diffvariable.Data(),splitting.Data(),bin),"recreate");
     purityfile->cd();
@@ -1458,6 +1528,7 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
 
   TH1F *xsec;
   TH1F *xsec_withsyst;
+  TH1F *xsec_ngammagammayield = NULL;
 
   if (splitting=="inclusive"){
     TString sp[3]={"EBEB","EBEE","EEEE"};
@@ -1575,6 +1646,11 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
     xsec_withsyst = (TH1F*)(xsec->Clone("xsec_withsyst"));
     xsec_withsyst->SetLineColor(kRed);
 
+    xsec_ngammagammayield = (TH1F*)(xsec->Clone("xsec_rawngammagammayield"));
+    xsec_ngammagammayield->SetMarkerColor(kGreen+2);
+    xsec_ngammagammayield->SetLineColor(kGreen+2);
+
+
   for (int bin=0; bin<bins_to_run; bin++) {
 
 
@@ -1596,6 +1672,7 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
 
     xsec->SetBinContent(bin+1,pp*tot_events/eff_overflow/xsec->GetBinWidth(bin+1)/intlumi);
     xsec_withsyst->SetBinContent(bin+1,xsec->GetBinContent(bin+1));
+    xsec_ngammagammayield->SetBinContent(bin+1,pp*tot_events/eff_overflow);
 
     float purity_error_withsyst = (!skipsystematics) ? sqrt(pow(pp_err,2) + pow(histo_bias_templatestatistics->GetBinContent(bin+1),2) + pow(pp_err*histo_bias_purefitbias->GetBinContent(bin+1),2)) : pp_err;
 
@@ -1612,7 +1689,6 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
   
   xsec->Divide(eff);  
   xsec_withsyst->Divide(eff);
-
   
   TCanvas *output_canv = new TCanvas("output_canv","output_canv");
   output_canv->cd();
@@ -1656,6 +1732,9 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
 
   }
 
+  xsec_withsyst->Print();
+  xsec->Print();
+
   TCanvas *xsec_canv = new TCanvas("xsec_canv","xsec_canv");
   xsec_canv->cd();
   xsec_withsyst->SetStats(0);
@@ -1664,7 +1743,6 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
   xsec_withsyst->SetMinimum(0);
   xsec_withsyst->Draw("e1");
   xsec->Draw("e1same");
-
 
   TLegend *legxsec = new TLegend(0.7,0.7,0.9,0.9);
   legxsec->AddEntry(xsec,"stat only","l");
@@ -1683,6 +1761,7 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
   xsec_file->cd();
   xsec->Write();
   xsec_withsyst->Write();
+  if (xsec_ngammagammayield) xsec_ngammagammayield->Write();
   xsec_file->Close();  
   
 };
@@ -2262,7 +2341,7 @@ void randomize_dataset_statistically_binned(RooDataSet **dset){
 
   bool plot = false; 
 
-  TRandom3 *r = new TRandom3(0);
+
 
   assert ((*dset)->numEntries()>0);  
   RooArgSet initialvars = *((*dset)->get(0));
@@ -2288,7 +2367,7 @@ void randomize_dataset_statistically_binned(RooDataSet **dset){
   if (code==3){  
     for (int i=0; i<hden2d->GetNbinsX()+1; i++)
       for (int j=0; j<hden2d->GetNbinsY()+1; j++){
-	hnum2d->SetBinContent(i,j,hden2d->GetBinContent(i,j)+hden2d->GetBinError(i,j)*r->Gaus());
+	hnum2d->SetBinContent(i,j,hden2d->GetBinContent(i,j)+hden2d->GetBinError(i,j)*_random_generator->Gaus());
 	if (hnum2d->GetBinContent(i,j)<0) hnum2d->SetBinContent(i,j,0);
 	hnum2d->SetBinError(i,j,0);
       }
@@ -2302,7 +2381,7 @@ void randomize_dataset_statistically_binned(RooDataSet **dset){
   }
   else {
     for (int i=0; i<hden1d->GetNbinsX()+1; i++){
-      hnum1d->SetBinContent(i,hden1d->GetBinContent(i)+hden1d->GetBinError(i)*r->Gaus());
+      hnum1d->SetBinContent(i,hden1d->GetBinContent(i)+hden1d->GetBinError(i)*_random_generator->Gaus());
       if (hnum1d->GetBinContent(i)<0) hnum1d->SetBinContent(i,0);
       hnum1d->SetBinError(i,0);
     }
@@ -2335,7 +2414,6 @@ void randomize_dataset_statistically_binned(RooDataSet **dset){
 
   delete hnum1d; if (hden1d) delete hden1d;
   delete hnum2d; if (hden2d) delete hden2d;
-  delete r;
 
   RooDataSet *old_dset = *dset;
   *dset=newdset;
@@ -2444,7 +2522,7 @@ void generate_toy_dataset_1d(RooDataSet **target, RooHistPdf *sigpdf, RooHistPdf
 
   RooAddPdf *addpdf = new RooAddPdf("addpdf","addpdf",*sigpdf,*bkgpdf,RooRealConstant::value(fsig1toy));
 
-  RooDataSet *generated = addpdf->generate((code==1) ? RooArgSet(*binning_roovar1) : RooArgSet(*binning_roovar2),Name(Form("toy_dset_1d_axis%d",code)),NumEvents((*target)->numEntries()),AutoBinned(kTRUE),Extended());
+  RooDataSet *generated = addpdf->generate((code==1) ? RooArgSet(*binning_roovar1) : RooArgSet(*binning_roovar2),_random_generator->Poisson((*target)->sumEntries()),kFALSE,kFALSE,"",kFALSE,kTRUE);
 
 //  {
 //    std::cout << "TOY GENERATION DEBUG:" << std::endl;
@@ -2469,7 +2547,13 @@ void generate_toy_dataset_2d(RooDataSet **target, RooHistPdf *sigsigpdf, RooHist
 
   RooAddPdf *addpdf = new RooAddPdf("addpdf","addpdf",RooArgList(*sigsigpdf,*sigbkgpdf,*bkgsigpdf,*bkgbkgpdf),RooArgList(RooRealConstant::value(pptoy),RooRealConstant::value(pftoy),RooRealConstant::value(fptoy)),kFALSE);
 
-  RooDataSet *generated = addpdf->generate(RooArgSet(*binning_roovar1,*binning_roovar2),Name("toy_dset_2d"),NumEvents((*target)->numEntries()),AutoBinned(kTRUE),Extended());
+  addpdf->Print();
+  (*target)->Print();
+
+  RooDataSet *generated = addpdf->generate(RooArgSet(*binning_roovar1,*binning_roovar2),_random_generator->Poisson((*target)->sumEntries()),kFALSE,kFALSE,"",kFALSE,kTRUE);
+
+  generated->Print();
+  generated->Print("v");
 
 //  {
 //    std::cout << "TOY GENERATION DEBUG:" << std::endl;
