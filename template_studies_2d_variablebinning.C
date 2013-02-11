@@ -492,7 +492,7 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
   produce_category_binning(&dataset_axis2);
 
   int times_to_run = 1;
-  const int ntoys = 100;
+  const int ntoys = 5;
 
   std::vector<fit_output*> do_syst_templatestatistics_outputvector;
   std::vector<fit_output*> do_syst_purefitbias_outputvector;
@@ -595,7 +595,10 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
     RooHistPdf *bkgpdf_axis2_unbinned = new RooHistPdf("bkgpdf_axis2_unbinned","bkgpdf_axis2_unbinned",RooArgList(*roovar2),*bkgdhist_axis2_unbinned);
 
     if (do_syst_string==TString("purefitbias")) {
-      generate_toy_dataset_2d(&dataset,sigsigpdf,sigbkgpdf,bkgsigpdf,bkgbkgpdf,0.2,0.23,0.23);
+      if (runcount==0){
+	mctruthfr = fit_dataset("outphoton_allmc_2pgen.root","outphoton_allmc_1p1fbothgen.root","outphoton_allmc_2fgen.root","outphoton_allmc_standard.root",diffvariable.Data(),splitting.Data(),n_bins,"savepdfMCtrue");
+      }
+      generate_toy_dataset_2d(&dataset,sigsigpdf,sigbkgpdf,bkgsigpdf,bkgbkgpdf,mctruthfr->pp,mctruthfr->pf,mctruthfr->fp);
       delete dataset_axis1;
       delete dataset_axis2;
       dataset_axis1 = (RooDataSet*)(dataset->reduce(Name("dataset_axis1"),SelectVars(RooArgList(*binning_roovar1))));
@@ -1350,9 +1353,12 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
     mean/=times_to_run;
     std::cout << "Mean pp " << mean << std::endl;
 
+    assert ((int)(do_syst_vector->size())==times_to_run);
+
     for (int i=0; i<times_to_run; i++){
       fittedx.setVal(do_syst_vector->at(i)->pp);
-      fittedpull.setVal((do_syst_vector->at(i)->pp-mctruthfr->pp)/do_syst_vector->at(i)->pp_err);
+      float centerval = (mctruthfr) ? mctruthfr->pp : mean;
+      fittedpull.setVal((do_syst_vector->at(i)->pp-centerval)/do_syst_vector->at(i)->pp_err);
       std::cout << "Toy nr. " << i << " " << fittedx.getVal() << " " << do_syst_vector->at(i)->pp_err << " " << fittedpull.getVal() << std::endl;
       dsetx.add(fittedx);
       dsetpull.add(fittedpull);
@@ -1393,7 +1399,7 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
       histo_bias->SetBinError(bin+1,sigmagaus.getPropagatedError(*biasfitresult));
     }
     if (do_syst_string==TString("purefitbias")) {
-      histo_bias->GetYaxis()->SetTitle("fitted mean of the pull (0.2 pp purity toys)");
+      histo_bias->GetYaxis()->SetTitle(Form("fitted mean of the pull (%f pp purity toys)",mctruthfr->pp));
       histo_bias->SetBinContent(bin+1,meangauspull.getVal());
       histo_bias->SetBinError(bin+1,meangauspull.getPropagatedError(*biasfitresultpull));
     }
