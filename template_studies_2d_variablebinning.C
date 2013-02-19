@@ -1,4 +1,4 @@
-bool doplots = false;
+bool global_doplots = false;
 bool doxcheckstemplates = false;
 
 #include <assert.h>
@@ -135,8 +135,10 @@ TDirectoryFile *dir_d=NULL;
 
 fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename_t1p1f, const char* inputfilename_t2f, const char* inputfilename_d, TString diffvariable, TString splitting, int bin, const TString do_syst_string=TString("")){
 
-  if (do_syst_string=="savepdfMCtrue") std::cout << "RUNNING FOR SAVE PDF" << std::endl;
-  if (do_syst_string=="savepdfMCtrue1D") std::cout << "RUNNING FOR SAVE PDF 1D" << std::endl;
+  bool doplots = global_doplots;
+
+  if (do_syst_string=="savepdfMCtrue")   {std::cout << "RUNNING FOR SAVE PDF" << std::endl; doplots=false;}
+  if (do_syst_string=="savepdfMCtrue1D") {std::cout << "RUNNING FOR SAVE PDF 1D" << std::endl; doplots=false;}
 
   TH1F::SetDefaultSumw2(kTRUE);
 
@@ -254,7 +256,7 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
   roovar1->setBins(n_histobins);
   roovar2->setBins(n_histobins);
 
-  bool islowstatcat = true;
+  bool islowstatcat = false;
   if (splitting=="invmass" && bin==12) islowstatcat=true;
   if (splitting=="costhetastar" && bin==12) islowstatcat=true;
 
@@ -590,7 +592,7 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
   produce_category_binning(&dataset_axis2);
 
   int times_to_run = 1;
-  const int ntoys = 10;
+  const int ntoys = 1;
 
   std::vector<fit_output*> do_syst_templatestatistics_outputvector;
   std::vector<fit_output*> do_syst_purefitbias_outputvector;
@@ -1753,14 +1755,20 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
   TH1F *purity[4];
   TH1F *eventshisto;
   TH1F *overflowremovaleffhisto;
-  TH1F *eff=NULL;
 
-
-  TFile *eff_file = new TFile("efficiencies.root");
-  eff_file->GetObject(Form("w_eff_gg_%s_%s",splitting.Data(),diffvariable.Data()),eff);
+  TH1D *eff=NULL;
+  TFile *eff_file = new TFile(Form("correctedDiphotonJetEff/bin_%s/eff_%s.root",splitting.Data(),diffvariable.Data()));
+  eff_file->GetObject("hist3",eff);
   assert (eff!=NULL);
   eff->GetYaxis()->SetTitle("selection/ID efficiency");
   eff->GetXaxis()->SetTitle(diffvariable.Data());
+
+//  TH1F *eff=NULL;
+//  TFile *eff_file = new TFile("efficiencies.root");
+//  eff_file->GetObject(Form("w_eff_gg_%s_%s",splitting.Data(),diffvariable.Data()),eff);
+//  assert (eff!=NULL);
+//  eff->GetYaxis()->SetTitle("selection/ID efficiency");
+//  eff->GetXaxis()->SetTitle(diffvariable.Data());
 
   TFile *purity_file = new TFile(Form("plots/histo_purity_%s_%s_allbins.root",diffvariable.Data(),splitting.Data()));
   purity_file->GetObject("purity_sigsig",purity[0]);
@@ -1775,12 +1783,15 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
 
   TH1F *histo_bias_purefitbias;
   TH1F *histo_bias_templatestatistics;
+  TFile *file_standardsel_dy;
 
   if (!skipsystematics){
     TFile *file_bias_purefitbias  = new TFile(Form("plots/histo_bias_purefitbias_%s_%s_allbins.root",diffvariable.Data(),splitting.Data()));
     file_bias_purefitbias->GetObject("histo_bias_purefitbias",histo_bias_purefitbias);
     TFile *file_bias_templatestatistics  = new TFile(Form("plots/histo_bias_templatestatistics_%s_%s_allbins.root",diffvariable.Data(),splitting.Data()));
     file_bias_templatestatistics->GetObject("histo_bias_templatestatistics",histo_bias_templatestatistics);
+    file_standardsel_dy = new TFile("outphoton_dy_standard.root");
+    std::cout << "files opened for syst" << std::endl;
   }
   
     xsec = new TH1F("xsec","xsec",bins_to_run,binsdef);
@@ -1800,9 +1811,22 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
     xsec_ngammagammayield->SetMarkerColor(kGreen+2);
     xsec_ngammagammayield->SetLineColor(kGreen+2);
 
+    map<TString,float> syst_relative_promptshape;
+    syst_relative_promptshape.insert(pair<TString,float>("EBEB",0.03));
+    syst_relative_promptshape.insert(pair<TString,float>("EBEE",0.05));
+    syst_relative_promptshape.insert(pair<TString,float>("EEEE",0.15));
+    map<TString,float> syst_relative_fakeshape;
+    syst_relative_fakeshape.insert(pair<TString,float>("EBEB",0.05));
+    syst_relative_fakeshape.insert(pair<TString,float>("EBEE",0.15));
+    syst_relative_fakeshape.insert(pair<TString,float>("EEEE",0.18));
+    map<TString,pair<float,float> > syst_purity_dy;
+    syst_purity_dy.insert(pair<TString,pair<float,float> >("EBEB",pair<float,float>(8.6542e-01,4.51e-02)));
+    syst_purity_dy.insert(pair<TString,pair<float,float> >("EBEE",pair<float,float>(7.9537e-01,8.22e-02)));
+    syst_purity_dy.insert(pair<TString,pair<float,float> >("EEEE",pair<float,float>(8.5493e-01,7.29e-02)));
+
+    std::cout << "ready to start loop" << std::endl;
 
   for (int bin=0; bin<bins_to_run; bin++) {
-
 
 
     //    if (!fr[bin]->fr) continue;
@@ -1820,16 +1844,31 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
     float tot_events = eventshisto->GetBinContent(bin+1);
     float eff_overflow = overflowremovaleffhisto->GetBinContent(bin+1);
 
-    xsec->SetBinContent(bin+1,pp*tot_events/eff_overflow/xsec->GetBinWidth(bin+1)/intlumi);
-    xsec_withsyst->SetBinContent(bin+1,xsec->GetBinContent(bin+1));
-    xsec_ngammagammayield->SetBinContent(bin+1,pp*tot_events/eff_overflow);
+    RooDataSet *dset_standardsel_dy = NULL;
+    if (!skipsystematics) {file_standardsel_dy->GetObject(Form("mc_Tree_2Dstandard_selection/obs_roodset_%s_%s_b%d",splitting.Data(),diffvariable.Data(),bin),dset_standardsel_dy); assert(dset_standardsel_dy);}
 
-    float purity_error_withsyst = (!skipsystematics) ? sqrt(pow(pp_err,2) + pow(histo_bias_templatestatistics->GetBinContent(bin+1),2) + pow(pp_err*histo_bias_purefitbias->GetBinContent(bin+1),2)) : pp_err;
+    float events_dy = (!skipsystematics) ? dset_standardsel_dy->sumEntries() : 0; // normalized to 1/fb, xsec already to 2475 (measured CMS)
+    float purity_dy = syst_purity_dy[splitting].first;
+    float purity_dy_err = syst_purity_dy[splitting].second;
+    float scale_dy = 1;
+    float rel_error_on_purity_pp = events_dy*purity_dy_err*scale_dy/(pp*tot_events/eff_overflow/intlumi-events_dy*purity_dy*scale_dy);
+
+    xsec->SetBinContent(bin+1,(pp*tot_events/eff_overflow/intlumi-events_dy*purity_dy*scale_dy)/xsec->GetBinWidth(bin+1));
+    xsec_withsyst->SetBinContent(bin+1,xsec->GetBinContent(bin+1));
+    xsec_ngammagammayield->SetBinContent(bin+1,pp*tot_events/eff_overflow-events_dy*purity_dy*scale_dy*intlumi);
+
+
+    float shapesyst1 = pp*syst_relative_promptshape[splitting];
+    float shapesyst2 = pp*syst_relative_fakeshape[splitting];
+
+    float purity_error_withsyst = pp_err;
+    if (!skipsystematics) purity_error_withsyst = sqrt(pow(pp_err,2) + pow(histo_bias_templatestatistics->GetBinContent(bin+1),2) + pow(pp_err*histo_bias_purefitbias->GetBinContent(bin+1),2) + pow(shapesyst1,2) + pow(shapesyst2,2) + pow(pp*rel_error_on_purity_pp,2));
 
     float errpoiss=1.0/sqrt(tot_events);
     float err=sqrt(pow(pp_err/pp,2)+pow(errpoiss,2));
     float err_withsyst=sqrt(pow(purity_error_withsyst/pp,2)+pow(errpoiss,2));
-    for (int i=0; i<10; i++) std::cout << "SISTEMATICA SU TEMPLATE SHAPE E PT ASSENTE" << std::endl;
+
+
     xsec->SetBinError(bin+1,err*xsec->GetBinContent(bin+1));
     xsec_withsyst->SetBinError(bin+1,err_withsyst*xsec->GetBinContent(bin+1));
 
@@ -1907,6 +1946,13 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
   xsec_canv->SaveAs(Form("plots/plot_xsec_%s_%s.root",diffvariable.Data(),splitting.Data()));
   xsec_canv->SaveAs(Form("plots/plot_xsec_%s_%s.pdf", diffvariable.Data(),splitting.Data()));
   
+//  xsec_canv->SetLogy();
+//  xsec_canv->SaveAs(Form("plots/plot_xsec_log_%s_%s.png", diffvariable.Data(),splitting.Data()));
+//  xsec_canv->SaveAs(Form("plots/plot_xsec_log_%s_%s.jpg", diffvariable.Data(),splitting.Data()));
+//  xsec_canv->SaveAs(Form("plots/plot_xsec_log_%s_%s.root",diffvariable.Data(),splitting.Data()));
+//  xsec_canv->SaveAs(Form("plots/plot_xsec_log_%s_%s.pdf", diffvariable.Data(),splitting.Data()));
+
+
   TFile *xsec_file = new TFile(Form("plots/histo_xsec_%s_%s.root", diffvariable.Data(),splitting.Data()),"recreate");
   xsec_file->cd();
   xsec->Write();
