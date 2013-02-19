@@ -1,4 +1,4 @@
-bool global_doplots = false;
+bool global_doplots = true;
 bool doxcheckstemplates = false;
 
 #include <assert.h>
@@ -257,8 +257,10 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
   roovar2->setBins(n_histobins);
 
   bool islowstatcat = false;
-  if (splitting=="invmass" && bin==12) islowstatcat=true;
-  if (splitting=="costhetastar" && bin==12) islowstatcat=true;
+  if (diffvariable=="invmass" && bin==12) islowstatcat=true;
+  if (diffvariable=="costhetastar" && bin==12) islowstatcat=true;
+
+  if (islowstatcat) std::cout << "USING LOW STAT BINNING" << std::endl;
 
   const int n_templatebins_const = (islowstatcat) ? n_templatebins_reduced : n_templatebins_full;
   n_templatebins = n_templatebins_const;
