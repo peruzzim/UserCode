@@ -407,6 +407,7 @@ void template_production::Loop(int maxevents)
 	if (*diffvariable==TString("invmass")) {
 	  bin_couple = Choose_bin_invmass(dipho_mgg_photon,event_ok_for_dataset_local);
 	  value_diffvariable=dipho_mgg_photon;
+	  invmass_vector.push_back(value_diffvariable);
 	}
 	if (*diffvariable==TString("diphotonpt")){
 	  float px = pholead_px+photrail_px;
@@ -414,18 +415,41 @@ void template_production::Loop(int maxevents)
 	  float pt = sqrt(px*px+py*py);
 	  bin_couple = Choose_bin_diphotonpt(pt,event_ok_for_dataset_local);
 	  value_diffvariable=pt;
+	  diphotonpt_vector.push_back(value_diffvariable);
 	}
 	if (*diffvariable==TString("costhetastar")){
 	  TLorentzVector pho1(pholead_px,pholead_py,pholead_pz,pholead_energy);
 	  TLorentzVector pho2(photrail_px,photrail_py,photrail_pz,photrail_energy);
+
+// COS THETASTAR HX
 //	  TVector3 boost = (pho1+pho2).BoostVector();
 //	  TLorentzVector boostedpho1 = pho1;
 //	  boostedpho1.Boost(-boost);
 //	  float thetastar1 = boostedpho1.Angle(boost);
 //	  bin_couple = Choose_bin_costhetastar(fabs(TMath::Cos(thetastar1)),event_ok_for_dataset_local);
 //	  value_diffvariable=fabs(TMath::Cos(thetastar1));
-	  value_diffvariable = fabs(TMath::TanH((pho1.Rapidity()-pho2.Rapidity())/2));
-	  bin_couple = Choose_bin_costhetastar(value_diffvariable,event_ok_for_dataset_local);
+
+// DELTA ETA
+//	  value_diffvariable = fabs(TMath::TanH((pho1.Rapidity()-pho2.Rapidity())/2));
+//	  bin_couple = Choose_bin_costhetastar(value_diffvariable,event_ok_for_dataset_local);
+
+// COS THETASTAR CS
+	  TLorentzVector b1,b2,diphoton;
+	  b1.SetPx(0); b1.SetPy(0); b1.SetPz( 3500); b1.SetE(3500);
+	  b2.SetPx(0); b2.SetPy(0); b2.SetPz(-3500); b2.SetE(3500);
+	  TLorentzVector boostedpho1 = pho1; 
+	  TLorentzVector boostedpho2 = pho2; 
+	  TLorentzVector boostedb1 = b1; 
+	  TLorentzVector boostedb2 = b2; 
+	  TVector3 boost = (pho1+pho2).BoostVector();
+	  boostedpho1.Boost(-boost);
+	  boostedpho2.Boost(-boost);
+	  boostedb1.Boost(-boost);
+	  boostedb2.Boost(-boost);
+	  TVector3 direction_cs = (boostedb1.Vect().Unit()-boostedb2.Vect().Unit()).Unit();
+	  value_diffvariable = fabs(TMath::Cos(direction_cs.Angle(boostedpho1.Vect())));
+	  bin_couple = Choose_bin_costhetastar(value_diffvariable,event_ok_for_dataset_local); 
+
 	}
 	if (*diffvariable==TString("dphi")){
 	  float phi1 = pholead_SCphi;
@@ -479,6 +503,7 @@ void template_production::Loop(int maxevents)
 	args.add(RooArgSet(*roorho,*roosigma));
 	obs_roodset[get_name_obs_roodset(event_ok_for_dataset_local,*diffvariable,bin_couple)]->add(args,weight);
 
+
 //	if (!isdata) { SISTEMARE;
 //	  if (leadistruesig && trailistruesig) weights_2p[event_ok_for_dataset_local][*diffvariable][bin_couple]+=weight;
 //	  else if (!leadistruesig && !trailistruesig) weights_2f[event_ok_for_dataset_local][*diffvariable][bin_couple]+=weight;
@@ -510,6 +535,12 @@ void template_production::Loop(int maxevents)
 //    }
 //  }
 
+  if (invmass_vector.size()>0){
+    std::sort(invmass_vector.begin(),invmass_vector.end());
+    std::sort(diphotonpt_vector.begin(),diphotonpt_vector.end());
+    for (int i=1; i<10; i++) std::cout << "invmass" << invmass_vector.at(invmass_vector.size()-i) << std::endl;
+    for (int i=1; i<10; i++) std::cout << "diphotonpt" << diphotonpt_vector.at(diphotonpt_vector.size()-i) << std::endl;
+  }
 
 };
 

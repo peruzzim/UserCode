@@ -35,6 +35,8 @@
 #include "TLorentzVector.h"
 #include "RooDataSet.h"
 #include "RooWorkspace.h"
+#include <vector>
+#include <algorithm> 
 
 using namespace std;
 using namespace RooFit;
@@ -44,6 +46,9 @@ public :
 
    TTree          *fChain;   //!pointer to the analyzed TTree or TChain
    Int_t           fCurrent; //!current Tree number in a TChain
+
+   vector<float> invmass_vector;
+   vector<float> diphotonpt_vector;
 
    // Declaration of leaf types
    Float_t         event_luminormfactor;

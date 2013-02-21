@@ -1855,6 +1855,9 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
     float scale_dy = 1;
     float rel_error_on_purity_pp = events_dy*purity_dy_err*scale_dy/(pp*tot_events/eff_overflow/intlumi-events_dy*purity_dy*scale_dy);
 
+
+    //    std::cout << "rel_error_on_purity_pp from dy " << rel_error_on_purity_pp << std::endl;
+
     xsec->SetBinContent(bin+1,(pp*tot_events/eff_overflow/intlumi-events_dy*purity_dy*scale_dy)/xsec->GetBinWidth(bin+1));
     xsec_withsyst->SetBinContent(bin+1,xsec->GetBinContent(bin+1));
     xsec_ngammagammayield->SetBinContent(bin+1,pp*tot_events/eff_overflow-events_dy*purity_dy*scale_dy*intlumi);
@@ -1870,11 +1873,25 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
     float err=sqrt(pow(pp_err/pp,2)+pow(errpoiss,2));
     float err_withsyst=sqrt(pow(purity_error_withsyst/pp,2)+pow(errpoiss,2));
 
-
     xsec->SetBinError(bin+1,err*xsec->GetBinContent(bin+1));
     xsec_withsyst->SetBinError(bin+1,err_withsyst*xsec->GetBinContent(bin+1));
 
-    std::cout << err << " " << err_withsyst << std::endl;
+    std::cout << "In bin " << bin << ":" << std::endl;
+    std::cout << "pp: " << pp << std::endl;
+    std::cout << "pp_err: " << pp_err << std::endl;
+    std::cout << "Abs error without syst: " << err*pp << std::endl;
+    std::cout << "Abs error with syst: " << err_withsyst*pp << std::endl;
+    std::cout << "Rel error without syst: " << err << std::endl;
+    std::cout << "Rel error with syst: " << err_withsyst << std::endl;
+    std::cout << "Rel pp_err: " << pp_err/pp << std::endl;
+    if (!skipsystematics){
+    std::cout << "Rel templ stat: " << histo_bias_templatestatistics->GetBinContent(bin+1)/pp << std::endl;
+    std::cout << "Rel fit bias: " << pp_err*histo_bias_purefitbias->GetBinContent(bin+1)/pp << std::endl;
+    std::cout << "Rel shape sig: " << shapesyst1/pp << std::endl;
+    std::cout << "Rel shape bkg: " << shapesyst2/pp << std::endl;
+    std::cout << "Rel dy sub: " << rel_error_on_purity_pp << std::endl;
+    }
+    std::cout << "Rel poisson: " << errpoiss << std::endl << std::endl;
 
   }
   
