@@ -1,4 +1,4 @@
-bool global_doplots = true;
+bool global_doplots = false;
 bool doxcheckstemplates = false;
 
 #include <assert.h>
@@ -257,10 +257,12 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
   roovar2->setBins(n_histobins);
 
   bool islowstatcat = false;
-  if (diffvariable=="invmass" && bin==12) islowstatcat=true;
-  if (diffvariable=="costhetastar" && bin==12) islowstatcat=true;
-
-  if (islowstatcat) std::cout << "USING LOW STAT BINNING" << std::endl;
+  if (diffvariable=="costhetastar" && splitting=="EEEE" && bin==5) islowstatcat=true;
+  if (diffvariable=="costhetastar" && splitting=="EEEE" && bin==6) islowstatcat=true;
+  if (diffvariable=="invmass" && bin==15) islowstatcat=true;
+  if (diffvariable=="invmass" && splitting=="EEEE" && bin==13) islowstatcat=true;
+  if (diffvariable=="invmass" && splitting=="EEEE" && bin==14) islowstatcat=true;
+  if (diffvariable=="diphotonpt" && splitting=="EEEE" && bin==19) islowstatcat=true;
 
   const int n_templatebins_const = (islowstatcat) ? n_templatebins_reduced : n_templatebins_full;
   n_templatebins = n_templatebins_const;
@@ -594,7 +596,7 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
   produce_category_binning(&dataset_axis2);
 
   int times_to_run = 1;
-  const int ntoys = 1;
+  const int ntoys = 1000;
 
   std::vector<fit_output*> do_syst_templatestatistics_outputvector;
   std::vector<fit_output*> do_syst_purefitbias_outputvector;
@@ -1793,7 +1795,6 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
     TFile *file_bias_templatestatistics  = new TFile(Form("plots/histo_bias_templatestatistics_%s_%s_allbins.root",diffvariable.Data(),splitting.Data()));
     file_bias_templatestatistics->GetObject("histo_bias_templatestatistics",histo_bias_templatestatistics);
     file_standardsel_dy = new TFile("outphoton_dy_standard.root");
-    std::cout << "files opened for syst" << std::endl;
   }
   
     xsec = new TH1F("xsec","xsec",bins_to_run,binsdef);
@@ -1826,9 +1827,11 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
     syst_purity_dy.insert(pair<TString,pair<float,float> >("EBEE",pair<float,float>(7.9537e-01,8.22e-02)));
     syst_purity_dy.insert(pair<TString,pair<float,float> >("EEEE",pair<float,float>(8.5493e-01,7.29e-02)));
 
-    std::cout << "ready to start loop" << std::endl;
+
+    std::cout << "start loop: " << std::endl;
 
   for (int bin=0; bin<bins_to_run; bin++) {
+
 
 
     //    if (!fr[bin]->fr) continue;
@@ -1846,17 +1849,11 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
     float tot_events = eventshisto->GetBinContent(bin+1);
     float eff_overflow = overflowremovaleffhisto->GetBinContent(bin+1);
 
-    RooDataSet *dset_standardsel_dy = NULL;
-    if (!skipsystematics) {file_standardsel_dy->GetObject(Form("mc_Tree_2Dstandard_selection/obs_roodset_%s_%s_b%d",splitting.Data(),diffvariable.Data(),bin),dset_standardsel_dy); assert(dset_standardsel_dy);}
-
-    float events_dy = (!skipsystematics) ? dset_standardsel_dy->sumEntries() : 0; // normalized to 1/fb, xsec already to 2475 (measured CMS)
+    float events_dy = (!skipsystematics) ? ((RooDataSet*)(file_standardsel_dy->Get("mc_Tree_2Dstandard_selection/obs_roodset_%s_%s_b%d")))->sumEntries() : 0; // normalized to 1/fb, xsec already to 2475 (measured CMS)
     float purity_dy = syst_purity_dy[splitting].first;
     float purity_dy_err = syst_purity_dy[splitting].second;
     float scale_dy = 1;
     float rel_error_on_purity_pp = events_dy*purity_dy_err*scale_dy/(pp*tot_events/eff_overflow/intlumi-events_dy*purity_dy*scale_dy);
-
-
-    //    std::cout << "rel_error_on_purity_pp from dy " << rel_error_on_purity_pp << std::endl;
 
     xsec->SetBinContent(bin+1,(pp*tot_events/eff_overflow/intlumi-events_dy*purity_dy*scale_dy)/xsec->GetBinWidth(bin+1));
     xsec_withsyst->SetBinContent(bin+1,xsec->GetBinContent(bin+1));
@@ -1873,25 +1870,11 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
     float err=sqrt(pow(pp_err/pp,2)+pow(errpoiss,2));
     float err_withsyst=sqrt(pow(purity_error_withsyst/pp,2)+pow(errpoiss,2));
 
+
     xsec->SetBinError(bin+1,err*xsec->GetBinContent(bin+1));
     xsec_withsyst->SetBinError(bin+1,err_withsyst*xsec->GetBinContent(bin+1));
 
-    std::cout << "In bin " << bin << ":" << std::endl;
-    std::cout << "pp: " << pp << std::endl;
-    std::cout << "pp_err: " << pp_err << std::endl;
-    std::cout << "Abs error without syst: " << err*pp << std::endl;
-    std::cout << "Abs error with syst: " << err_withsyst*pp << std::endl;
-    std::cout << "Rel error without syst: " << err << std::endl;
-    std::cout << "Rel error with syst: " << err_withsyst << std::endl;
-    std::cout << "Rel pp_err: " << pp_err/pp << std::endl;
-    if (!skipsystematics){
-    std::cout << "Rel templ stat: " << histo_bias_templatestatistics->GetBinContent(bin+1)/pp << std::endl;
-    std::cout << "Rel fit bias: " << pp_err*histo_bias_purefitbias->GetBinContent(bin+1)/pp << std::endl;
-    std::cout << "Rel shape sig: " << shapesyst1/pp << std::endl;
-    std::cout << "Rel shape bkg: " << shapesyst2/pp << std::endl;
-    std::cout << "Rel dy sub: " << rel_error_on_purity_pp << std::endl;
-    }
-    std::cout << "Rel poisson: " << errpoiss << std::endl << std::endl;
+    std::cout << err << " " << err_withsyst << std::endl;
 
   }
   

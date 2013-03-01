@@ -29,26 +29,26 @@ float binsdef_single_gamma_EE[n_bins+1]={30,40,50,60,70,80,90,110,120};
 float binsdef_single_gamma_EB_eta[n_bins+1]={0,0.2,0.4,0.6,0.8,1,1.2,1.4442};
 float binsdef_single_gamma_EE_eta[n_bins+1]={1.56,1.653,1.8,2,2.2,2.5};
 
-int n_templates_invmass_EBEB=14;
-int n_templates_invmass_EBEE=14;
-int n_templates_invmass_EEEE=14;
-float binsdef_diphoton_invmass_EBEB[n_bins+1]={0,60,75,80,85,90,95,100,110,120,150,250,400,800,801};
-float binsdef_diphoton_invmass_EBEE[n_bins+1]={0,60,75,80,85,90,95,100,110,120,150,250,400,800,801};
-float binsdef_diphoton_invmass_EEEE[n_bins+1]={0,60,75,80,85,90,95,100,110,120,150,250,400,800,801};
+int n_templates_invmass_EBEB=16;
+int n_templates_invmass_EBEE=16;
+int n_templates_invmass_EEEE=16;
+float binsdef_diphoton_invmass_EBEB[n_bins+1]={0,40,60,70,75,80,85,90,95,100,110,120,150,250,400,800,801};
+float binsdef_diphoton_invmass_EBEE[n_bins+1]={0,40,60,70,75,80,85,90,95,100,110,120,150,250,400,800,801};
+float binsdef_diphoton_invmass_EEEE[n_bins+1]={0,40,60,70,75,80,85,90,95,100,110,120,150,250,400,800,801};
 
-int n_templates_diphotonpt_EBEB=20;
-int n_templates_diphotonpt_EBEE=20;
-int n_templates_diphotonpt_EEEE=20;
-float binsdef_diphoton_diphotonpt_EBEB[n_bins+1]={0,6,10,12,14,16,18,20,22,24,28,34,40,50,60,70,80,90,100,120,121};
-float binsdef_diphoton_diphotonpt_EBEE[n_bins+1]={0,6,10,12,14,16,18,20,22,24,28,34,40,50,60,70,80,90,100,120,121};
-float binsdef_diphoton_diphotonpt_EEEE[n_bins+1]={0,6,10,12,14,16,18,20,22,24,28,34,40,50,60,70,80,90,100,120,121};
+int n_templates_diphotonpt_EBEB=21;
+int n_templates_diphotonpt_EBEE=21;
+int n_templates_diphotonpt_EEEE=21;
+float binsdef_diphoton_diphotonpt_EBEB[n_bins+1]={0,6,10,12,14,16,18,20,22,24,28,34,40,50,60,70,80,90,100,120,200,201};
+float binsdef_diphoton_diphotonpt_EBEE[n_bins+1]={0,6,10,12,14,16,18,20,22,24,28,34,40,50,60,70,80,90,100,120,200,201};
+float binsdef_diphoton_diphotonpt_EEEE[n_bins+1]={0,6,10,12,14,16,18,20,22,24,28,34,40,50,60,70,80,90,100,120,200,201};
 
-int n_templates_costhetastar_EBEB=10;
-int n_templates_costhetastar_EBEE=10;
-int n_templates_costhetastar_EEEE=10;
-float binsdef_diphoton_costhetastar_EBEB[n_bins+1]={0,0.20,0.24,0.28,0.32,0.36,0.40,0.44,0.60,0.90,1.00};
-float binsdef_diphoton_costhetastar_EBEE[n_bins+1]={0,0.20,0.24,0.28,0.32,0.36,0.40,0.44,0.60,0.90,1.00};
-float binsdef_diphoton_costhetastar_EEEE[n_bins+1]={0,0.20,0.24,0.28,0.32,0.36,0.40,0.44,0.60,0.90,1.00};
+int n_templates_costhetastar_EBEB=7;
+int n_templates_costhetastar_EBEE=7;
+int n_templates_costhetastar_EEEE=7;
+float binsdef_diphoton_costhetastar_EBEB[n_bins+1]={0,0.20,0.28,0.36,0.44,0.60,0.90,1.00};
+float binsdef_diphoton_costhetastar_EBEE[n_bins+1]={0,0.20,0.28,0.36,0.44,0.60,0.90,1.00};
+float binsdef_diphoton_costhetastar_EEEE[n_bins+1]={0,0.20,0.28,0.36,0.44,0.60,0.90,1.00};
 
 
 int n_templates_dphi_EBEB=13;
