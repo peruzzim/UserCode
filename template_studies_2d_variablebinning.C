@@ -1,4 +1,4 @@
-bool global_doplots = false;
+bool global_doplots = true;
 bool doxcheckstemplates = false;
 
 #include <assert.h>
@@ -95,7 +95,7 @@ void reweight_rho(RooDataSet **dset, RooDataSet *dsetdestination, RooPlot *plot)
 void reweight_sigma(RooDataSet **dset, RooDataSet *dsetdestination);
 void reweight_rhosigma(RooDataSet **dset, RooDataSet *dsetdestination, bool deleteold = kTRUE);
 void validate_reweighting(RooDataSet *dset, RooDataSet *dsetdestination, int numvar);
-void plot_datasets_axis1(std::vector<RooDataSet*> dset, TString outname, legend_struct legdata);
+void plot_datasets_axis1(std::vector<RooDataSet*> dset, TString outname, legend_struct legdata, std::vector<int> colors);
 void plot_template_dependency_axis1(RooDataSet *dset, TString variable, float min, float max, int bins, bool dobinned=0);
 void produce_category_binning(RooDataSet **dset, bool deleteold=kTRUE);
 void randomize_dataset_statistically_binned(RooDataSet **dset);
@@ -104,6 +104,7 @@ void create_histo_from_dataset_variablebins(RooDataSet *dset, TH1F **h1out, TH2F
 void generate_toy_dataset_1d(RooDataSet **target, RooAbsPdf *sigpdf, RooAbsPdf *bkgpdf, float fsig1toy);
 void generate_toy_dataset_2d(RooDataSet **target, RooAbsPdf *sigsigpdf, RooAbsPdf *sigbkgpdf, RooAbsPdf *bkgsigpdf, RooAbsPdf *bkgbkgpdf, float pptoy, float pftoy, float fptoy);
 void print_mem();
+void find_adaptive_binning(RooDataSet *dset, int *n_found_bins, Double_t *array_bounds, int axis=-1, float threshold = default_threshold_adaptive_binning);
 
 RooRealVar *roovar1=NULL;
 RooRealVar *roovar2=NULL;
@@ -142,43 +143,43 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
 
   TH1F::SetDefaultSumw2(kTRUE);
 
-  int bins_to_run=0; 
+  int bins_to_run=-1; 
   float *binsdef=NULL;
 
   if (diffvariable=="invmass"){
-    if (splitting=="EBEB")      bins_to_run=n_templates_invmass_EBEB;
-    else if (splitting=="EBEE") bins_to_run=n_templates_invmass_EBEE;
-    else if (splitting=="EEEE") bins_to_run=n_templates_invmass_EEEE; 
+    if (splitting=="EBEB")      bins_to_run+=n_templates_invmass_EBEB;
+    else if (splitting=="EBEE") bins_to_run+=n_templates_invmass_EBEE;
+    else if (splitting=="EEEE") bins_to_run+=n_templates_invmass_EEEE; 
     if (splitting=="EBEB")      binsdef=binsdef_diphoton_invmass_EBEB;
     else if (splitting=="EBEE") binsdef=binsdef_diphoton_invmass_EBEE;
     else if (splitting=="EEEE") binsdef=binsdef_diphoton_invmass_EEEE;
   }
   if (diffvariable=="diphotonpt"){
-    if (splitting=="EBEB")      bins_to_run=n_templates_diphotonpt_EBEB;
-    else if (splitting=="EBEE") bins_to_run=n_templates_diphotonpt_EBEE;
-    else if (splitting=="EEEE") bins_to_run=n_templates_diphotonpt_EEEE; 
+    if (splitting=="EBEB")      bins_to_run+=n_templates_diphotonpt_EBEB;
+    else if (splitting=="EBEE") bins_to_run+=n_templates_diphotonpt_EBEE;
+    else if (splitting=="EEEE") bins_to_run+=n_templates_diphotonpt_EEEE; 
     if (splitting=="EBEB")      binsdef=binsdef_diphoton_diphotonpt_EBEB;
     else if (splitting=="EBEE") binsdef=binsdef_diphoton_diphotonpt_EBEE;
     else if (splitting=="EEEE") binsdef=binsdef_diphoton_diphotonpt_EEEE;
   }
   if (diffvariable=="costhetastar"){
-    if (splitting=="EBEB")      bins_to_run=n_templates_costhetastar_EBEB;
-    else if (splitting=="EBEE") bins_to_run=n_templates_costhetastar_EBEE;
-    else if (splitting=="EEEE") bins_to_run=n_templates_costhetastar_EEEE; 
+    if (splitting=="EBEB")      bins_to_run+=n_templates_costhetastar_EBEB;
+    else if (splitting=="EBEE") bins_to_run+=n_templates_costhetastar_EBEE;
+    else if (splitting=="EEEE") bins_to_run+=n_templates_costhetastar_EEEE; 
     if (splitting=="EBEB")      binsdef=binsdef_diphoton_costhetastar_EBEB;
     else if (splitting=="EBEE") binsdef=binsdef_diphoton_costhetastar_EBEE;
     else if (splitting=="EEEE") binsdef=binsdef_diphoton_costhetastar_EEEE;
   }
   if (diffvariable=="dphi"){
-    if (splitting=="EBEB")      bins_to_run=n_templates_dphi_EBEB;
-    else if (splitting=="EBEE") bins_to_run=n_templates_dphi_EBEE;
-    else if (splitting=="EEEE") bins_to_run=n_templates_dphi_EEEE; 
+    if (splitting=="EBEB")      bins_to_run+=n_templates_dphi_EBEB;
+    else if (splitting=="EBEE") bins_to_run+=n_templates_dphi_EBEE;
+    else if (splitting=="EEEE") bins_to_run+=n_templates_dphi_EEEE; 
     if (splitting=="EBEB")      binsdef=binsdef_diphoton_dphi_EBEB;
     else if (splitting=="EBEE") binsdef=binsdef_diphoton_dphi_EBEE;
     else if (splitting=="EEEE") binsdef=binsdef_diphoton_dphi_EEEE;
   }
 
-  if (bins_to_run==bin) bins_to_run=0;
+  if (bins_to_run==bin) bins_to_run=-1;
 
   fit_output *out=NULL;
 
@@ -255,27 +256,6 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
   roovar2->setRange(leftrange,rightrange);
   roovar1->setBins(n_histobins);
   roovar2->setBins(n_histobins);
-
-  bool islowstatcat = false;
-  if (diffvariable=="costhetastar" && splitting=="EEEE" && bin==5) islowstatcat=true;
-  if (diffvariable=="costhetastar" && splitting=="EEEE" && bin==6) islowstatcat=true;
-  if (diffvariable=="invmass" && bin==15) islowstatcat=true;
-  if (diffvariable=="invmass" && splitting=="EEEE" && bin==13) islowstatcat=true;
-  if (diffvariable=="invmass" && splitting=="EEEE" && bin==14) islowstatcat=true;
-  if (diffvariable=="diphotonpt" && splitting=="EEEE" && bin==19) islowstatcat=true;
-
-  const int n_templatebins_const = (islowstatcat) ? n_templatebins_reduced : n_templatebins_full;
-  n_templatebins = n_templatebins_const;
-  templatebinsboundaries = (islowstatcat) ? templatebinsboundaries_reduced+0 : templatebinsboundaries_full+0;
-  Double_t templatebinsboundaries_diagonal[n_templatebins_const+1];
-  for (int i=0; i<n_templatebins+1; i++) templatebinsboundaries_diagonal[i]=templatebinsboundaries[i]*sqrt(2);
-    
-  binning_roovar1_threshold = new RooThresholdCategory("binning_roovar1_threshold","binning_roovar1_threshold",*roovar1);
-  for (int i=1; i<n_templatebins+1; i++) binning_roovar1_threshold->addThreshold(templatebinsboundaries[i],Form("rv1_templatebin_thr_%d",i));
-  binning_roovar2_threshold = new RooThresholdCategory("binning_roovar2_threshold","binning_roovar2_threshold",*roovar2);
-  for (int i=1; i<n_templatebins+1; i++) binning_roovar2_threshold->addThreshold(templatebinsboundaries[i],Form("rv2_templatebin_thr_%d",i));
-  binning_roovar1 = new RooRealVar("binning_roovar1","binning_roovar1",0.5,n_templatebins+0.5); binning_roovar1->setBins(n_templatebins);
-  binning_roovar2 = new RooRealVar("binning_roovar2","binning_roovar2",0.5,n_templatebins+0.5); binning_roovar2->setBins(n_templatebins);
 
   dir_d->GetObject("roopt1",roopt1); 
   dir_d->GetObject("roosieie1",roosieie1); 
@@ -476,18 +456,40 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
     sigdsets.push_back(dset_mctrue_s);
     sigdsets.push_back(dset_mcrcone_s);
     sigdsets.push_back(dset_zee_s);
-    plot_datasets_axis1(sigdsets,Form("plots/histo_sig_%s.root",s1.Data()),sigleg);
+    std::vector<int> sigcol;
+    sigcol.push_back(kBlack);
+    sigcol.push_back(kRed);
+    sigcol.push_back(kBlue);
+    sigcol.push_back(kGreen+2);
+    plot_datasets_axis1(sigdsets,Form("plots/histo_sig_withZ_%s",s1.Data()),sigleg,sigcol);
+    sigdsets.pop_back();
+    sigleg.leg.pop_back();
+    sigcol.pop_back();
+    plot_datasets_axis1(sigdsets,Form("plots/histo_sig_%s",s1.Data()),sigleg,sigcol);
+    sigdsets.erase(sigdsets.begin());
+    sigleg.leg.erase(sigleg.leg.begin());
+    sigcol.erase(sigcol.begin());
+    plot_datasets_axis1(sigdsets,Form("plots/histo_sig_onlyMC_%s",s1.Data()),sigleg,sigcol);
 
-    legend_struct sigbkg;
-    sigbkg.title = Form("Background template %s",s1.Data());
-    sigbkg.leg.push_back(TString("Sieie sideband in data"));
-    sigbkg.leg.push_back(TString("Photon Iso in MC fakes"));
-    sigbkg.leg.push_back(TString("Sieie sideband in MC"));
+    legend_struct bkgleg;
+    bkgleg.title = Form("Background template %s",s1.Data());
+    bkgleg.leg.push_back(TString("Sieie sideband in data"));
+    bkgleg.leg.push_back(TString("Photon Iso in MC fakes"));
+    bkgleg.leg.push_back(TString("Sieie sideband in MC"));
     std::vector<RooDataSet*> bkgdsets;
     bkgdsets.push_back(dataset_bkg_axis1);
     bkgdsets.push_back(dset_mctrue_b);
     bkgdsets.push_back(dset_mcrcone_b);
-    plot_datasets_axis1(bkgdsets,Form("plots/histo_bkg_%s.root",s1.Data()),sigbkg);
+    std::vector<int> bkgcol;
+    bkgcol.push_back(kBlack);
+    bkgcol.push_back(kRed);
+    bkgcol.push_back(kBlue);
+    plot_datasets_axis1(bkgdsets,Form("plots/histo_bkg_%s",s1.Data()),bkgleg,bkgcol);
+    bkgdsets.erase(bkgdsets.begin());
+    bkgleg.leg.erase(bkgleg.leg.begin());
+    bkgcol.erase(bkgcol.begin());
+    plot_datasets_axis1(bkgdsets,Form("plots/histo_bkg_onlyMC_%s",s1.Data()),bkgleg,bkgcol);
+
 
     return NULL;
   
@@ -571,16 +573,27 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
     reweight_pt_1d(&dset_mctrue_b_rv2,dataset_axis2,2);
     reweight_pt_1d(&dset_mcrcone_b_rv2,dataset_axis2,2);
 
-    produce_category_binning(&dset_mctrue_s_rv1);
-    produce_category_binning(&dset_mcrcone_s_rv1);
-    produce_category_binning(&dset_mctrue_s_rv2);
-    produce_category_binning(&dset_mcrcone_s_rv2);
-    produce_category_binning(&dset_mctrue_b_rv1);
-    produce_category_binning(&dset_mcrcone_b_rv1);
-    produce_category_binning(&dset_mctrue_b_rv2);
-    produce_category_binning(&dset_mcrcone_b_rv2);
-
   }
+
+  bool islowstatcat = false;
+  if (diffvariable=="costhetastar" && splitting=="EEEE" && bin==5) islowstatcat=true;
+  if (diffvariable=="costhetastar" && splitting=="EEEE" && bin==6) islowstatcat=true;
+  if (diffvariable=="invmass" && bin==15) islowstatcat=true;
+  if (diffvariable=="invmass" && splitting=="EEEE" && bin==13) islowstatcat=true;
+  if (diffvariable=="invmass" && splitting=="EEEE" && bin==14) islowstatcat=true;
+  if (diffvariable=="diphotonpt" && splitting=="EEEE" && bin==19) islowstatcat=true;
+
+  find_adaptive_binning(dataset,&n_templatebins,templatebinsboundaries+0,1,islowstatcat ? -999 : -1);
+
+  Double_t templatebinsboundaries_diagonal[n_templatebins_max+1];
+  for (int i=0; i<n_templatebins+1; i++) templatebinsboundaries_diagonal[i]=templatebinsboundaries[i]*sqrt(2);
+  binning_roovar1_threshold = new RooThresholdCategory("binning_roovar1_threshold","binning_roovar1_threshold",*roovar1);
+  for (int i=1; i<n_templatebins+1; i++) binning_roovar1_threshold->addThreshold(templatebinsboundaries[i],Form("rv1_templatebin_thr_%d",i));
+  binning_roovar2_threshold = new RooThresholdCategory("binning_roovar2_threshold","binning_roovar2_threshold",*roovar2);
+  for (int i=1; i<n_templatebins+1; i++) binning_roovar2_threshold->addThreshold(templatebinsboundaries[i],Form("rv2_templatebin_thr_%d",i));
+  binning_roovar1 = new RooRealVar("binning_roovar1","binning_roovar1",0.5,n_templatebins+0.5); binning_roovar1->setBins(n_templatebins);
+  binning_roovar2 = new RooRealVar("binning_roovar2","binning_roovar2",0.5,n_templatebins+0.5); binning_roovar2->setBins(n_templatebins);
+
 
   produce_category_binning(&dataset_sigsig);
   produce_category_binning(&dataset_sigbkg);
@@ -594,6 +607,20 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
   produce_category_binning(&dataset);
   produce_category_binning(&dataset_axis1);
   produce_category_binning(&dataset_axis2);
+
+  if (do_syst_string==TString("savepdfMCtrue1D") || do_syst_string==TString("templateshapeMCpromptdriven") || do_syst_string==TString("templateshapeMCfakedriven")) {
+    produce_category_binning(&dset_mctrue_s_rv1);
+    produce_category_binning(&dset_mcrcone_s_rv1);
+    produce_category_binning(&dset_mctrue_s_rv2);
+    produce_category_binning(&dset_mcrcone_s_rv2);
+    produce_category_binning(&dset_mctrue_b_rv1);
+    produce_category_binning(&dset_mcrcone_b_rv1);
+    produce_category_binning(&dset_mctrue_b_rv2);
+    produce_category_binning(&dset_mcrcone_b_rv2);
+  }
+
+
+
 
   int times_to_run = 1;
   const int ntoys = 1000;
@@ -1582,18 +1609,20 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
     
     for (int i=0; i<4; i++){
       TString name = "purity_";
+      TString title = Form("Purity - %s category",splitting.Data());
       if (do_syst_string==TString("templateshapeMCtrue") || do_syst_string==TString("templateshapeMCpromptdriven") || do_syst_string==TString("templateshapeMCfakedriven") || do_syst_string==TString("templateshapeMCfulldriven") || do_syst_string==TString("subtractionZee")) {name+=do_syst_string; name.Append("_");}
       if (i==0) name.Append("sigsig"); else if (i==1) name.Append("sigbkg"); else if (i==2) name.Append("bkgsig"); else if (i==3) name.Append("bkgbkg");
-      if (bins_to_run>0) purity[i] = new TH1F(name.Data(),name.Data(),bins_to_run,binsdef);
-      else purity[i] = new TH1F(name.Data(),name.Data(),n_bins,0,n_bins);
+      if (bins_to_run>0) purity[i] = new TH1F(name.Data(),title.Data(),bins_to_run,binsdef);
+      else purity[i] = new TH1F(name.Data(),title.Data(),n_bins,0,n_bins);
       purity[i]->SetMarkerStyle(20);
       purity[i]->SetMarkerColor(colors[i]);
       purity[i]->SetLineColor(colors[i]);
       purity[i]->SetLineWidth(2);
       purity[i]->GetYaxis()->SetRangeUser(0,1);
-      purity[i]->GetYaxis()->SetTitle("purity");
-      purity[i]->GetXaxis()->SetTitle(diffvariable.Data());
-    }
+      purity[i]->GetYaxis()->SetTitle("");
+      TString unit = diffvariables_units_list(diffvariable);
+      purity[i]->GetXaxis()->SetTitle(Form("%s %s",diffvariables_names_list(diffvariable).Data(),unit!=TString("") ? (TString("(").Append(unit.Append(")"))).Data() : TString("").Data()));
+    } 
 
     std::cout << "Output histos formatted" << std::endl;
 
@@ -1631,37 +1660,37 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
 
 void fit_dataset_allbins(TString inputfilename_t2p, TString inputfilename_t1p1f, TString inputfilename_t2f, TString inputfilename_d="tobefitted.root", TString diffvariable="", TString splitting="", TString do_syst_string=TString("")){
 
-  int bins_to_run=0; 
+  int bins_to_run=-1; 
   float *binsdef=NULL;
 
   if (diffvariable=="invmass"){
-    if (splitting=="EBEB")      bins_to_run=n_templates_invmass_EBEB;
-    else if (splitting=="EBEE") bins_to_run=n_templates_invmass_EBEE;
-    else if (splitting=="EEEE") bins_to_run=n_templates_invmass_EEEE; 
+    if (splitting=="EBEB")      bins_to_run+=n_templates_invmass_EBEB;
+    else if (splitting=="EBEE") bins_to_run+=n_templates_invmass_EBEE;
+    else if (splitting=="EEEE") bins_to_run+=n_templates_invmass_EEEE; 
     if (splitting=="EBEB")      binsdef=binsdef_diphoton_invmass_EBEB;
     else if (splitting=="EBEE") binsdef=binsdef_diphoton_invmass_EBEE;
     else if (splitting=="EEEE") binsdef=binsdef_diphoton_invmass_EEEE;
   }
   if (diffvariable=="diphotonpt"){
-    if (splitting=="EBEB")      bins_to_run=n_templates_diphotonpt_EBEB;
-    else if (splitting=="EBEE") bins_to_run=n_templates_diphotonpt_EBEE;
-    else if (splitting=="EEEE") bins_to_run=n_templates_diphotonpt_EEEE; 
+    if (splitting=="EBEB")      bins_to_run+=n_templates_diphotonpt_EBEB;
+    else if (splitting=="EBEE") bins_to_run+=n_templates_diphotonpt_EBEE;
+    else if (splitting=="EEEE") bins_to_run+=n_templates_diphotonpt_EEEE; 
     if (splitting=="EBEB")      binsdef=binsdef_diphoton_diphotonpt_EBEB;
     else if (splitting=="EBEE") binsdef=binsdef_diphoton_diphotonpt_EBEE;
     else if (splitting=="EEEE") binsdef=binsdef_diphoton_diphotonpt_EEEE;
   }
   if (diffvariable=="costhetastar"){
-    if (splitting=="EBEB")      bins_to_run=n_templates_costhetastar_EBEB;
-    else if (splitting=="EBEE") bins_to_run=n_templates_costhetastar_EBEE;
-    else if (splitting=="EEEE") bins_to_run=n_templates_costhetastar_EEEE; 
+    if (splitting=="EBEB")      bins_to_run+=n_templates_costhetastar_EBEB;
+    else if (splitting=="EBEE") bins_to_run+=n_templates_costhetastar_EBEE;
+    else if (splitting=="EEEE") bins_to_run+=n_templates_costhetastar_EEEE; 
     if (splitting=="EBEB")      binsdef=binsdef_diphoton_costhetastar_EBEB;
     else if (splitting=="EBEE") binsdef=binsdef_diphoton_costhetastar_EBEE;
     else if (splitting=="EEEE") binsdef=binsdef_diphoton_costhetastar_EEEE;
   }
   if (diffvariable=="dphi"){
-    if (splitting=="EBEB")      bins_to_run=n_templates_dphi_EBEB;
-    else if (splitting=="EBEE") bins_to_run=n_templates_dphi_EBEE;
-    else if (splitting=="EEEE") bins_to_run=n_templates_dphi_EEEE; 
+    if (splitting=="EBEB")      bins_to_run+=n_templates_dphi_EBEB;
+    else if (splitting=="EBEE") bins_to_run+=n_templates_dphi_EBEE;
+    else if (splitting=="EEEE") bins_to_run+=n_templates_dphi_EEEE; 
     if (splitting=="EBEB")      binsdef=binsdef_diphoton_dphi_EBEB;
     else if (splitting=="EBEE") binsdef=binsdef_diphoton_dphi_EBEE;
     else if (splitting=="EEEE") binsdef=binsdef_diphoton_dphi_EEEE;
@@ -1678,10 +1707,6 @@ void fit_dataset_allbins(TString inputfilename_t2p, TString inputfilename_t1p1f,
 
 void post_process(TString diffvariable="", TString splitting="", bool skipsystematics=false){
 
-  TString xunit;
-  if (diffvariable==TString("invmass") || diffvariable==TString("diphotonpt")) xunit=TString("GeV");
-  if (diffvariable==TString("costhetastar") || diffvariable==TString("dphi")) xunit=TString("1");
-
   TH1F *xsec;
   TH1F *xsec_withsyst;
   TH1F *xsec_ngammagammayield = NULL;
@@ -1691,17 +1716,21 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
     TFile *axsec_file[3];
     TH1F *axsec[3];
     TH1F *axsec_withsyst[3];
+    TH1F *axsec_ngammagammayield[3];
     for (int i=0; i<3; i++) {
       axsec_file[i] = new TFile(Form("plots/histo_xsec_%s_%s.root", diffvariable.Data(),sp[i].Data()));
       axsec_file[i]->GetObject("xsec",axsec[i]);
       axsec_file[i]->GetObject("xsec_withsyst",axsec_withsyst[i]);
+      axsec_file[i]->GetObject("xsec_ngammagammayield",axsec_ngammagammayield[i]);
     }
     for (int i=1; i<3; i++) {
       axsec[0]->Add(axsec[i]);
       axsec_withsyst[0]->Add(axsec_withsyst[i]);
+      axsec_ngammagammayield[0]->Add(axsec_ngammagammayield[i]);
     }
     xsec=axsec[0];
     xsec_withsyst=axsec_withsyst[0];
+    xsec_ngammagammayield=axsec_ngammagammayield[0];
   }
 
   else {
@@ -1717,37 +1746,37 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
 
   TH1F::SetDefaultSumw2(kTRUE);
 
-  int bins_to_run=0; 
+  int bins_to_run=-1;
   float *binsdef=NULL;
 
   if (diffvariable=="invmass"){
-    if (splitting=="EBEB")      bins_to_run=n_templates_invmass_EBEB;
-    else if (splitting=="EBEE") bins_to_run=n_templates_invmass_EBEE;
-    else if (splitting=="EEEE") bins_to_run=n_templates_invmass_EEEE; 
+    if (splitting=="EBEB")      bins_to_run+=n_templates_invmass_EBEB;
+    else if (splitting=="EBEE") bins_to_run+=n_templates_invmass_EBEE;
+    else if (splitting=="EEEE") bins_to_run+=n_templates_invmass_EEEE; 
     if (splitting=="EBEB")      binsdef=binsdef_diphoton_invmass_EBEB;
     else if (splitting=="EBEE") binsdef=binsdef_diphoton_invmass_EBEE;
     else if (splitting=="EEEE") binsdef=binsdef_diphoton_invmass_EEEE;
   }
   if (diffvariable=="diphotonpt"){
-    if (splitting=="EBEB")      bins_to_run=n_templates_diphotonpt_EBEB;
-    else if (splitting=="EBEE") bins_to_run=n_templates_diphotonpt_EBEE;
-    else if (splitting=="EEEE") bins_to_run=n_templates_diphotonpt_EEEE; 
+    if (splitting=="EBEB")      bins_to_run+=n_templates_diphotonpt_EBEB;
+    else if (splitting=="EBEE") bins_to_run+=n_templates_diphotonpt_EBEE;
+    else if (splitting=="EEEE") bins_to_run+=n_templates_diphotonpt_EEEE; 
     if (splitting=="EBEB")      binsdef=binsdef_diphoton_diphotonpt_EBEB;
     else if (splitting=="EBEE") binsdef=binsdef_diphoton_diphotonpt_EBEE;
     else if (splitting=="EEEE") binsdef=binsdef_diphoton_diphotonpt_EEEE;
   }
   if (diffvariable=="costhetastar"){
-    if (splitting=="EBEB")      bins_to_run=n_templates_costhetastar_EBEB;
-    else if (splitting=="EBEE") bins_to_run=n_templates_costhetastar_EBEE;
-    else if (splitting=="EEEE") bins_to_run=n_templates_costhetastar_EEEE; 
+    if (splitting=="EBEB")      bins_to_run+=n_templates_costhetastar_EBEB;
+    else if (splitting=="EBEE") bins_to_run+=n_templates_costhetastar_EBEE;
+    else if (splitting=="EEEE") bins_to_run+=n_templates_costhetastar_EEEE; 
     if (splitting=="EBEB")      binsdef=binsdef_diphoton_costhetastar_EBEB;
     else if (splitting=="EBEE") binsdef=binsdef_diphoton_costhetastar_EBEE;
     else if (splitting=="EEEE") binsdef=binsdef_diphoton_costhetastar_EEEE;
   }
   if (diffvariable=="dphi"){
-    if (splitting=="EBEB")      bins_to_run=n_templates_dphi_EBEB;
-    else if (splitting=="EBEE") bins_to_run=n_templates_dphi_EBEE;
-    else if (splitting=="EEEE") bins_to_run=n_templates_dphi_EEEE; 
+    if (splitting=="EBEB")      bins_to_run+=n_templates_dphi_EBEB;
+    else if (splitting=="EBEE") bins_to_run+=n_templates_dphi_EBEE;
+    else if (splitting=="EEEE") bins_to_run+=n_templates_dphi_EEEE; 
     if (splitting=="EBEB")      binsdef=binsdef_diphoton_dphi_EBEB;
     else if (splitting=="EBEE") binsdef=binsdef_diphoton_dphi_EBEE;
     else if (splitting=="EEEE") binsdef=binsdef_diphoton_dphi_EEEE;
@@ -1761,11 +1790,14 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
   TH1F *overflowremovaleffhisto;
 
   TH1D *eff=NULL;
+
+  /*
   TFile *eff_file = new TFile(Form("correctedDiphotonJetEff/bin_%s/eff_%s.root",splitting.Data(),diffvariable.Data()));
   eff_file->GetObject("hist3",eff);
   assert (eff!=NULL);
   eff->GetYaxis()->SetTitle("selection/ID efficiency");
   eff->GetXaxis()->SetTitle(diffvariable.Data());
+  */
 
 //  TH1F *eff=NULL;
 //  TFile *eff_file = new TFile("efficiencies.root");
@@ -1785,16 +1817,19 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
   std::cout << "Purity histos imported" << std::endl;
   for (int i=0; i<4; i++) purity[i]->Print(); eventshisto->Print(); overflowremovaleffhisto->Print(); 
 
-  TH1F *histo_bias_purefitbias;
-  TH1F *histo_bias_templatestatistics;
-  TFile *file_standardsel_dy;
+  TH1F *histo_bias_purefitbias = NULL;
+  TH1F *histo_bias_templatestatistics = NULL;
+  TFile *file_standardsel_dy = NULL;
 
   if (!skipsystematics){
     TFile *file_bias_purefitbias  = new TFile(Form("plots/histo_bias_purefitbias_%s_%s_allbins.root",diffvariable.Data(),splitting.Data()));
     file_bias_purefitbias->GetObject("histo_bias_purefitbias",histo_bias_purefitbias);
+    assert(histo_bias_purefitbias);
     TFile *file_bias_templatestatistics  = new TFile(Form("plots/histo_bias_templatestatistics_%s_%s_allbins.root",diffvariable.Data(),splitting.Data()));
     file_bias_templatestatistics->GetObject("histo_bias_templatestatistics",histo_bias_templatestatistics);
+    assert(histo_bias_templatestatistics);
     file_standardsel_dy = new TFile("outphoton_dy_standard.root");
+    assert(file_standardsel_dy);
   }
   
     xsec = new TH1F("xsec","xsec",bins_to_run,binsdef);
@@ -1805,12 +1840,14 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
 
   
     //    xsec->GetYaxis()->SetTitle("");
-    xsec->GetXaxis()->SetTitle(diffvariable.Data());
+    //    xsec->GetXaxis()->SetTitle(diffvariables_names_list(diffvariable).Data());
+    TString unit = diffvariables_units_list(diffvariable);
+    xsec->GetXaxis()->SetTitle(Form("%s %s",diffvariables_names_list(diffvariable).Data(),unit!=TString("") ? (TString("(").Append(unit.Append(")"))).Data() : TString("").Data()));
 
     xsec_withsyst = (TH1F*)(xsec->Clone("xsec_withsyst"));
     xsec_withsyst->SetLineColor(kRed);
 
-    xsec_ngammagammayield = (TH1F*)(xsec->Clone("xsec_rawngammagammayield"));
+    xsec_ngammagammayield = (TH1F*)(xsec->Clone("xsec_ngammagammayield"));
     xsec_ngammagammayield->SetMarkerColor(kGreen+2);
     xsec_ngammagammayield->SetLineColor(kGreen+2);
 
@@ -1832,8 +1869,6 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
 
   for (int bin=0; bin<bins_to_run; bin++) {
 
-
-
     //    if (!fr[bin]->fr) continue;
 
     float intlumi=5.093;
@@ -1849,7 +1884,8 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
     float tot_events = eventshisto->GetBinContent(bin+1);
     float eff_overflow = overflowremovaleffhisto->GetBinContent(bin+1);
 
-    float events_dy = (!skipsystematics) ? ((RooDataSet*)(file_standardsel_dy->Get("mc_Tree_2Dstandard_selection/obs_roodset_%s_%s_b%d")))->sumEntries() : 0; // normalized to 1/fb, xsec already to 2475 (measured CMS)
+    if (!skipsystematics) assert((RooDataSet*)(file_standardsel_dy->Get(Form("mc_Tree_2Dstandard_selection/obs_roodset_%s_%s_b%d",splitting.Data(),diffvariable.Data(),bin))));
+    float events_dy = (!skipsystematics) ? ((RooDataSet*)(file_standardsel_dy->Get(Form("mc_Tree_2Dstandard_selection/obs_roodset_%s_%s_b%d",splitting.Data(),diffvariable.Data(),bin))))->sumEntries() : 0; // normalized to 1/fb, xsec already to 2475 (measured CMS)
     float purity_dy = syst_purity_dy[splitting].first;
     float purity_dy_err = syst_purity_dy[splitting].second;
     float scale_dy = 1;
@@ -1858,7 +1894,7 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
     xsec->SetBinContent(bin+1,(pp*tot_events/eff_overflow/intlumi-events_dy*purity_dy*scale_dy)/xsec->GetBinWidth(bin+1));
     xsec_withsyst->SetBinContent(bin+1,xsec->GetBinContent(bin+1));
     xsec_ngammagammayield->SetBinContent(bin+1,pp*tot_events/eff_overflow-events_dy*purity_dy*scale_dy*intlumi);
-
+    std::cout << xsec_ngammagammayield->GetBinContent(bin+1) << std::endl;
 
     float shapesyst1 = pp*syst_relative_promptshape[splitting];
     float shapesyst2 = pp*syst_relative_fakeshape[splitting];
@@ -1873,14 +1909,18 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
 
     xsec->SetBinError(bin+1,err*xsec->GetBinContent(bin+1));
     xsec_withsyst->SetBinError(bin+1,err_withsyst*xsec->GetBinContent(bin+1));
+    xsec_ngammagammayield->SetBinError(bin+1,err_withsyst*xsec_ngammagammayield->GetBinContent(bin+1));
 
     std::cout << err << " " << err_withsyst << std::endl;
 
   }
-  
+
+  std::cout << "NIENTE DIVIDE(EFF): EFFICIENZA NON CORRETTA!!!" << std::endl;  
+  /*
   xsec->Divide(eff);  
   xsec_withsyst->Divide(eff);
-  
+  */
+
   TCanvas *output_canv = new TCanvas("output_canv","output_canv");
   output_canv->cd();
 
@@ -1898,7 +1938,10 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
   }
   purity[3]->Draw("e1same");
   
-  TLegend *leg = new TLegend(0.7,0.7,0.9,0.9,Form("purity %s",splitting.Data()));
+  //  purity[0]->GetXaxis()->SetTitle(diffvariables_names_list(diffvariable).Data());
+  purity[0]->GetXaxis()->SetTitle(Form("%s %s",diffvariables_names_list(diffvariable).Data(),unit!=TString("") ? (TString("(").Append(unit.Append(")"))).Data() : TString("").Data()));
+
+  TLegend *leg = new TLegend(0.7,0.7,0.9,0.9);
   leg->AddEntry(purity[0],"prompt-prompt","lp");
   leg->AddEntry(purity[1],"prompt-fake","lp");
   if (!sym) leg->AddEntry(purity[2],"fake-prompt","lp");
@@ -1929,15 +1972,16 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
   TCanvas *xsec_canv = new TCanvas("xsec_canv","xsec_canv");
   xsec_canv->cd();
   xsec_withsyst->SetStats(0);
-  xsec_withsyst->SetTitle(Form("Cross section %s",splitting.Data()));
-  xsec_withsyst->GetYaxis()->SetTitle(Form("d#sigma /fb /%s",xunit.Data()));
+  xsec_withsyst->SetTitle(Form("Differential cross section - %s category",splitting.Data()));
+  TString unit = diffvariables_units_list(diffvariable);
+  xsec_withsyst->GetYaxis()->SetTitle(Form("d#sigma/d%s (fb%s)",diffvariables_names_list(diffvariable).Data(),unit!=TString("") ? (TString("/").Append(unit.Data())).Data() : TString("").Data()));
   xsec_withsyst->SetMinimum(0);
   xsec_withsyst->Draw("e1");
   xsec->Draw("e1same");
 
   TLegend *legxsec = new TLegend(0.7,0.7,0.9,0.9);
-  legxsec->AddEntry(xsec,"stat only","l");
-  legxsec->AddEntry(xsec_withsyst,"stat + syst","l");
+  legxsec->AddEntry(xsec,"Stat. unc. only","l");
+  legxsec->AddEntry(xsec_withsyst,"Stat. + syst. unc.","l");
   legxsec->SetFillColor(kWhite);
   legxsec->Draw();
 
@@ -2430,7 +2474,7 @@ void validate_reweighting(RooDataSet *dset, RooDataSet *dsetdestination, int num
 
 };
 
-void plot_datasets_axis1(std::vector<RooDataSet*> dset, TString outname, legend_struct legdata){
+void plot_datasets_axis1(std::vector<RooDataSet*> dset, TString outname, legend_struct legdata, std::vector<int> colors){
 
   assert(dset.size()>0 && dset.size()<5);
   assert(dset.size() == legdata.leg.size());
@@ -2439,10 +2483,7 @@ void plot_datasets_axis1(std::vector<RooDataSet*> dset, TString outname, legend_
   const RooDataSet* dset1 = dset[0];
   const int ndsets = (int)(dset.size());
 
-
   TH1F *h[100];
-
-  Int_t colors[4] = {kBlack,kRed,kBlue,kGreen};
 
   for (int j=0; j<ndsets; j++){
     h[j] = new TH1F(Form("histo_%d_rv%d",j,1),Form("histo_%d_rv%d",j,1),n_histobins,leftrange,rightrange);
@@ -2451,6 +2492,8 @@ void plot_datasets_axis1(std::vector<RooDataSet*> dset, TString outname, legend_
     h[j]->SetLineWidth(2);
     h[j]->SetLineColor(colors[j]);
     h[j]->SetMarkerColor(colors[j]);
+    h[j]->SetTitle("");
+    if (legdata.leg[j].Index("data",4)!=kNPOS) h[j]->SetMarkerStyle(20);
     h[j]->SetStats(0);
     h[j]->GetXaxis()->SetTitle("Photon PFIso (GeV)");
     //    h[j]->GetXaxis()->SetRangeUser(0,6);
@@ -2469,15 +2512,20 @@ void plot_datasets_axis1(std::vector<RooDataSet*> dset, TString outname, legend_
 
   h[0]->Draw();
   for (int j=1; j<ndsets; j++) h[j]->Draw("same");
-
+  h[0]->Draw("same");
 
   TLegend *leg = new TLegend(0.6,0.7,0.9,0.9,legdata.title.Data());
   leg->SetFillColor(kWhite);
 
-  for (int j=0; j<ndsets; j++) leg->AddEntry(h[j],legdata.leg[j].Data());
+  for (int j=0; j<ndsets; j++) {
+    if (legdata.leg[j].Index("data",4)!=kNPOS) leg->AddEntry(h[j],legdata.leg[j].Data(),"p");
+    else leg->AddEntry(h[j],legdata.leg[j].Data(),"l");
+  }
   leg->Draw();
 
-  comp->SaveAs(outname.Data());
+  comp->SaveAs(Form("%s.%s",outname.Data(),"root"));
+  comp->SaveAs(Form("%s.%s",outname.Data(),"pdf"));
+  comp->SaveAs(Form("%s.%s",outname.Data(),"png"));
 
 };
 
@@ -2773,6 +2821,66 @@ void print_mem(){
   gSystem->Sleep(1e3);
 };
 
+bool myfunc_sortonfirst(pair<float,float> a, pair<float,float> b) { return (a.first<b.first); };
+
+void find_adaptive_binning(RooDataSet *dset, int *n_found_bins, Double_t *array_bounds, int axis, float threshold){
+
+  if (threshold<0 && threshold>=-100){
+    std::cout << "APPLYING FIXED BIN NUMBER BOUND (10)" << std::endl;
+    *n_found_bins=10;
+    Double_t templatebinsboundaries_reduced[11] = {-3,-0.75,-0.5,-0.25,0,0.5,1,2,4,6,9};
+    for (int i=0; i<11; i++) array_bounds[i] = templatebinsboundaries_reduced[i];
+    return;
+  }
+  if (threshold<-100){
+    std::cout << "APPLYING FIXED BIN NUMBER BOUND (5)" << std::endl;
+    *n_found_bins=5;
+    Double_t templatebinsboundaries_reduced[6] = {-3,-0.5,0,1,4,9};
+    for (int i=0; i<6; i++) array_bounds[i] = templatebinsboundaries_reduced[i];
+    return;
+  }
+
+  assert ((axis==1) || (axis==2));
+  TString string = (axis==1) ? TString("roovar1") : TString("roovar2");
+
+  vector<pair<float,float> > values;
+  for (int i=0; i<dset->numEntries(); i++){
+    values.push_back(pair<float,float>(dset->get(i)->getRealValue(string.Data()),dset->store()->weight(i)));
+  }
+  sort(values.begin(),values.end(),myfunc_sortonfirst);
+
+  vector<float> boundaries;
+  boundaries.push_back(leftrange);
+  float totw = 0;
+  float totw2 = 0;
+  for (int i=0; i<values.size(); i++){
+    totw+=values.at(i).second;
+    totw2+=pow(values.at(i).second,2);
+    if (sqrt(totw2)/totw<threshold && totw>0) {
+      boundaries.push_back(values.at(i).first);
+      totw=0;
+      totw2=0;
+    }
+  }
+  if (boundaries.size()>1) boundaries.at(boundaries.size()-1) = rightrange; else boundaries.push_back(rightrange);
+
+  std::cout << "debug adaptive binning:" << std::endl;
+  std::cout << boundaries.size()-1 << " bins" << std::endl;
+  for (int i=0; i<boundaries.size(); i++) std::cout << boundaries.at(i) << " ";
+  std::cout << std::endl;
+
+  *n_found_bins = boundaries.size()-1;
+  assert (*n_found_bins<=n_templatebins_max);
+  for (int i=0; i<boundaries.size(); i++) array_bounds[i] = boundaries.at(i);
+
+  if (*n_found_bins<5) {
+    std::cout << "APPLYING LOWER BIN NUMBER BOUND AT 5" << std::endl;
+    *n_found_bins=5;
+    Double_t templatebinsboundaries_reduced[6] = {-3,-0.5,0,1,4,9};
+    for (int i=0; i<6; i++) array_bounds[i] = templatebinsboundaries_reduced[i];
+  }
+
+};
 
 //RooDataSet** split_in_eta_cats(RooDataSet *dset, int numvar);
 //RooDataSet** split_in_eta1eta2_cats(RooDataSet *dset);

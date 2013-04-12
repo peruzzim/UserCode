@@ -1,6 +1,7 @@
 #ifndef __BINSDEF__
 #define __BINSDEF__
 
+#include <map>
 #include <vector>
 #include "TString.h"
 #include "TMath.h"
@@ -9,16 +10,40 @@
 TString __variables__[] = {TString("invmass"),TString("diphotonpt"),TString("costhetastar"),TString("dphi")};
 std::vector<TString> diffvariables_list (__variables__, __variables__ + sizeof(__variables__) / sizeof(TString) );
 
+std::map<TString,TString> diffvariables_names_list_;
+TString diffvariables_names_list(TString diffvariable){
+  if (diffvariables_names_list_.size()==0) {
+    diffvariables_names_list_[TString("invmass")]=TString("m_{#gamma #gamma}");
+    diffvariables_names_list_[TString("diphotonpt")]=TString("p_{T}^{#gamma #gamma}");
+    diffvariables_names_list_[TString("costhetastar")]=TString("cos #theta^{*}_{CS}");
+    diffvariables_names_list_[TString("dphi")]=TString("#Delta #phi_{#gamma #gamma}");
+  }
+  return diffvariables_names_list_[diffvariable];
+};
+
+std::map<TString,TString> diffvariables_units_list_;
+TString diffvariables_units_list(TString diffvariable){
+  if (diffvariables_units_list_.size()==0) {
+    diffvariables_units_list_[TString("invmass")]=TString("GeV");
+    diffvariables_units_list_[TString("diphotonpt")]=TString("GeV");
+    diffvariables_units_list_[TString("costhetastar")]=TString("");
+    diffvariables_units_list_[TString("dphi")]=TString("");
+  }
+  return diffvariables_units_list_[diffvariable];
+};
+
+
+
+
 const Int_t n_histobins = 96;
 const Float_t leftrange = -3;
 const Float_t rightrange = 9;
 
-const int n_templatebins_full = 10; 
-Double_t templatebinsboundaries_full[n_templatebins_full+1] = {-3,-0.75,-0.5,-0.25,0,0.5,1,2,4,6,9};
-const int n_templatebins_reduced = 5; 
-Double_t templatebinsboundaries_reduced[n_templatebins_reduced+1] = {-3,-0.5,0,1,4,9};
+const float default_threshold_adaptive_binning = -999;
+
+const int n_templatebins_max = 1000; 
 int n_templatebins = 0;
-Double_t *templatebinsboundaries = NULL;
+Double_t templatebinsboundaries[n_templatebins_max+1];
 
 static const int n_bins=26;
 
