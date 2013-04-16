@@ -600,8 +600,8 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
   for (int i=1; i<n_templatebins+1; i++) binning_roovar1_threshold->addThreshold(templatebinsboundaries[i],Form("rv1_templatebin_thr_%d",i));
   binning_roovar2_threshold = new RooThresholdCategory("binning_roovar2_threshold","binning_roovar2_threshold",*roovar2);
   for (int i=1; i<n_templatebins+1; i++) binning_roovar2_threshold->addThreshold(templatebinsboundaries[i],Form("rv2_templatebin_thr_%d",i));
-  binning_roovar1 = new RooRealVar("binning_roovar1","binning_roovar1",0.5,n_templatebins+0.5); binning_roovar1->setBins(n_templatebins);
-  binning_roovar2 = new RooRealVar("binning_roovar2","binning_roovar2",0.5,n_templatebins+0.5); binning_roovar2->setBins(n_templatebins);
+  binning_roovar1 = new RooRealVar("binning_roovar1","Binned Iso_{1}",0.5,n_templatebins+0.5); binning_roovar1->setBins(n_templatebins);
+  binning_roovar2 = new RooRealVar("binning_roovar2","Binned Iso_{2}",0.5,n_templatebins+0.5); binning_roovar2->setBins(n_templatebins);
 
 
   produce_category_binning(&dataset_sigsig);
@@ -989,7 +989,7 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
       model_axis1->plotOn(frame1bla,Components("bkgpdf_axis1"),LineStyle(kDashed),LineColor(kBlack),Name("background"));
       frame1bla->Draw();
       //    c1->GetPad(1)->SetLogy(1);
-      TLegend *leg = new TLegend(0.7,0.7,0.9,0.9);
+      TLegend *leg = new TLegend(0.1,0.8,0.35,0.9);
       leg->AddEntry("data","data","lp");
       leg->AddEntry("fit","fit","lp");
       leg->AddEntry("signal","signal comp.","lp");
@@ -1154,13 +1154,22 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
        
       c2_ub->cd(1);
       RooPlot *frame1bla = roovar1->frame(Title("Fit axis 1"));
-      dataset->plotOn(frame1bla);
-      model_axis1_unbinned->plotOn(frame1bla);
-      model_axis1_unbinned->plotOn(frame1bla,Components("sigpdf_axis1_unbinned"),Normalization(fsigsig->getVal()/fsig1->getVal(),RooAbsPdf::Relative),LineStyle(kDashed),LineColor(kRed));
-      model_axis1_unbinned->plotOn(frame1bla,Components("sigpdf_axis1_unbinned"),Normalization(fsigbkg->getVal()/fsig1->getVal(),RooAbsPdf::Relative),LineStyle(kDashed),LineColor(kGreen));
-      model_axis1_unbinned->plotOn(frame1bla,Components("bkgpdf_axis1_unbinned"),Normalization(fbkgsig->getVal()/(1-fsig1->getVal()),RooAbsPdf::Relative),LineStyle(kDashed),LineColor(kGreen+2));
-      model_axis1_unbinned->plotOn(frame1bla,Components("bkgpdf_axis1_unbinned"),Normalization(fbkgbkg->getVal()/(1-fsig1->getVal()),RooAbsPdf::Relative),LineStyle(kDashed),LineColor(kBlack));
+      dataset->plotOn(frame1bla,Name("data"));
+      model_axis1_unbinned->plotOn(frame1bla,Name("fit"));
+      model_axis1_unbinned->plotOn(frame1bla,Components("sigpdf_axis1_unbinned"),Name("plot_sigsig_axis1_unbinned"),Normalization(fsigsig->getVal()/fsig1->getVal(),RooAbsPdf::Relative),LineStyle(kDashed),LineColor(kRed));
+      model_axis1_unbinned->plotOn(frame1bla,Components("sigpdf_axis1_unbinned"),Name("plot_sigbkg_axis1_unbinned"),Normalization(fsigbkg->getVal()/fsig1->getVal(),RooAbsPdf::Relative),LineStyle(kDashed),LineColor(kGreen));
+      model_axis1_unbinned->plotOn(frame1bla,Components("bkgpdf_axis1_unbinned"),Name("plot_bkgsig_axis1_unbinned"),Normalization(fbkgsig->getVal()/(1-fsig1->getVal()),RooAbsPdf::Relative),LineStyle(kDashed),LineColor(kGreen+2));
+      model_axis1_unbinned->plotOn(frame1bla,Components("bkgpdf_axis1_unbinned"),Name("plot_bkgbkg_axis1_unbinned"),Normalization(fbkgbkg->getVal()/(1-fsig1->getVal()),RooAbsPdf::Relative),LineStyle(kDashed),LineColor(kBlack));
       frame1bla->Draw();
+      TLegend *leg = new TLegend(0.55,0.6,0.9,0.9);
+      leg->AddEntry("data","data","lp");
+      leg->AddEntry("fit","fit","l");
+      leg->AddEntry("plot_sigsig_axis1_unbinned","prompt-prompt","l");
+      leg->AddEntry("plot_sigbkg_axis1_unbinned","prompt-fake","l");
+      leg->AddEntry("plot_bkgsig_axis1_unbinned","fake-prompt","l");
+      leg->AddEntry("plot_bkgbkg_axis1_unbinned","fake-fake","l");
+      leg->SetFillColor(kWhite);
+      leg->Draw();
 
       c2_ub->cd(2);
       RooPlot *frame2bla = roovar2->frame(Title("Fit axis 2"));
@@ -1171,6 +1180,7 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
       model_axis2_unbinned->plotOn(frame2bla,Components("bkgpdf_axis2_unbinned"),Normalization(fsigbkg->getVal()/(1-fsig2->getVal()),RooAbsPdf::Relative),LineStyle(kDashed),LineColor(kGreen+2));
       model_axis2_unbinned->plotOn(frame2bla,Components("bkgpdf_axis2_unbinned"),Normalization(fbkgbkg->getVal()/(1-fsig2->getVal()),RooAbsPdf::Relative),LineStyle(kDashed),LineColor(kBlack));
       frame2bla->Draw();
+      leg->Draw();
 
       c2_ub->SaveAs(Form("plots/fittingplot2unbinned_%s_%s_b%d.png",splitting.Data(),diffvariable.Data(),bin));   
       c2_ub->SaveAs(Form("plots/fittingplot2unbinned_%s_%s_b%d.jpg",splitting.Data(),diffvariable.Data(),bin));   
@@ -1183,30 +1193,41 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
     if (doplots) {
       TCanvas *c2 = new TCanvas("c2","c2",1200,800);
       c2->Divide(2,2);   
-       
-      c2->cd(1);
-      RooPlot *frame1final = binning_roovar1->frame();
-      dataset->plotOn(frame1final);
-      model_2D_uncorrelated->plotOn(frame1final);
-      sigsigpdf->plotOn(frame1final,Normalization(fsigsig->getVal(),RooAbsPdf::Relative),LineStyle(kDashed),LineColor(kRed));	  
-      sigbkgpdf->plotOn(frame1final,Normalization(fsigbkg->getVal(),RooAbsPdf::Relative),LineStyle(kDashed),LineColor(kGreen));  
-      bkgsigpdf->plotOn(frame1final,Normalization(fbkgsig->getVal(),RooAbsPdf::Relative),LineStyle(kDashed),LineColor(kGreen+2));
-      bkgbkgpdf->plotOn(frame1final,Normalization(fbkgbkg->getVal(),RooAbsPdf::Relative),LineStyle(kDashed),LineColor(kBlack));  
-      frame1final->Draw();
-      //    c2->GetPad(1)->SetLogy(1);
 
+      {       
+	c2->cd(1);
+	RooPlot *frame1final = binning_roovar1->frame(Title("Fit axis 1 - binned"));
+	dataset->plotOn(frame1final,Name("data"));
+	model_2D_uncorrelated->plotOn(frame1final,Name("fit"));
+	sigsigpdf->plotOn(frame1final,Normalization(fsigsig->getVal(),RooAbsPdf::Relative),Name("plot_sigsig_axis1_unbinned"),LineStyle(kDashed),LineColor(kRed));	  
+	sigbkgpdf->plotOn(frame1final,Normalization(fsigbkg->getVal(),RooAbsPdf::Relative),Name("plot_sigbkg_axis1_unbinned"),LineStyle(kDashed),LineColor(kGreen));  
+	bkgsigpdf->plotOn(frame1final,Normalization(fbkgsig->getVal(),RooAbsPdf::Relative),Name("plot_bkgsig_axis1_unbinned"),LineStyle(kDashed),LineColor(kGreen+2));
+	bkgbkgpdf->plotOn(frame1final,Normalization(fbkgbkg->getVal(),RooAbsPdf::Relative),Name("plot_bkgbkg_axis1_unbinned"),LineStyle(kDashed),LineColor(kBlack));  
+	frame1final->Draw();
+	//    c2->GetPad(1)->SetLogy(1);
+	TLegend *leg = new TLegend(0.75,0.7,0.9,0.9);
+	leg->AddEntry("data","data","lp");
+	leg->AddEntry("fit","fit","l");
+	leg->AddEntry("plot_sigsig_axis1_unbinned","prompt-prompt","l");
+	leg->AddEntry("plot_sigbkg_axis1_unbinned","prompt-fake","l");
+	leg->AddEntry("plot_bkgsig_axis1_unbinned","fake-prompt","l");
+	leg->AddEntry("plot_bkgbkg_axis1_unbinned","fake-fake","l");
+	leg->SetFillColor(kWhite);
+	leg->Draw();
   
-      c2->cd(2);
-      RooPlot *frame2final = binning_roovar2->frame();
-      dataset->plotOn(frame2final);
-      model_2D_uncorrelated->plotOn(frame2final);
-      sigsigpdf->plotOn(frame2final,Normalization(fsigsig->getVal(),RooAbsPdf::Relative),LineStyle(kDashed),LineColor(kRed));	  
-      sigbkgpdf->plotOn(frame2final,Normalization(fsigbkg->getVal(),RooAbsPdf::Relative),LineStyle(kDashed),LineColor(kGreen));  
-      bkgsigpdf->plotOn(frame2final,Normalization(fbkgsig->getVal(),RooAbsPdf::Relative),LineStyle(kDashed),LineColor(kGreen+2));
-      bkgbkgpdf->plotOn(frame2final,Normalization(fbkgbkg->getVal(),RooAbsPdf::Relative),LineStyle(kDashed),LineColor(kBlack));  
-      frame2final->Draw();
-      //    c2->GetPad(2)->SetLogy(1);
-    
+	c2->cd(2);
+	RooPlot *frame2final = binning_roovar2->frame(Title("Fit axis 2 - binned"));
+	dataset->plotOn(frame2final);
+	model_2D_uncorrelated->plotOn(frame2final);
+	sigsigpdf->plotOn(frame2final,Normalization(fsigsig->getVal(),RooAbsPdf::Relative),LineStyle(kDashed),LineColor(kRed));	  
+	sigbkgpdf->plotOn(frame2final,Normalization(fsigbkg->getVal(),RooAbsPdf::Relative),LineStyle(kDashed),LineColor(kGreen));  
+	bkgsigpdf->plotOn(frame2final,Normalization(fbkgsig->getVal(),RooAbsPdf::Relative),LineStyle(kDashed),LineColor(kGreen+2));
+	bkgbkgpdf->plotOn(frame2final,Normalization(fbkgbkg->getVal(),RooAbsPdf::Relative),LineStyle(kDashed),LineColor(kBlack));  
+	frame2final->Draw();
+	//    c2->GetPad(2)->SetLogy(1);
+	leg->Draw();
+      }
+
       /*
 	c2->cd(1);
 	RooPlot *ppnllplot = pp->frame();
@@ -1242,7 +1263,7 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
       h2f = new TH2F("h2f","h2f",n_templatebins,0.5,0.5+n_templatebins,n_templatebins,0.5,0.5+n_templatebins);
       h2l = new TH2F("h2l","h2l",n_templatebins,0.5,0.5+n_templatebins,n_templatebins,0.5,0.5+n_templatebins);
       h2h = new TH2F("h2h","h2h",n_templatebins,0.5,0.5+n_templatebins,n_templatebins,0.5,0.5+n_templatebins);
-      h3d = new TH1F("h3d","h3d",n_templatebins,0.5*sqrt(2),(0.5+n_templatebins)*sqrt(2));
+      h3d = new TH1F("h3d","Diagonal projection",n_templatebins,0.5*sqrt(2),(0.5+n_templatebins)*sqrt(2));
       h3f = new TH1F("h3f","h3f",n_templatebins,0.5*sqrt(2),(0.5+n_templatebins)*sqrt(2));
       h3l = new TH1F("h3l","h3l",n_templatebins,0.5*sqrt(2),(0.5+n_templatebins)*sqrt(2));
       h3h = new TH1F("h3h","h3h",n_templatebins,0.5*sqrt(2),(0.5+n_templatebins)*sqrt(2));
@@ -1359,13 +1380,23 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
 //      h3l->Draw("same");
 //      h3h->Draw("same");
 
-      c2->cd(4);
-      h3d->SetStats(0);
-      h3d->GetXaxis()->SetTitle("diagonal");
-      h3d->Draw();
-      h3f->Draw("same");
-      h3l->Draw("same");
-      h3h->Draw("same");
+      {
+	c2->cd(4);
+	h3d->SetStats(0);
+	h3d->GetXaxis()->SetTitle("Diag. projection binned (Iso_{1},Iso_{2})");
+	h3d->Draw();
+	h3f->Draw("same");
+	h3l->Draw("same");
+	h3h->Draw("same");
+	
+	TLegend *leg = new TLegend(0.7,0.7,0.9,0.9);
+	leg->AddEntry(h3d,"data","lp");
+	leg->AddEntry(h3f,"fit","l");
+	leg->AddEntry(h3h,"max pp","l");
+	leg->AddEntry(h3l,"min pp","l");
+	leg->SetFillColor(kWhite);
+	leg->Draw();
+      }
 
       c2->Update();
       //      c3->Update();
