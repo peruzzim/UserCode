@@ -1,7 +1,9 @@
-bool global_doplots = true;
+bool global_doplots = false;
 bool doxcheckstemplates = false;
 
 #include <assert.h>
+
+#include "tdrstyle.C"
 
 #include "binsdef.h"
 #include "RooFitResult.h"
@@ -819,7 +821,7 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
       //    c0->GetPad(1)->SetLogy(1);
       TLegend *leg = new TLegend(0.7,0.7,0.9,0.9);
       leg->AddEntry("proj","proj. of 2-D template","lp");
-      leg->AddEntry("1d","1-D template","lp");
+      leg->AddEntry("1d","1-D template","l");
       leg->SetFillColor(kWhite);
       leg->Draw();
 
@@ -834,12 +836,17 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
 
       c0->cd(3);
       RooPlot *frame01bkg = binning_roovar1->frame(Title("Background template axis 1 - binned"));
-      dataset_bkgbkg->plotOn(frame01bkg);
+      dataset_bkgbkg->plotOn(frame01bkg,Name("proj"));
       //      bkgbkgpdf->plotOn(frame01bkg);
-      bkgpdf_axis1->plotOn(frame01bkg,LineColor(kRed),LineStyle(kDashed));
+      bkgpdf_axis1->plotOn(frame01bkg,LineColor(kRed),LineStyle(kDashed),Name("1d"));
       frame01bkg->Draw();
       //    c0->GetPad(1)->SetLogy(1);
-      leg->Draw();
+      TLegend *leg2 = new TLegend(0.3,0.7,0.5,0.9);
+      leg2->AddEntry("proj","proj. of 2-D template","lp");
+      leg2->AddEntry("1d","1-D template","l");
+      leg2->SetFillColor(kWhite);
+      leg2->Draw();
+      leg2->Draw();
 
       c0->cd(4);
       RooPlot *frame02bkg = binning_roovar2->frame(Title("Background template axis 2 - binned"));
@@ -848,7 +855,7 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
       bkgpdf_axis2->plotOn(frame02bkg,LineColor(kRed),LineStyle(kDashed));
       frame02bkg->Draw();
       //    c0->GetPad(2)->SetLogy(1);
-      leg->Draw();
+      leg2->Draw();
 
       c0->SaveAs(Form("plots/fittingplot0_%s_%s_b%d.png",splitting.Data(),diffvariable.Data(),bin));
       c0->SaveAs(Form("plots/fittingplot0_%s_%s_b%d.pdf",splitting.Data(),diffvariable.Data(),bin));
@@ -871,7 +878,7 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
       //    c0_ub->GetPad(1)->SetLogy(1);
       TLegend *leg = new TLegend(0.7,0.7,0.9,0.9);
       leg->AddEntry("proj","proj. of 2-D template","lp");
-      leg->AddEntry("1d","1-D template","lp");
+      leg->AddEntry("1d","1-D template","l");
       leg->SetFillColor(kWhite);
       leg->Draw();
 
@@ -989,11 +996,11 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
       model_axis1->plotOn(frame1bla,Components("bkgpdf_axis1"),LineStyle(kDashed),LineColor(kBlack),Name("background"));
       frame1bla->Draw();
       //    c1->GetPad(1)->SetLogy(1);
-      TLegend *leg = new TLegend(0.1,0.8,0.35,0.9);
+      TLegend *leg = new TLegend(0.2,0.8,0.45,0.9);
       leg->AddEntry("data","data","lp");
-      leg->AddEntry("fit","fit","lp");
-      leg->AddEntry("signal","signal comp.","lp");
-      leg->AddEntry("background","background comp.","lp");
+      leg->AddEntry("fit","fit","l");
+      leg->AddEntry("signal","signal comp.","l");
+      leg->AddEntry("background","background comp.","l");
       leg->SetFillColor(kWhite);
       leg->Draw();
 
@@ -1030,9 +1037,9 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
       //    c1_ub->GetPad(1)->SetLogy(1);
       TLegend *leg = new TLegend(0.55,0.7,0.9,0.9);
       leg->AddEntry("data","data","lp");
-      leg->AddEntry("fit","fit","lp");
-      leg->AddEntry("signal","signal comp.","lp");
-      leg->AddEntry("background","background comp.","lp");
+      leg->AddEntry("fit","fit","l");
+      leg->AddEntry("signal","signal comp.","l");
+      leg->AddEntry("background","background comp.","l");
       leg->SetFillColor(kWhite);
       leg->Draw();
 
@@ -1205,7 +1212,7 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
 	bkgbkgpdf->plotOn(frame1final,Normalization(fbkgbkg->getVal(),RooAbsPdf::Relative),Name("plot_bkgbkg_axis1_unbinned"),LineStyle(kDashed),LineColor(kBlack));  
 	frame1final->Draw();
 	//    c2->GetPad(1)->SetLogy(1);
-	TLegend *leg = new TLegend(0.75,0.7,0.9,0.9);
+	TLegend *leg = new TLegend(0.18,0.74,0.38,0.94);
 	leg->AddEntry("data","data","lp");
 	leg->AddEntry("fit","fit","l");
 	leg->AddEntry("plot_sigsig_axis1_unbinned","prompt-prompt","l");
@@ -1389,7 +1396,7 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
 	h3l->Draw("same");
 	h3h->Draw("same");
 	
-	TLegend *leg = new TLegend(0.7,0.7,0.9,0.9);
+	TLegend *leg = new TLegend(0.75,0.7,0.95,0.9);
 	leg->AddEntry(h3d,"data","lp");
 	leg->AddEntry(h3f,"fit","l");
 	leg->AddEntry(h3h,"max pp","l");
@@ -1606,9 +1613,10 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
 
     assert ((int)(do_syst_vector->size())==times_to_run);
 
+    float centerval = (mctruthfr) ? mctruthfr->pp : mean;
+
     for (int i=0; i<times_to_run; i++){
       fittedx.setVal(do_syst_vector->at(i)->pp);
-      float centerval = (mctruthfr) ? mctruthfr->pp : mean;
       fittedpull.setVal((do_syst_vector->at(i)->pp-centerval)/do_syst_vector->at(i)->pp_err);
       std::cout << "Toy nr. " << i << " " << fittedx.getVal() << " " << do_syst_vector->at(i)->pp_err << " " << fittedpull.getVal() << std::endl;
       dsetx.add(fittedx);
@@ -1642,27 +1650,35 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
     dsetpull.Write();
     file_bias->Close();
 
-    TH1F *histo_bias = new TH1F(Form("histo_bias_%s",do_syst_string.Data()),Form("histo_bias_%s",do_syst_string.Data()),n_bins,0,n_bins);
+    TH1F *histo_bias = new TH1F(Form("histo_bias_%s",do_syst_string.Data()),Form("histo_bias_%s",do_syst_string.Data()),bins_to_run,binsdef);
+    {
+      TString unit = diffvariables_units_list(diffvariable);
+      histo_bias->GetXaxis()->SetTitle(Form("%s %s",diffvariables_names_list(diffvariable).Data(),unit!=TString("") ? (TString("(").Append(unit.Append(")"))).Data() : TString("").Data()));
+    }
+    histo_bias->SetTitle("");
+    histo_bias->SetStats(0);
     histo_bias->SetMarkerStyle(20);
     if (do_syst_string==TString("templatestatistics")) {    
-      histo_bias->GetYaxis()->SetTitle("sigma of template fluctuation toys");
-      histo_bias->SetBinContent(bin+1,sigmagaus.getVal());
-      histo_bias->SetBinError(bin+1,sigmagaus.getPropagatedError(*biasfitresult));
+      histo_bias->GetYaxis()->SetTitle("RMS of fitted purity / gen. purity");
+      histo_bias->SetBinContent(bin+1,sigmagaus.getVal()/centerval);
+      histo_bias->SetBinError(bin+1,sigmagaus.getPropagatedError(*biasfitresult)/centerval);
     }
     if (do_syst_string==TString("purefitbias")) {
-      histo_bias->GetYaxis()->SetTitle(Form("fitted mean of the pull (%f pp purity toys)",mctruthfr->pp));
+      histo_bias->GetYaxis()->SetTitle(Form("Fitted mean of the pull (%f pp purity toys)",centerval));
       histo_bias->SetBinContent(bin+1,meangauspull.getVal());
       histo_bias->SetBinError(bin+1,meangauspull.getPropagatedError(*biasfitresultpull));
     }
     if (do_syst_string==TString("templateshapeMCtrue") || do_syst_string==TString("templateshapeMCpromptdriven") || do_syst_string==TString("templateshapeMCfakedriven")){
-      histo_bias->GetYaxis()->SetTitle(Form("Fitted purity on %f purity toys",mctruthfr->pp));
-      histo_bias->SetBinContent(bin+1,meangaus.getVal());
-      histo_bias->SetBinError(bin+1,meangaus.getPropagatedError(*biasfitresult));
+      histo_bias->GetYaxis()->SetTitle(Form("Fitted purity / gen. purity (%f purity toys)",centerval));
+      histo_bias->SetBinContent(bin+1,meangaus.getVal()/centerval);
+      histo_bias->SetBinError(bin+1,meangaus.getPropagatedError(*biasfitresult)/centerval);
     }
     histo_bias->SaveAs(Form("plots/histo_bias_%s_%s_%s_b%d.root",do_syst_string.Data(),diffvariable.Data(),splitting.Data(),bin));    
 
+
   }
 
+  std::cout << "WARNING: RISCRIVERE CALCOLO SISTEMATICHE" << std::endl;
 
 
   bool writeoutpurity = (do_syst_string!=TString("purefitbias") && do_syst_string!=TString("templatestatistics"));
@@ -1915,8 +1931,10 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
   
     //    xsec->GetYaxis()->SetTitle("");
     //    xsec->GetXaxis()->SetTitle(diffvariables_names_list(diffvariable).Data());
-    TString unit = diffvariables_units_list(diffvariable);
-    xsec->GetXaxis()->SetTitle(Form("%s %s",diffvariables_names_list(diffvariable).Data(),unit!=TString("") ? (TString("(").Append(unit.Append(")"))).Data() : TString("").Data()));
+    {
+      TString unit = diffvariables_units_list(diffvariable);
+      xsec->GetXaxis()->SetTitle(Form("%s %s",diffvariables_names_list(diffvariable).Data(),unit!=TString("") ? (TString("(").Append(unit.Append(")"))).Data() : TString("").Data()));
+    }
 
     xsec_withsyst = (TH1F*)(xsec->Clone("xsec_withsyst"));
     xsec_withsyst->SetLineColor(kRed);
@@ -1974,7 +1992,7 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
     float shapesyst2 = pp*syst_relative_fakeshape[splitting];
 
     float purity_error_withsyst = pp_err;
-    if (!skipsystematics) purity_error_withsyst = sqrt(pow(pp_err,2) + pow(histo_bias_templatestatistics->GetBinContent(bin+1),2) + pow(pp_err*histo_bias_purefitbias->GetBinContent(bin+1),2) + pow(shapesyst1,2) + pow(shapesyst2,2) + pow(pp*rel_error_on_purity_pp,2));
+    if (!skipsystematics) purity_error_withsyst = sqrt(pow(pp_err,2) + pow(pp*histo_bias_templatestatistics->GetBinContent(bin+1),2) + pow(pp_err*histo_bias_purefitbias->GetBinContent(bin+1),2) + pow(shapesyst1,2) + pow(shapesyst2,2) + pow(pp*rel_error_on_purity_pp,2));
 
     float errpoiss=1.0/sqrt(tot_events);
     float err=sqrt(pow(pp_err/pp,2)+pow(errpoiss,2));
@@ -2013,7 +2031,10 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
   purity[3]->Draw("e1same");
   
   //  purity[0]->GetXaxis()->SetTitle(diffvariables_names_list(diffvariable).Data());
-  purity[0]->GetXaxis()->SetTitle(Form("%s %s",diffvariables_names_list(diffvariable).Data(),unit!=TString("") ? (TString("(").Append(unit.Append(")"))).Data() : TString("").Data()));
+  {
+    TString unit = diffvariables_units_list(diffvariable);
+    purity[0]->GetXaxis()->SetTitle(Form("%s %s",diffvariables_names_list(diffvariable).Data(),unit!=TString("") ? (TString("(").Append(unit.Append(")"))).Data() : TString("").Data()));
+  }
 
   TLegend *leg = new TLegend(0.7,0.7,0.9,0.9);
   leg->AddEntry(purity[0],"prompt-prompt","lp");
@@ -2047,8 +2068,10 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
   xsec_canv->cd();
   xsec_withsyst->SetStats(0);
   xsec_withsyst->SetTitle(Form("Differential cross section - %s category",splitting.Data()));
-  TString unit = diffvariables_units_list(diffvariable);
-  xsec_withsyst->GetYaxis()->SetTitle(Form("d#sigma/d%s (fb%s)",diffvariables_names_list(diffvariable).Data(),unit!=TString("") ? (TString("/").Append(unit.Data())).Data() : TString("").Data()));
+  {
+    TString unit = diffvariables_units_list(diffvariable);
+    xsec_withsyst->GetYaxis()->SetTitle(Form("d#sigma/d%s (fb%s)",diffvariables_names_list(diffvariable).Data(),unit!=TString("") ? (TString("/").Append(unit.Data())).Data() : TString("").Data()));
+  }
   xsec_withsyst->SetMinimum(0);
   xsec_withsyst->Draw("e1");
   xsec->Draw("e1same");
@@ -3047,5 +3070,6 @@ void reweight_pteta(RooDataSet **dset, RooDataSet *dsetdestination, int numvar){
 */
 
 fit_output* template_studies_2d_variablebinning(const char* inputfilename_t2p, const char* inputfilename_t1p1f, const char* inputfilename_t2f, const char* inputfilename_d, TString diffvariable, TString splitting, int bin, const TString do_syst_string=TString("")){
+  setTDRStyle();
   return fit_dataset(inputfilename_t2p,inputfilename_t1p1f,inputfilename_t2f,inputfilename_d,diffvariable,splitting,bin,do_syst_string);
 };
