@@ -1801,6 +1801,13 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
   TH1F *xsec_withsyst;
   TH1F *xsec_ngammagammayield = NULL;
 
+  TH1F *systplot_purefitbias=NULL;
+  TH1F *systplot_templatestatistics=NULL;
+  TH1F *systplot_templateshapeMCpromptdriven=NULL;
+  TH1F *systplot_templateshapeMCfakedriven=NULL;
+  TH1F *systplot_zee=NULL;
+  TH1F *systplot_tot=NULL;
+
   if (splitting=="inclusive"){
     TString sp[3]={"EBEB","EBEE","EEEE"};
     TFile *axsec_file[3];
@@ -1957,6 +1964,19 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
     syst_purity_dy.insert(pair<TString,pair<float,float> >("EEEE",pair<float,float>(8.5493e-01,7.29e-02)));
 
 
+    if (!skipsystematics){
+      TH1F *systplot = NULL;
+      systplot = new TH1F("systplot","Systematic uncertainties",bins_to_run,binsdef);
+      systplot->SetLineStyle(kDashed);
+      systplot->SetLineWidth(2);
+      systplot_purefitbias=(TH1F*)(systplot->Clone("systplot_purefitbias"));
+      systplot_templatestatistics=(TH1F*)(systplot->Clone("systplot_templatestatistics"));
+      systplot_templateshapeMCpromptdriven=(TH1F*)(systplot->Clone("systplot_templateshapeMCpromptdriven"));
+      systplot_templateshapeMCfakedriven=(TH1F*)(systplot->Clone("systplot_templateshapeMCfakedriven"));
+      systplot_zee=(TH1F*)(systplot->Clone("systplot_zee"));
+      systplot_tot=(TH1F*)(systplot->Clone("systplot_tot"));
+    }
+
     std::cout << "start loop: " << std::endl;
 
   for (int bin=0; bin<bins_to_run; bin++) {
@@ -2003,9 +2023,20 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
     xsec_withsyst->SetBinError(bin+1,err_withsyst*xsec->GetBinContent(bin+1));
     xsec_ngammagammayield->SetBinError(bin+1,err_withsyst*xsec_ngammagammayield->GetBinContent(bin+1));
 
+    if (!skipsystematics){
+      systplot_purefitbias->SetBinContent(bin+1,pp_err*histo_bias_purefitbias->GetBinContent(bin+1)/pp);
+      systplot_templatestatistics->SetBinContent(bin+1,histo_bias_templatestatistics->GetBinContent(bin+1));
+      systplot_templateshapeMCpromptdriven->SetBinContent(bin+1,shapesyst1/pp);
+      systplot_templateshapeMCfakedriven->SetBinContent(bin+1,shapesyst2/pp);
+      systplot_templateshapeMCfakedriven->SetBinContent(bin+1,shapesyst2/pp);
+      systplot_zee->SetBinContent(bin+1,rel_error_on_purity_pp);
+      systplot_tot->SetBinContent(bin+1,sqrt(pow(pp*histo_bias_templatestatistics->GetBinContent(bin+1),2) + pow(pp_err*histo_bias_purefitbias->GetBinContent(bin+1),2) + pow(shapesyst1,2) + pow(shapesyst2,2) + pow(pp*rel_error_on_purity_pp,2))/pp);
+    }
+
     std::cout << err << " " << err_withsyst << std::endl;
 
   }
+
 
   std::cout << "NIENTE DIVIDE(EFF): EFFICIENZA NON CORRETTA!!!" << std::endl;  
   /*
@@ -2061,6 +2092,8 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
 
   }
 
+
+
   xsec_withsyst->Print();
   xsec->Print();
 
@@ -2102,7 +2135,50 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
   xsec_withsyst->Write();
   if (xsec_ngammagammayield) xsec_ngammagammayield->Write();
   xsec_file->Close();  
-  
+
+
+
+  if (!skipsystematics){
+
+    TCanvas *systplot_canv = new TCanvas("systplot_canv","systplot_canv");
+    systplot_canv->cd();
+    systplot_templateshapeMCfakedriven->SetStats(0);
+    systplot_templateshapeMCfakedriven->SetTitle(Form("Systematic uncertainties - %s category",splitting.Data()));
+    systplot_templateshapeMCfakedriven->SetMinimum(0);
+    
+    systplot_templateshapeMCfakedriven->Draw("");
+    systplot_templateshapeMCpromptdriven->Draw("same");
+    systplot_purefitbias->Draw("same");
+    systplot_templatestatistics->Draw("same");
+    systplot_zee->Draw("same");
+    systplot_tot->Draw("same");
+
+    systplot_templateshapeMCfakedriven->SetLineColor(kBlue);
+    systplot_templateshapeMCpromptdriven->SetLineColor(kRed);
+    systplot_purefitbias->SetLineColor(kGreen);
+    systplot_templatestatistics->SetLineColor(kGray);
+    systplot_zee->SetLineColor(kMagenta);
+    systplot_tot->SetLineColor(kBlack);
+
+    TLegend *legsystplot = new TLegend(0.6,0.7,0.9,0.9);
+    legsystplot->AddEntry(systplot_templateshapeMCpromptdriven,"Prompt template shape","l");
+    legsystplot->AddEntry(systplot_templateshapeMCfakedriven,"Fakes template shape","l");
+    legsystplot->AddEntry(systplot_templatestatistics,"Template stat. fluctuation","l");
+    legsystplot->AddEntry(systplot_purefitbias,"Fit bias","l");
+    legsystplot->AddEntry(systplot_zee,"Zee subtraction ","l");
+    legsystplot->AddEntry(systplot_tot,"Total syst. uncertainty","l");
+    legsystplot->SetFillColor(kWhite);
+    legsystplot->Draw();
+
+    systplot_canv->Update();
+    
+    systplot_canv->SaveAs(Form("plots/plot_systsummary_%s_%s.png", diffvariable.Data(),splitting.Data()));
+    systplot_canv->SaveAs(Form("plots/plot_systsummary_%s_%s.jpg", diffvariable.Data(),splitting.Data()));
+    systplot_canv->SaveAs(Form("plots/plot_systsummary_%s_%s.root",diffvariable.Data(),splitting.Data()));
+    systplot_canv->SaveAs(Form("plots/plot_systsummary_%s_%s.pdf", diffvariable.Data(),splitting.Data()));
+
+  }
+
 };
 
 void post_process_all(bool skipsystematics = false){
