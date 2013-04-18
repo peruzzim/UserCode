@@ -1670,8 +1670,9 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
     }
     if (do_syst_string==TString("templateshapeMCtrue") || do_syst_string==TString("templateshapeMCpromptdriven") || do_syst_string==TString("templateshapeMCfakedriven")){
       histo_bias->GetYaxis()->SetTitle(Form("Fitted purity / gen. purity (%f purity toys)",centerval));
-      histo_bias->SetBinContent(bin+1,meangaus.getVal()/centerval);
-      histo_bias->SetBinError(bin+1,meangaus.getPropagatedError(*biasfitresult)/centerval);
+      std::cout << "FILLING BIN 1 IN ANY CASE (SHOULD BE USED FOR BIN=N_BINS ONLY" << std::endl;
+      histo_bias->SetBinContent(1,meangaus.getVal()/centerval);
+      histo_bias->SetBinError(1,meangaus.getPropagatedError(*biasfitresult)/centerval);
     }
     histo_bias->SaveAs(Form("plots/histo_bias_%s_%s_%s_b%d.root",do_syst_string.Data(),diffvariable.Data(),splitting.Data(),bin));    
 
