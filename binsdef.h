@@ -15,7 +15,7 @@ TString diffvariables_names_list(TString diffvariable){
   if (diffvariables_names_list_.size()==0) {
     diffvariables_names_list_[TString("invmass")]=TString("m_{#gamma #gamma}");
     diffvariables_names_list_[TString("diphotonpt")]=TString("p_{T}^{#gamma #gamma}");
-    diffvariables_names_list_[TString("costhetastar")]=TString("cos #theta^{*}_{CS}");
+    diffvariables_names_list_[TString("costhetastar")]=TString("#cos #theta^{*}_{CS}");
     diffvariables_names_list_[TString("dphi")]=TString("#Delta #phi_{#gamma #gamma}");
   }
   return diffvariables_names_list_[diffvariable];
@@ -68,21 +68,21 @@ float binsdef_diphoton_diphotonpt_EBEB[n_bins+1]={0,6,10,12,14,16,18,20,22,24,28
 float binsdef_diphoton_diphotonpt_EBEE[n_bins+1]={0,6,10,12,14,16,18,20,22,24,28,34,40,50,60,70,80,90,100,120,200,201};
 float binsdef_diphoton_diphotonpt_EEEE[n_bins+1]={0,6,10,12,14,16,18,20,22,24,28,34,40,50,60,70,80,90,100,120,200,201};
 
-int n_templates_costhetastar_EBEB=7;
-int n_templates_costhetastar_EBEE=7;
-int n_templates_costhetastar_EEEE=7;
-float binsdef_diphoton_costhetastar_EBEB[n_bins+1]={0,0.20,0.28,0.36,0.44,0.60,0.90,1.00};
-float binsdef_diphoton_costhetastar_EBEE[n_bins+1]={0,0.20,0.28,0.36,0.44,0.60,0.90,1.00};
-float binsdef_diphoton_costhetastar_EEEE[n_bins+1]={0,0.20,0.28,0.36,0.44,0.60,0.90,1.00};
+int n_templates_costhetastar_EBEB=8;
+int n_templates_costhetastar_EBEE=8;
+int n_templates_costhetastar_EEEE=8;
+float binsdef_diphoton_costhetastar_EBEB[n_bins+1]={0,0.20,0.28,0.36,0.44,0.60,0.90,1.00,1.01};
+float binsdef_diphoton_costhetastar_EBEE[n_bins+1]={0,0.20,0.28,0.36,0.44,0.60,0.90,1.00,1.01};
+float binsdef_diphoton_costhetastar_EEEE[n_bins+1]={0,0.20,0.28,0.36,0.44,0.60,0.90,1.00,1.01};
 
 
-int n_templates_dphi_EBEB=13;
-int n_templates_dphi_EBEE=13;
-int n_templates_dphi_EEEE=13;
+int n_templates_dphi_EBEB=14;
+int n_templates_dphi_EBEE=14;
+int n_templates_dphi_EEEE=14;
 const float Pi = TMath::Pi();
-float binsdef_diphoton_dphi_EBEB[n_bins+1]={0,0.2*Pi,0.4*Pi,0.6*Pi,0.7*Pi,0.8*Pi,0.84*Pi,0.88*Pi,0.90*Pi,0.92*Pi,0.94*Pi,0.96*Pi,0.98*Pi,1.0*Pi};
-float binsdef_diphoton_dphi_EBEE[n_bins+1]={0,0.2*Pi,0.4*Pi,0.6*Pi,0.7*Pi,0.8*Pi,0.84*Pi,0.88*Pi,0.90*Pi,0.92*Pi,0.94*Pi,0.96*Pi,0.98*Pi,1.0*Pi};
-float binsdef_diphoton_dphi_EEEE[n_bins+1]={0,0.2*Pi,0.4*Pi,0.6*Pi,0.7*Pi,0.8*Pi,0.84*Pi,0.88*Pi,0.90*Pi,0.92*Pi,0.94*Pi,0.96*Pi,0.98*Pi,1.0*Pi};
+float binsdef_diphoton_dphi_EBEB[n_bins+1]={0,0.2*Pi,0.4*Pi,0.6*Pi,0.7*Pi,0.8*Pi,0.84*Pi,0.88*Pi,0.90*Pi,0.92*Pi,0.94*Pi,0.96*Pi,0.98*Pi,1.0*Pi,1.01*Pi};
+float binsdef_diphoton_dphi_EBEE[n_bins+1]={0,0.2*Pi,0.4*Pi,0.6*Pi,0.7*Pi,0.8*Pi,0.84*Pi,0.88*Pi,0.90*Pi,0.92*Pi,0.94*Pi,0.96*Pi,0.98*Pi,1.0*Pi,1.01*Pi};
+float binsdef_diphoton_dphi_EEEE[n_bins+1]={0,0.2*Pi,0.4*Pi,0.6*Pi,0.7*Pi,0.8*Pi,0.84*Pi,0.88*Pi,0.90*Pi,0.92*Pi,0.94*Pi,0.96*Pi,0.98*Pi,1.0*Pi,1.01*Pi};
 
 
 float AbsDeltaPhi(double phi1, double phi2){
@@ -119,11 +119,11 @@ float eff_areas_EE_mc[n_bins] = {5.107922e-02,8.485798e-02,1.354249e-01,1.671490
 
 
 
-const int n_ptbins_forreweighting = 1;
-Float_t ptbins_forreweighting[n_ptbins_forreweighting+1]={0,300};
+//const int n_ptbins_forreweighting = 1;
+//Float_t ptbins_forreweighting[n_ptbins_forreweighting+1]={0,300};
 
-//const int n_ptbins_forreweighting = 6;
-//Float_t ptbins_forreweighting[n_ptbins_forreweighting+1]={0,35,45,55,65,85,999};
+const int n_ptbins_forreweighting = 3;
+Float_t ptbins_forreweighting[n_ptbins_forreweighting+1]={0,40,60,999};
 
 
 #endif
