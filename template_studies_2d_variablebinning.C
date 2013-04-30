@@ -2072,7 +2072,7 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
     xsec_ngammagammayield->SetBinError(bin+1,err_withsyst*xsec_ngammagammayield->GetBinContent(bin+1));
     
     if (!skipsystematics){
-      systplot_purefitbias->SetBinContent(bin+1,pp_err*histo_bias_purefitbias->GetBinContent(bin+1)/pp);
+      systplot_purefitbias->SetBinContent(bin+1,pp_err*fabs(histo_bias_purefitbias->GetBinContent(bin+1))/pp);
       systplot_templatestatistics->SetBinContent(bin+1,histo_bias_templatestatistics->GetBinContent(bin+1));
       systplot_templateshapeMCpromptdriven->SetBinContent(bin+1,shapesyst1/pp);
       systplot_templateshapeMCfakedriven->SetBinContent(bin+1,shapesyst2/pp);
@@ -2083,7 +2083,7 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
       systplot_totfinal->SetBinContent(bin+1,sqrt(pow(systplot_tot->GetBinContent(bin+1),2)+pow(systplot_efficiency->GetBinContent(bin+1),2)+pow(systplot_unfolding->GetBinContent(bin+1),2)));
       systplot_totfinal->SetBinError(bin+1,0);
       systplot_statistic->SetBinContent(bin+1,err);
-      std::cout << systplot_totfinal->GetBinContent(bin+1) << " " << systplot_totfinal->GetBinError(bin+1) << std::endl;
+      std::cout << systplot_tot->GetBinContent(bin+1) << " " << systplot_totfinal->GetBinContent(bin+1) << std::endl;
     }
     
     std::cout << err << " " << err_withsyst << std::endl;
@@ -2289,14 +2289,14 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
     toadd_correlated.push_back(systplot_templateshapeMCfakedriven);
     toadd_correlated.push_back(systplot_templateshapeMCpromptdriven);
     toadd_correlated.push_back(systplot_zee);
+    toadd_correlated.push_back(systplot_templatestatistics);
+    toadd_correlated.push_back(systplot_efficiency);
+    toadd_correlated.push_back(systplot_unfolding);
 
     systplot_correlated=AddTHInQuadrature(toadd_correlated,"systplot_correlated");
 
     std::vector<TH1F*> toadd_uncorrelated;
     toadd_uncorrelated.push_back(systplot_purefitbias);
-    toadd_uncorrelated.push_back(systplot_templatestatistics);
-    toadd_uncorrelated.push_back(systplot_efficiency);
-    toadd_uncorrelated.push_back(systplot_unfolding);
 
     systplot_uncorrelated=AddTHInQuadrature(toadd_uncorrelated,"systplot_uncorrelated");
 
@@ -2367,29 +2367,113 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
     TH1F *unfoldnevt_tot =(TH1F*)(unfoldnevt_new[0]->Clone("unfoldnevt_tot"));
     unfoldnevt_tot->Reset();
     unfoldnevt_tot->Sumw2();
-    TH1F *hsyst_tot = (TH1F*)(hsysts[0]->Clone("hsyst_tot"));
-    hsyst_tot->Reset();
-    hsyst_tot->Sumw2();
+//    TH1F *hsyst_tot = (TH1F*)(hsysts[0]->Clone("hsyst_tot"));
+//    hsyst_tot->Reset();
+//    hsyst_tot->Sumw2();
     for (int i=0; i<3; i++) {
-      hsysts[i]->Multiply(unfoldnevt_new[i]);
-      hsyst_tot->Add(hsysts[i]);
+//      hsysts[i]->Multiply(unfoldnevt_new[i]);
+//      hsyst_tot->Add(hsysts[i]);
       unfoldnevt_tot->Add(unfoldnevt_new[i]);
     }
+    //    hsyst_tot->Divide(unfoldnevt_tot);
 
-    hsyst_tot->Divide(unfoldnevt_tot);
-    TH1F* systplot_totfinal_inclusive = hsyst_tot;
-
-    systplot_totfinal_inclusive->SetLineStyle(1);
+    TH1F* systplot_totfinal_inclusive = (TH1F*)(hsysts[0]->Clone("systplot_totfinal_inclusive"));
+    systplot_totfinal_inclusive->Reset();
+    systplot_totfinal_inclusive->Sumw2();
+    systplot_totfinal_inclusive->SetLineStyle(kDashed);
     systplot_totfinal_inclusive->SetMinimum(0);
     systplot_totfinal_inclusive->SetTitle("Total systematic uncertainty on cross-section");
 
-    TCanvas *canv3 = new TCanvas();
-    canv3->cd();
-    systplot_totfinal_inclusive->Draw();
-    canv3->SaveAs(Form("plots/histo_systsummaryfinal_%s_inclusive.jpg", diffvariable.Data()));
-    canv3->SaveAs(Form("plots/histo_systsummaryfinal_%s_inclusive.png", diffvariable.Data()));
-    canv3->SaveAs(Form("plots/histo_systsummaryfinal_%s_inclusive.root", diffvariable.Data()));
-    canv3->SaveAs(Form("plots/histo_systsummaryfinal_%s_inclusive.pdf", diffvariable.Data()));
+
+    for (int i=0; i<3; i++) {
+      hsysts_statistic[i]->Multiply(unfoldnevt_new[i]);
+      hsysts_uncorrelated[i]->Multiply(unfoldnevt_new[i]);
+      hsysts_correlated[i]->Multiply(unfoldnevt_new[i]);
+    }
+
+
+    float statcategory[3];
+    float systuncorrcategory[3];
+    float systcorrcategory[3];
+    float statcategory_rel[3];
+    float systuncorrcategory_rel[3];
+    float systcorrcategory_rel[3];
+    float systcategory[3];
+    float systcategory_rel[3];
+    float totcategory[3];
+    float totcategory_rel[3];
+
+    float totbin[n_bins];
+    float systbin[n_bins];
+    for(int bin = 0; bin<bins_to_run; bin++) {totbin[bin]=0; systbin[bin]=0;}
+
+    for (int i=0; i<3; i++){
+      statcategory[i]=0;
+      systuncorrcategory[i]=0;
+      systcorrcategory[i]=0;
+
+      for(int bin = 0; bin<bins_to_run; bin++){
+	float statin1bin = hsysts_statistic[i]->GetBinContent(bin+1);
+	float systin1bin = sqrt(pow(hsysts_uncorrelated[i]->GetBinContent(bin+1),2)+pow(hsysts_correlated[i]->GetBinContent(bin+1),2));
+	float statplussystin1bin = sqrt(pow(statin1bin,2)+pow(systin1bin,2)); //nolumi
+	float statplussystin1bin_rel = statplussystin1bin/unfoldnevt_new[i]->GetBinContent(bin+1);
+	float systcorrin1bin = hsysts_correlated[i]->GetBinContent(bin+1);
+	float systuncorrin1bin = hsysts_uncorrelated[i]->GetBinContent(bin+1);
+	
+	statcategory[i]+=pow(statin1bin,2);
+	systuncorrcategory[i]+=pow(systuncorrin1bin,2);
+	systcorrcategory[i]+=systcorrin1bin;
+
+	std::cout << i << " bin " << bin << std::endl;
+	std::cout << "stat " << statin1bin/unfoldnevt_new[i]->GetBinContent(bin+1) << std::endl;
+	std::cout << "syst " << systin1bin/unfoldnevt_new[i]->GetBinContent(bin+1) << std::endl;
+	std::cout << "ev " << unfoldnevt_new[i]->GetBinContent(bin+1) << std::endl;
+	std::cout << "xsec " << unfoldnevt_new[i]->GetBinContent(bin+1)/intlumi/1e3/unfoldnevt_new[i]->GetBinWidth(bin+1) << std::endl;
+	std::cout << "bw " << unfoldnevt_new[i]->GetBinWidth(bin+1) << std::endl;
+	std::cout << "stat+syst rel " << statplussystin1bin_rel << std::endl;
+	totbin[bin]+=pow(statplussystin1bin,2);
+	systbin[bin]+=pow(systin1bin,2);
+
+    }
+    statcategory[i]=sqrt(statcategory[i]);
+    systuncorrcategory[i]=sqrt(systuncorrcategory[i]);
+
+    statcategory_rel[i]=statcategory[i]/unfoldnevt_new[i]->Integral();
+    systuncorrcategory_rel[i]=systuncorrcategory[i]/unfoldnevt_new[i]->Integral();
+    systcorrcategory_rel[i]=systcorrcategory[i]/unfoldnevt_new[i]->Integral();
+
+    systcategory[i]=sqrt(pow(systuncorrcategory[i],2)+pow(systcorrcategory[i],2));
+    systcategory_rel[i]=systcategory[i]/unfoldnevt_new[i]->Integral();
+
+    totcategory[i]=sqrt(pow(statcategory[i],2)+pow(systuncorrcategory[i],2)+pow(systcorrcategory[i],2));
+    totcategory_rel[i]=sqrt(pow(statcategory_rel[i],2)+pow(systuncorrcategory_rel[i],2)+pow(systcorrcategory_rel[i],2));
+
+    std::cout << "riepilogo cat " << i << std::endl;
+    std::cout << "stat " << statcategory[i] << " " << statcategory_rel[i] << std::endl;
+    std::cout << "syst " << systcategory[i] << " " << systcategory_rel[i] << std::endl;
+    std::cout << "ev " << unfoldnevt_new[i]->Integral() << std::endl;
+    std::cout << std::endl;
+
+    }
+
+    for(int bin = 0; bin<bins_to_run; bin++) {
+      totbin[bin]=sqrt(totbin[bin]);
+      systbin[bin]=sqrt(systbin[bin]);
+    }
+    for(int bin = 0; bin<bins_to_run; bin++) {
+      std::cout << unfoldnevt_tot->GetBinContent(bin+1)/intlumi/1e3/unfoldnevt_tot->GetBinWidth(bin+1) << std::endl;
+    }
+    std::cout << std::endl;
+    for(int bin = 0; bin<bins_to_run; bin++) {
+      //      std::cout << totbin[bin]/unfoldnevt_tot->GetBinContent(bin+1) << std::endl;
+      printf("%.1f\\%%\n",100*totbin[bin]/unfoldnevt_tot->GetBinContent(bin+1));
+      systplot_totfinal_inclusive->SetBinContent(bin+1,systbin[bin]/unfoldnevt_tot->GetBinContent(bin+1));
+      systplot_totfinal_inclusive->SetBinError(bin+1,0);
+    }
+
+    float statallcategories_rel=sqrt(pow(statcategory[0],2)+pow(statcategory[1],2)+pow(statcategory[2],2))/unfoldnevt_tot->Integral();
+    float systallcategories_rel=sqrt(pow(systcategory[0],2)+pow(systcategory[1],2)+pow(systcategory[2],2))/unfoldnevt_tot->Integral();
+    float totallcategories_rel=sqrt(pow(totcategory[0],2)+pow(totcategory[1],2)+pow(totcategory[2],2))/unfoldnevt_tot->Integral();
 
     std::cout << std::endl;
 
@@ -2398,28 +2482,15 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
     std::cout << std::endl;
 
     std::cout << "STAT UNCERTAINTY" << std::endl;
-    for (int i=0; i<3; i++) {
-      hsysts_statistic[i]->Multiply(unfoldnevt_new[i]);
-      hsysts_statistic[i]->Multiply(hsysts_statistic[i]);
-    }
-    std::cout << sqrt(hsysts_statistic[0]->Integral()+hsysts_statistic[1]->Integral()+hsysts_statistic[2]->Integral())/unfoldnevt_tot->Integral() << " relative" << std::endl;
-    std::cout << sqrt(hsysts_statistic[0]->Integral()+hsysts_statistic[1]->Integral()+hsysts_statistic[2]->Integral())/intlumi/1e3 << " pb" << std::endl;
+    std::cout << statallcategories_rel << " relative" << std::endl;
+    std::cout << statallcategories_rel*unfoldnevt_tot->Integral()/intlumi/1e3 << " pb" << std::endl;
     std::cout << std::endl;
 
+
     std::cout << "SYST UNCERTAINTY" << std::endl;
-    for (int i=0; i<3; i++) {
-      hsysts_uncorrelated[i]->Multiply(unfoldnevt_new[i]);
-      hsysts_uncorrelated[i]->Multiply(hsysts_uncorrelated[i]);
-      hsysts_correlated[i]->Multiply(unfoldnevt_new[i]);
-    }
 
-    float increase_uncorr = sqrt(hsysts_uncorrelated[0]->Integral()+hsysts_uncorrelated[1]->Integral()+hsysts_uncorrelated[2]->Integral());
-    float increase_corr = hsysts_correlated[0]->Integral()+hsysts_correlated[1]->Integral()+hsysts_correlated[2]->Integral();
-    float increase = sqrt(pow(increase_uncorr,2)+pow(increase_corr,2));
-
-    std::cout << increase/unfoldnevt_tot->Integral() << " relative" << std::endl;
-    std::cout << increase/intlumi/1e3 << " pb" << std::endl;
-    std::cout << "of which correlated " << increase_corr/intlumi/1e3 << " pb, uncorrelated " << increase_uncorr/intlumi/1e3 << " pb" << std::endl;
+    std::cout << systallcategories_rel << " relative" << std::endl;
+    std::cout << systallcategories_rel*unfoldnevt_tot->Integral()/intlumi/1e3 << " pb" << std::endl;
     std::cout << std::endl;
 
     std::cout << "LUMI UNCERTAINTY" << std::endl;
@@ -2429,13 +2500,69 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
     std::cout << std::endl;
 
     std::cout << "TOTAL UNCERTAINTY" << std::endl;
-    float e_stat = sqrt(hsysts_statistic[0]->Integral()+hsysts_statistic[1]->Integral()+hsysts_statistic[2]->Integral())/unfoldnevt_tot->Integral();
-    float e_syst = increase/unfoldnevt_tot->Integral();
+    float e_stat = statallcategories_rel;
+    float e_syst = systallcategories_rel;
     float e_lumi = lumi_rel;
     std::cout << sqrt(pow(e_stat,2)+pow(e_syst,2)+pow(e_lumi,2)) << " relative" << std::endl;
     std::cout << sqrt(pow(e_stat,2)+pow(e_syst,2)+pow(e_lumi,2))*unfoldnevt_tot->Integral()/intlumi/1e3 << " pb" << std::endl;
     std::cout << std::endl;
 
+
+
+    TCanvas *canv3 = new TCanvas();
+    canv3->cd();
+    systplot_totfinal_inclusive->Draw();
+    canv3->SaveAs(Form("plots/histo_systsummaryfinal_%s_inclusive.jpg", diffvariable.Data()));
+    canv3->SaveAs(Form("plots/histo_systsummaryfinal_%s_inclusive.png", diffvariable.Data()));
+    canv3->SaveAs(Form("plots/histo_systsummaryfinal_%s_inclusive.root", diffvariable.Data()));
+    canv3->SaveAs(Form("plots/histo_systsummaryfinal_%s_inclusive.pdf", diffvariable.Data()));
+
+
+
+
+
+//    std::cout << std::endl;
+//
+//    std::cout << "CENTRAL VALUE" << std::endl;
+//    std::cout << unfoldnevt_tot->Integral()/intlumi/1e3 << " pb" << std::endl;
+//    std::cout << std::endl;
+//
+//    std::cout << "STAT UNCERTAINTY" << std::endl;
+//    for (int i=0; i<3; i++) {
+//      hsysts_statistic[i]->Multiply(hsysts_statistic[i]);
+//    }
+//    std::cout << sqrt(hsysts_statistic[0]->Integral()+hsysts_statistic[1]->Integral()+hsysts_statistic[2]->Integral())/unfoldnevt_tot->Integral() << " relative" << std::endl;
+//    std::cout << sqrt(hsysts_statistic[0]->Integral()+hsysts_statistic[1]->Integral()+hsysts_statistic[2]->Integral())/intlumi/1e3 << " pb" << std::endl;
+//    std::cout << std::endl;
+//
+//    std::cout << "SYST UNCERTAINTY" << std::endl;
+//    for (int i=0; i<3; i++) {
+//      hsysts_uncorrelated[i]->Multiply(hsysts_uncorrelated[i]);
+//    }
+//
+//    float increase_uncorr = sqrt(hsysts_uncorrelated[0]->Integral()+hsysts_uncorrelated[1]->Integral()+hsysts_uncorrelated[2]->Integral());
+//    float increase_corr = hsysts_correlated[0]->Integral()+hsysts_correlated[1]->Integral()+hsysts_correlated[2]->Integral();
+//    float increase = sqrt(pow(increase_uncorr,2)+pow(increase_corr,2));
+//
+//    std::cout << increase/unfoldnevt_tot->Integral() << " relative" << std::endl;
+//    std::cout << increase/intlumi/1e3 << " pb" << std::endl;
+//    std::cout << "of which correlated " << increase_corr/intlumi/1e3 << " pb, uncorrelated " << increase_uncorr/intlumi/1e3 << " pb" << std::endl;
+//    std::cout << std::endl;
+//
+//    std::cout << "LUMI UNCERTAINTY" << std::endl;
+//    float lumi_rel = 2.2e-2;
+//    std::cout << lumi_rel << " relative" << std::endl;
+//    std::cout << lumi_rel*unfoldnevt_tot->Integral()/intlumi/1e3 << " pb" << std::endl;
+//    std::cout << std::endl;
+//
+//    std::cout << "TOTAL UNCERTAINTY" << std::endl;
+//    float e_stat = sqrt(hsysts_statistic[0]->Integral()+hsysts_statistic[1]->Integral()+hsysts_statistic[2]->Integral())/unfoldnevt_tot->Integral();
+//    float e_syst = increase/unfoldnevt_tot->Integral();
+//    float e_lumi = lumi_rel;
+//    std::cout << sqrt(pow(e_stat,2)+pow(e_syst,2)+pow(e_lumi,2)) << " relative" << std::endl;
+//    std::cout << sqrt(pow(e_stat,2)+pow(e_syst,2)+pow(e_lumi,2))*unfoldnevt_tot->Integral()/intlumi/1e3 << " pb" << std::endl;
+//    std::cout << std::endl;
+//
   }
 
 };
