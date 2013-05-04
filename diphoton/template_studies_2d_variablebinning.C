@@ -1,4 +1,4 @@
-bool global_doplots = true;
+bool global_doplots = false;
 bool doxcheckstemplates = false;
 
 #include <assert.h>
@@ -137,13 +137,17 @@ TDirectoryFile *dir_t1p1f=NULL;
 TDirectoryFile *dir_t2f=NULL;
 TDirectoryFile *dir_d=NULL;
 
+fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const TString do_syst_string=TString("")){
 
-fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename_t1p1f, const char* inputfilename_t2f, const char* inputfilename_d, TString diffvariable, TString splitting, int bin, const TString do_syst_string=TString("")){
+  std::cout << "Calling fit_dataset " << diffvariable.Data() << " " << splitting.Data() << " " << bin << " " << do_syst_string.Data() << std::endl;
 
   bool doplots = global_doplots;
 
-  if (do_syst_string=="savepdfMCtrue")   {std::cout << "RUNNING FOR SAVE PDF" << std::endl; doplots=false;}
+  if (do_syst_string=="savepdfMCtrue2D")   {std::cout << "RUNNING FOR SAVE PDF 2D" << std::endl; doplots=false;}
   if (do_syst_string=="savepdfMCtrue1D") {std::cout << "RUNNING FOR SAVE PDF 1D" << std::endl; doplots=false;}
+
+  if (do_syst_string=="data_donotwriteoutpurity") doplots=false;
+  if (do_syst_string=="subtractionZee") doplots=false;
 
   TH1F::SetDefaultSumw2(kTRUE);
 
@@ -191,6 +195,65 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
   std::cout << "Process " << diffvariable.Data() << " bin " << bin << std::endl;
   for (int k=0; k<2; k++) std::cout << std::endl;
 
+  TString inputfilename_t2p;
+  TString inputfilename_t1p1f;
+  TString inputfilename_t2f;
+  TString inputfilename_d;
+
+  if (do_syst_string=="savepdfMCtrue2D" ||  do_syst_string=="doMCtrue"){
+    inputfilename_t2p   = "outphoton_allmc_2pgen.root";
+    inputfilename_t1p1f = "outphoton_allmc_1p1fbothgen.root";
+    inputfilename_t2f   = "outphoton_allmc_2fgen.root";
+    inputfilename_d     = "outphoton_allmc_standard.root";
+  }
+  else if (do_syst_string=="savepdfMCtrue1D"){
+    inputfilename_t2p   = "outphoton_allmc_2pgen.root";
+    inputfilename_t1p1f = "outphoton_allmc_1p1fbothgen.root";
+    inputfilename_t2f   = "outphoton_allmc_2fgen.root";
+    inputfilename_d     = "outphoton_data_standard.root";
+  }
+  else if (do_syst_string=="doMCpromptdriven"){
+    inputfilename_t2p   = "outphoton_allmc_sigsig.root";
+    inputfilename_t1p1f = "outphoton_allmc_1prcone1fgen.root";
+    inputfilename_t2f   = "outphoton_allmc_2fgen.root";
+    inputfilename_d     = "outphoton_allmc_standard.root";
+  }
+  else if (do_syst_string=="templateshapeMCpromptdrivenEB" || do_syst_string=="templateshapeMCpromptdrivenEE"){
+    inputfilename_t2p   = "outphoton_allmc_sigsig.root";
+    inputfilename_t1p1f = "outphoton_allmc_1prcone1fgen.root";
+    inputfilename_t2f   = "outphoton_allmc_2fgen.root";
+    inputfilename_d     = "outphoton_data_standard.root";
+  }
+  else if (do_syst_string=="doMCfakedriven"){
+    inputfilename_t2p   = "outphoton_allmc_2pgen.root";
+    inputfilename_t1p1f = "outphoton_allmc_1pgen1fside.root";
+    inputfilename_t2f   = "outphoton_allmc_bkgbkg.root";
+    inputfilename_d     = "outphoton_allmc_standard.root";
+  }
+  else if (do_syst_string=="templateshapeMCfakedrivenEB" || do_syst_string=="templateshapeMCfakedrivenEE"){
+    inputfilename_t2p   = "outphoton_allmc_2pgen.root";
+    inputfilename_t1p1f = "outphoton_allmc_1pgen1fside.root";
+    inputfilename_t2f   = "outphoton_allmc_bkgbkg.root";
+    inputfilename_d     = "outphoton_data_standard.root";
+  }
+  else if (do_syst_string=="subtractionZee"){
+    inputfilename_t2p   = "outphoton_allmc_2pgen.root";
+    inputfilename_t1p1f = "outphoton_allmc_1p1fbothgen.root";
+    inputfilename_t2f   = "outphoton_allmc_2fgen.root";
+    inputfilename_d     = "outphoton_allmc_standard.root";
+  }  
+  else if (do_syst_string=="doMCfulldriven") {
+    inputfilename_t2p   = "outphoton_allmc_sigsig.root";
+    inputfilename_t1p1f = "outphoton_allmc_sigbkg.root";
+    inputfilename_t2f   = "outphoton_allmc_bkgbkg.root";
+    inputfilename_d     = "outphoton_allmc_standard.root";
+  }  
+  else {
+    inputfilename_t2p   = "outphoton_data_sigsig.root";
+    inputfilename_t1p1f = "outphoton_data_sigbkg.root";
+    inputfilename_t2f   = "outphoton_data_bkgbkg.root";
+    inputfilename_d     = "outphoton_data_standard.root";
+  }  
 
   if ((!inputfile_t2p)   ||  (TString(inputfile_t2p->GetName())   != TString(inputfilename_t2p)  )) {inputfile_t2p = TFile::Open(inputfilename_t2p);     dir_t2p=NULL;  }
   if ((!inputfile_t1p1f) ||  (TString(inputfile_t1p1f->GetName()) != TString(inputfilename_t1p1f))) {inputfile_t1p1f = TFile::Open(inputfilename_t1p1f); dir_t1p1f=NULL;}
@@ -207,28 +270,43 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
   else if (splitting=="EBEE") {s1="EB"; s2="EE";}
   bool sym  = (s1==s2);
   
-  if (do_syst_string=="templateshapeMCtrue" || do_syst_string=="savepdfMCtrue" || do_syst_string=="savepdfMCtrue1D" ||  do_syst_string=="doMCtrue"){
+  if (do_syst_string=="savepdfMCtrue2D" ||  do_syst_string=="doMCtrue"){
     if(!dir_t2p)   inputfile_t2p->GetObject("mc_Tree_2Dtruesigsig_template",dir_t2p);
     if(!dir_t1p1f) inputfile_t1p1f->GetObject("mc_Tree_2Dtruesigbkg_template",dir_t1p1f);
     if(!dir_t2f)   inputfile_t2f->GetObject("mc_Tree_2Dtruebkgbkg_template",dir_t2f);
     if(!dir_d)     inputfile_d->GetObject("mc_Tree_2Dstandard_selection",dir_d);
   }
-  else if (do_syst_string=="templateshapeMCpromptdriven" || do_syst_string=="doMCpromptdriven"){
+  else if (do_syst_string=="savepdfMCtrue1D"){
+    if(!dir_t2p)   inputfile_t2p->GetObject("mc_Tree_2Dtruesigsig_template",dir_t2p);
+    if(!dir_t1p1f) inputfile_t1p1f->GetObject("mc_Tree_2Dtruesigbkg_template",dir_t1p1f);
+    if(!dir_t2f)   inputfile_t2f->GetObject("mc_Tree_2Dtruebkgbkg_template",dir_t2f);
+    if(!dir_d)     inputfile_d->GetObject("data_Tree_2Dstandard_selection",dir_d);
+  }
+  else if (do_syst_string=="doMCpromptdriven"){
     if(!dir_t2p)   inputfile_t2p->GetObject("mc_Tree_2Drandomcone_template",dir_t2p);
     if(!dir_t1p1f) inputfile_t1p1f->GetObject("mc_Tree_2Drconeplusgenfake_template",dir_t1p1f);
     if(!dir_t2f)   inputfile_t2f->GetObject("mc_Tree_2Dtruebkgbkg_template",dir_t2f);
     if(!dir_d)     inputfile_d->GetObject("mc_Tree_2Dstandard_selection",dir_d);
   }
-  else if (do_syst_string=="templateshapeMCfakedriven" || do_syst_string=="doMCfakedriven"){
+  else if (do_syst_string=="templateshapeMCpromptdrivenEB" || do_syst_string=="templateshapeMCpromptdrivenEE"){
+    if(!dir_t2p)   inputfile_t2p->GetObject("mc_Tree_2Drandomcone_template",dir_t2p);
+    if(!dir_t1p1f) inputfile_t1p1f->GetObject("mc_Tree_2Drconeplusgenfake_template",dir_t1p1f);
+    if(!dir_t2f)   inputfile_t2f->GetObject("mc_Tree_2Dtruebkgbkg_template",dir_t2f);
+    if(!dir_d)     inputfile_d->GetObject("data_Tree_2Dstandard_selection",dir_d);
+  }
+  else if (do_syst_string=="doMCfakedriven"){
     if(!dir_t2p)   inputfile_t2p->GetObject("mc_Tree_2Dtruesigsig_template",dir_t2p);
     if(!dir_t1p1f) inputfile_t1p1f->GetObject("mc_Tree_2Dgenpromptplussideband_template",dir_t1p1f);
     if(!dir_t2f)   inputfile_t2f->GetObject("mc_Tree_2Dsideband_template",dir_t2f);
     if(!dir_d)     inputfile_d->GetObject("mc_Tree_2Dstandard_selection",dir_d);
   }
+  else if (do_syst_string=="templateshapeMCfakedrivenEB" || do_syst_string=="templateshapeMCfakedrivenEE"){
+    if(!dir_t2p)   inputfile_t2p->GetObject("mc_Tree_2Dtruesigsig_template",dir_t2p);
+    if(!dir_t1p1f) inputfile_t1p1f->GetObject("mc_Tree_2Dgenpromptplussideband_template",dir_t1p1f);
+    if(!dir_t2f)   inputfile_t2f->GetObject("mc_Tree_2Dsideband_template",dir_t2f);
+    if(!dir_d)     inputfile_d->GetObject("data_Tree_2Dstandard_selection",dir_d);
+  }
   else if (do_syst_string=="subtractionZee"){
-//    if(!dir_t2p)   inputfile_t2p->GetObject("mc_Tree_2Drandomcone_template",dir_t2p);
-//    if(!dir_t1p1f) inputfile_t1p1f->GetObject("mc_Tree_2Drandomconesideband_template",dir_t1p1f);
-//    if(!dir_t2f)   inputfile_t2f->GetObject("mc_Tree_2Dsideband_template",dir_t2f);
     if(!dir_t2p)   inputfile_t2p->GetObject("mc_Tree_2Dtruesigsig_template",dir_t2p);
     if(!dir_t1p1f) inputfile_t1p1f->GetObject("mc_Tree_2Dtruesigbkg_template",dir_t1p1f);
     if(!dir_t2f)   inputfile_t2f->GetObject("mc_Tree_2Dtruebkgbkg_template",dir_t2f);
@@ -246,8 +324,6 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
     if(!dir_t2f)   inputfile_t2f->GetObject("data_Tree_2Dsideband_template",dir_t2f);
     if(!dir_d)     inputfile_d->GetObject("data_Tree_2Dstandard_selection",dir_d);
   }  
-
-  if (do_syst_string=="subtractionZee") doplots=false;
     
   assert(dir_t2p);
   assert(dir_t1p1f);
@@ -524,26 +600,26 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
   RooDataSet *dset_mctrue_b_rv2 = NULL;
   RooDataSet *dset_mcrcone_b_rv2 = NULL;
 
-  if (do_syst_string==TString("savepdfMCtrue1D") || do_syst_string==TString("templateshapeMCpromptdriven") || do_syst_string==TString("templateshapeMCfakedriven")) {
+  if (do_syst_string==TString("savepdfMCtrue1D") || do_syst_string==TString("templateshapeMCpromptdrivenEB") || do_syst_string==TString("templateshapeMCfakedrivenEB") || do_syst_string==TString("templateshapeMCpromptdrivenEE") || do_syst_string==TString("templateshapeMCfakedrivenEE")) {
 
     TFile *fmctrue_s = new TFile("outphoton_allmc_sig.root","read");
-    fmctrue_s->GetObject(Form("mc_Tree_1Dsignal_template/roodset_signal_%s_b%d_rv1",s1.Data(),bin),dset_mctrue_s_rv1);
-    fmctrue_s->GetObject(Form("mc_Tree_1Dsignal_template/roodset_signal_%s_b%d_rv2",s2.Data(),bin),dset_mctrue_s_rv2);
+    fmctrue_s->GetObject(Form("mc_Tree_1Dsignal_template/roodset_signal_%s_b%d_rv1",s1.Data(),n_bins),dset_mctrue_s_rv1);
+    fmctrue_s->GetObject(Form("mc_Tree_1Dsignal_template/roodset_signal_%s_b%d_rv2",s2.Data(),n_bins),dset_mctrue_s_rv2);
     assert(dset_mctrue_s_rv1);
     assert(dset_mctrue_s_rv2);
     TFile *fmcrcone_s = new TFile("outphoton_allmc_rcone.root","read");
-    fmcrcone_s->GetObject(Form("mc_Tree_1Drandomcone_template/roodset_signal_%s_b%d_rv1",s1.Data(),bin),dset_mcrcone_s_rv1);
-    fmcrcone_s->GetObject(Form("mc_Tree_1Drandomcone_template/roodset_signal_%s_b%d_rv2",s2.Data(),bin),dset_mcrcone_s_rv2);
+    fmcrcone_s->GetObject(Form("mc_Tree_1Drandomcone_template/roodset_signal_%s_b%d_rv1",s1.Data(),n_bins),dset_mcrcone_s_rv1);
+    fmcrcone_s->GetObject(Form("mc_Tree_1Drandomcone_template/roodset_signal_%s_b%d_rv2",s2.Data(),n_bins),dset_mcrcone_s_rv2);
     assert(dset_mcrcone_s_rv1);
     assert(dset_mcrcone_s_rv2);
     TFile *fmctrue_b = new TFile("outphoton_allmc_bkg.root","read");
-    fmctrue_b->GetObject(Form("mc_Tree_1Dbackground_template/roodset_background_%s_b%d_rv1",s1.Data(),bin),dset_mctrue_b_rv1);
-    fmctrue_b->GetObject(Form("mc_Tree_1Dbackground_template/roodset_background_%s_b%d_rv2",s2.Data(),bin),dset_mctrue_b_rv2);
+    fmctrue_b->GetObject(Form("mc_Tree_1Dbackground_template/roodset_background_%s_b%d_rv1",s1.Data(),n_bins),dset_mctrue_b_rv1);
+    fmctrue_b->GetObject(Form("mc_Tree_1Dbackground_template/roodset_background_%s_b%d_rv2",s2.Data(),n_bins),dset_mctrue_b_rv2);
     assert(dset_mctrue_b_rv1);
     assert(dset_mctrue_b_rv2);
     TFile *fmcrcone_b = new TFile("outphoton_allmc_sieiesideband.root","read");
-    fmcrcone_b->GetObject(Form("mc_Tree_1Dsideband_template/roodset_background_%s_b%d_rv1",s1.Data(),bin),dset_mcrcone_b_rv1);
-    fmcrcone_b->GetObject(Form("mc_Tree_1Dsideband_template/roodset_background_%s_b%d_rv2",s2.Data(),bin),dset_mcrcone_b_rv2);
+    fmcrcone_b->GetObject(Form("mc_Tree_1Dsideband_template/roodset_background_%s_b%d_rv1",s1.Data(),n_bins),dset_mcrcone_b_rv1);
+    fmcrcone_b->GetObject(Form("mc_Tree_1Dsideband_template/roodset_background_%s_b%d_rv2",s2.Data(),n_bins),dset_mcrcone_b_rv2);
     assert(dset_mcrcone_b_rv1);
     assert(dset_mcrcone_b_rv2);
 
@@ -556,7 +632,7 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
     dset_mctrue_b_rv2 = (RooDataSet*)(dset_mctrue_b_rv2->reduce(Name("dset_mctrue_b_rv2"),Cut(Form("roovar2<%f",rightrange-1e-5))));
     dset_mcrcone_b_rv2 = (RooDataSet*)(dset_mcrcone_b_rv2->reduce(Name("dset_mcrcone_b_rv2"),Cut(Form("roovar2<%f",rightrange-1e-5))));
 
-    std::cout << "MC datasets" << std::endl;
+    std::cout << "MC true/rcone datasets" << std::endl;
     dset_mctrue_s_rv1->Print();
     dset_mcrcone_s_rv1->Print();
     dset_mctrue_s_rv2->Print();
@@ -626,7 +702,7 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
   produce_category_binning(&dataset_axis1);
   produce_category_binning(&dataset_axis2);
 
-  if (do_syst_string==TString("savepdfMCtrue1D") || do_syst_string==TString("templateshapeMCpromptdriven") || do_syst_string==TString("templateshapeMCfakedriven")) {
+  if (do_syst_string==TString("savepdfMCtrue1D") || do_syst_string==TString("templateshapeMCpromptdrivenEB") || do_syst_string==TString("templateshapeMCfakedrivenEB") || do_syst_string==TString("templateshapeMCpromptdrivenEE") || do_syst_string==TString("templateshapeMCfakedrivenEE")) {
     produce_category_binning(&dset_mctrue_s_rv1);
     produce_category_binning(&dset_mcrcone_s_rv1);
     produce_category_binning(&dset_mctrue_s_rv2);
@@ -645,11 +721,10 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
 
   std::vector<fit_output*> do_syst_templatestatistics_outputvector;
   std::vector<fit_output*> do_syst_purefitbias_outputvector;
-  std::vector<fit_output*> do_syst_MCtrue_outputvector;
   std::vector<fit_output*> do_syst_MCpromptdriven_outputvector;
   std::vector<fit_output*> do_syst_MCfakedriven_outputvector;
 
-  if (do_syst_string==TString("templatestatistics") || do_syst_string==TString("purefitbias") || do_syst_string==TString("templateshapeMCtrue") || do_syst_string==TString("templateshapeMCpromptdriven") || do_syst_string==TString("templateshapeMCfakedriven")) times_to_run = ntoys;
+  if (do_syst_string==TString("templatestatistics") || do_syst_string==TString("purefitbias") || do_syst_string==TString("templateshapeMCpromptdrivenEB") || do_syst_string==TString("templateshapeMCfakedrivenEB") || do_syst_string==TString("templateshapeMCpromptdrivenEE") || do_syst_string==TString("templateshapeMCfakedrivenEE")) times_to_run = ntoys;
 
   RooAbsPdf *sigsigpdf_forgen = NULL;
   RooAbsPdf *sigbkgpdf_forgen = NULL;
@@ -660,6 +735,7 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
   RooAbsPdf *sigpdf_axis2_forgen = NULL;
   RooAbsPdf *bkgpdf_axis2_forgen = NULL;
   fit_output *mctruthfr = NULL;
+  fit_output *datafr = NULL;
 
   for (int runcount=0; runcount<times_to_run; runcount++){
 
@@ -676,7 +752,7 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
       RooDataSet* original_dataset=NULL;
 
 
-      if (do_syst_string==TString("templatestatistics") || do_syst_string==TString("purefitbias") || do_syst_string==TString("templateshapeMCtrue") || do_syst_string==TString("templateshapeMCpromptdriven") || do_syst_string==TString("templateshapeMCfakedriven")){
+      if (do_syst_string==TString("templatestatistics") || do_syst_string==TString("purefitbias") || do_syst_string==TString("templateshapeMCpromptdrivenEB") || do_syst_string==TString("templateshapeMCfakedrivenEB") || do_syst_string==TString("templateshapeMCpromptdrivenEE") || do_syst_string==TString("templateshapeMCfakedrivenEE")){
 	original_dataset_sigsig   =dataset_sigsig   ;
         original_dataset_sigbkg   =dataset_sigbkg   ;
         original_dataset_bkgsig   =dataset_bkgsig   ;
@@ -702,6 +778,7 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
       }
       
       if (do_syst_string==TString("templatestatistics")){
+	if (runcount==0) datafr = fit_dataset(diffvariable.Data(),splitting.Data(),bin,"data_donotwriteoutpurity");
 	randomize_dataset_statistically_binned(&dataset_sigsig);
 	randomize_dataset_statistically_binned(&dataset_sigbkg);
 	randomize_dataset_statistically_binned(&dataset_bkgsig);
@@ -711,6 +788,30 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
 	randomize_dataset_statistically_binned(&dataset_sig_axis2);
 	randomize_dataset_statistically_binned(&dataset_bkg_axis2);
       }
+
+    if (do_syst_string==TString("templateshapeMCpromptdrivenEB") || do_syst_string==TString("templateshapeMCfakedrivenEB") || do_syst_string==TString("templateshapeMCpromptdrivenEE") || do_syst_string==TString("templateshapeMCfakedrivenEE")) {
+      
+      if (runcount==0){
+	datafr = fit_dataset(diffvariable.Data(),splitting.Data(),bin,"data_donotwriteoutpurity");
+	mctruthfr = fit_dataset(diffvariable.Data(),splitting.Data(),bin,"savepdfMCtrue1D");
+	sigsigpdf_forgen = mctruthfr->pdf_forgen[0];
+	sigbkgpdf_forgen = mctruthfr->pdf_forgen[1];
+	bkgsigpdf_forgen = mctruthfr->pdf_forgen[2];
+	bkgbkgpdf_forgen = mctruthfr->pdf_forgen[3];
+	sigpdf_axis1_forgen = mctruthfr->pdf_forgen[4];
+	bkgpdf_axis1_forgen = mctruthfr->pdf_forgen[5];
+	sigpdf_axis2_forgen = mctruthfr->pdf_forgen[6];
+	bkgpdf_axis2_forgen = mctruthfr->pdf_forgen[7];
+      }
+      
+      generate_toy_dataset_2d(&dataset,sigsigpdf_forgen,sigbkgpdf_forgen,bkgsigpdf_forgen,bkgbkgpdf_forgen,datafr->pp,datafr->pf,datafr->fp);
+//      generate_toy_dataset_1d(&dataset_axis1,sigpdf_axis1_forgen,bkgpdf_axis1_forgen,mctruthfr->fsig1_firstpass);
+//      generate_toy_dataset_1d(&dataset_axis2,sigpdf_axis2_forgen,bkgpdf_axis2_forgen,mctruthfr->fsig2_firstpass);
+      delete dataset_axis1;
+      delete dataset_axis2;
+      dataset_axis1 = (RooDataSet*)(dataset->reduce(Name("dataset_axis1"),SelectVars(RooArgList(*binning_roovar1))));
+      dataset_axis2 = (RooDataSet*)(dataset->reduce(Name("dataset_axis2"),SelectVars(RooArgList(*binning_roovar2))));
+    }
 
 
     RooDataHist *sigsigdhist = new RooDataHist("sigsigdhist","sigsigdhist",RooArgList(*binning_roovar1,*binning_roovar2),*dataset_sigsig);
@@ -731,13 +832,36 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
     RooAbsPdf *bkgsigpdf = NULL;
     RooAbsPdf *bkgbkgpdf = NULL;
 
-    if (do_syst_string==TString("savepdfMCtrue1D") || do_syst_string==TString("templateshapeMCpromptdriven") || do_syst_string==TString("templateshapeMCfakedriven")){
-      dhist_mc_s_rv1 = new RooDataHist("dhist_mc_s_rv1","dset_mc_s_rv1",RooArgList(*binning_roovar1),(do_syst_string!=TString("templateshapeMCpromptdriven")) ? *dset_mctrue_s_rv1 : *dset_mcrcone_s_rv1);
-      dhist_mc_s_rv2 = new RooDataHist("dhist_mc_s_rv2","dset_mc_s_rv2",RooArgList(*binning_roovar2),(do_syst_string!=TString("templateshapeMCpromptdriven")) ? *dset_mctrue_s_rv2 : *dset_mcrcone_s_rv2);
+    if (do_syst_string==TString("savepdfMCtrue1D") || do_syst_string==TString("templateshapeMCpromptdrivenEB") || do_syst_string==TString("templateshapeMCfakedrivenEB") || do_syst_string==TString("templateshapeMCpromptdrivenEE") || do_syst_string==TString("templateshapeMCfakedrivenEE")){
+
+//      This is for debug: if you uncomment this and comment the next block, you should get NO BIAS.
+//      dhist_mc_s_rv1 = new RooDataHist("dhist_mc_s_rv1","dset_mc_s_rv1",RooArgList(*binning_roovar1),*dset_mctrue_s_rv1);
+//      dhist_mc_s_rv2 = new RooDataHist("dhist_mc_s_rv2","dset_mc_s_rv2",RooArgList(*binning_roovar2),*dset_mctrue_s_rv2);
+//      dhist_mc_b_rv1 = new RooDataHist("dhist_mc_b_rv1","dset_mc_b_rv1",RooArgList(*binning_roovar1),*dset_mctrue_b_rv1);
+//      dhist_mc_b_rv2 = new RooDataHist("dhist_mc_b_rv2","dset_mc_b_rv2",RooArgList(*binning_roovar2),*dset_mctrue_b_rv2);
+      {
+	if (splitting=="EBEB"){        
+	  dhist_mc_s_rv1 = new RooDataHist("dhist_mc_s_rv1","dset_mc_s_rv1",RooArgList(*binning_roovar1),(do_syst_string!=TString("templateshapeMCpromptdrivenEB")) ? *dset_mctrue_s_rv1 : *dset_mcrcone_s_rv1);
+	  dhist_mc_s_rv2 = new RooDataHist("dhist_mc_s_rv2","dset_mc_s_rv2",RooArgList(*binning_roovar2),(do_syst_string!=TString("templateshapeMCpromptdrivenEB")) ? *dset_mctrue_s_rv2 : *dset_mcrcone_s_rv2);
+	  dhist_mc_b_rv1 = new RooDataHist("dhist_mc_b_rv1","dset_mc_b_rv1",RooArgList(*binning_roovar1),(do_syst_string!=TString("templateshapeMCfakedrivenEB")) ? *dset_mctrue_b_rv1 : *dset_mcrcone_b_rv1);
+	  dhist_mc_b_rv2 = new RooDataHist("dhist_mc_b_rv2","dset_mc_b_rv2",RooArgList(*binning_roovar2),(do_syst_string!=TString("templateshapeMCfakedrivenEB")) ? *dset_mctrue_b_rv2 : *dset_mcrcone_b_rv2);
+	}
+	else if (splitting=="EBEE"){        
+	  dhist_mc_s_rv1 = new RooDataHist("dhist_mc_s_rv1","dset_mc_s_rv1",RooArgList(*binning_roovar1),(do_syst_string!=TString("templateshapeMCpromptdrivenEB")) ? *dset_mctrue_s_rv1 : *dset_mcrcone_s_rv1);
+	  dhist_mc_s_rv2 = new RooDataHist("dhist_mc_s_rv2","dset_mc_s_rv2",RooArgList(*binning_roovar2),(do_syst_string!=TString("templateshapeMCpromptdrivenEE")) ? *dset_mctrue_s_rv2 : *dset_mcrcone_s_rv2);
+	  dhist_mc_b_rv1 = new RooDataHist("dhist_mc_b_rv1","dset_mc_b_rv1",RooArgList(*binning_roovar1),(do_syst_string!=TString("templateshapeMCfakedrivenEB")) ? *dset_mctrue_b_rv1 : *dset_mcrcone_b_rv1);
+	  dhist_mc_b_rv2 = new RooDataHist("dhist_mc_b_rv2","dset_mc_b_rv2",RooArgList(*binning_roovar2),(do_syst_string!=TString("templateshapeMCfakedrivenEE")) ? *dset_mctrue_b_rv2 : *dset_mcrcone_b_rv2);
+	}
+	else if (splitting=="EEEE"){        
+	  dhist_mc_s_rv1 = new RooDataHist("dhist_mc_s_rv1","dset_mc_s_rv1",RooArgList(*binning_roovar1),(do_syst_string!=TString("templateshapeMCpromptdrivenEE")) ? *dset_mctrue_s_rv1 : *dset_mcrcone_s_rv1);
+	  dhist_mc_s_rv2 = new RooDataHist("dhist_mc_s_rv2","dset_mc_s_rv2",RooArgList(*binning_roovar2),(do_syst_string!=TString("templateshapeMCpromptdrivenEE")) ? *dset_mctrue_s_rv2 : *dset_mcrcone_s_rv2);
+	  dhist_mc_b_rv1 = new RooDataHist("dhist_mc_b_rv1","dset_mc_b_rv1",RooArgList(*binning_roovar1),(do_syst_string!=TString("templateshapeMCfakedrivenEE")) ? *dset_mctrue_b_rv1 : *dset_mcrcone_b_rv1);
+	  dhist_mc_b_rv2 = new RooDataHist("dhist_mc_b_rv2","dset_mc_b_rv2",RooArgList(*binning_roovar2),(do_syst_string!=TString("templateshapeMCfakedrivenEE")) ? *dset_mctrue_b_rv2 : *dset_mcrcone_b_rv2);
+	}
+      }
+
       pdf_mc_s_rv1 = new RooHistPdf("pdf_mc_s_rv1","pdf_mc_s_rv1",RooArgList(*binning_roovar1),*dhist_mc_s_rv1);
       pdf_mc_s_rv2 = new RooHistPdf("pdf_mc_s_rv2","pdf_mc_s_rv2",RooArgList(*binning_roovar2),*dhist_mc_s_rv2);
-      dhist_mc_b_rv1 = new RooDataHist("dhist_mc_b_rv1","dset_mc_b_rv1",RooArgList(*binning_roovar1),(do_syst_string!=TString("templateshapeMCfakedriven")) ? *dset_mctrue_b_rv1 : *dset_mcrcone_b_rv1);
-      dhist_mc_b_rv2 = new RooDataHist("dhist_mc_b_rv2","dset_mc_b_rv2",RooArgList(*binning_roovar2),(do_syst_string!=TString("templateshapeMCfakedriven")) ? *dset_mctrue_b_rv2 : *dset_mcrcone_b_rv2);
       pdf_mc_b_rv1 = new RooHistPdf("pdf_mc_b_rv1","pdf_mc_b_rv1",RooArgList(*binning_roovar1),*dhist_mc_b_rv1);
       pdf_mc_b_rv2 = new RooHistPdf("pdf_mc_b_rv2","pdf_mc_b_rv2",RooArgList(*binning_roovar2),*dhist_mc_b_rv2);
       sigsigpdf = (RooAbsPdf*)(new RooProdPdf("sigsigpdf","sigsigpdf",*pdf_mc_s_rv1,*pdf_mc_s_rv2));
@@ -778,9 +902,10 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
     RooHistPdf *sigpdf_axis2_unbinned = new RooHistPdf("sigpdf_axis2_unbinned","sigpdf_axis2_unbinned",RooArgList(*roovar2),*sigdhist_axis2_unbinned);
     RooHistPdf *bkgpdf_axis2_unbinned = new RooHistPdf("bkgpdf_axis2_unbinned","bkgpdf_axis2_unbinned",RooArgList(*roovar2),*bkgdhist_axis2_unbinned);
 
+
     if (do_syst_string==TString("purefitbias")) {
       if (runcount==0){
-	mctruthfr = fit_dataset("outphoton_allmc_2pgen.root","outphoton_allmc_1p1fbothgen.root","outphoton_allmc_2fgen.root","outphoton_allmc_standard.root",diffvariable.Data(),splitting.Data(),n_bins,"savepdfMCtrue");
+	mctruthfr = fit_dataset(diffvariable.Data(),splitting.Data(),bin,"savepdfMCtrue2D");
       }
       generate_toy_dataset_2d(&dataset,sigsigpdf,sigbkgpdf,bkgsigpdf,bkgbkgpdf,mctruthfr->pp,mctruthfr->pf,mctruthfr->fp);
       delete dataset_axis1;
@@ -789,31 +914,7 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
       dataset_axis2 = (RooDataSet*)(dataset->reduce(Name("dataset_axis2"),SelectVars(RooArgList(*binning_roovar2))));
     }
     
-    if (do_syst_string==TString("templateshapeMCtrue") || do_syst_string==TString("templateshapeMCpromptdriven") || do_syst_string==TString("templateshapeMCfakedriven")) {
-      
-      if (runcount==0){
-	mctruthfr = fit_dataset("outphoton_allmc_2pgen.root","outphoton_allmc_1p1fbothgen.root","outphoton_allmc_2fgen.root","outphoton_allmc_standard.root",diffvariable.Data(),splitting.Data(),n_bins,(do_syst_string!=TString("templateshapeMCtrue")) ? "savepdfMCtrue1D" : "savepdfMCtrue");
-	sigsigpdf_forgen = mctruthfr->pdf_forgen[0];
-	sigbkgpdf_forgen = mctruthfr->pdf_forgen[1];
-	bkgsigpdf_forgen = mctruthfr->pdf_forgen[2];
-	bkgbkgpdf_forgen = mctruthfr->pdf_forgen[3];
-	sigpdf_axis1_forgen = mctruthfr->pdf_forgen[4];
-	bkgpdf_axis1_forgen = mctruthfr->pdf_forgen[5];
-	sigpdf_axis2_forgen = mctruthfr->pdf_forgen[6];
-	bkgpdf_axis2_forgen = mctruthfr->pdf_forgen[7];
-      }
-      
-      generate_toy_dataset_2d(&dataset,sigsigpdf_forgen,sigbkgpdf_forgen,bkgsigpdf_forgen,bkgbkgpdf_forgen,mctruthfr->pp,mctruthfr->pf,mctruthfr->fp);
-      generate_toy_dataset_1d(&dataset_axis1,sigpdf_axis1_forgen,bkgpdf_axis1_forgen,mctruthfr->fsig1_firstpass);
-      generate_toy_dataset_1d(&dataset_axis2,sigpdf_axis2_forgen,bkgpdf_axis2_forgen,mctruthfr->fsig2_firstpass);
-//      delete dataset_axis1;
-//      delete dataset_axis2;
-//      dataset_axis1 = (RooDataSet*)(dataset->reduce(Name("dataset_axis1"),SelectVars(RooArgList(*binning_roovar1))));
-//      dataset_axis2 = (RooDataSet*)(dataset->reduce(Name("dataset_axis2"),SelectVars(RooArgList(*binning_roovar2))));
-    }
 
-
-    
     
     if (doplots) {
       TCanvas *c0 = new TCanvas(Form("c0"),Form("c0"),1200,800);
@@ -869,7 +970,7 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
       c0->SaveAs(Form("plots/fittingplot0_%s_%s_b%d.jpg",splitting.Data(),diffvariable.Data(),bin));
       c0->SaveAs(Form("plots/fittingplot0_%s_%s_b%d.root",splitting.Data(),diffvariable.Data(),bin));
 
-    }
+    } // c0 binned
 
     if (doplots) {
       TCanvas *c0_ub = new TCanvas(Form("c0_ub"),Form("c0_ub"),1200,800);
@@ -923,15 +1024,12 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
       c0_ub->SaveAs(Form("plots/fittingplot0unbinned_%s_%s_b%d.root",splitting.Data(),diffvariable.Data(),bin));
 
 
-    }
+    } // c0_ub
 
-    
     if (doplots) {
       plot_template_dependency_axis1(dataset_bkg_axis1,TString("pt"),20,70,2,kTRUE);
       //      plot_template_dependency_axis1(dataset_bkg_axis1,TString("sieie"),0.008,0.014,6,kTRUE);
-    }
-
-
+    } // template dependency
 
     // inversione:
     //  pp = pp;
@@ -1029,7 +1127,7 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
       c1->SaveAs(Form("plots/fittingplot1_%s_%s_b%d.png",splitting.Data(),diffvariable.Data(),bin));
       c1->SaveAs(Form("plots/fittingplot1_%s_%s_b%d.pdf",splitting.Data(),diffvariable.Data(),bin));
       c1->SaveAs(Form("plots/fittingplot1_%s_%s_b%d.root",splitting.Data(),diffvariable.Data(),bin));
-    }
+    } // c1
 
     if (doplots) {
       TCanvas *c1_ub = new TCanvas("c1_ub","c1_ub",1200,800);
@@ -1068,7 +1166,7 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
       c1_ub->SaveAs(Form("plots/fittingplot1unbinned_%s_%s_b%d.png",splitting.Data(),diffvariable.Data(),bin));
       c1_ub->SaveAs(Form("plots/fittingplot1unbinned_%s_%s_b%d.pdf",splitting.Data(),diffvariable.Data(),bin));
       c1_ub->SaveAs(Form("plots/fittingplot1unbinned_%s_%s_b%d.root",splitting.Data(),diffvariable.Data(),bin));
-    }
+    } // c1_ub
   
   
   
@@ -1202,7 +1300,7 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
       c2_ub->SaveAs(Form("plots/fittingplot2unbinned_%s_%s_b%d.root",splitting.Data(),diffvariable.Data(),bin));   
 
 
-    }
+    } // c2_ub
 
     if (doplots) {
       TCanvas *c2 = new TCanvas("c2","c2",1200,800);
@@ -1421,14 +1519,7 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
       //      c3->SaveAs(Form("plots/fittingplot3_%s_%s_b%d.png",splitting.Data(),diffvariable.Data(),bin));
    
 
-    }
-
-
-
-
-
-
-
+    } // c2 binned
 
     delete minuit_secondpass;
     delete minuit_secondpass_constraint;
@@ -1472,7 +1563,7 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
     delete sigbkgdhist_unbinned;
     delete sigsigdhist_unbinned;
 
-    if (do_syst_string==TString("savepdfMCtrue") || do_syst_string==TString("savepdfMCtrue1D")){
+    if (do_syst_string==TString("savepdfMCtrue2D") || do_syst_string==TString("savepdfMCtrue1D")){
       out->pdf_forgen[0] = sigsigpdf;
       out->pdf_forgen[1] = sigbkgpdf;
       out->pdf_forgen[2] = bkgsigpdf;
@@ -1508,9 +1599,8 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
 
     if (do_syst_string==TString("templatestatistics")) do_syst_templatestatistics_outputvector.push_back(out);
     if (do_syst_string==TString("purefitbias")) do_syst_purefitbias_outputvector.push_back(out);
-    if (do_syst_string==TString("templateshapeMCtrue")) do_syst_MCtrue_outputvector.push_back(out);
-    if (do_syst_string==TString("templateshapeMCpromptdriven")) do_syst_MCpromptdriven_outputvector.push_back(out);
-    if (do_syst_string==TString("templateshapeMCfakedriven")) do_syst_MCfakedriven_outputvector.push_back(out);
+    if (do_syst_string==TString("templateshapeMCpromptdrivenEB") || do_syst_string==TString("templateshapeMCpromptdrivenEE")) do_syst_MCpromptdriven_outputvector.push_back(out);
+    if (do_syst_string==TString("templateshapeMCfakedrivenEB") || do_syst_string==TString("templateshapeMCfakedrivenEE")) do_syst_MCfakedriven_outputvector.push_back(out);
 
 
     delete dataset_sigsig   ;
@@ -1577,7 +1667,7 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
 
 
 
-  if (do_syst_string==TString("templatestatistics") || do_syst_string==TString("purefitbias") || do_syst_string==TString("templateshapeMCtrue") || do_syst_string==TString("templateshapeMCpromptdriven") || do_syst_string==TString("templateshapeMCfakedriven")){
+  if (do_syst_string==TString("templatestatistics") || do_syst_string==TString("purefitbias") || do_syst_string==TString("templateshapeMCpromptdrivenEB") || do_syst_string==TString("templateshapeMCfakedrivenEB") || do_syst_string==TString("templateshapeMCpromptdrivenEE") || do_syst_string==TString("templateshapeMCfakedrivenEE")){
 
     std::vector<fit_output*> *do_syst_vector = NULL;
     if (do_syst_string==TString("templatestatistics")){
@@ -1586,16 +1676,24 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
     else if (do_syst_string==TString("purefitbias")){
       do_syst_vector = &do_syst_purefitbias_outputvector;
     }
-    else if (do_syst_string==TString("templateshapeMCtrue")){
-      do_syst_vector = &do_syst_MCtrue_outputvector;
-    }
-    else if (do_syst_string==TString("templateshapeMCpromptdriven")){
+    else if (do_syst_string==TString("templateshapeMCpromptdrivenEB") || do_syst_string==TString("templateshapeMCpromptdrivenEE")){
       do_syst_vector = &do_syst_MCpromptdriven_outputvector;
     }
-    else if (do_syst_string==TString("templateshapeMCfakedriven")){
+    else if (do_syst_string==TString("templateshapeMCfakedrivenEB") || do_syst_string==TString("templateshapeMCfakedrivenEE")){
       do_syst_vector = &do_syst_MCfakedriven_outputvector;
     }
     assert (do_syst_vector);
+
+    float mean=0;
+    for (int i=0; i<times_to_run; i++) mean+=do_syst_vector->at(i)->pp;
+    mean/=times_to_run;
+    std::cout << "Mean pp " << mean << std::endl;
+
+    float centerval=0;
+    if (do_syst_string==TString("purefitbias")) centerval= mctruthfr->pp;
+    else centerval = datafr->pp;
+    std::cout << "Center val: " << centerval << std::endl;
+
 
     RooRealVar fittedx("fittedx","fittedx",0,1);
     RooRealVar fittedpull("fittedpull","fittedpull",-5,5);    
@@ -1613,14 +1711,7 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
     RooRealVar sigmagauspull("sigmagauspull","sigmagauspull",0,3);
     RooGaussian gauspull("gauspull","gauspull",fittedpull,meangauspull,sigmagauspull);
 
-    float mean=0;
-    for (int i=0; i<times_to_run; i++) mean+=do_syst_vector->at(i)->pp;
-    mean/=times_to_run;
-    std::cout << "Mean pp " << mean << std::endl;
-
     assert ((int)(do_syst_vector->size())==times_to_run);
-
-    float centerval = (mctruthfr) ? mctruthfr->pp : mean;
 
     for (int i=0; i<times_to_run; i++){
       fittedx.setVal(do_syst_vector->at(i)->pp);
@@ -1666,7 +1757,7 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
     histo_bias->SetStats(0);
     histo_bias->SetMarkerStyle(20);
     if (do_syst_string==TString("templatestatistics")) {    
-      histo_bias->GetYaxis()->SetTitle("RMS of fitted purity / gen. purity");
+      histo_bias->GetYaxis()->SetTitle("Width of fitted purity / data purity");
       histo_bias->SetBinContent(bin+1,sigmagaus.getVal()/centerval);
       histo_bias->SetBinError(bin+1,sigmagaus.getPropagatedError(*biasfitresult)/centerval);
     }
@@ -1675,21 +1766,17 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
       histo_bias->SetBinContent(bin+1,meangauspull.getVal());
       histo_bias->SetBinError(bin+1,meangauspull.getPropagatedError(*biasfitresultpull));
     }
-    if (do_syst_string==TString("templateshapeMCtrue") || do_syst_string==TString("templateshapeMCpromptdriven") || do_syst_string==TString("templateshapeMCfakedriven")){
+    if (do_syst_string==TString("templateshapeMCpromptdrivenEB") || do_syst_string==TString("templateshapeMCfakedrivenEB") || do_syst_string==TString("templateshapeMCpromptdrivenEE") || do_syst_string==TString("templateshapeMCfakedrivenEE")){
       histo_bias->GetYaxis()->SetTitle(Form("Fitted purity / gen. purity (%f purity toys)",centerval));
-      std::cout << "FILLING BIN 1 IN ANY CASE (SHOULD BE USED FOR BIN=N_BINS ONLY" << std::endl;
-      histo_bias->SetBinContent(1,meangaus.getVal()/centerval);
-      histo_bias->SetBinError(1,meangaus.getPropagatedError(*biasfitresult)/centerval);
+      histo_bias->SetBinContent(bin+1,meangaus.getVal()/centerval);
+      histo_bias->SetBinError(bin+1,meangaus.getPropagatedError(*biasfitresult)/centerval);
     }
     histo_bias->SaveAs(Form("plots/histo_bias_%s_%s_%s_b%d.root",do_syst_string.Data(),diffvariable.Data(),splitting.Data(),bin));    
 
 
   }
 
-  std::cout << "WARNING: RISCRIVERE CALCOLO SISTEMATICHE" << std::endl;
-
-
-  bool writeoutpurity = (do_syst_string!=TString("purefitbias") && do_syst_string!=TString("templatestatistics"));
+  bool writeoutpurity = (do_syst_string!=TString("purefitbias") && do_syst_string!=TString("templatestatistics") && do_syst_string!=TString("data_donotwriteoutpurity"));
 
   if (writeoutpurity){
 
@@ -1708,7 +1795,7 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
     for (int i=0; i<4; i++){
       TString name = "purity_";
       TString title = Form("Purity - %s category",splitting.Data());
-      if (do_syst_string==TString("templateshapeMCtrue") || do_syst_string==TString("templateshapeMCpromptdriven") || do_syst_string==TString("templateshapeMCfakedriven") || do_syst_string==TString("templateshapeMCfulldriven") || do_syst_string==TString("subtractionZee")) {name+=do_syst_string; name.Append("_");}
+      if (do_syst_string==TString("templateshapeMCpromptdrivenEB") || do_syst_string==TString("templateshapeMCfakedrivenEB") || do_syst_string==TString("templateshapeMCpromptdrivenEE") || do_syst_string==TString("templateshapeMCfakedrivenEE") || do_syst_string==TString("templateshapeMCfulldriven") || do_syst_string==TString("subtractionZee")) {name+=do_syst_string; name.Append("_");}
       if (i==0) name.Append("sigsig"); else if (i==1) name.Append("sigbkg"); else if (i==2) name.Append("bkgsig"); else if (i==3) name.Append("bkgbkg");
       if (bins_to_run>0) purity[i] = new TH1F(name.Data(),title.Data(),bins_to_run,binsdef);
       else purity[i] = new TH1F(name.Data(),title.Data(),n_bins,0,n_bins);
@@ -1738,7 +1825,7 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
     std::cout << "Output histos filled" << std::endl;
 
     TString helper("");
-    if (do_syst_string==TString("templateshapeMCtrue") || do_syst_string==TString("templateshapeMCpromptdriven") || do_syst_string==TString("templateshapeMCfakedriven") || do_syst_string==TString("templateshapeMCfulldriven") || do_syst_string==TString("subtractionZee")) {helper = do_syst_string; helper+=TString("_");}
+    if (do_syst_string==TString("templateshapeMCpromptdrivenEB") || do_syst_string==TString("templateshapeMCfakedrivenEB") || do_syst_string==TString("templateshapeMCpromptdrivenEE") || do_syst_string==TString("templateshapeMCfakedrivenEE") || do_syst_string==TString("templateshapeMCfulldriven") || do_syst_string==TString("subtractionZee")) {helper = do_syst_string; helper+=TString("_");}
     
     TFile *purityfile = new TFile(Form("plots/histo_purity_%s%s_%s_b%d.root",helper.Data(),diffvariable.Data(),splitting.Data(),bin),"recreate");
     purityfile->cd();
@@ -1751,12 +1838,13 @@ fit_output* fit_dataset(const char* inputfilename_t2p, const char* inputfilename
 
   }
 
+
   return out;
     
 
 };
 
-void fit_dataset_allbins(TString inputfilename_t2p, TString inputfilename_t1p1f, TString inputfilename_t2f, TString inputfilename_d="tobefitted.root", TString diffvariable="", TString splitting="", TString do_syst_string=TString("")){
+void fit_dataset_allbins(TString diffvariable="", TString splitting="", TString do_syst_string=TString("")){
 
   int bins_to_run=-1; 
   float *binsdef=NULL;
@@ -1797,7 +1885,7 @@ void fit_dataset_allbins(TString inputfilename_t2p, TString inputfilename_t1p1f,
   fit_output *fr[n_bins];
 
   for (int bin=0; bin<bins_to_run; bin++) {
-    fr[bin]=fit_dataset(inputfilename_t2p.Data(),inputfilename_t1p1f.Data(),inputfilename_t2f.Data(),inputfilename_d.Data(),diffvariable,splitting,bin,do_syst_string);
+    fr[bin]=fit_dataset(diffvariable,splitting,bin,do_syst_string);
   }
 
 };
@@ -2473,7 +2561,7 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
 
     float statallcategories_rel=sqrt(pow(statcategory[0],2)+pow(statcategory[1],2)+pow(statcategory[2],2))/unfoldnevt_tot->Integral();
     float systallcategories_rel=sqrt(pow(systcategory[0],2)+pow(systcategory[1],2)+pow(systcategory[2],2))/unfoldnevt_tot->Integral();
-    float totallcategories_rel=sqrt(pow(totcategory[0],2)+pow(totcategory[1],2)+pow(totcategory[2],2))/unfoldnevt_tot->Integral();
+    //    float totallcategories_rel=sqrt(pow(totcategory[0],2)+pow(totcategory[1],2)+pow(totcategory[2],2))/unfoldnevt_tot->Integral();
 
     std::cout << std::endl;
 
@@ -3316,6 +3404,7 @@ void create_histo_from_dataset_variablebins(RooDataSet *dset, TH1F** h1out, TH2F
 
 
 void generate_toy_dataset_1d(RooDataSet **target, RooAbsPdf *sigpdf, RooAbsPdf *bkgpdf, float fsig1toy){
+  //  std::cout << "TOY GENERATION DEBUG:" << std::endl;
 
   assert ((*target)->numEntries()>0);  
   RooArgSet initialvars = *((*target)->get(0));
@@ -3329,13 +3418,11 @@ void generate_toy_dataset_1d(RooDataSet **target, RooAbsPdf *sigpdf, RooAbsPdf *
 
   RooDataSet *generated = addpdf->generate((code==1) ? RooArgSet(*binning_roovar1) : RooArgSet(*binning_roovar2),_random_generator->Poisson((*target)->sumEntries()),kFALSE,kFALSE,"",kFALSE,kTRUE);
 
-//  {
-//    std::cout << "TOY GENERATION DEBUG:" << std::endl;
-//    (*target)->Print();
-//    (*target)->Print("v");
-//    generated->Print();
-//    generated->Print("v");
-//  }
+//  (*target)->Print();
+//  (*target)->Print("v");
+  std::cout << "Generated dataset:" << std::endl;
+  generated->Print();
+  //  generated->Print("v");
 
   delete *target;
   *target = generated;
@@ -3343,6 +3430,7 @@ void generate_toy_dataset_1d(RooDataSet **target, RooAbsPdf *sigpdf, RooAbsPdf *
 };
 
 void generate_toy_dataset_2d(RooDataSet **target, RooAbsPdf *sigsigpdf, RooAbsPdf *sigbkgpdf, RooAbsPdf *bkgsigpdf, RooAbsPdf *bkgbkgpdf, float pptoy, float pftoy, float fptoy){
+  //  std::cout << "TOY GENERATION DEBUG:" << std::endl;
 
   assert (pptoy+pftoy+fptoy<=1);
 
@@ -3357,16 +3445,11 @@ void generate_toy_dataset_2d(RooDataSet **target, RooAbsPdf *sigsigpdf, RooAbsPd
 
   RooDataSet *generated = addpdf->generate(RooArgSet(*binning_roovar1,*binning_roovar2),_random_generator->Poisson((*target)->sumEntries()),kFALSE,kFALSE,"",kFALSE,kTRUE);
 
+  //  (*target)->Print();
+  //  (*target)->Print("v");
+  std::cout << "Generated dataset:" << std::endl;
   generated->Print();
-  generated->Print("v");
-
-//  {
-//    std::cout << "TOY GENERATION DEBUG:" << std::endl;
-//    (*target)->Print();
-//    (*target)->Print("v");
-//    generated->Print();
-//    generated->Print("v");
-//  }
+  //  generated->Print("v");
 
   delete *target;
   *target = generated;
@@ -3531,9 +3614,9 @@ void reweight_pteta(RooDataSet **dset, RooDataSet *dsetdestination, int numvar){
 };
 */
 
-fit_output* template_studies_2d_variablebinning(const char* inputfilename_t2p, const char* inputfilename_t1p1f, const char* inputfilename_t2f, const char* inputfilename_d, TString diffvariable, TString splitting, int bin, const TString do_syst_string=TString("")){
+fit_output* template_studies_2d_variablebinning(TString diffvariable, TString splitting, int bin, const TString do_syst_string=TString("")){
   setTDRStyle();
-  return fit_dataset(inputfilename_t2p,inputfilename_t1p1f,inputfilename_t2f,inputfilename_d,diffvariable,splitting,bin,do_syst_string);
+  return fit_dataset(diffvariable,splitting,bin,do_syst_string);
 };
 
 TH1F* AddTHInQuadrature(std::vector<TH1F*> vector, TString name){
