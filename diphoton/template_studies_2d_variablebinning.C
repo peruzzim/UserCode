@@ -103,7 +103,7 @@ void produce_category_binning(RooDataSet **dset, bool deleteold=kTRUE);
 void randomize_dataset_statistically_binned(RooDataSet **dset);
 void create_histo_from_dataset_binned(RooDataSet *dset, TH1F **h1out, TH2F **h2out);
 void create_histo_from_dataset_variablebins(RooDataSet *dset, TH1F **h1out, TH2F **h2out);
-void generate_toy_dataset_1d(RooDataSet **target, RooAbsPdf *sigpdf, RooAbsPdf *bkgpdf, float fsig1toy);
+//void generate_toy_dataset_1d(RooDataSet **target, RooAbsPdf *sigpdf, RooAbsPdf *bkgpdf, float fsig1toy);
 void generate_toy_dataset_2d(RooDataSet **target, RooAbsPdf *sigsigpdf, RooAbsPdf *sigbkgpdf, RooAbsPdf *bkgsigpdf, RooAbsPdf *bkgbkgpdf, float pptoy, float pftoy, float fptoy);
 void print_mem();
 void find_adaptive_binning(RooDataSet *dset, int *n_found_bins, Double_t *array_bounds, int axis=-1, float threshold = default_threshold_adaptive_binning);
@@ -144,10 +144,15 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
   bool doplots = global_doplots;
 
   if (do_syst_string=="savepdfMCtrue2D")   {std::cout << "RUNNING FOR SAVE PDF 2D" << std::endl; doplots=false;}
-  if (do_syst_string=="savepdfMCtrue1D") {std::cout << "RUNNING FOR SAVE PDF 1D" << std::endl; doplots=false;}
+  if (do_syst_string=="savepdfMCtrue1D") {std::cout << "RUNNING FOR SAVE PDF 1D, IGNORE THE RESULTS OF THE FIT!!!" << std::endl; doplots=false;}
 
   if (do_syst_string=="data_donotwriteoutpurity") doplots=false;
   if (do_syst_string=="subtractionZee") doplots=false;
+
+  bool doplots_b = doplots;
+  bool doplots_ub = doplots;
+//  bool doplots_b = true;
+//  bool doplots_ub = false;
 
   TH1F::SetDefaultSumw2(kTRUE);
 
@@ -717,7 +722,7 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
 
 
   int times_to_run = 1;
-  const int ntoys = 10;
+  const int ntoys = 1000;
 
   std::vector<fit_output*> do_syst_templatestatistics_outputvector;
   std::vector<fit_output*> do_syst_purefitbias_outputvector;
@@ -805,6 +810,7 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
       }
       
       generate_toy_dataset_2d(&dataset,sigsigpdf_forgen,sigbkgpdf_forgen,bkgsigpdf_forgen,bkgbkgpdf_forgen,datafr->pp,datafr->pf,datafr->fp);
+
 //      generate_toy_dataset_1d(&dataset_axis1,sigpdf_axis1_forgen,bkgpdf_axis1_forgen,mctruthfr->fsig1_firstpass);
 //      generate_toy_dataset_1d(&dataset_axis2,sigpdf_axis2_forgen,bkgpdf_axis2_forgen,mctruthfr->fsig2_firstpass);
       delete dataset_axis1;
@@ -905,9 +911,10 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
 
     if (do_syst_string==TString("purefitbias")) {
       if (runcount==0){
-	mctruthfr = fit_dataset(diffvariable.Data(),splitting.Data(),bin,"savepdfMCtrue2D");
+	//	mctruthfr = fit_dataset(diffvariable.Data(),splitting.Data(),bin,"savepdfMCtrue2D");
+	datafr = fit_dataset(diffvariable.Data(),splitting.Data(),bin,"data_donotwriteoutpurity");
       }
-      generate_toy_dataset_2d(&dataset,sigsigpdf,sigbkgpdf,bkgsigpdf,bkgbkgpdf,mctruthfr->pp,mctruthfr->pf,mctruthfr->fp);
+      generate_toy_dataset_2d(&dataset,sigsigpdf,sigbkgpdf,bkgsigpdf,bkgbkgpdf,datafr->pp,datafr->pf,datafr->fp);
       delete dataset_axis1;
       delete dataset_axis2;
       dataset_axis1 = (RooDataSet*)(dataset->reduce(Name("dataset_axis1"),SelectVars(RooArgList(*binning_roovar1))));
@@ -916,7 +923,7 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
     
 
     
-    if (doplots) {
+    if (doplots_b) {
       TCanvas *c0 = new TCanvas(Form("c0"),Form("c0"),1200,800);
       c0->Divide(2,2);
 
@@ -972,7 +979,7 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
 
     } // c0 binned
 
-    if (doplots) {
+    if (doplots_ub) {
       TCanvas *c0_ub = new TCanvas(Form("c0_ub"),Form("c0_ub"),1200,800);
       c0_ub->Divide(2,2);
 
@@ -1026,7 +1033,7 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
 
     } // c0_ub
 
-    if (doplots) {
+    if (doplots_b) {
       plot_template_dependency_axis1(dataset_bkg_axis1,TString("pt"),20,70,2,kTRUE);
       //      plot_template_dependency_axis1(dataset_bkg_axis1,TString("sieie"),0.008,0.014,6,kTRUE);
     } // template dependency
@@ -1090,7 +1097,7 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
     */
   
 
-    if (doplots) {
+    if (doplots_b) {
       TCanvas *c1 = new TCanvas("c1","c1",1200,800);
       c1->Divide(2);
       c1->cd(1);
@@ -1129,7 +1136,7 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
       c1->SaveAs(Form("plots/fittingplot1_%s_%s_b%d.root",splitting.Data(),diffvariable.Data(),bin));
     } // c1
 
-    if (doplots) {
+    if (doplots_ub) {
       TCanvas *c1_ub = new TCanvas("c1_ub","c1_ub",1200,800);
       c1_ub->Divide(2);
       c1_ub->cd(1);
@@ -1260,7 +1267,7 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
     out->fsig1_firstpass=fsig1->getVal();
     out->fsig2_firstpass=fsig2->getVal();
 
-    if (doplots){
+    if (doplots_ub){
       TCanvas *c2_ub = new TCanvas("c2_ub","c2_ub",1200,800);
       c2_ub->Divide(2);   
        
@@ -1302,7 +1309,7 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
 
     } // c2_ub
 
-    if (doplots) {
+    if (doplots_b) {
       TCanvas *c2 = new TCanvas("c2","c2",1200,800);
       c2->Divide(2,2);   
 
@@ -1689,9 +1696,7 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
     mean/=times_to_run;
     std::cout << "Mean pp " << mean << std::endl;
 
-    float centerval=0;
-    if (do_syst_string==TString("purefitbias")) centerval= mctruthfr->pp;
-    else centerval = datafr->pp;
+    float centerval = datafr->pp;
     std::cout << "Center val: " << centerval << std::endl;
 
 
@@ -1727,7 +1732,7 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
     RooFitResult *biasfitresult = gaus.fitTo(dsetx,Save());
     RooFitResult *biasfitresultpull = gauspull.fitTo(dsetpull,Save());
 
-    fittedx.setRange(mean-0.05,mean+0.05);
+    fittedx.setRange(mean-0.20,mean+0.20);
     RooPlot *framefittedx = fittedx.frame();
     dsetx.plotOn(framefittedx);
     gaus.plotOn(framefittedx);
@@ -1776,7 +1781,7 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
 
   }
 
-  bool writeoutpurity = (do_syst_string!=TString("purefitbias") && do_syst_string!=TString("templatestatistics") && do_syst_string!=TString("data_donotwriteoutpurity"));
+  bool writeoutpurity = (do_syst_string==TString(""));
 
   if (writeoutpurity){
 
@@ -1901,8 +1906,10 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
 
   TH1F *systplot_purefitbias=NULL;
   TH1F *systplot_templatestatistics=NULL;
-  TH1F *systplot_templateshapeMCpromptdriven=NULL;
-  TH1F *systplot_templateshapeMCfakedriven=NULL;
+  TH1F *systplot_templateshapeMCpromptdrivenEB=NULL;
+  TH1F *systplot_templateshapeMCfakedrivenEB=NULL;
+  TH1F *systplot_templateshapeMCpromptdrivenEE=NULL;
+  TH1F *systplot_templateshapeMCfakedrivenEE=NULL;
   TH1F *systplot_zee=NULL;
   TH1F *systplot_tot=NULL;
   TH1F *systplot_efficiency=NULL;
@@ -1910,7 +1917,8 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
   TH1F *systplot_totfinal=NULL;
 
   TH1F *systplot_uncorrelated=NULL;
-  TH1F *systplot_correlated=NULL;
+  TH1F *systplot_1catcorrelated=NULL;
+  TH1F *systplot_allcatcorrelated=NULL;
 
   TH1F *systplot_statistic=NULL;
 
@@ -2045,6 +2053,12 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
   TH1F *histo_bias_templatestatistics = NULL;
   TFile *file_standardsel_dy = NULL;
 
+  TH1F *histo_bias_templateshapeMCpromptdrivenEB = NULL;
+  TH1F *histo_bias_templateshapeMCfakedrivenEB = NULL;
+  TH1F *histo_bias_templateshapeMCpromptdrivenEE = NULL;
+  TH1F *histo_bias_templateshapeMCfakedrivenEE = NULL;
+
+
   if (!skipsystematics){
     TFile *file_bias_purefitbias  = new TFile(Form("plots/histo_bias_purefitbias_%s_%s_allbins.root",diffvariable.Data(),splitting.Data()));
     file_bias_purefitbias->GetObject("histo_bias_purefitbias",histo_bias_purefitbias);
@@ -2054,6 +2068,18 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
     assert(histo_bias_templatestatistics);
     file_standardsel_dy = new TFile("outphoton_dy_standard.root");
     assert(file_standardsel_dy);
+    if (splitting!="EEEE"){
+    TFile *file_bias_templateshapepromptEB = new TFile(Form("plots/histo_bias_templateshapeMCpromptdrivenEB_%s_%s_allbins.root",diffvariable.Data(),splitting.Data()));
+    file_bias_templateshapepromptEB->GetObject("histo_bias_templateshapeMCpromptdrivenEB",histo_bias_templateshapeMCpromptdrivenEB);
+    TFile *file_bias_templateshapefakeEB = new TFile(Form("plots/histo_bias_templateshapeMCfakedrivenEB_%s_%s_allbins.root",diffvariable.Data(),splitting.Data()));
+    file_bias_templateshapefakeEB->GetObject("histo_bias_templateshapeMCfakedrivenEB",histo_bias_templateshapeMCfakedrivenEB);
+    }
+    if (splitting!="EBEB"){
+    TFile *file_bias_templateshapepromptEE = new TFile(Form("plots/histo_bias_templateshapeMCpromptdrivenEE_%s_%s_allbins.root",diffvariable.Data(),splitting.Data()));
+    file_bias_templateshapepromptEE->GetObject("histo_bias_templateshapeMCpromptdrivenEE",histo_bias_templateshapeMCpromptdrivenEE);
+    TFile *file_bias_templateshapefakeEE = new TFile(Form("plots/histo_bias_templateshapeMCfakedrivenEE_%s_%s_allbins.root",diffvariable.Data(),splitting.Data()));
+    file_bias_templateshapefakeEE->GetObject("histo_bias_templateshapeMCfakedrivenEE",histo_bias_templateshapeMCfakedrivenEE);
+    }
   }
   
     xsec = new TH1F("xsec","xsec",bins_to_run,binsdef);
@@ -2077,14 +2103,6 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
     xsec_ngammagammayield->SetMarkerColor(kGreen+2);
     xsec_ngammagammayield->SetLineColor(kGreen+2);
 
-    map<TString,float> syst_relative_promptshape;
-    syst_relative_promptshape.insert(pair<TString,float>("EBEB",0.03));
-    syst_relative_promptshape.insert(pair<TString,float>("EBEE",0.05));
-    syst_relative_promptshape.insert(pair<TString,float>("EEEE",0.13));
-    map<TString,float> syst_relative_fakeshape;
-    syst_relative_fakeshape.insert(pair<TString,float>("EBEB",0.06));
-    syst_relative_fakeshape.insert(pair<TString,float>("EBEE",0.16));
-    syst_relative_fakeshape.insert(pair<TString,float>("EEEE",0.20));
     map<TString,pair<float,float> > syst_purity_dy;
     syst_purity_dy.insert(pair<TString,pair<float,float> >("EBEB",pair<float,float>(8.6542e-01,4.51e-02)));
     syst_purity_dy.insert(pair<TString,pair<float,float> >("EBEE",pair<float,float>(7.9537e-01,8.22e-02)));
@@ -2102,15 +2120,18 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
       }
       systplot_purefitbias=(TH1F*)(systplot->Clone("systplot_purefitbias"));
       systplot_templatestatistics=(TH1F*)(systplot->Clone("systplot_templatestatistics"));
-      systplot_templateshapeMCpromptdriven=(TH1F*)(systplot->Clone("systplot_templateshapeMCpromptdriven"));
-      systplot_templateshapeMCfakedriven=(TH1F*)(systplot->Clone("systplot_templateshapeMCfakedriven"));
+      systplot_templateshapeMCpromptdrivenEB=(TH1F*)(systplot->Clone("systplot_templateshapeMCpromptdrivenEB"));
+      systplot_templateshapeMCfakedrivenEB=(TH1F*)(systplot->Clone("systplot_templateshapeMCfakedrivenEB"));
+      systplot_templateshapeMCpromptdrivenEE=(TH1F*)(systplot->Clone("systplot_templateshapeMCpromptdrivenEE"));
+      systplot_templateshapeMCfakedrivenEE=(TH1F*)(systplot->Clone("systplot_templateshapeMCfakedrivenEE"));
       systplot_zee=(TH1F*)(systplot->Clone("systplot_zee"));
       systplot_tot=(TH1F*)(systplot->Clone("systplot_tot"));
       systplot_efficiency=(TH1F*)(systplot->Clone("systplot_efficiency"));
       systplot_unfolding=(TH1F*)(systplot->Clone("systplot_unfolding"));
       systplot_totfinal=(TH1F*)(systplot->Clone("systplot_totfinal"));
       systplot_uncorrelated=(TH1F*)(systplot->Clone("systplot_uncorrelated"));
-      systplot_correlated=(TH1F*)(systplot->Clone("systplot_correlated"));
+      systplot_1catcorrelated=(TH1F*)(systplot->Clone("systplot_1catcorrelated"));
+      systplot_allcatcorrelated=(TH1F*)(systplot->Clone("systplot_allcatcorrelated"));
       systplot_statistic=(TH1F*)(systplot->Clone("systplot_statistic"));
       
     }
@@ -2144,11 +2165,13 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
     xsec_ngammagammayield->SetBinContent(bin+1,pp*tot_events/eff_overflow-events_dy*purity_dy*scale_dy*intlumi);
     std::cout << xsec_ngammagammayield->GetBinContent(bin+1) << std::endl;
 
-    float shapesyst1 = pp*syst_relative_promptshape[splitting];
-    float shapesyst2 = pp*syst_relative_fakeshape[splitting];
+    float shapesyst1 = (splitting!="EEEE") ? pp*fabs(histo_bias_templateshapeMCpromptdrivenEB->GetBinContent(bin+1)-1) : 0;
+    float shapesyst2 = (splitting!="EEEE") ? pp*fabs(histo_bias_templateshapeMCfakedrivenEB->GetBinContent(bin+1)-1) : 0;
+    float shapesyst3 = (splitting!="EBEB") ? pp*fabs(histo_bias_templateshapeMCpromptdrivenEE->GetBinContent(bin+1)-1) : 0;
+    float shapesyst4 = (splitting!="EBEB") ? pp*fabs(histo_bias_templateshapeMCfakedrivenEE->GetBinContent(bin+1)-1) : 0;
 
     float purity_error_withsyst = pp_err;
-    if (!skipsystematics) purity_error_withsyst = sqrt(pow(pp_err,2) + pow(pp*histo_bias_templatestatistics->GetBinContent(bin+1),2) + pow(pp_err*histo_bias_purefitbias->GetBinContent(bin+1),2) + pow(shapesyst1,2) + pow(shapesyst2,2) + pow(pp*rel_error_on_purity_pp,2));
+    if (!skipsystematics) purity_error_withsyst = sqrt(pow(pp_err,2) + pow(pp*histo_bias_templatestatistics->GetBinContent(bin+1),2) + pow(pp_err*histo_bias_purefitbias->GetBinContent(bin+1),2) + pow(shapesyst1,2) + pow(shapesyst2,2) + pow(shapesyst3,2) + pow(shapesyst4,2) + pow(pp*rel_error_on_purity_pp,2));
 
     float errpoiss=1.0/sqrt(tot_events);
     float err=sqrt(pow(pp_err/pp,2)+pow(errpoiss,2));
@@ -2162,10 +2185,12 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
     if (!skipsystematics){
       systplot_purefitbias->SetBinContent(bin+1,pp_err*fabs(histo_bias_purefitbias->GetBinContent(bin+1))/pp);
       systplot_templatestatistics->SetBinContent(bin+1,histo_bias_templatestatistics->GetBinContent(bin+1));
-      systplot_templateshapeMCpromptdriven->SetBinContent(bin+1,shapesyst1/pp);
-      systplot_templateshapeMCfakedriven->SetBinContent(bin+1,shapesyst2/pp);
+      systplot_templateshapeMCpromptdrivenEB->SetBinContent(bin+1,shapesyst1/pp);
+      systplot_templateshapeMCfakedrivenEB->SetBinContent(bin+1,shapesyst2/pp);
+      systplot_templateshapeMCpromptdrivenEE->SetBinContent(bin+1,shapesyst3/pp);
+      systplot_templateshapeMCfakedrivenEE->SetBinContent(bin+1,shapesyst4/pp);
       systplot_zee->SetBinContent(bin+1,rel_error_on_purity_pp);
-      systplot_tot->SetBinContent(bin+1,sqrt(pow(pp*histo_bias_templatestatistics->GetBinContent(bin+1),2) + pow(pp_err*histo_bias_purefitbias->GetBinContent(bin+1),2) + pow(shapesyst1,2) + pow(shapesyst2,2) + pow(pp*rel_error_on_purity_pp,2))/pp);
+      systplot_tot->SetBinContent(bin+1,sqrt(pow(pp*histo_bias_templatestatistics->GetBinContent(bin+1),2) + pow(pp_err*histo_bias_purefitbias->GetBinContent(bin+1),2) + pow(shapesyst1,2) + pow(shapesyst2,2) + pow(shapesyst3,2) + pow(shapesyst4,2) + pow(pp*rel_error_on_purity_pp,2))/pp);
       systplot_efficiency->SetBinContent(bin+1,eff->GetBinError(bin+1)/eff->GetBinContent(bin+1));
       systplot_unfolding->SetBinContent(bin+1,unfoldunc->GetBinContent(bin+1));
       systplot_totfinal->SetBinContent(bin+1,sqrt(pow(systplot_tot->GetBinContent(bin+1),2)+pow(systplot_efficiency->GetBinContent(bin+1),2)+pow(systplot_unfolding->GetBinContent(bin+1),2)));
@@ -2296,22 +2321,30 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
     systplot_tot->SetMinimum(0);
 
     systplot_tot->Draw();    
-    systplot_templateshapeMCfakedriven->Draw("same");
-    systplot_templateshapeMCpromptdriven->Draw("same");
+    systplot_templateshapeMCpromptdrivenEB->Draw("same");
+    systplot_templateshapeMCfakedrivenEB->Draw("same");
+    systplot_templateshapeMCpromptdrivenEE->Draw("same");
+    systplot_templateshapeMCfakedrivenEE->Draw("same");
     systplot_purefitbias->Draw("same");
     systplot_templatestatistics->Draw("same");
     systplot_zee->Draw("same");
 
-    systplot_templateshapeMCfakedriven->SetLineColor(kBlue);
-    systplot_templateshapeMCpromptdriven->SetLineColor(kRed);
+    systplot_templateshapeMCpromptdrivenEB->SetLineColor(kRed);
+    systplot_templateshapeMCfakedrivenEB->SetLineColor(kBlue);
+    systplot_templateshapeMCpromptdrivenEE->SetLineColor(kRed);
+    systplot_templateshapeMCfakedrivenEE->SetLineColor(kBlue);
+    systplot_templateshapeMCpromptdrivenEE->SetLineStyle(kDotted);
+    systplot_templateshapeMCfakedrivenEE->SetLineStyle(kDotted);
     systplot_purefitbias->SetLineColor(kGreen);
     systplot_templatestatistics->SetLineColor(kGray);
     systplot_zee->SetLineColor(kMagenta);
     systplot_tot->SetLineColor(kBlack);
 
     TLegend *legsystplot = new TLegend(0.6,0.7,0.9,0.9);
-    legsystplot->AddEntry(systplot_templateshapeMCpromptdriven,"Prompt template shape","l");
-    legsystplot->AddEntry(systplot_templateshapeMCfakedriven,"Fakes template shape","l");
+    legsystplot->AddEntry(systplot_templateshapeMCpromptdrivenEB,"Prompt template shape EB","l");
+    legsystplot->AddEntry(systplot_templateshapeMCfakedrivenEB,"Fakes template shape EB","l");
+    legsystplot->AddEntry(systplot_templateshapeMCpromptdrivenEE,"Prompt template shape EE","l");
+    legsystplot->AddEntry(systplot_templateshapeMCfakedrivenEE,"Fakes template shape EE","l");
     legsystplot->AddEntry(systplot_templatestatistics,"Template stat. fluctuation","l");
     legsystplot->AddEntry(systplot_purefitbias,"Fit bias","l");
     legsystplot->AddEntry(systplot_zee,"Zee subtraction ","l");
@@ -2362,8 +2395,10 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
     TFile *f2 = new TFile(Form("plots/histo_systsummaryfinal_%s_%s.root", diffvariable.Data(),splitting.Data()),"recreate");
     f2->cd();
 
-    systplot_templateshapeMCfakedriven->Write();
-    systplot_templateshapeMCpromptdriven->Write();
+    systplot_templateshapeMCfakedrivenEB->Write();
+    systplot_templateshapeMCpromptdrivenEB->Write();
+    systplot_templateshapeMCfakedrivenEE->Write();
+    systplot_templateshapeMCpromptdrivenEE->Write();
     systplot_purefitbias->Write();
     systplot_templatestatistics->Write();
     systplot_zee->Write();
@@ -2373,23 +2408,31 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
     systplot_totfinal->Write();
     systplot_statistic->Write();
 
-    std::vector<TH1F*> toadd_correlated;
-    toadd_correlated.push_back(systplot_templateshapeMCfakedriven);
-    toadd_correlated.push_back(systplot_templateshapeMCpromptdriven);
-    toadd_correlated.push_back(systplot_zee);
-    toadd_correlated.push_back(systplot_templatestatistics);
-    toadd_correlated.push_back(systplot_efficiency);
-    toadd_correlated.push_back(systplot_unfolding);
+    std::vector<TH1F*> toadd_1catcorrelated;
+    toadd_1catcorrelated.push_back(systplot_zee);
+    toadd_1catcorrelated.push_back(systplot_templatestatistics);
+    toadd_1catcorrelated.push_back(systplot_efficiency);
+    toadd_1catcorrelated.push_back(systplot_unfolding);
 
-    systplot_correlated=AddTHInQuadrature(toadd_correlated,"systplot_correlated");
+    systplot_1catcorrelated=AddTHInQuadrature(toadd_1catcorrelated,"systplot_1catcorrelated");
+
+    std::vector<TH1F*> toadd_allcatcorrelated;
+    toadd_allcatcorrelated.push_back(systplot_templateshapeMCfakedrivenEB);
+    toadd_allcatcorrelated.push_back(systplot_templateshapeMCpromptdrivenEB);
+    toadd_allcatcorrelated.push_back(systplot_templateshapeMCfakedrivenEE);
+    toadd_allcatcorrelated.push_back(systplot_templateshapeMCpromptdrivenEE);
+
+    systplot_allcatcorrelated=AddTHInQuadrature(toadd_allcatcorrelated,"systplot_allcatcorrelated");
 
     std::vector<TH1F*> toadd_uncorrelated;
     toadd_uncorrelated.push_back(systplot_purefitbias);
 
     systplot_uncorrelated=AddTHInQuadrature(toadd_uncorrelated,"systplot_uncorrelated");
 
-    systplot_correlated->Write();
+    systplot_1catcorrelated->Write();
+    systplot_allcatcorrelated->Write();
     systplot_uncorrelated->Write();
+
 
     f2->Close();
 
@@ -2416,19 +2459,32 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
     fsysts[1] = new TFile(Form("plots/histo_systsummaryfinal_%s_EBEE.root", diffvariable.Data()));;
     fsysts[2] = new TFile(Form("plots/histo_systsummaryfinal_%s_EEEE.root", diffvariable.Data()));;
 
+    const int n_cats = 3;
+    const int n_syst_1catcorr = 4;
+    const int n_syst_allcatcorr = 4;
+
     TH1F *hsysts[3];
-    TH1F *hsysts_correlated[3];
+    TH1F *hsysts_1catcorrelated[3][n_syst_1catcorr];
+    TH1F *hsysts_allcatcorrelated[3][n_syst_allcatcorr];
     TH1F *hsysts_uncorrelated[3];
     TH1F *hsysts_statistic[3];
 
     for (int i=0; i<3; i++) fsysts[i]->GetObject("systplot_totfinal",hsysts[i]);
-    for (int i=0; i<3; i++) fsysts[i]->GetObject("systplot_correlated",hsysts_correlated[i]);
+    for (int i=0; i<3; i++) {
+      fsysts[i]->GetObject("systplot_zee",hsysts_1catcorrelated[i][0]);
+      fsysts[i]->GetObject("systplot_templatestatistics",hsysts_1catcorrelated[i][1]);
+      fsysts[i]->GetObject("systplot_efficiency",hsysts_1catcorrelated[i][2]);
+      fsysts[i]->GetObject("systplot_unfolding",hsysts_1catcorrelated[i][3]);
+    }
+    for (int i=0; i<3; i++) {
+      fsysts[i]->GetObject("systplot_templateshapeMCpromptdrivenEB",hsysts_allcatcorrelated[i][0]);
+      fsysts[i]->GetObject("systplot_templateshapeMCfakedrivenEB",hsysts_allcatcorrelated[i][1]);
+      fsysts[i]->GetObject("systplot_templateshapeMCpromptdrivenEE",hsysts_allcatcorrelated[i][2]);
+      fsysts[i]->GetObject("systplot_templateshapeMCfakedrivenEE",hsysts_allcatcorrelated[i][3]);
+    }
     for (int i=0; i<3; i++) fsysts[i]->GetObject("systplot_uncorrelated",hsysts_uncorrelated[i]);
     for (int i=0; i<3; i++) fsysts[i]->GetObject("systplot_statistic",hsysts_statistic[i]);
     for (int i=0; i<3; i++) hsysts[i]->Sumw2();
-    for (int i=0; i<3; i++) hsysts_correlated[i]->Sumw2();
-    for (int i=0; i<3; i++) hsysts_uncorrelated[i]->Sumw2();
-    for (int i=0; i<3; i++) hsysts_statistic[i]->Sumw2();
 
     TH1F *unfoldnevt[3];
     std::map<TString,TString> translation2;
@@ -2472,96 +2528,151 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
     systplot_totfinal_inclusive->SetMinimum(0);
     systplot_totfinal_inclusive->SetTitle("Total systematic uncertainty on cross-section");
 
-
     for (int i=0; i<3; i++) {
       hsysts_statistic[i]->Multiply(unfoldnevt_new[i]);
       hsysts_uncorrelated[i]->Multiply(unfoldnevt_new[i]);
-      hsysts_correlated[i]->Multiply(unfoldnevt_new[i]);
+      for (int k=0; k<n_syst_1catcorr; k++) hsysts_1catcorrelated[i][k]->Multiply(unfoldnevt_new[i]);
+      for (int k=0; k<n_syst_allcatcorr; k++) hsysts_allcatcorrelated[i][k]->Multiply(unfoldnevt_new[i]);
+    }
+
+    
+    float a[n_cats][n_bins];
+    float b[n_cats][n_bins];
+    float c[n_cats][n_syst_1catcorr][n_bins];
+    float d[n_cats][n_syst_allcatcorr][n_bins];
+
+
+    for (int i=0; i<n_cats; i++){
+      for (int bin = 0; bin<bins_to_run; bin++){
+	a[i][bin]=hsysts_statistic[i]->GetBinContent(bin+1);
+	b[i][bin]=hsysts_uncorrelated[i]->GetBinContent(bin+1);
+	for (int k=0; k<n_syst_1catcorr; k++) c[i][k][bin]=hsysts_1catcorrelated[i][k]->GetBinContent(bin+1);
+	for (int k=0; k<n_syst_allcatcorr; k++) d[i][k][bin]=hsysts_1catcorrelated[i][k]->GetBinContent(bin+1);
+      }
     }
 
 
-    float statcategory[3];
-    float systuncorrcategory[3];
-    float systcorrcategory[3];
-    float statcategory_rel[3];
-    float systuncorrcategory_rel[3];
-    float systcorrcategory_rel[3];
-    float systcategory[3];
-    float systcategory_rel[3];
-    float totcategory[3];
-    float totcategory_rel[3];
 
-    float totbin[n_bins];
-    float systbin[n_bins];
-    for(int bin = 0; bin<bins_to_run; bin++) {totbin[bin]=0; systbin[bin]=0;}
-
-    for (int i=0; i<3; i++){
-      statcategory[i]=0;
-      systuncorrcategory[i]=0;
-      systcorrcategory[i]=0;
-
-      for(int bin = 0; bin<bins_to_run; bin++){
-	float statin1bin = hsysts_statistic[i]->GetBinContent(bin+1);
-	float systin1bin = sqrt(pow(hsysts_uncorrelated[i]->GetBinContent(bin+1),2)+pow(hsysts_correlated[i]->GetBinContent(bin+1),2));
-	float statplussystin1bin = sqrt(pow(statin1bin,2)+pow(systin1bin,2)); //nolumi
-	float statplussystin1bin_rel = statplussystin1bin/unfoldnevt_new[i]->GetBinContent(bin+1);
-	float systcorrin1bin = hsysts_correlated[i]->GetBinContent(bin+1);
-	float systuncorrin1bin = hsysts_uncorrelated[i]->GetBinContent(bin+1);
-	
-	statcategory[i]+=pow(statin1bin,2);
-	systuncorrcategory[i]+=pow(systuncorrin1bin,2);
-	systcorrcategory[i]+=systcorrin1bin;
-
-	std::cout << i << " bin " << bin << std::endl;
-	std::cout << "stat " << statin1bin/unfoldnevt_new[i]->GetBinContent(bin+1) << std::endl;
-	std::cout << "syst " << systin1bin/unfoldnevt_new[i]->GetBinContent(bin+1) << std::endl;
-	std::cout << "ev " << unfoldnevt_new[i]->GetBinContent(bin+1) << std::endl;
-	std::cout << "xsec " << unfoldnevt_new[i]->GetBinContent(bin+1)/intlumi/1e3/unfoldnevt_new[i]->GetBinWidth(bin+1) << std::endl;
-	std::cout << "bw " << unfoldnevt_new[i]->GetBinWidth(bin+1) << std::endl;
-	std::cout << "stat+syst rel " << statplussystin1bin_rel << std::endl;
-	totbin[bin]+=pow(statplussystin1bin,2);
-	systbin[bin]+=pow(systin1bin,2);
-
+    float stat1bin[n_cats][bins_to_run];
+    for (int i=0; i<n_cats; i++){
+      for (int bin = 0; bin<bins_to_run; bin++){
+	stat1bin[i][bin]=a[i][bin];
+      }
     }
-    statcategory[i]=sqrt(statcategory[i]);
-    systuncorrcategory[i]=sqrt(systuncorrcategory[i]);
 
-    statcategory_rel[i]=statcategory[i]/unfoldnevt_new[i]->Integral();
-    systuncorrcategory_rel[i]=systuncorrcategory[i]/unfoldnevt_new[i]->Integral();
-    systcorrcategory_rel[i]=systcorrcategory[i]/unfoldnevt_new[i]->Integral();
+    float syst1bin[n_cats][bins_to_run];
+    for (int i=0; i<n_cats; i++){
+      for (int bin = 0; bin<bins_to_run; bin++){
+	float res = 0;
+	res+=pow(a[i][bin],2)+pow(b[i][bin],2);
+	for (int k=0; k<n_syst_1catcorr; k++) res+=pow(c[i][k][bin],2);
+	for (int k=0; k<n_syst_allcatcorr; k++) res+=pow(d[i][k][bin],2);
+	syst1bin[i][bin]=sqrt(res);
+      }
+    }
 
-    systcategory[i]=sqrt(pow(systuncorrcategory[i],2)+pow(systcorrcategory[i],2));
-    systcategory_rel[i]=systcategory[i]/unfoldnevt_new[i]->Integral();
 
-    totcategory[i]=sqrt(pow(statcategory[i],2)+pow(systuncorrcategory[i],2)+pow(systcorrcategory[i],2));
-    totcategory_rel[i]=sqrt(pow(statcategory_rel[i],2)+pow(systuncorrcategory_rel[i],2)+pow(systcorrcategory_rel[i],2));
 
-    std::cout << "riepilogo cat " << i << std::endl;
-    std::cout << "stat " << statcategory[i] << " " << statcategory_rel[i] << std::endl;
-    std::cout << "syst " << systcategory[i] << " " << systcategory_rel[i] << std::endl;
-    std::cout << "ev " << unfoldnevt_new[i]->Integral() << std::endl;
-    std::cout << std::endl;
 
+    float statcategory[n_cats];
+    for (int i=0; i<n_cats; i++){
+      float res = 0;
+      for (int bin = 0; bin<bins_to_run; bin++){
+	res+=pow(a[i][bin],2);
+      }
+      statcategory[i]=sqrt(res);
+    }
+
+    float systcategory[n_cats];
+    for (int i=0; i<n_cats; i++){
+      float res = 0;
+      float sumc[n_syst_1catcorr];
+      float sumd[n_syst_allcatcorr];
+      for (int bin = 0; bin<bins_to_run; bin++){
+	res+=pow(a[i][bin],2)+pow(b[i][bin],2);
+      }
+      for (int k=0; k<n_syst_1catcorr; k++){
+	sumc[k]=0;
+	for (int bin = 0; bin<bins_to_run; bin++) sumc[k]+=c[i][k][bin];
+      }
+      for (int k=0; k<n_syst_allcatcorr; k++){
+	sumd[k]=0;
+	for (int bin = 0; bin<bins_to_run; bin++) sumd[k]+=d[i][k][bin];
+      }
+      for (int k=0; k<n_syst_1catcorr; k++) res+=pow(sumc[k],2);
+      for (int k=0; k<n_syst_allcatcorr; k++) res+=pow(sumd[k],2);
+      systcategory[i]=sqrt(res);
+    }
+
+
+    float statcolumn[bins_to_run];
+    for (int bin = 0; bin<bins_to_run; bin++){
+      float res = 0;
+      for (int i=0; i<n_cats; i++){
+	res+=pow(a[i][bin],2);
+      }
+      statcolumn[bin]=sqrt(res);
+    }
+
+    float systcolumn[bins_to_run];
+    for (int bin = 0; bin<bins_to_run; bin++){
+      float res = 0;
+      for (int i=0; i<n_cats; i++){
+        res+=pow(a[i][bin],2)+pow(b[i][bin],2);
+	for (int k=0; k<n_syst_1catcorr; k++) res+=pow(c[i][k][bin],2);
+      }
+      for (int k=0; k<n_syst_allcatcorr; k++) {
+	float sumd_column=0;
+	for (int i=0; i<n_cats; i++) sumd_column+=d[i][k][bin];
+	res+=pow(sumd_column,2);
+      }
+      systcolumn[bin]=sqrt(res);
+    }
+
+						   
+    float statall = 0;
+    {
+      float res = 0;
+      for (int i=0; i<n_cats; i++){
+	for (int bin = 0; bin<bins_to_run; bin++){
+	  res+=pow(a[i][bin],2);
+	}
+      }
+      statall=sqrt(res);
+    }
+
+    float systall = 0;
+    {
+      float res = 0;
+      float sumc[n_cats][n_syst_1catcorr];
+      float sumd[n_cats][n_syst_allcatcorr];
+      for (int i=0; i<n_cats; i++){
+	for (int bin = 0; bin<bins_to_run; bin++){
+	  res+=pow(a[i][bin],2)+pow(b[i][bin],2);
+	}
+	for (int k=0; k<n_syst_1catcorr; k++){
+	  sumc[i][k]=0;
+	  for (int bin = 0; bin<bins_to_run; bin++) sumc[i][k]+=c[i][k][bin];
+	}
+	for (int k=0; k<n_syst_allcatcorr; k++){
+	  sumd[i][k]=0;
+	  for (int bin = 0; bin<bins_to_run; bin++) sumd[i][k]+=d[i][k][bin];
+	}
+      }
+      for (int i=0; i<n_cats; i++) for (int k=0; k<n_syst_1catcorr; k++) res+=pow(sumc[i][k],2);
+      for (int k=0; k<n_syst_allcatcorr; k++){
+	float sumd_column=0;
+	for (int i=0; i<n_cats; i++) sumd_column+=sumd[i][k];
+	res+=pow(sumd_column,2);
+      }
+      systall=sqrt(res);
     }
 
     for(int bin = 0; bin<bins_to_run; bin++) {
-      totbin[bin]=sqrt(totbin[bin]);
-      systbin[bin]=sqrt(systbin[bin]);
-    }
-    for(int bin = 0; bin<bins_to_run; bin++) {
-      std::cout << unfoldnevt_tot->GetBinContent(bin+1)/intlumi/1e3/unfoldnevt_tot->GetBinWidth(bin+1) << std::endl;
-    }
-    std::cout << std::endl;
-    for(int bin = 0; bin<bins_to_run; bin++) {
-      //      std::cout << totbin[bin]/unfoldnevt_tot->GetBinContent(bin+1) << std::endl;
-      printf("%.1f\\%%\n",100*totbin[bin]/unfoldnevt_tot->GetBinContent(bin+1));
-      systplot_totfinal_inclusive->SetBinContent(bin+1,systbin[bin]/unfoldnevt_tot->GetBinContent(bin+1));
+      printf("%.1f\\%%\n",100*sqrt(pow(systcolumn[bin],2)+pow(statcolumn[bin],2))/unfoldnevt_tot->GetBinContent(bin+1));
+      systplot_totfinal_inclusive->SetBinContent(bin+1,systcolumn[bin]/unfoldnevt_tot->GetBinContent(bin+1));
       systplot_totfinal_inclusive->SetBinError(bin+1,0);
     }
-
-    float statallcategories_rel=sqrt(pow(statcategory[0],2)+pow(statcategory[1],2)+pow(statcategory[2],2))/unfoldnevt_tot->Integral();
-    float systallcategories_rel=sqrt(pow(systcategory[0],2)+pow(systcategory[1],2)+pow(systcategory[2],2))/unfoldnevt_tot->Integral();
-    //    float totallcategories_rel=sqrt(pow(totcategory[0],2)+pow(totcategory[1],2)+pow(totcategory[2],2))/unfoldnevt_tot->Integral();
 
     std::cout << std::endl;
 
@@ -2570,15 +2681,14 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
     std::cout << std::endl;
 
     std::cout << "STAT UNCERTAINTY" << std::endl;
-    std::cout << statallcategories_rel << " relative" << std::endl;
-    std::cout << statallcategories_rel*unfoldnevt_tot->Integral()/intlumi/1e3 << " pb" << std::endl;
+    std::cout << statall/unfoldnevt_tot->Integral() << " relative" << std::endl;
+    std::cout << statall/intlumi/1e3 << " pb" << std::endl;
     std::cout << std::endl;
 
 
     std::cout << "SYST UNCERTAINTY" << std::endl;
-
-    std::cout << systallcategories_rel << " relative" << std::endl;
-    std::cout << systallcategories_rel*unfoldnevt_tot->Integral()/intlumi/1e3 << " pb" << std::endl;
+    std::cout << systall/unfoldnevt_tot->Integral() << " relative" << std::endl;
+    std::cout << systall/intlumi/1e3 << " pb" << std::endl;
     std::cout << std::endl;
 
     std::cout << "LUMI UNCERTAINTY" << std::endl;
@@ -2588,8 +2698,8 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
     std::cout << std::endl;
 
     std::cout << "TOTAL UNCERTAINTY" << std::endl;
-    float e_stat = statallcategories_rel;
-    float e_syst = systallcategories_rel;
+    float e_stat = statall/unfoldnevt_tot->Integral();
+    float e_syst = systall/unfoldnevt_tot->Integral();
     float e_lumi = lumi_rel;
     std::cout << sqrt(pow(e_stat,2)+pow(e_syst,2)+pow(e_lumi,2)) << " relative" << std::endl;
     std::cout << sqrt(pow(e_stat,2)+pow(e_syst,2)+pow(e_lumi,2))*unfoldnevt_tot->Integral()/intlumi/1e3 << " pb" << std::endl;
@@ -3403,31 +3513,31 @@ void create_histo_from_dataset_variablebins(RooDataSet *dset, TH1F** h1out, TH2F
 };
 
 
-void generate_toy_dataset_1d(RooDataSet **target, RooAbsPdf *sigpdf, RooAbsPdf *bkgpdf, float fsig1toy){
-  //  std::cout << "TOY GENERATION DEBUG:" << std::endl;
-
-  assert ((*target)->numEntries()>0);  
-  RooArgSet initialvars = *((*target)->get(0));
-  assert (initialvars.find("binning_roovar1") || initialvars.find("binning_roovar2"));
-  int code = 0;
-  if (initialvars.find("binning_roovar1")) code=1;
-  else if (initialvars.find("binning_roovar2")) code=2;
-  assert (code>0);
-
-  RooAddPdf *addpdf = new RooAddPdf("addpdf","addpdf",*sigpdf,*bkgpdf,RooRealConstant::value(fsig1toy));
-
-  RooDataSet *generated = addpdf->generate((code==1) ? RooArgSet(*binning_roovar1) : RooArgSet(*binning_roovar2),_random_generator->Poisson((*target)->sumEntries()),kFALSE,kFALSE,"",kFALSE,kTRUE);
-
-//  (*target)->Print();
-//  (*target)->Print("v");
-  std::cout << "Generated dataset:" << std::endl;
-  generated->Print();
-  //  generated->Print("v");
-
-  delete *target;
-  *target = generated;
-
-};
+//void generate_toy_dataset_1d(RooDataSet **target, RooAbsPdf *sigpdf, RooAbsPdf *bkgpdf, float fsig1toy){
+//  //  std::cout << "TOY GENERATION DEBUG:" << std::endl;
+//
+//  assert ((*target)->numEntries()>0);  
+//  RooArgSet initialvars = *((*target)->get(0));
+//  assert (initialvars.find("binning_roovar1") || initialvars.find("binning_roovar2"));
+//  int code = 0;
+//  if (initialvars.find("binning_roovar1")) code=1;
+//  else if (initialvars.find("binning_roovar2")) code=2;
+//  assert (code>0);
+//
+//  RooAddPdf *addpdf = new RooAddPdf("addpdf","addpdf",*sigpdf,*bkgpdf,RooRealConstant::value(fsig1toy));
+//
+//  RooDataSet *generated = addpdf->generate((code==1) ? RooArgSet(*binning_roovar1) : RooArgSet(*binning_roovar2),_random_generator->Poisson((*target)->sumEntries()),kFALSE,kFALSE,"",kFALSE,kTRUE);
+//
+////  (*target)->Print();
+////  (*target)->Print("v");
+//  std::cout << "Generated dataset:" << std::endl;
+//  generated->Print();
+//  //  generated->Print("v");
+//
+//  delete *target;
+//  *target = generated;
+//
+//};
 
 void generate_toy_dataset_2d(RooDataSet **target, RooAbsPdf *sigsigpdf, RooAbsPdf *sigbkgpdf, RooAbsPdf *bkgsigpdf, RooAbsPdf *bkgbkgpdf, float pptoy, float pftoy, float fptoy){
   //  std::cout << "TOY GENERATION DEBUG:" << std::endl;
