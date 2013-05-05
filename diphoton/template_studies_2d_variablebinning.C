@@ -1695,7 +1695,7 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
     assert (do_syst_vector);
 
     float mean=0;
-    for (int i=0; i<do_syst_vector->size(); i++) mean+=do_syst_vector->at(i)->pp;
+    for (unsigned int i=0; i<do_syst_vector->size(); i++) mean+=do_syst_vector->at(i)->pp;
     mean/=do_syst_vector->size();
     std::cout << "Mean pp " << mean << std::endl;
 
@@ -1719,7 +1719,7 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
     RooRealVar sigmagauspull("sigmagauspull","sigmagauspull",0,3);
     RooGaussian gauspull("gauspull","gauspull",fittedpull,meangauspull,sigmagauspull);
 
-    for (int i=0; i<do_syst_vector->size(); i++){
+    for (unsigned int i=0; i<do_syst_vector->size(); i++){
       fittedx.setVal(do_syst_vector->at(i)->pp);
       fittedpull.setVal((do_syst_vector->at(i)->pp-centerval)/do_syst_vector->at(i)->pp_err);
       std::cout << "Toy nr. " << i << " " << fittedx.getVal() << " " << do_syst_vector->at(i)->pp_err << " " << fittedpull.getVal() << std::endl;
@@ -2137,7 +2137,7 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
       
     }
 
-    std::cout << "start loop: " << std::endl;
+    //    std::cout << "start loop: " << std::endl;
 
   for (int bin=0; bin<bins_to_run; bin++) {
 
@@ -2164,7 +2164,7 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
     xsec->SetBinContent(bin+1,(pp*tot_events/eff_overflow/intlumi-events_dy*purity_dy*scale_dy)/xsec->GetBinWidth(bin+1));
     xsec_withsyst->SetBinContent(bin+1,xsec->GetBinContent(bin+1));
     xsec_ngammagammayield->SetBinContent(bin+1,pp*tot_events/eff_overflow-events_dy*purity_dy*scale_dy*intlumi);
-    std::cout << xsec_ngammagammayield->GetBinContent(bin+1) << std::endl;
+    //    std::cout << xsec_ngammagammayield->GetBinContent(bin+1) << std::endl;
 
     float shapesyst1 = (splitting!="EEEE") ? pp*fabs(histo_bias_templateshapeMCpromptdrivenEB->GetBinContent(bin+1)-1) : 0;
     float shapesyst2 = (splitting!="EEEE") ? pp*fabs(histo_bias_templateshapeMCfakedrivenEB->GetBinContent(bin+1)-1) : 0;
@@ -2197,15 +2197,15 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
       systplot_totfinal->SetBinContent(bin+1,sqrt(pow(systplot_tot->GetBinContent(bin+1),2)+pow(systplot_efficiency->GetBinContent(bin+1),2)+pow(systplot_unfolding->GetBinContent(bin+1),2)));
       systplot_totfinal->SetBinError(bin+1,0);
       systplot_statistic->SetBinContent(bin+1,err);
-      std::cout << systplot_tot->GetBinContent(bin+1) << " " << systplot_totfinal->GetBinContent(bin+1) << std::endl;
+      //      std::cout << systplot_tot->GetBinContent(bin+1) << " " << systplot_totfinal->GetBinContent(bin+1) << std::endl;
     }
     
-    std::cout << err << " " << err_withsyst << std::endl;
+    //    std::cout << err << " " << err_withsyst << std::endl;
 
   }
 
 
-  std::cout << "NIENTE DIVIDE(EFF): EFFICIENZA NON CORRETTA!!!" << std::endl;  
+  //  std::cout << "NIENTE DIVIDE(EFF): EFFICIENZA NON CORRETTA!!!" << std::endl;  
   /*
   xsec->Divide(eff);  
   xsec_withsyst->Divide(eff);
@@ -2675,8 +2675,52 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
       systplot_totfinal_inclusive->SetBinError(bin+1,0);
     }
 
+
+    for (int i=0; i<n_cats; i++){
+      std::cout << std::endl;
+      std::cout << "---" << std::endl;
+      std::cout << std::endl;
+
+      std::cout << "Category " << i << ":" << std::endl;
+      std::cout << std::endl;
+      std::cout << "CENTRAL VALUE" << std::endl;
+      std::cout << unfoldnevt_new[i]->Integral()/intlumi/1e3 << " pb" << std::endl;
+      std::cout << std::endl;
+      
+      std::cout << "STAT UNCERTAINTY" << std::endl;
+      std::cout << statcategory[i]/unfoldnevt_new[i]->Integral() << " relative" << std::endl;
+      std::cout << statcategory[i]/intlumi/1e3 << " pb" << std::endl;
+      std::cout << std::endl;
+
+
+      std::cout << "SYST UNCERTAINTY" << std::endl;
+      std::cout << systcategory[i]/unfoldnevt_new[i]->Integral() << " relative" << std::endl;
+      std::cout << systcategory[i]/intlumi/1e3 << " pb" << std::endl;
+      std::cout << std::endl;
+
+      std::cout << "LUMI UNCERTAINTY" << std::endl;
+      float lumi_rel = 2.2e-2;
+      std::cout << lumi_rel << " relative" << std::endl;
+      std::cout << lumi_rel*unfoldnevt_new[i]->Integral()/intlumi/1e3 << " pb" << std::endl;
+      std::cout << std::endl;
+
+      std::cout << "TOTAL UNCERTAINTY" << std::endl;
+      float e_stat = statcategory[i]/unfoldnevt_new[i]->Integral();
+      float e_syst = systcategory[i]/unfoldnevt_new[i]->Integral();
+      float e_lumi = lumi_rel;
+      std::cout << sqrt(pow(e_stat,2)+pow(e_syst,2)+pow(e_lumi,2)) << " relative" << std::endl;
+      std::cout << sqrt(pow(e_stat,2)+pow(e_syst,2)+pow(e_lumi,2))*unfoldnevt_new[i]->Integral()/intlumi/1e3 << " pb" << std::endl;
+      std::cout << std::endl;
+      
+    }
+
+
+    std::cout << std::endl;
+    std::cout << "---" << std::endl;
     std::cout << std::endl;
 
+    std::cout << "Full acceptance:" << std::endl;
+    std::cout << std::endl;
     std::cout << "CENTRAL VALUE" << std::endl;
     std::cout << unfoldnevt_tot->Integral()/intlumi/1e3 << " pb" << std::endl;
     std::cout << std::endl;
