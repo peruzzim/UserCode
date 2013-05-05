@@ -1695,8 +1695,8 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
     assert (do_syst_vector);
 
     float mean=0;
-    for (int i=0; i<times_to_run; i++) mean+=do_syst_vector->at(i)->pp;
-    mean/=times_to_run;
+    for (int i=0; i<do_syst_vector->size(); i++) mean+=do_syst_vector->at(i)->pp;
+    mean/=do_syst_vector->size();
     std::cout << "Mean pp " << mean << std::endl;
 
     float centerval = datafr->pp;
@@ -1704,7 +1704,7 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
 
 
     RooRealVar fittedx("fittedx","fittedx",0,1);
-    RooRealVar fittedpull("fittedpull","fittedpull",-5,5);    
+    RooRealVar fittedpull("fittedpull","fittedpull",-20,20);    
     RooDataSet dsetx("dsetx","dsetx",fittedx);
     RooDataSet dsetpull("dsetpull","dsetpull",fittedpull);
 
@@ -1715,13 +1715,11 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
     meangaus.setVal(0.2);
     sigmagaus.setVal(0.03);
 
-    RooRealVar meangauspull("meangauspull","meangauspull",-5,5);
+    RooRealVar meangauspull("meangauspull","meangauspull",-20,20);
     RooRealVar sigmagauspull("sigmagauspull","sigmagauspull",0,3);
     RooGaussian gauspull("gauspull","gauspull",fittedpull,meangauspull,sigmagauspull);
 
-    assert ((int)(do_syst_vector->size())==times_to_run);
-
-    for (int i=0; i<times_to_run; i++){
+    for (int i=0; i<do_syst_vector->size(); i++){
       fittedx.setVal(do_syst_vector->at(i)->pp);
       fittedpull.setVal((do_syst_vector->at(i)->pp-centerval)/do_syst_vector->at(i)->pp_err);
       std::cout << "Toy nr. " << i << " " << fittedx.getVal() << " " << do_syst_vector->at(i)->pp_err << " " << fittedpull.getVal() << std::endl;
@@ -1740,7 +1738,7 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
     dsetx.plotOn(framefittedx);
     gaus.plotOn(framefittedx);
     gaus.paramOn(framefittedx);
-    fittedpull.setRange(-5,5);
+    fittedpull.setRange(-20,20);
     RooPlot *framefittedpull = fittedpull.frame();
     dsetpull.plotOn(framefittedpull);
     gauspull.plotOn(framefittedpull);
