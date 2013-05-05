@@ -1730,8 +1730,8 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
     dsetx.Print();
     dsetpull.Print();
     
-    RooFitResult *biasfitresult = gaus.fitTo(dsetx,Save());
-    RooFitResult *biasfitresultpull = gauspull.fitTo(dsetpull,Save());
+    RooFitResult *biasfitresult = gaus.fitTo(dsetx,Save(),Range(0.01,1));
+    RooFitResult *biasfitresultpull = gauspull.fitTo(dsetpull,Save(),Range(-10,10));
 
     fittedx.setRange(mean-0.20,mean+0.20);
     RooPlot *framefittedx = fittedx.frame();
