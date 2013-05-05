@@ -757,7 +757,7 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
       RooDataSet* original_dataset=NULL;
 
 
-      if (do_syst_string==TString("templatestatistics") || do_syst_string==TString("purefitbias") || do_syst_string==TString("templateshapeMCpromptdrivenEB") || do_syst_string==TString("templateshapeMCfakedrivenEB") || do_syst_string==TString("templateshapeMCpromptdrivenEE") || do_syst_string==TString("templateshapeMCfakedrivenEE")){
+      if (do_syst_string==TString("templatestatistics") || (do_syst_string==TString("purefitbias") && runcount>0) || do_syst_string==TString("templateshapeMCpromptdrivenEB") || do_syst_string==TString("templateshapeMCfakedrivenEB") || do_syst_string==TString("templateshapeMCpromptdrivenEE") || do_syst_string==TString("templateshapeMCfakedrivenEE")){
 	original_dataset_sigsig   =dataset_sigsig   ;
         original_dataset_sigbkg   =dataset_sigbkg   ;
         original_dataset_bkgsig   =dataset_bkgsig   ;
@@ -780,8 +780,8 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
 	dataset_axis1    =(RooDataSet*)(original_dataset_axis1->Clone("dataset_axis1_forsyst"));
 	dataset_axis2    =(RooDataSet*)(original_dataset_axis2->Clone("dataset_axis2_forsyst"));
 	dataset          =(RooDataSet*)(original_dataset->Clone("dataset_forsyst"));
-      }
-      
+	}
+	
       if (do_syst_string==TString("templatestatistics")){
 	if (runcount==0) datafr = fit_dataset(diffvariable.Data(),splitting.Data(),bin,"data_donotwriteoutpurity");
 	randomize_dataset_statistically_binned(&dataset_sigsig);
@@ -793,7 +793,7 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
 	randomize_dataset_statistically_binned(&dataset_sig_axis2);
 	randomize_dataset_statistically_binned(&dataset_bkg_axis2);
       }
-
+	
     if (do_syst_string==TString("templateshapeMCpromptdrivenEB") || do_syst_string==TString("templateshapeMCfakedrivenEB") || do_syst_string==TString("templateshapeMCpromptdrivenEE") || do_syst_string==TString("templateshapeMCfakedrivenEE")) {
       
       if (runcount==0){
@@ -909,18 +909,17 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
     RooHistPdf *bkgpdf_axis2_unbinned = new RooHistPdf("bkgpdf_axis2_unbinned","bkgpdf_axis2_unbinned",RooArgList(*roovar2),*bkgdhist_axis2_unbinned);
 
 
-    if (do_syst_string==TString("purefitbias")) {
-      if (runcount==0){
-	//	mctruthfr = fit_dataset(diffvariable.Data(),splitting.Data(),bin,"savepdfMCtrue2D");
-	datafr = fit_dataset(diffvariable.Data(),splitting.Data(),bin,"data_donotwriteoutpurity");
-      }
+    if (do_syst_string==TString("purefitbias") && (runcount>0)) {
+      //	mctruthfr = fit_dataset(diffvariable.Data(),splitting.Data(),bin,"savepdfMCtrue2D");
+      //      datafr = fit_dataset(diffvariable.Data(),splitting.Data(),bin,"data_donotwriteoutpurity");
+      assert(datafr!=NULL);
       generate_toy_dataset_2d(&dataset,sigsigpdf,sigbkgpdf,bkgsigpdf,bkgbkgpdf,datafr->pp,datafr->pf,datafr->fp);
       delete dataset_axis1;
       delete dataset_axis2;
       dataset_axis1 = (RooDataSet*)(dataset->reduce(Name("dataset_axis1"),SelectVars(RooArgList(*binning_roovar1))));
       dataset_axis2 = (RooDataSet*)(dataset->reduce(Name("dataset_axis2"),SelectVars(RooArgList(*binning_roovar2))));
     }
-    
+	
 
     
     if (doplots_b) {
@@ -1583,6 +1582,11 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
       return out;
     }
 
+    if (do_syst_string=="purefitbias" && runcount==0){
+      datafr=out;
+      continue;
+    }
+
     delete bkgpdf_axis2;
     delete sigpdf_axis2;
     delete bkgdhist_axis2;
@@ -1605,10 +1609,9 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
     delete pp;
 
     if (do_syst_string==TString("templatestatistics")) do_syst_templatestatistics_outputvector.push_back(out);
-    if (do_syst_string==TString("purefitbias")) do_syst_purefitbias_outputvector.push_back(out);
+    if (do_syst_string==TString("purefitbias") && runcount>0) do_syst_purefitbias_outputvector.push_back(out);
     if (do_syst_string==TString("templateshapeMCpromptdrivenEB") || do_syst_string==TString("templateshapeMCpromptdrivenEE")) do_syst_MCpromptdriven_outputvector.push_back(out);
     if (do_syst_string==TString("templateshapeMCfakedrivenEB") || do_syst_string==TString("templateshapeMCfakedrivenEE")) do_syst_MCfakedriven_outputvector.push_back(out);
-
 
     delete dataset_sigsig   ;
     delete dataset_sigbkg   ;
