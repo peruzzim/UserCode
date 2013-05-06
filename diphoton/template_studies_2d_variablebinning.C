@@ -2283,6 +2283,7 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
   xsec_withsyst->Draw("e1");
   xsec->Draw("e1same");
 
+
   TLegend *legxsec = (diffvariable!="dphi") ? new TLegend(0.7,0.7,0.9,0.9) : new TLegend(0.1,0.7,0.3,0.9);
   legxsec->AddEntry(xsec,"Stat. unc. only","l");
   legxsec->AddEntry(xsec_withsyst,"Stat. + syst. unc.","l");
@@ -2342,10 +2343,14 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
     systplot_tot->SetLineColor(kBlack);
 
     TLegend *legsystplot = new TLegend(0.6,0.7,0.9,0.9);
-    legsystplot->AddEntry(systplot_templateshapeMCpromptdrivenEB,"Prompt template shape EB","l");
-    legsystplot->AddEntry(systplot_templateshapeMCfakedrivenEB,"Fakes template shape EB","l");
-    legsystplot->AddEntry(systplot_templateshapeMCpromptdrivenEE,"Prompt template shape EE","l");
-    legsystplot->AddEntry(systplot_templateshapeMCfakedrivenEE,"Fakes template shape EE","l");
+    if (splitting!="EEEE"){
+      legsystplot->AddEntry(systplot_templateshapeMCpromptdrivenEB,"Prompt template shape EB","l");
+      legsystplot->AddEntry(systplot_templateshapeMCfakedrivenEB,"Fakes template shape EB","l");
+    }
+    if (splitting!="EBEB"){
+      legsystplot->AddEntry(systplot_templateshapeMCpromptdrivenEE,"Prompt template shape EE","l");
+      legsystplot->AddEntry(systplot_templateshapeMCfakedrivenEE,"Fakes template shape EE","l");
+    }
     legsystplot->AddEntry(systplot_templatestatistics,"Template stat. fluctuation","l");
     legsystplot->AddEntry(systplot_purefitbias,"Fit bias","l");
     legsystplot->AddEntry(systplot_zee,"Zee subtraction ","l");
@@ -2670,7 +2675,8 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
     }
 
     for(int bin = 0; bin<bins_to_run; bin++) {
-      printf("%.1f\\%%\n",100*sqrt(pow(systcolumn[bin],2)+pow(statcolumn[bin],2))/unfoldnevt_tot->GetBinContent(bin+1));
+      float val = 100*sqrt(pow(systcolumn[bin],2)+pow(statcolumn[bin],2))/unfoldnevt_tot->GetBinContent(bin+1);
+      (val>=10) ? printf("%.1f\\%%\n\n\n",val) : printf("%.2f\\%%\n\n\n",val);
       systplot_totfinal_inclusive->SetBinContent(bin+1,systcolumn[bin]/unfoldnevt_tot->GetBinContent(bin+1));
       systplot_totfinal_inclusive->SetBinError(bin+1,0);
     }
@@ -2761,8 +2767,23 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
     canv3->SaveAs(Form("plots/histo_systsummaryfinal_%s_inclusive.pdf", diffvariable.Data()));
 
 
+    TH1F *histo_finalxs_fortheorycomp = (TH1F*)(systplot_totfinal_inclusive->Clone(Form("histo_finalxs_fortheorycomp_%s",diffvariable.Data())));
+    histo_finalxs_fortheorycomp->SetTitle("Cross section (unfolding+efficiency) (stat.+syst.+lumi.)");
+    histo_finalxs_fortheorycomp->Reset();
+    histo_finalxs_fortheorycomp->GetYaxis()->UnZoom();
+    histo_finalxs_fortheorycomp->SetLineStyle(1);
+    for (int bin=0; bin<bins_to_run; bin++){
+      float xs = unfoldnevt_tot->GetBinContent(bin+1)/intlumi/1e3/unfoldnevt_tot->GetBinWidth(bin+1);
+      float relerr = sqrt(pow(systcolumn[bin]/unfoldnevt_tot->GetBinContent(bin+1),2)+pow(statcolumn[bin]/unfoldnevt_tot->GetBinContent(bin+1),2)+pow(lumi_rel,2));
+      histo_finalxs_fortheorycomp->SetBinContent(bin+1,xs);
+      histo_finalxs_fortheorycomp->SetBinError(bin+1,relerr*xs);
+      std::cout << "Bin " << bin << " " << xs << " +/- " << 100*relerr << " % (stat.+syst.+lumi.)" << std::endl;
+    }
+    TCanvas *canv4 = new TCanvas();
+    canv4->cd();
+    histo_finalxs_fortheorycomp->Draw("e1");
 
-
+    histo_finalxs_fortheorycomp->SaveAs(Form("plots/%s.root",histo_finalxs_fortheorycomp->GetName()));
 
 //    std::cout << std::endl;
 //
