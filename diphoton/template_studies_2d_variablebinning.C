@@ -210,7 +210,7 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
   TString inputfilename_t2f;
   TString inputfilename_d;
 
-  if (do_syst_string=="savepdfMCtrue2D" ||  do_syst_string=="doMCtrue" || do_syst_string=="templateshape2frag"){
+  if (do_syst_string=="savepdfMCtrue2D" ||  do_syst_string=="doMCtrue"){
     inputfilename_t2p   = "outphoton_allmc_2pgen.root";
     inputfilename_t1p1f = "outphoton_allmc_1p1fbothgen.root";
     inputfilename_t2f   = "outphoton_allmc_2fgen.root";
@@ -222,7 +222,7 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
     inputfilename_t2f   = "outphoton_allmc_2fgen.root";
     inputfilename_d     = "outphoton_allmc_standard_2frag.root";
   }
-  else if (do_syst_string=="savepdfMCtrue1D"){
+  else if (do_syst_string=="savepdfMCtrue1D" || do_syst_string=="templateshape2frag"){
     inputfilename_t2p   = "outphoton_allmc_2pgen.root";
     inputfilename_t1p1f = "outphoton_allmc_1p1fbothgen.root";
     inputfilename_t2f   = "outphoton_allmc_2fgen.root";
@@ -286,13 +286,13 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
   else if (splitting=="EBEE") {s1="EB"; s2="EE";}
   bool sym  = (s1==s2);
   
-  if (do_syst_string=="savepdfMCtrue2D" ||  do_syst_string=="doMCtrue" || do_syst_string=="doMCtrue_2frag" || do_syst_string=="templateshape2frag"){
+  if (do_syst_string=="savepdfMCtrue2D" ||  do_syst_string=="doMCtrue" || do_syst_string=="doMCtrue_2frag"){
     if(!dir_t2p)   inputfile_t2p->GetObject("mc_Tree_2Dtruesigsig_template",dir_t2p);
     if(!dir_t1p1f) inputfile_t1p1f->GetObject("mc_Tree_2Dtruesigbkg_template",dir_t1p1f);
     if(!dir_t2f)   inputfile_t2f->GetObject("mc_Tree_2Dtruebkgbkg_template",dir_t2f);
     if(!dir_d)     inputfile_d->GetObject("mc_Tree_2Dstandard_selection",dir_d);
   }
-  else if (do_syst_string=="savepdfMCtrue1D"){
+  else if (do_syst_string=="savepdfMCtrue1D" || do_syst_string=="templateshape2frag"){
     if(!dir_t2p)   inputfile_t2p->GetObject("mc_Tree_2Dtruesigsig_template",dir_t2p);
     if(!dir_t1p1f) inputfile_t1p1f->GetObject("mc_Tree_2Dtruesigbkg_template",dir_t1p1f);
     if(!dir_t2f)   inputfile_t2f->GetObject("mc_Tree_2Dtruebkgbkg_template",dir_t2f);
