@@ -23,6 +23,9 @@
 
  gen_templates(dir+TString("DYJetsToLL_TuneZ2_M_50_7TeV_madgraph_tauola_Fall11_PU_S6_START42_V14B_v1_AODSIM.root"),"standard",0,"outphoton_dy_standard.root","photoniso",-1);
 
+ gen_templates(dir+TString("allmc.root"),"signal_2frag",0,"outphoton_allmc_sig_2frag.root","photoniso",5e5);
+
+
 }
 
 

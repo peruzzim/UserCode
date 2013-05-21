@@ -1,7 +1,13 @@
 #!/bin/bash
 cd /shome/peruzzi/shape_studies || exit 1
 source /swshare/ROOT/thisroot.sh
-root -q -b -l template_studies_2d_variablebinning.C+O\(\"outphoton_allmc_2pgen.root\",\"outphoton_allmc_1pgen1fside.root\",\"outphoton_allmc_bkgbkg.root\",\"outphoton_allmc_standard.root\",\"$1\",\"$2\",$3,\"templateshapeMCfakedriven\"\)
-
+if [ "$2" != "EEEE" ]
+then 
+root -q -b -l template_studies_2d_variablebinning.C+O\(\"$1\",\"$2\",$3,\"templateshapeMCfakedrivenEB\"\)
+fi
+if [ "$2" != "EBEB" ]
+then
+root -q -b -l template_studies_2d_variablebinning.C+O\(\"$1\",\"$2\",$3,\"templateshapeMCfakedrivenEE\"\)
+fi
 
 

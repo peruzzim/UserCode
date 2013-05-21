@@ -28,6 +28,7 @@
 #include "RooBinning.h"
 #include "TString.h"
 #include "TH1.h"
+#include "TProfile.h"
 #include "TMath.h"
 #include "TRandom3.h"
 #include <map>
@@ -458,6 +459,8 @@ public :
    std::map<TString, RooDataSet*> obs_roodset;
    std::map<TString, RooDataSet*> template2d_roodset;
 
+   std::map<TString, TProfile*> true_purity;
+
    std::map<TString, std::vector<float> > weights_2p[3];
    std::map<TString, std::vector<float> > weights_2f[3];
    std::map<TString, std::vector<float> > weights_1p1f[3];
@@ -466,6 +469,7 @@ public :
    TString get_name_obs(int region, TString diffvariable, int bin);
    TString get_name_obs_distribution(int region, TString diffvariable);
    TString get_name_obs_roodset(int region, TString diffvariable, int bin);
+   TString get_name_true_purity(int region, TString diffvariable);
    TString get_name_template2d_roodset(int region, TString sigorbkg);
 
    TH2F *hist2d_iso_ncand[2][n_templates+1];
@@ -608,11 +612,11 @@ void template_production::Setup(Bool_t _isdata, TString _mode, TString _differen
 
   Init();
 
-  if (mode=="standard" || mode=="preselection_diphoton") dodistribution=true;
-  if (mode=="signal" || mode=="randomcone") dosignaltemplate=true;
+  if (mode=="standard" || mode=="preselection_diphoton" || mode=="standard_2frag") dodistribution=true;
+  if (mode=="signal" || mode=="fragmentation" || mode=="nofragmentation" || mode=="signal_2frag" || mode=="randomcone") dosignaltemplate=true;
   if (mode=="background" || mode=="sieiesideband") dobackgroundtemplate=true;
-  if (mode=="sigsig" || mode=="2pgen" || mode=="zmumu" || mode=="zee") do2ptemplate=true; 
-  if (mode=="sigbkg" || mode=="1p1fbothgen" || mode=="1prcone1fgen" || mode=="1pgen1fside") do1p1ftemplate=true; 
+  if (mode=="sigsig" || mode=="2pgen" || mode=="zmumu" || mode=="zee" || mode=="2pgen_2frag") do2ptemplate=true; 
+  if (mode=="sigbkg" || mode=="1p1fbothgen" || mode=="1prcone1fgen" || mode=="1pgen1fside" || mode=="1p1fbothgen_2frag" || mode=="1pgen1fside_2frag") do1p1ftemplate=true; 
   if (mode=="bkgbkg" || mode=="2fgen") do2ftemplate=true; 
   do2dtemplate = (do2ptemplate || do1p1ftemplate || do2ftemplate);
 
@@ -720,10 +724,10 @@ void template_production::Setup(Bool_t _isdata, TString _mode, TString _differen
   
 
   for (std::vector<TString>::const_iterator diffvariable = diffvariables_list.begin(); diffvariable!=diffvariables_list.end(); diffvariable++){
-    for (int i=0; i<3; i++)
+    for (int i=0; i<3; i++) {
+      TString reg;
+      if (i==0) reg="EBEB"; else if (i==1) reg="EBEE"; else if (i==2) reg="EEEE"; else if (i==3) reg="EEEB";
       for (int j=0; j<n_templates+1; j++) {
-	TString reg;
-	if (i==0) reg="EBEB"; else if (i==1) reg="EBEE"; else if (i==2) reg="EEEE"; else if (i==3) reg="EEEB";
 	TString t=Form("obs_hist_%s_%s_b%d",reg.Data(),diffvariable->Data(),j);
 	obs_hist[t] = new TH2F(t.Data(),t.Data(),n_histobins,leftrange,rightrange,n_histobins,leftrange,rightrange);
 	obs_hist[t]->Sumw2();
@@ -737,6 +741,51 @@ void template_production::Setup(Bool_t _isdata, TString _mode, TString _differen
 	args.add(RooArgSet(*roorho,*roosigma,*rooweight));
 	obs_roodset[t2] = new RooDataSet(t2.Data(),t2.Data(),args,WeightVar(*rooweight));
       }
+
+      int bins_to_run=-1; 
+      float *binsdef=NULL;
+
+      TString splitting = reg;
+      if (splitting=="EEEB") splitting="EBEE";
+      if (*diffvariable=="invmass"){
+	if (splitting=="EBEB")      bins_to_run+=n_templates_invmass_EBEB;
+	else if (splitting=="EBEE") bins_to_run+=n_templates_invmass_EBEE;
+	else if (splitting=="EEEE") bins_to_run+=n_templates_invmass_EEEE; 
+	if (splitting=="EBEB")      binsdef=binsdef_diphoton_invmass_EBEB;
+	else if (splitting=="EBEE") binsdef=binsdef_diphoton_invmass_EBEE;
+	else if (splitting=="EEEE") binsdef=binsdef_diphoton_invmass_EEEE;
+      }
+      if (*diffvariable=="diphotonpt"){
+	if (splitting=="EBEB")      bins_to_run+=n_templates_diphotonpt_EBEB;
+	else if (splitting=="EBEE") bins_to_run+=n_templates_diphotonpt_EBEE;
+	else if (splitting=="EEEE") bins_to_run+=n_templates_diphotonpt_EEEE; 
+	if (splitting=="EBEB")      binsdef=binsdef_diphoton_diphotonpt_EBEB;
+	else if (splitting=="EBEE") binsdef=binsdef_diphoton_diphotonpt_EBEE;
+	else if (splitting=="EEEE") binsdef=binsdef_diphoton_diphotonpt_EEEE;
+      }
+      if (*diffvariable=="costhetastar"){
+	if (splitting=="EBEB")      bins_to_run+=n_templates_costhetastar_EBEB;
+	else if (splitting=="EBEE") bins_to_run+=n_templates_costhetastar_EBEE;
+	else if (splitting=="EEEE") bins_to_run+=n_templates_costhetastar_EEEE; 
+	if (splitting=="EBEB")      binsdef=binsdef_diphoton_costhetastar_EBEB;
+	else if (splitting=="EBEE") binsdef=binsdef_diphoton_costhetastar_EBEE;
+	else if (splitting=="EEEE") binsdef=binsdef_diphoton_costhetastar_EEEE;
+      }
+      if (*diffvariable=="dphi"){
+	if (splitting=="EBEB")      bins_to_run+=n_templates_dphi_EBEB;
+	else if (splitting=="EBEE") bins_to_run+=n_templates_dphi_EBEE;
+	else if (splitting=="EEEE") bins_to_run+=n_templates_dphi_EEEE; 
+	if (splitting=="EBEB")      binsdef=binsdef_diphoton_dphi_EBEB;
+	else if (splitting=="EBEE") binsdef=binsdef_diphoton_dphi_EBEE;
+	else if (splitting=="EEEE") binsdef=binsdef_diphoton_dphi_EEEE;
+      }
+
+
+
+      TString t3=Form("true_purity_%s_%s",reg.Data(),diffvariable->Data());
+      true_purity[t3] = new TProfile(t3.Data(),t3.Data(),bins_to_run,binsdef);
+    }
+
   }
 
   std::vector<TString> tobuild;
@@ -1361,6 +1410,8 @@ void template_production::WriteOutput(const char* filename, const TString _dirna
     for (std::map<TString, TH2F*>::const_iterator it = obs_hist.begin(); it!=obs_hist.end(); it++) it->second->Write();
     for (std::map<TString, TH1F*>::const_iterator it = obs_hist_distribution.begin(); it!=obs_hist_distribution.end(); it++) it->second->Write();
     for (std::map<TString, RooDataSet*>::const_iterator it = obs_roodset.begin(); it!=obs_roodset.end(); it++) (it->second)->Write();
+    for (std::map<TString, TProfile*>::const_iterator it = true_purity.begin(); it!=true_purity.end(); it++) (it->second)->Write();
+
   }
 
   std::cout << "Writing output..." << std::endl;
@@ -1399,6 +1450,14 @@ TString template_production::get_name_obs_roodset(int region, TString diffvariab
   TString reg;
   if (region==0) reg="EBEB"; else if (region==1) reg="EBEE"; else if (region==2) reg="EEEE"; else if (region==3) reg="EEEB";
   TString t=Form("%s_%s_%s_b%d",name_signal.Data(),reg.Data(),diffvariable.Data(),bin);
+  return t;
+};
+
+TString template_production::get_name_true_purity(int region, TString diffvariable){
+  TString name_signal="true_purity";
+  TString reg;
+  if (region==0) reg="EBEB"; else if (region==1) reg="EBEE"; else if (region==2) reg="EEEE"; else if (region==3) reg="EEEB";
+  TString t=Form("%s_%s_%s",name_signal.Data(),reg.Data(),diffvariable.Data());
   return t;
 };
 

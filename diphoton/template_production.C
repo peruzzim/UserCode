@@ -72,6 +72,9 @@ void template_production::Loop(int maxevents)
     //    if (!isdata && (event_PUOOTnumInteractionsEarly<20 && event_PUOOTnumInteractionsLate<20)) continue;
     //    if (!isdata && event_PUOOTnumInteractionsEarly>3) continue;
 
+    if (mode=="fragmentation") if (pholead_PhoMCmatchexitcode!=1) continue;
+    if (mode=="nofragmentation") if (pholead_PhoMCmatchexitcode!=2) continue;
+
     Int_t event_ok_for_dataset=-1;
 
     Int_t reg_lead;
@@ -285,6 +288,13 @@ void template_production::Loop(int maxevents)
     float ptweight_lead = 1;
     float ptweight_trail = 1;
 
+    if (mode=="standard_2frag" || mode=="2pgen_2frag" || mode=="1p1fbothgen_2frag" || mode=="1pgen1fside_2frag") {
+      if (pholead_PhoMCmatchexitcode==1 && pholead_GenPhotonIsoDR04<5) weight*=2;
+      if (photrail_PhoMCmatchexitcode==1 && photrail_GenPhotonIsoDR04<5) weight*=2;
+    }
+    if (mode=="signal_2frag"){
+      if (pholead_PhoMCmatchexitcode==1 && pholead_GenPhotonIsoDR04<5) weight*=2;
+    }
 
 //    if (do_pt_reweighting) ptweight_lead*=FindPtWeight(pholead_pt,pholead_SCeta);
 //    if (do_eta_reweighting) ptweight_lead*=FindEtaWeight(pholead_SCeta);
@@ -503,6 +513,11 @@ void template_production::Loop(int maxevents)
 	args.add(RooArgSet(*roorho,*roosigma));
 	obs_roodset[get_name_obs_roodset(event_ok_for_dataset_local,*diffvariable,bin_couple)]->add(args,weight);
 
+	if (!isdata){
+	  int isppevent = 0;
+	  if ( ((pholead_PhoMCmatchexitcode==1 || pholead_PhoMCmatchexitcode==2) && pholead_GenPhotonIsoDR04<5) && ((photrail_PhoMCmatchexitcode==1 || photrail_PhoMCmatchexitcode==2) && photrail_GenPhotonIsoDR04<5) ) isppevent=1;
+	  true_purity[get_name_true_purity(event_ok_for_dataset_local,*diffvariable)]->Fill(value_diffvariable,isppevent,weight);
+	}
 
 //	if (!isdata) { SISTEMARE;
 //	  if (leadistruesig && trailistruesig) weights_2p[event_ok_for_dataset_local][*diffvariable][bin_couple]+=weight;
@@ -581,7 +596,11 @@ void gen_templates(TString filename="input.root", TString mode="", bool isdata=1
 
   TString treename_chosen="";
   if (mode=="standard") treename_chosen=treename[0];
+  if (mode=="standard_2frag") treename_chosen=treename[0];
   if (mode=="signal") treename_chosen=treename[11];
+  if (mode=="signal_2frag") treename_chosen=treename[11];
+  if (mode=="fragmentation") treename_chosen=treename[11];
+  if (mode=="nofragmentation") treename_chosen=treename[11];
   if (mode=="background") treename_chosen=treename[12];
   if (mode=="randomcone") treename_chosen=treename[1];
   if (mode=="sieiesideband") treename_chosen=treename[2];
@@ -591,10 +610,13 @@ void gen_templates(TString filename="input.root", TString mode="", bool isdata=1
   if (mode=="bkgbkg") treename_chosen=treename[8];
   if (mode=="zee") treename_chosen=treename[3];
   if (mode=="2pgen") treename_chosen=treename[13];
+  if (mode=="2pgen_2frag") treename_chosen=treename[13];
   if (mode=="1p1fbothgen") treename_chosen=treename[14];
+  if (mode=="1p1fbothgen_2frag") treename_chosen=treename[14];
   if (mode=="2fgen") treename_chosen=treename[15];
   if (mode=="1prcone1fgen") treename_chosen=treename[16];
   if (mode=="1pgen1fside") treename_chosen=treename[17];
+  if (mode=="1pgen1fside_2frag") treename_chosen=treename[17];
 
 
   file->GetObject(treename_chosen.Data(),t);
