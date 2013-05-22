@@ -802,7 +802,7 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
 
 
   int times_to_run = 1;
-  const int ntoys = 10;
+  const int ntoys = 1000;
 
   std::vector<fit_output*> do_syst_templatestatistics_outputvector;
   std::vector<fit_output*> do_syst_purefitbias_outputvector;
@@ -1355,7 +1355,7 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
       RooDataHist *dataset_dhist = new RooDataHist("dataset_dhist","dataset_dhist",RooArgList(*binning_roovar1,*binning_roovar2),*dataset);
       RooAbsReal *chi2var = model_2D_uncorrelated->createChi2(*dataset_dhist);
       float chi2 = chi2var->getVal();
-      int nparams = (sym) ? 3 : 4;
+      int nparams = (sym) ? 2 : 3;
       int ndof = n_templatebins*n_templatebins-nparams-1;
       std::cout << "OFFICIALCHI2 " << chi2 << " " << ndof << " " << chi2/ndof << " " << TMath::Prob(chi2,ndof) << std::endl; 
 
@@ -1404,6 +1404,7 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
 
 	float den = sqrt(pow(data_werr,2) + pow(sigma_sigsig,2) + pow(sigma_sigbkg,2) + pow(sigma_bkgsig,2) + pow(sigma_bkgbkg,2));
 
+	if (den==0) {std::cout << "WARNING: 0 denominator" << std::endl; out->fitpulls[i]=0; continue;}
 
 //	model_2D_uncorrelated->Print();
 //	model_2D_uncorrelated->Print("v");
@@ -1415,11 +1416,11 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
 //	std::cout << (w-fitvalue)/data_werr << " " << (w-fitvalue)/den << std::endl;
 
 	out->lowstatbin[i]=false;
-	if (w<10) out->lowstatbin[i]=true;
-	if (sigsigdhist->store()->weight()<10) out->lowstatbin[i]=true;
-	if (sigbkgdhist->store()->weight()<10) out->lowstatbin[i]=true;
-	if (bkgsigdhist->store()->weight()<10) out->lowstatbin[i]=true;
-	if (bkgbkgdhist->store()->weight()<10) out->lowstatbin[i]=true;
+	if (w<20) out->lowstatbin[i]=true;
+	if (sigsigdhist->store()->weight()<20) out->lowstatbin[i]=true;
+	if (sigbkgdhist->store()->weight()<20) out->lowstatbin[i]=true;
+	if (bkgsigdhist->store()->weight()<20) out->lowstatbin[i]=true;
+	if (bkgbkgdhist->store()->weight()<20) out->lowstatbin[i]=true;
 
 	if (!(out->lowstatbin[i])){
 	  ndof++;
@@ -1429,12 +1430,21 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
 
       }
 
-      std::cout << "OLDCHI2 " << oldchi2 << std::endl;
-      std::cout << "NEWCHI2 " << newchi2 << " " << ndof << " " << newchi2/ndof << " " << TMath::Prob(newchi2,ndof) << std::endl; 
+      ndof -= (nparams+1);
 
-      out->chi2=newchi2;
-      out->ndof=ndof;
-      out->probchi2=TMath::Prob(newchi2,ndof);
+      if (ndof<1) {
+	std::cout << "NOT ENOUGH BINS TO DO THE CHI2" << std::endl;
+	out->chi2=0;
+	out->ndof=1;
+	out->probchi2=0;
+      }
+      else {
+	std::cout << "OLDCHI2 " << oldchi2 << std::endl;
+	std::cout << "NEWCHI2 " << newchi2 << " " << ndof << " " << newchi2/ndof << " " << TMath::Prob(newchi2,ndof) << std::endl; 
+	out->chi2=newchi2;
+	out->ndof=ndof;
+	out->probchi2=TMath::Prob(newchi2,ndof);
+      }
 
       delete chi2var;
       delete dataset_dhist;
@@ -2010,8 +2020,8 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
     purity[3]->SetBinContent((bin!=n_bins) ? bin+1 : 1,out->ff);
     purity[3]->SetBinError((bin!=n_bins) ? bin+1 : 1,out->ff_err);
     eventshisto->SetBinContent((bin!=n_bins) ? bin+1 : 1,out->tot_events);
-    redchi2->SetBinContent((bin!=n_bins) ? bin+1 : 1,out->chi2/out->ndof);
-    probchi2->SetBinContent((bin!=n_bins) ? bin+1 : 1,out->probchi2);
+    redchi2->SetBinContent((bin!=n_bins) ? bin+1 : 1, out->chi2/out->ndof);
+    probchi2->SetBinContent((bin!=n_bins) ? bin+1 : 1, out->probchi2);
     for (int i=0; i<n_templatebins*n_templatebins; i++) fitpull->SetBinContent(i+1,out->fitpulls[i]);
     for (int i=0; i<n_templatebins*n_templatebins; i++) if (!(out->lowstatbin[i])) fitpull_histo->Fill(out->fitpulls[i]);
     overflowremovaleffhisto->SetBinContent((bin!=n_bins) ? bin+1 : 1,out->eff_overflow_removal_pp);
@@ -2097,6 +2107,8 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
   TH1F *xsec_withsyst;
   TH1F *xsec_ngammagammayield = NULL;
 
+  TH1F *fitpull_histo = NULL;
+
   TH1F *systplot_purefitbias=NULL;
   TH1F *systplot_templatestatistics=NULL;
   TH1F *systplot_templateshapeMCpromptdrivenEB=NULL;
@@ -2164,20 +2176,24 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
     TH1F *axsec[3];
     TH1F *axsec_withsyst[3];
     TH1F *axsec_ngammagammayield[3];
+    TH1F *axsec_fitpull_histo[3];
     for (int i=0; i<3; i++) {
       axsec_file[i] = new TFile(Form("plots/histo_xsec_%s_%s.root", diffvariable.Data(),sp[i].Data()));
       axsec_file[i]->GetObject("xsec",axsec[i]);
       axsec_file[i]->GetObject("xsec_withsyst",axsec_withsyst[i]);
       axsec_file[i]->GetObject("xsec_ngammagammayield",axsec_ngammagammayield[i]);
+      axsec_file[i]->GetObject("fitpull_histo",axsec_fitpull_histo[i]);
     }
     for (int i=1; i<3; i++) {
       axsec[0]->Add(axsec[i]);
       axsec_withsyst[0]->Add(axsec_withsyst[i]);
       axsec_ngammagammayield[0]->Add(axsec_ngammagammayield[i]);
+      axsec_fitpull_histo[0]->Add(axsec_fitpull_histo[i]);
     }
     xsec=axsec[0];
     xsec_withsyst=axsec_withsyst[0];
     xsec_ngammagammayield=axsec_ngammagammayield[0];
+    fitpull_histo=axsec_fitpull_histo[0];
   }
 
   else {
@@ -2239,6 +2255,7 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
   purity_file->GetObject("purity_bkgbkg",purity[3]);
   purity_file->GetObject("eventshisto",eventshisto);
   purity_file->GetObject("overflowremovaleffhisto",overflowremovaleffhisto);
+  purity_file->GetObject("fitpull_histo",fitpull_histo);
 
   std::cout << "Purity histos imported" << std::endl;
   for (int i=0; i<4; i++) purity[i]->Print(); eventshisto->Print(); overflowremovaleffhisto->Print(); 
@@ -2509,7 +2526,24 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
   xsec->Write();
   xsec_withsyst->Write();
   if (xsec_ngammagammayield) xsec_ngammagammayield->Write();
+  fitpull_histo->Write();
   xsec_file->Close();  
+
+
+  TCanvas *fitpull_canv = new TCanvas("fitpull_canv","fitpull_canv");
+  fitpull_canv->cd();
+
+  gStyle->SetOptFit(1);
+
+  fitpull_histo->SetStats(1);
+  fitpull_histo->SetTitle(Form("Distribution of the fit pull - %s category",splitting.Data()));
+  fitpull_histo->Fit("gaus");
+  fitpull_histo->Draw();
+  fitpull_canv->SaveAs(Form("plots/plot_fitpull_%s_%s.root", diffvariable.Data(),splitting.Data()));
+  fitpull_canv->SaveAs(Form("plots/plot_fitpull_%s_%s.pdf", diffvariable.Data(),splitting.Data()));
+  fitpull_canv->SaveAs(Form("plots/plot_fitpull_%s_%s.png", diffvariable.Data(),splitting.Data()));
+
+  gStyle->SetOptFit(0);
 
   if (splitting=="inclusive"){
 
