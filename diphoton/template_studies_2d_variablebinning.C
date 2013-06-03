@@ -1,5 +1,5 @@
 bool global_doplots = false;
-bool doxcheckstemplates = false;
+bool doxcheckstemplates = true;
 
 #include <assert.h>
 
@@ -591,22 +591,16 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
     sigleg.title = Form("Signal template %s",s1.Data());
     sigleg.leg.push_back(TString("Rand. cone in data"));
     sigleg.leg.push_back(TString("Photon Iso in MC"));
-    sigleg.leg.push_back(TString("Direct photon Iso in MC"));
-    sigleg.leg.push_back(TString("Frag. photon Iso in MC"));
     sigleg.leg.push_back(TString("Rand. cone in MC"));
     sigleg.leg.push_back(TString("Zee in data"));
     std::vector<RooDataSet*> sigdsets;
     sigdsets.push_back(dataset_sig_axis1);
     sigdsets.push_back(dset_mctrue_s);
-    sigdsets.push_back(dset_mcnofrag_s);
-    sigdsets.push_back(dset_mcfrag_s);
     sigdsets.push_back(dset_mcrcone_s);
     sigdsets.push_back(dset_zee_s);
     std::vector<int> sigcol;
     sigcol.push_back(kBlack);
     sigcol.push_back(kRed);
-    sigcol.push_back(kCyan);
-    sigcol.push_back(kOrange);
     sigcol.push_back(kBlue);
     sigcol.push_back(kGreen+2);
     plot_datasets_axis1(sigdsets,Form("plots/histo_template_sig_withZ_%s_log",s1.Data()),sigleg,sigcol);
@@ -619,8 +613,23 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
     sigdsets.erase(sigdsets.begin());
     sigleg.leg.erase(sigleg.leg.begin());
     sigcol.erase(sigcol.begin());
+    plot_datasets_axis1(sigdsets,Form("plots/histo_template_sig_onlyMC_%s_log",s1.Data()),sigleg,sigcol);
+    plot_datasets_axis1(sigdsets,Form("plots/histo_template_sig_onlyMC_%s_lin",s1.Data()),sigleg,sigcol,true,true);
+    sigdsets.pop_back();
+    sigleg.leg.pop_back();
+    sigcol.pop_back();
+    sigleg.leg.push_back(TString("Direct photon Iso in MC"));
+    sigleg.leg.push_back(TString("Frag. photon Iso in MC"));
+    sigleg.leg.push_back(TString("Rand. cone in MC"));
+    sigdsets.push_back(dset_mcnofrag_s);
+    sigdsets.push_back(dset_mcfrag_s);
+    sigdsets.push_back(dset_mcrcone_s);
+    sigcol.push_back(kCyan);
+    sigcol.push_back(kOrange);
+    sigcol.push_back(kBlue);
     plot_datasets_axis1(sigdsets,Form("plots/histo_template_sig_onlyMCwithfrag_%s_log",s1.Data()),sigleg,sigcol);
     plot_datasets_axis1(sigdsets,Form("plots/histo_template_sig_onlyMCwithfrag_%s_lin",s1.Data()),sigleg,sigcol,true,true);
+
 
     legend_struct bkgleg;
     bkgleg.title = Form("Background template %s",s1.Data());
@@ -649,12 +658,26 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
     bkgcol.push_back(kBlue);
     plot_datasets_axis1(bkgdsets,Form("plots/histo_template_bkg_slicesieie_%s_log",s1.Data()),bkgleg,bkgcol,false);
     plot_datasets_axis1(bkgdsets,Form("plots/histo_template_bkg_slicesieie_%s_lin",s1.Data()),bkgleg,bkgcol,true,true);
-    bkgdsets.erase(bkgdsets.begin());
-    bkgleg.leg.erase(bkgleg.leg.begin());
-    bkgcol.erase(bkgcol.begin());
-    bkgdsets.erase(bkgdsets.begin());
-    bkgleg.leg.erase(bkgleg.leg.begin());
-    bkgcol.erase(bkgcol.begin());
+    std::vector<TString>::iterator it1 = bkgleg.leg.begin();
+    std::vector<RooDataSet*>::iterator it2 = bkgdsets.begin();
+    std::vector<int>::iterator it3 = bkgcol.begin();
+    it1++; it2++; it3++;
+    bkgleg.leg.erase(it1);
+    bkgdsets.erase(it2);
+    bkgcol.erase(it3);
+    bkgleg.leg.erase(it1);
+    bkgdsets.erase(it2);
+    bkgcol.erase(it3);
+    it1++; it2++; it3++;
+    it1++; it2++; it3++;
+    bkgleg.leg.erase(it1);
+    bkgdsets.erase(it2);
+    bkgcol.erase(it3);
+    bkgleg.leg.erase(it1);
+    bkgdsets.erase(it2);
+    bkgcol.erase(it3);
+    plot_datasets_axis1(bkgdsets,Form("plots/histo_template_bkg_%s_log",s1.Data()),bkgleg,bkgcol,false);
+    plot_datasets_axis1(bkgdsets,Form("plots/histo_template_bkg_%s_lin",s1.Data()),bkgleg,bkgcol,true,true);
     bkgdsets.erase(bkgdsets.begin());
     bkgleg.leg.erase(bkgleg.leg.begin());
     bkgcol.erase(bkgcol.begin());
@@ -2654,8 +2677,8 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
     systplot_unfolding->Draw("same");
 
     systplot_tot->SetLineColor(kRed);
-    systplot_efficiency->SetLineColor(kBlue);
-    systplot_unfolding->SetLineColor(kGreen);
+    systplot_efficiency->SetLineColor(kRed-7);
+    systplot_unfolding->SetLineColor(kCyan);
     systplot_totfinal->SetLineColor(kBlack);
 
     TLegend *legsystplot2 = new TLegend(0.6,0.7,0.9,0.9);
@@ -3055,6 +3078,7 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
       for (int i=0; i<n_cats; i++) toadd_uncorrelated_allcat.push_back(hsysts_uncorrelated[i]);
       histo_uncorrelated_allcat = AddTHInQuadrature(toadd_uncorrelated_allcat,Form("%s_allcat",hsysts_uncorrelated[0]->GetName()));  
       histo_uncorrelated_allcat->Divide(unfoldnevt_tot);
+      for (int bin=0; bin<bins_to_run; bin++) histo_uncorrelated_allcat->SetBinError(bin+1,0);
     }
     TH1F *histo_1catcorrelated_allcat[n_syst_1catcorr];
     for (int k=0; k<n_syst_1catcorr; k++){
@@ -3062,6 +3086,7 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
       for (int i=0; i<n_cats; i++) toadd_1catcorrelated_allcat.push_back(hsysts_1catcorrelated[i][k]);
       histo_1catcorrelated_allcat[k] = AddTHInQuadrature(toadd_1catcorrelated_allcat,Form("%s_allcat",hsysts_1catcorrelated[0][k]->GetName()));
       histo_1catcorrelated_allcat[k]->Divide(unfoldnevt_tot);
+      for (int bin=0; bin<bins_to_run; bin++) histo_1catcorrelated_allcat[k]->SetBinError(bin+1,0);
     }
     TH1F *histo_allcatcorrelated_allcat[n_syst_allcatcorr];
     for (int k=0; k<n_syst_allcatcorr; k++){
@@ -3069,14 +3094,38 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
       histo_allcatcorrelated_allcat[k]->Reset();
       for (int i=0; i<n_cats; i++) histo_allcatcorrelated_allcat[k]->Add(hsysts_allcatcorrelated[i][k]);
       histo_allcatcorrelated_allcat[k]->Divide(unfoldnevt_tot);
+      for (int bin=0; bin<bins_to_run; bin++) histo_allcatcorrelated_allcat[k]->SetBinError(bin+1,0);
     }
 
     TCanvas *canv3b = new TCanvas();
     canv3b->cd();
+    systplot_totfinal_inclusive->SetMinimum(0);
     systplot_totfinal_inclusive->Draw();
     histo_uncorrelated_allcat->Draw("same");
     for (int k=0; k<n_syst_1catcorr; k++) histo_1catcorrelated_allcat[k]->Draw("same");
     for (int k=0; k<n_syst_allcatcorr; k++) histo_allcatcorrelated_allcat[k]->Draw("same");
+    TLegend *leg_canv3b = new TLegend(0.6,0.7,0.9,0.9);
+    leg_canv3b->AddEntry(histo_uncorrelated_allcat,"Fit bias","l");
+    leg_canv3b->AddEntry(histo_1catcorrelated_allcat[0],"Zee subtraction","l");
+    leg_canv3b->AddEntry(histo_1catcorrelated_allcat[1],"Template stat. fluctuation","l");
+    leg_canv3b->AddEntry(histo_1catcorrelated_allcat[2],"Efficiency uncertainty","l");
+    leg_canv3b->AddEntry(histo_1catcorrelated_allcat[3],"Unfolding uncertainty","l");
+    leg_canv3b->AddEntry(histo_allcatcorrelated_allcat[0],"Prompt template shape EB","l");
+    leg_canv3b->AddEntry(histo_allcatcorrelated_allcat[1],"Fakes template shape EB","l");
+    leg_canv3b->AddEntry(histo_allcatcorrelated_allcat[2],"Prompt template shape EE","l");
+    leg_canv3b->AddEntry(histo_allcatcorrelated_allcat[3],"Fakes template shape EE","l");
+    leg_canv3b->AddEntry(histo_allcatcorrelated_allcat[4],"Fragmentation description","l");
+    leg_canv3b->AddEntry(systplot_totfinal_inclusive,"Total syst. uncertainty","l");
+    leg_canv3b->Draw();
+    systplot_totfinal_inclusive->GetYaxis()->SetRangeUser(0,systplot_totfinal_inclusive->GetBinContent(systplot_totfinal_inclusive->GetMaximumBin())*1.05);
+    canv3b->Update();
+
+    canv3b->SaveAs(Form("plots/histo_systsummaryfinal_splitted_%s_inclusive.jpg", diffvariable.Data()));
+    canv3b->SaveAs(Form("plots/histo_systsummaryfinal_splitted_%s_inclusive.png", diffvariable.Data()));
+    canv3b->SaveAs(Form("plots/histo_systsummaryfinal_splitted_%s_inclusive.root", diffvariable.Data()));
+    canv3b->SaveAs(Form("plots/histo_systsummaryfinal_splitted_%s_inclusive.pdf", diffvariable.Data()));
+
+
 
       
 
