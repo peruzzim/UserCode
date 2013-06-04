@@ -75,6 +75,8 @@ void template_production::Loop(int maxevents)
     if (mode=="fragmentation") if (pholead_PhoMCmatchexitcode!=1) continue;
     if (mode=="nofragmentation") if (pholead_PhoMCmatchexitcode!=2) continue;
 
+    if (mode=="cutPFchargediso_signal" || mode=="cutPFchargediso_background") if (pholead_pho_Cone04ChargedHadronIso_dR02_dz02_dxy01>0.1) continue;
+
     Int_t event_ok_for_dataset=-1;
 
     Int_t reg_lead;
@@ -601,7 +603,9 @@ void gen_templates(TString filename="input.root", TString mode="", bool isdata=1
   if (mode=="signal_2frag") treename_chosen=treename[11];
   if (mode=="fragmentation") treename_chosen=treename[11];
   if (mode=="nofragmentation") treename_chosen=treename[11];
+  if (mode=="cutPFchargediso_signal") treename_chosen=treename[11];
   if (mode=="background") treename_chosen=treename[12];
+  if (mode=="cutPFchargediso_background") treename_chosen=treename[12];
   if (mode=="randomcone") treename_chosen=treename[1];
   if (mode=="sieiesideband") treename_chosen=treename[2];
   if (mode=="zmumu") treename_chosen=treename[10];

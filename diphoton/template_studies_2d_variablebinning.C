@@ -1,5 +1,5 @@
 bool global_doplots = false;
-bool doxcheckstemplates = true;
+bool doxcheckstemplates = false;
 
 #include <assert.h>
 
