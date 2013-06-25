@@ -14,8 +14,8 @@ std::map<TString,TString> diffvariables_names_list_;
 TString diffvariables_names_list(TString diffvariable){
   if (diffvariables_names_list_.size()==0) {
     diffvariables_names_list_[TString("invmass")]=TString("m_{#gamma #gamma}");
-    diffvariables_names_list_[TString("diphotonpt")]=TString("p_{T}^{#gamma #gamma}");
-    diffvariables_names_list_[TString("costhetastar")]=TString("cos #theta^{*}_{CS}");
+    diffvariables_names_list_[TString("diphotonpt")]=TString("p_{T, #gamma #gamma}");
+    diffvariables_names_list_[TString("costhetastar")]=TString("|cos #theta^{*}|");
     diffvariables_names_list_[TString("dphi")]=TString("#Delta #phi_{#gamma #gamma}");
   }
   return diffvariables_names_list_[diffvariable];

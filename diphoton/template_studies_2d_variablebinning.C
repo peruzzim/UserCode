@@ -132,7 +132,6 @@ RooRealVar *binning_roovar1=NULL;
 RooRealVar *binning_roovar2=NULL;
 
 
-
 TFile *inputfile_t2p  = NULL;
 TFile *inputfile_t1p1f = NULL;
 TFile *inputfile_t2f   = NULL;
@@ -787,6 +786,7 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
 
   find_adaptive_binning(dataset,&n_templatebins,templatebinsboundaries+0,1,islowstatcat ? -999 : -1);
 
+  if (binning_roovar1==NULL || binning_roovar2==NULL){
   Double_t templatebinsboundaries_diagonal[n_templatebins_max+1];
   for (int i=0; i<n_templatebins+1; i++) templatebinsboundaries_diagonal[i]=templatebinsboundaries[i]*sqrt(2);
   binning_roovar1_threshold = new RooThresholdCategory("binning_roovar1_threshold","binning_roovar1_threshold",*roovar1);
@@ -795,7 +795,7 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
   for (int i=1; i<n_templatebins+1; i++) binning_roovar2_threshold->addThreshold(templatebinsboundaries[i],Form("rv2_templatebin_thr_%d",i));
   binning_roovar1 = new RooRealVar("binning_roovar1","Binned Iso_{1}",0.5,n_templatebins+0.5); binning_roovar1->setBins(n_templatebins);
   binning_roovar2 = new RooRealVar("binning_roovar2","Binned Iso_{2}",0.5,n_templatebins+0.5); binning_roovar2->setBins(n_templatebins);
-
+  }
 
   produce_category_binning(&dataset_sigsig);
   produce_category_binning(&dataset_sigbkg);
@@ -825,7 +825,7 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
 
 
   int times_to_run = 1;
-  const int ntoys = 1000;
+  const int ntoys = 10;
 
   std::vector<fit_output*> do_syst_templatestatistics_outputvector;
   std::vector<fit_output*> do_syst_purefitbias_outputvector;
@@ -887,6 +887,7 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
 	}
 	
       if (do_syst_string==TString("templatestatistics")){
+
 	if (runcount==0) datafr = fit_dataset(diffvariable.Data(),splitting.Data(),bin,"data_donotwriteoutpurity");
 	randomize_dataset_statistically_binned(&dataset_sigsig);
 	randomize_dataset_statistically_binned(&dataset_sigbkg);
@@ -895,7 +896,8 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
 	randomize_dataset_statistically_binned(&dataset_sig_axis1);
 	randomize_dataset_statistically_binned(&dataset_bkg_axis1);
 	randomize_dataset_statistically_binned(&dataset_sig_axis2);
-	randomize_dataset_statistically_binned(&dataset_bkg_axis2);
+	randomize_dataset_statistically_binned(&dataset_bkg_axis2);	
+
       }
 	
       if (do_syst_string==TString("templateshapeMCpromptdrivenEB") || do_syst_string==TString("templateshapeMCfakedrivenEB") || do_syst_string==TString("templateshapeMCpromptdrivenEE") || do_syst_string==TString("templateshapeMCfakedrivenEE") || do_syst_string==TString("templateshape2frag")) {
@@ -921,13 +923,14 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
       delete dataset_axis2;
       dataset_axis1 = (RooDataSet*)(dataset->reduce(Name("dataset_axis1"),SelectVars(RooArgList(*binning_roovar1))));
       dataset_axis2 = (RooDataSet*)(dataset->reduce(Name("dataset_axis2"),SelectVars(RooArgList(*binning_roovar2))));
-    }
+      }
 
 
     RooDataHist *sigsigdhist = new RooDataHist("sigsigdhist","sigsigdhist",RooArgList(*binning_roovar1,*binning_roovar2),*dataset_sigsig);
     RooDataHist *sigbkgdhist = new RooDataHist("sigbkgdhist","sigbkgdhist",RooArgList(*binning_roovar1,*binning_roovar2),*dataset_sigbkg);
     RooDataHist *bkgsigdhist = new RooDataHist("bkgsigdhist","bkgsigdhist",RooArgList(*binning_roovar1,*binning_roovar2),*dataset_bkgsig);
     RooDataHist *bkgbkgdhist = new RooDataHist("bkgbkgdhist","bkgbkgdhist",RooArgList(*binning_roovar1,*binning_roovar2),*dataset_bkgbkg);
+
 
     RooDataHist *dhist_mc_s_rv1 = NULL;
     RooDataHist *dhist_mc_s_rv2 = NULL;
@@ -1173,6 +1176,15 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
     RooFormulaVar *fsig1 = new RooFormulaVar("fsig1","fsig1","j1",RooArgList(*j1));
     RooFormulaVar *fsig2 = new RooFormulaVar("fsig2","fsig2","@0", (sym) ? RooArgList(*j1) : RooArgList(*j2) );
 
+    sigpdf_axis1->Print();
+    bkgpdf_axis1->Print();
+    sigpdf_axis2->Print();
+    bkgpdf_axis2->Print();
+    sigpdf_axis1_unbinned->Print();
+    bkgpdf_axis1_unbinned->Print();
+    sigpdf_axis2_unbinned->Print();
+    bkgpdf_axis2_unbinned->Print();
+    
 
     RooAddPdf *model_axis1 = new RooAddPdf("model_axis1","model_axis1",RooArgList(*sigpdf_axis1,*bkgpdf_axis1),RooArgList(*fsig1));
     RooAddPdf *model_axis2 = new RooAddPdf("model_axis2","model_axis2",RooArgList(*sigpdf_axis2,*bkgpdf_axis2),RooArgList(*fsig2));
@@ -1851,36 +1863,36 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
   
 
 
-  delete dataset_axis2;
-  delete dataset_axis1;
-  delete dataset_bkg_axis2;
-  delete dataset_sig_axis2;
-  delete dataset_bkg_axis1;
-  delete dataset_sig_axis1;
-  delete binning_roovar2;
-  delete binning_roovar1;
-  delete binning_roovar2_threshold;
-  delete binning_roovar1_threshold;
-  delete rooweight;
-  delete dataset;
-  delete dataset_bkgbkg;
-  delete dataset_bkgsig;
-  delete dataset_sigbkg;
-  delete dataset_sigsig;
-  delete dataset_sigsig_orig;
-  delete dataset_sigbkg_orig;
-  delete dataset_bkgsig_orig;
-  delete dataset_bkgbkg_orig;
-  delete dataset_orig;
-  delete roovar1;
-  delete roopt1;
-  delete rooeta1;
-  delete roosieie1;
-  delete roovar2;
-  delete roopt2;
-  delete rooeta2;
-  delete roosieie2;
-  delete roorho;                                                                                                       
+//  delete dataset_axis2;
+//  delete dataset_axis1;
+//  delete dataset_bkg_axis2;
+//  delete dataset_sig_axis2;
+//  delete dataset_bkg_axis1;
+//  delete dataset_sig_axis1;
+//  delete binning_roovar2;
+//  delete binning_roovar1;
+//  delete binning_roovar2_threshold;
+//  delete binning_roovar1_threshold;
+//  delete rooweight;
+//  delete dataset;
+//  delete dataset_bkgbkg;
+//  delete dataset_bkgsig;
+//  delete dataset_sigbkg;
+//  delete dataset_sigsig;
+//  delete dataset_sigsig_orig;
+//  delete dataset_sigbkg_orig;
+//  delete dataset_bkgsig_orig;
+//  delete dataset_bkgbkg_orig;
+//  delete dataset_orig;
+//  delete roovar1;
+//  delete roopt1;
+//  delete rooeta1;
+//  delete roosieie1;
+//  delete roovar2;
+//  delete roopt2;
+//  delete rooeta2;
+//  delete roosieie2;
+//  delete roorho;                                                                                                       
 
 
 
@@ -2570,37 +2582,51 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
 
   if (splitting=="inclusive"){
 
-    TFile *outa = new TFile(Form("plots/histo_purity_%s_%s_allbins.root",diffvariable.Data(),"EBEB"));
-    TFile *outb = new TFile(Form("plots/histo_purity_%s_%s_allbins.root",diffvariable.Data(),"EBEE"));
-    TFile *outc = new TFile(Form("plots/histo_purity_%s_%s_allbins.root",diffvariable.Data(),"EEEE"));
-    TH1F *hebeb;
-    TH1F *hebee;
-    TH1F *heeee;
-    TH1F *nebeb;
-    TH1F *nebee;
-    TH1F *neeee;
-    outa->GetObject("purity_sigsig",hebeb);
-    outb->GetObject("purity_sigsig",hebee);
-    outc->GetObject("purity_sigsig",heeee);
-    outa->GetObject("eventshisto",nebeb);
-    outb->GetObject("eventshisto",nebee);
-    outc->GetObject("eventshisto",neeee);
+    TFile *out[3];
+    out[0] = new TFile(Form("plots/histo_purity_%s_%s_allbins.root",diffvariable.Data(),"EBEB"));
+    out[1] = new TFile(Form("plots/histo_purity_%s_%s_allbins.root",diffvariable.Data(),"EBEE"));
+    out[2] = new TFile(Form("plots/histo_purity_%s_%s_allbins.root",diffvariable.Data(),"EEEE"));
 
-    hebeb->Multiply(nebeb);
-    hebee->Multiply(nebee);
-    heeee->Multiply(neeee);
-    
-    nebeb->Add(nebee);
-    nebeb->Add(neeee);
+    TH1F *h[3][4];
+    TH1F *n[3];
 
-    hebeb->Divide(nebeb);
+    for (int i=0; i<3; i++){
+      out[i]->GetObject("purity_sigsig",h[i][0]);
+      out[i]->GetObject("purity_sigbkg",h[i][1]);
+      out[i]->GetObject("purity_bkgsig",h[i][2]);
+      out[i]->GetObject("purity_bkgbkg",h[i][3]);
+      out[i]->GetObject("eventshisto",n[i]);
+    }
+
+    for (int j=0; j<4; j++) for (int i=0; i<3; i++) h[i][j]->Multiply(n[i]);
+    for (int j=0; j<4; j++) for (int i=1; i<3; i++) h[0][j]->Add(h[i][j]);
+    for (int i=1; i<3; i++) n[0]->Add(n[i]);  
+    for (int j=0; j<4; j++) h[0][j]->Divide(n[0]);
+    h[0][1]->Add(h[0][2]);
 
     TCanvas *canv = new TCanvas("purity_inclusive");
     canv->cd();
-    hebeb->SetTitle("Purity - full acceptance");
-    hebeb->SetStats(0);
-    hebeb->SetMinimum(0);
-    hebeb->Draw();
+    h[0][0]->SetTitle("");
+    h[0][0]->SetStats(0);
+    h[0][0]->SetMinimum(0);
+    h[0][0]->SetMaximum(1);
+    {
+      TString unit = diffvariables_units_list(diffvariable);
+      h[0][0]->GetXaxis()->SetTitle(Form("%s %s",diffvariables_names_list(diffvariable).Data(),unit!=TString("") ? (TString("(").Append(unit.Append(")"))).Data() : TString("").Data()));
+      h[0][0]->GetYaxis()->SetTitle("Purity fraction");
+    }
+    h[0][0]->GetXaxis()->SetTitleSize(0.035);
+    h[0][0]->GetXaxis()->SetTitleOffset(1.07);
+    h[0][0]->Draw();
+    h[0][3]->Draw("same");
+    h[0][1]->Draw("same");
+    h[0][0]->Draw("same");
+    TLegend *leg = new TLegend(0.55,0.7,0.9,0.9);
+    leg->AddEntry(h[0][0],"prompt - prompt","lp");
+    leg->AddEntry(h[0][1],"prompt - fake","lp");
+    leg->AddEntry(h[0][3],"fake - fake","lp");
+    leg->SetFillColor(kWhite);
+    leg->Draw();
     canv->Update();
     canv->SaveAs(Form("plots/plot_purity_%s_%s.root",diffvariable.Data(),"inclusive"));
     canv->SaveAs(Form("plots/plot_purity_%s_%s.pdf",diffvariable.Data(),"inclusive"));
@@ -3674,6 +3700,7 @@ void plot_datasets_axis1(std::vector<RooDataSet*> dset, TString outname, legend_
 
   if (!dolin) comp->SetLogy(1);
 
+  h[0]->GetYaxis()->SetTitle("a.u.");
   h[0]->Draw();
   for (int j=1; j<ndsets; j++) h[j]->Draw("same");
   h[0]->Draw("same");

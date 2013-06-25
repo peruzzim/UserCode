@@ -613,8 +613,8 @@ void template_production::Setup(Bool_t _isdata, TString _mode, TString _differen
   Init();
 
   if (mode=="standard" || mode=="preselection_diphoton" || mode=="standard_2frag") dodistribution=true;
-  if (mode=="signal" || mode=="fragmentation" || mode=="nofragmentation" || mode=="signal_2frag" || mode=="randomcone" || mode=="cutPFchargediso_signal") dosignaltemplate=true;
-  if (mode=="background" || mode=="sieiesideband" || mode=="cutPFchargediso_background") dobackgroundtemplate=true;
+  if (mode=="signal" || mode=="fragmentation" || mode=="nofragmentation" || mode=="signal_2frag" || mode=="randomcone" || mode=="cutPFchargediso_signal" || mode=="cutPFchargediso_randomcone") dosignaltemplate=true;
+  if (mode=="background" || mode=="sieiesideband" || mode=="cutPFchargediso_background" || mode=="cutPFchargediso_sieiesideband") dobackgroundtemplate=true;
   if (mode=="sigsig" || mode=="2pgen" || mode=="zmumu" || mode=="zee" || mode=="2pgen_2frag") do2ptemplate=true; 
   if (mode=="sigbkg" || mode=="1p1fbothgen" || mode=="1prcone1fgen" || mode=="1pgen1fside" || mode=="1p1fbothgen_2frag" || mode=="1pgen1fside_2frag") do1p1ftemplate=true; 
   if (mode=="bkgbkg" || mode=="2fgen") do2ftemplate=true; 
