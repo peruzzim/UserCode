@@ -2404,10 +2404,13 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
     float eff_overflow = overflowremovaleffhisto->GetBinContent(bin+1);
 
     if (!skipsystematics) assert((RooDataSet*)(file_standardsel_dy->Get(Form("mc_Tree_2Dstandard_selection/obs_roodset_%s_%s_b%d",splitting.Data(),diffvariable.Data(),bin))));
-    float events_dy = (!skipsystematics) ? ((RooDataSet*)(file_standardsel_dy->Get(Form("mc_Tree_2Dstandard_selection/obs_roodset_%s_%s_b%d",splitting.Data(),diffvariable.Data(),bin))))->sumEntries() : 0; // normalized to 1/fb, xsec already to 2475 (measured CMS)
+    float events_dy = (!skipsystematics) ? ((RooDataSet*)(file_standardsel_dy->Get(Form("mc_Tree_2Dstandard_selection/obs_roodset_%s_%s_b%d",splitting.Data(),diffvariable.Data(),bin))))->sumEntries() : 0; // normalized to 1/fb, xsec normalized to 2475 
     float purity_dy = syst_purity_dy[splitting].first;
     float purity_dy_err = syst_purity_dy[splitting].second;
-    float scale_dy = 1;
+    float scale_dy = 3048.0/2475.0;
+    if (splitting=="EBEB") scale_dy*=pow(1.02,2);
+    else if (splitting=="EBEE") scale_dy*=1.02*0.98;
+    else if (splitting=="EEEE") scale_dy*=pow(0.98,2);
     float rel_error_on_purity_pp = events_dy*purity_dy_err*scale_dy/(pp*tot_events/eff_overflow/intlumi-events_dy*purity_dy*scale_dy);
 
     xsec->SetBinContent(bin+1,(pp*tot_events/eff_overflow/intlumi-events_dy*purity_dy*scale_dy)/xsec->GetBinWidth(bin+1));
