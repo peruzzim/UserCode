@@ -1,4 +1,4 @@
-bool global_doplots = false;
+bool global_doplots = true;
 bool doxcheckstemplates = false;
 
 #include <assert.h>
@@ -1140,7 +1140,7 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
     } // c0_ub
 
     if (doplots_b) {
-      plot_template_dependency_axis1(dataset_bkg_axis1,TString("pt"),20,70,2,kTRUE);
+      //      plot_template_dependency_axis1(dataset_bkg_axis1,TString("pt"),20,70,2,kTRUE);
       //      plot_template_dependency_axis1(dataset_bkg_axis1,TString("sieie"),0.008,0.014,6,kTRUE);
     } // template dependency
 
@@ -1258,7 +1258,10 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
       TCanvas *c1_ub = new TCanvas("c1_ub","c1_ub",1200,800);
       c1_ub->Divide(2);
       c1_ub->cd(1);
-      RooPlot *frame1bla = roovar1->frame(Title("Fit axis 1 - first pass"));
+      RooPlot *frame1bla = roovar1->frame(Title(""));
+      frame1bla->GetXaxis()->SetLabelSize(0.03);
+      frame1bla->GetYaxis()->SetLabelSize(0.03);
+      frame1bla->GetYaxis()->SetTitleOffset(1.45);
       dataset_axis1->plotOn(frame1bla,Name("data"));
       model_axis1_unbinned->plotOn(frame1bla,Name("fit"));
       model_axis1_unbinned->plotOn(frame1bla,Components("sigpdf_axis1_unbinned"),LineStyle(kDashed),LineColor(kRed),Name("signal"));
@@ -1274,7 +1277,10 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
       leg->Draw();
 
       c1_ub->cd(2);
-      RooPlot *frame2bla = roovar2->frame(Title("Fit axis 2 - first pass"));
+      RooPlot *frame2bla = roovar2->frame(Title(""));
+      frame2bla->GetXaxis()->SetLabelSize(0.03);
+      frame2bla->GetYaxis()->SetLabelSize(0.03);
+      frame2bla->GetYaxis()->SetTitleOffset(1.45);
       dataset_axis2->plotOn(frame2bla,Name("data"));
       model_axis2_unbinned->plotOn(frame2bla,Name("fit"));
       model_axis2_unbinned->plotOn(frame2bla,Components("sigpdf_axis2_unbinned"),LineStyle(kDashed),LineColor(kRed),Name("signal"));
@@ -1490,7 +1496,10 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
       c2_ub->Divide(2);   
        
       c2_ub->cd(1);
-      RooPlot *frame1bla = roovar1->frame(Title("Fit axis 1"));
+      RooPlot *frame1bla = roovar1->frame(Title(""));
+      frame1bla->GetXaxis()->SetLabelSize(0.03);
+      frame1bla->GetYaxis()->SetLabelSize(0.03);
+      frame1bla->GetYaxis()->SetTitleOffset(1.45);
       dataset->plotOn(frame1bla,Name("data"));
       model_axis1_unbinned->plotOn(frame1bla,Name("fit"));
       model_axis1_unbinned->plotOn(frame1bla,Components("sigpdf_axis1_unbinned"),Name("plot_sigsig_axis1_unbinned"),Normalization(fsigsig->getVal()/fsig1->getVal(),RooAbsPdf::Relative),LineStyle(kDashed),LineColor(kRed));
@@ -1509,7 +1518,10 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
       leg->Draw();
 
       c2_ub->cd(2);
-      RooPlot *frame2bla = roovar2->frame(Title("Fit axis 2"));
+      RooPlot *frame2bla = roovar2->frame(Title(""));
+      frame2bla->GetXaxis()->SetLabelSize(0.03);
+      frame2bla->GetYaxis()->SetLabelSize(0.03);
+      frame2bla->GetYaxis()->SetTitleOffset(1.45);
       dataset->plotOn(frame2bla);
       model_axis2_unbinned->plotOn(frame2bla);
       model_axis2_unbinned->plotOn(frame2bla,Components("sigpdf_axis2_unbinned"),Normalization(fsigsig->getVal()/fsig2->getVal(),RooAbsPdf::Relative),LineStyle(kDashed),LineColor(kRed));
@@ -2352,10 +2364,11 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
     xsec_ngammagammayield->SetMarkerColor(kGreen+2);
     xsec_ngammagammayield->SetLineColor(kGreen+2);
 
+    float uncertainty_scalefactor_Zee_PIXEL=2*0.025; // molt per 2 perche' due leg
     map<TString,pair<float,float> > syst_purity_dy;
-    syst_purity_dy.insert(pair<TString,pair<float,float> >("EBEB",pair<float,float>(8.6542e-01,4.51e-02)));
-    syst_purity_dy.insert(pair<TString,pair<float,float> >("EBEE",pair<float,float>(7.9537e-01,8.22e-02)));
-    syst_purity_dy.insert(pair<TString,pair<float,float> >("EEEE",pair<float,float>(8.5493e-01,7.29e-02)));
+    syst_purity_dy.insert(pair<TString,pair<float,float> >("EBEB",pair<float,float>(8.6542e-01,sqrt(pow(4.51e-02,2)+pow(uncertainty_scalefactor_Zee_PIXEL,2)))));
+    syst_purity_dy.insert(pair<TString,pair<float,float> >("EBEE",pair<float,float>(7.9537e-01,sqrt(pow(8.22e-02,2)+pow(uncertainty_scalefactor_Zee_PIXEL,2)))));
+    syst_purity_dy.insert(pair<TString,pair<float,float> >("EEEE",pair<float,float>(8.5493e-01,sqrt(pow(7.29e-02,2)+pow(uncertainty_scalefactor_Zee_PIXEL,2)))));
 
 
     if (!skipsystematics){
@@ -2408,9 +2421,9 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
     float purity_dy = syst_purity_dy[splitting].first;
     float purity_dy_err = syst_purity_dy[splitting].second;
     float scale_dy = 3048.0/2475.0;
-    if (splitting=="EBEB") scale_dy*=pow(1.02,2);
-    else if (splitting=="EBEE") scale_dy*=1.02*0.98;
-    else if (splitting=="EEEE") scale_dy*=pow(0.98,2);
+    if (splitting=="EBEB") scale_dy*=pow(0.979,2);
+    else if (splitting=="EBEE") scale_dy*=0.979*0.985;
+    else if (splitting=="EEEE") scale_dy*=pow(0.985,2);
     float rel_error_on_purity_pp = events_dy*purity_dy_err*scale_dy/(pp*tot_events/eff_overflow/intlumi-events_dy*purity_dy*scale_dy);
 
     xsec->SetBinContent(bin+1,(pp*tot_events/eff_overflow/intlumi-events_dy*purity_dy*scale_dy)/xsec->GetBinWidth(bin+1));
@@ -2618,8 +2631,9 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
       h[0][0]->GetXaxis()->SetTitle(Form("%s %s",diffvariables_names_list(diffvariable).Data(),unit!=TString("") ? (TString("(").Append(unit.Append(")"))).Data() : TString("").Data()));
       h[0][0]->GetYaxis()->SetTitle("Purity fraction");
     }
-    h[0][0]->GetXaxis()->SetTitleSize(0.035);
-    h[0][0]->GetXaxis()->SetTitleOffset(1.07);
+    h[0][0]->GetXaxis()->SetLabelSize(0.038);
+    h[0][0]->GetXaxis()->SetTitleSize(0.038);
+    h[0][0]->GetXaxis()->SetTitleOffset(1.15);
     h[0][0]->Draw();
     h[0][3]->Draw("same");
     h[0][1]->Draw("same");
