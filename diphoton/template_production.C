@@ -57,9 +57,15 @@ void template_production::Loop(int maxevents)
     if (do2dtemplate) if (pholead_pt<40 || photrail_pt<25) continue;
     float cutpt = (mode=="muon") ? 10 : 25;
     if (dosignaltemplate || dobackgroundtemplate) if (pholead_pt<cutpt) continue;
+
     if (mode=="zee") {
       if (fabs(dipho_mgg_photon-91.2)>10) continue;
     }
+
+    if (mode=="standard_pixelrev"){
+      if (dipho_mgg_photon<60 || dipho_mgg_photon>150) continue;
+    }
+
     //    if (mode=="background") if (pholead_PhoMCmatchexitcode!=3) continue;
 
     //    if (mode=="background") if (pholead_PhoMCmatchexitcode!=1 && pholead_PhoMCmatchexitcode!=2) continue;
@@ -615,6 +621,7 @@ void gen_templates(TString filename="input.root", TString mode="", bool isdata=1
   if (mode=="sigbkg") treename_chosen=treename[7];
   if (mode=="bkgbkg") treename_chosen=treename[8];
   if (mode=="zee") treename_chosen=treename[3];
+  if (mode=="standard_pixelrev") treename_chosen=treename[3];
   if (mode=="2pgen") treename_chosen=treename[13];
   if (mode=="2pgen_2frag") treename_chosen=treename[13];
   if (mode=="1p1fbothgen") treename_chosen=treename[14];

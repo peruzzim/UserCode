@@ -1,5 +1,5 @@
 bool global_doplots = true;
-bool doxcheckstemplates = false;
+bool doxcheckstemplates = true;
 
 #include <assert.h>
 
@@ -7,6 +7,7 @@ bool doxcheckstemplates = false;
 
 #include "binsdef.h"
 #include "RooFitResult.h"
+#include "TLatex.h"
 #include "TString.h"
 #include "TFile.h"
 #include "TCanvas.h"
@@ -1275,6 +1276,10 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
       leg->AddEntry("background","background comp.","l");
       leg->SetFillColor(kWhite);
       leg->Draw();
+      TLatex a;
+      a.SetNDC();
+      a.SetTextSize(0.03);
+      a.DrawLatex(0.58,0.65,"#splitline{CMS Preliminary}{#sqrt{s} = 7 TeV L = 5.0 fb^{-1}}");
 
       c1_ub->cd(2);
       RooPlot *frame2bla = roovar2->frame(Title(""));
@@ -1288,6 +1293,7 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
       frame2bla->Draw();
       //    c1_ub->GetPad(2)->SetLogy(1);
       leg->Draw();
+      a.DrawLatex(0.58,0.65,"#splitline{CMS Preliminary}{#sqrt{s} = 7 TeV L = 5.0 fb^{-1}}");
 
       model_axis1_unbinned->Print();
       model_axis2_unbinned->Print();
@@ -1516,6 +1522,10 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
       leg->AddEntry("plot_bkgbkg_axis1_unbinned","fake-fake","l");
       leg->SetFillColor(kWhite);
       leg->Draw();
+    TLatex a;
+    a.SetNDC();
+    a.SetTextSize(0.03);
+    a.DrawLatex(0.58,0.55,"#splitline{CMS Preliminary}{#sqrt{s} = 7 TeV L = 5.0 fb^{-1}}");
 
       c2_ub->cd(2);
       RooPlot *frame2bla = roovar2->frame(Title(""));
@@ -1530,6 +1540,7 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
       model_axis2_unbinned->plotOn(frame2bla,Components("bkgpdf_axis2_unbinned"),Normalization(fbkgbkg->getVal()/(1-fsig2->getVal()),RooAbsPdf::Relative),LineStyle(kDashed),LineColor(kBlack));
       frame2bla->Draw();
       leg->Draw();
+    a.DrawLatex(0.58,0.55,"#splitline{CMS Preliminary}{#sqrt{s} = 7 TeV L = 5.0 fb^{-1}}");
 
       c2_ub->SaveAs(Form("plots/fittingplot2unbinned_%s_%s_b%d.png",splitting.Data(),diffvariable.Data(),bin));   
       c2_ub->SaveAs(Form("plots/fittingplot2unbinned_%s_%s_b%d.jpg",splitting.Data(),diffvariable.Data(),bin));   
@@ -2310,6 +2321,8 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
   TH1F *histo_bias_purefitbias = NULL;
   TH1F *histo_bias_templatestatistics = NULL;
   TFile *file_standardsel_dy = NULL;
+  TFile *file_pixelrevsel_dy_data = NULL;
+  TFile *file_pixelrevsel_dy_mc = NULL;
 
   TH1F *histo_bias_templateshapeMCpromptdrivenEB = NULL;
   TH1F *histo_bias_templateshapeMCfakedrivenEB = NULL;
@@ -2327,6 +2340,10 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
     assert(histo_bias_templatestatistics);
     file_standardsel_dy = new TFile("outphoton_dy_standard.root");
     assert(file_standardsel_dy);
+    file_pixelrevsel_dy_data = new TFile("outphoton_data_pixelrev.root");
+    assert(file_pixelrevsel_dy_data);
+    file_pixelrevsel_dy_mc = new TFile("outphoton_dy_pixelrev.root");
+    assert(file_pixelrevsel_dy_mc);
     if (splitting!="EEEE"){
     TFile *file_bias_templateshapepromptEB = new TFile(Form("plots/histo_bias_templateshapeMCpromptdrivenEB_%s_%s_allbins.root",diffvariable.Data(),splitting.Data()));
     file_bias_templateshapepromptEB->GetObject("histo_bias_templateshapeMCpromptdrivenEB",histo_bias_templateshapeMCpromptdrivenEB);
@@ -2401,6 +2418,8 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
 
     //    std::cout << "start loop: " << std::endl;
 
+    float unfoldingdy_mc_all = (!skipsystematics) ? ((RooDataSet*)(file_pixelrevsel_dy_mc->Get(Form("mc_Tree_2DZee_pixelvetoreversed_selection/obs_roodset_%s_%s_b%d",splitting.Data(),diffvariable.Data(),n_bins))))->sumEntries() : 0;
+
   for (int bin=0; bin<bins_to_run; bin++) {
 
     //    if (!fr[bin]->fr) continue;
@@ -2418,13 +2437,29 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
 
     if (!skipsystematics) assert((RooDataSet*)(file_standardsel_dy->Get(Form("mc_Tree_2Dstandard_selection/obs_roodset_%s_%s_b%d",splitting.Data(),diffvariable.Data(),bin))));
     float events_dy = (!skipsystematics) ? ((RooDataSet*)(file_standardsel_dy->Get(Form("mc_Tree_2Dstandard_selection/obs_roodset_%s_%s_b%d",splitting.Data(),diffvariable.Data(),bin))))->sumEntries() : 0; // normalized to 1/fb, xsec normalized to 2475 
+
+    float unfoldingdy_data = (!skipsystematics) ? ((RooDataSet*)(file_pixelrevsel_dy_data->Get(Form("data_Tree_2DZee_pixelvetoreversed_selection/obs_roodset_%s_%s_b%d",splitting.Data(),diffvariable.Data(),bin))))->sumEntries()/intlumi : 1;
+    float unfoldingdy_mc = (!skipsystematics) ? ((RooDataSet*)(file_pixelrevsel_dy_mc->Get(Form("mc_Tree_2DZee_pixelvetoreversed_selection/obs_roodset_%s_%s_b%d",splitting.Data(),diffvariable.Data(),bin))))->sumEntries() : 1;
+
     float purity_dy = syst_purity_dy[splitting].first;
     float purity_dy_err = syst_purity_dy[splitting].second;
-    float scale_dy = 3048.0/2475.0;
+    float scale_dy = unfoldingdy_data/unfoldingdy_mc;
+
+    if (!skipsystematics){
+      if (unfoldingdy_mc/unfoldingdy_mc_all<0.01) scale_dy=3048./2475.;
+//      if (((RooDataSet*)(file_pixelrevsel_dy_data->Get(Form("data_Tree_2DZee_pixelvetoreversed_selection/obs_roodset_%s_%s_b%d",splitting.Data(),diffvariable.Data(),bin))))->numEntries()<100) scale_dy=3048./2475.;
+//      if (((RooDataSet*)(file_pixelrevsel_dy_mc->Get(Form("mc_Tree_2DZee_pixelvetoreversed_selection/obs_roodset_%s_%s_b%d",splitting.Data(),diffvariable.Data(),bin))))->numEntries()<100) scale_dy=3048./2475.;
+    }
+
     if (splitting=="EBEB") scale_dy*=pow(0.979,2);
     else if (splitting=="EBEE") scale_dy*=0.979*0.985;
     else if (splitting=="EEEE") scale_dy*=pow(0.985,2);
     float rel_error_on_purity_pp = events_dy*purity_dy_err*scale_dy/(pp*tot_events/eff_overflow/intlumi-events_dy*purity_dy*scale_dy);
+
+    std::cout << "bin " << bin << std::endl;
+    std::cout << "UNFOLDING DY FACTOR " << scale_dy << std::endl;
+    std::cout << unfoldingdy_data << " " << unfoldingdy_mc << std::endl;
+    std::cout << "SUBTRACTION " << events_dy*purity_dy*scale_dy/(pp*tot_events/eff_overflow/intlumi) << std::endl;
 
     xsec->SetBinContent(bin+1,(pp*tot_events/eff_overflow/intlumi-events_dy*purity_dy*scale_dy)/xsec->GetBinWidth(bin+1));
     xsec_withsyst->SetBinContent(bin+1,xsec->GetBinContent(bin+1));
@@ -2644,6 +2679,10 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
     leg->AddEntry(h[0][3],"fake - fake","lp");
     leg->SetFillColor(kWhite);
     leg->Draw();
+    TLatex a;
+    a.SetNDC();
+    a.SetTextSize(0.03);
+    a.DrawLatex(0.13,0.83,"#splitline{CMS Preliminary}{#sqrt{s} = 7 TeV L = 5.0 fb^{-1}}");
     canv->Update();
     canv->SaveAs(Form("plots/plot_purity_%s_%s.root",diffvariable.Data(),"inclusive"));
     canv->SaveAs(Form("plots/plot_purity_%s_%s.pdf",diffvariable.Data(),"inclusive"));
@@ -3731,6 +3770,11 @@ void plot_datasets_axis1(std::vector<RooDataSet*> dset, TString outname, legend_
       leg->AddEntry(h[j],legdata.leg[j].Data(),"lp");
   }
   leg->Draw();
+
+  TLatex a;
+  a.SetNDC();
+  a.SetTextSize(0.03);
+  a.DrawLatex(0.63,0.6,"#splitline{CMS Preliminary}{#sqrt{s} = 7 TeV L = 5.0 fb^{-1}}");
 
   comp->SaveAs(Form("%s.%s",outname.Data(),"root"));
   comp->SaveAs(Form("%s.%s",outname.Data(),"pdf"));
