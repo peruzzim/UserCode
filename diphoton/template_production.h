@@ -519,6 +519,7 @@ public :
    Int_t Choose_bin_diphotonpt(float diphotonpt, int region);
    Int_t Choose_bin_costhetastar(float costhetastar, int region);
    Int_t Choose_bin_dphi(float dphi, int region);
+   Int_t Choose_bin_dR(float dR, int region);
 
    Int_t Choose_bin_pt(float pt, int region);
    Int_t Choose_bin_eta(float eta, int region);
@@ -782,6 +783,14 @@ void template_production::Setup(Bool_t _isdata, TString _mode, TString _differen
 	if (splitting=="EBEB")      binsdef=binsdef_diphoton_dphi_EBEB;
 	else if (splitting=="EBEE") binsdef=binsdef_diphoton_dphi_EBEE;
 	else if (splitting=="EEEE") binsdef=binsdef_diphoton_dphi_EEEE;
+      }
+      if (*diffvariable=="dR"){
+	if (splitting=="EBEB")      bins_to_run+=n_templates_dR_EBEB;
+	else if (splitting=="EBEE") bins_to_run+=n_templates_dR_EBEE;
+	else if (splitting=="EEEE") bins_to_run+=n_templates_dR_EEEE; 
+	if (splitting=="EBEB")      binsdef=binsdef_diphoton_dR_EBEB;
+	else if (splitting=="EBEE") binsdef=binsdef_diphoton_dR_EBEE;
+	else if (splitting=="EEEE") binsdef=binsdef_diphoton_dR_EEEE;
       }
 
 
@@ -1611,6 +1620,36 @@ Int_t template_production::Choose_bin_dphi(float dphi, int region){
   for (int i=0; i<index; i++) if ((dphi>=cuts[i]) && (dphi<cuts[i+1])) return i;
   
   std::cout << "WARNING: called bin choice for out-of-range value " << dphi << std::endl;
+  return -999;
+
+
+};
+
+Int_t template_production::Choose_bin_dR(float dR, int region){
+
+  int index;
+
+  float *cuts=NULL;
+
+  if (region==0) {cuts=binsdef_diphoton_dR_EBEB; index=n_templates_dR_EBEB;}
+  if (region==2) {cuts=binsdef_diphoton_dR_EEEE; index=n_templates_dR_EEEE;}
+  if (region==3) {cuts=binsdef_diphoton_dR_EBEE; index=n_templates_dR_EBEE;}
+  if (region==4) {cuts=binsdef_diphoton_dR_EBEE; index=n_templates_dR_EBEE;}
+  if (region==1) {cuts=binsdef_diphoton_dR_EBEE; index=n_templates_dR_EBEE;}
+
+  assert (cuts!=NULL);
+  assert (index!=0);
+
+  cuts[index]=9999;
+
+  if (dR<cuts[0]){
+    std::cout << "WARNING: called bin choice for out-of-range value " << dR << " cuts[0]= " << cuts[0] << std::endl;
+    return -999;
+  }
+
+  for (int i=0; i<index; i++) if ((dR>=cuts[i]) && (dR<cuts[i+1])) return i;
+  
+  std::cout << "WARNING: called bin choice for out-of-range value " << dR << std::endl;
   return -999;
 
 

@@ -196,6 +196,14 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
     else if (splitting=="EBEE") binsdef=binsdef_diphoton_dphi_EBEE;
     else if (splitting=="EEEE") binsdef=binsdef_diphoton_dphi_EEEE;
   }
+  if (diffvariable=="dR"){
+    if (splitting=="EBEB")      bins_to_run+=n_templates_dR_EBEB;
+    else if (splitting=="EBEE") bins_to_run+=n_templates_dR_EBEE;
+    else if (splitting=="EEEE") bins_to_run+=n_templates_dR_EEEE; 
+    if (splitting=="EBEB")      binsdef=binsdef_diphoton_dR_EBEB;
+    else if (splitting=="EBEE") binsdef=binsdef_diphoton_dR_EBEE;
+    else if (splitting=="EEEE") binsdef=binsdef_diphoton_dR_EEEE;
+  }
 
   if (bins_to_run==bin) bins_to_run=-1;
 
@@ -2147,6 +2155,14 @@ void fit_dataset_allbins(TString diffvariable="", TString splitting="", TString 
     else if (splitting=="EBEE") binsdef=binsdef_diphoton_dphi_EBEE;
     else if (splitting=="EEEE") binsdef=binsdef_diphoton_dphi_EEEE;
   }
+  if (diffvariable=="dR"){
+    if (splitting=="EBEB")      bins_to_run+=n_templates_dR_EBEB;
+    else if (splitting=="EBEE") bins_to_run+=n_templates_dR_EBEE;
+    else if (splitting=="EEEE") bins_to_run+=n_templates_dR_EEEE; 
+    if (splitting=="EBEB")      binsdef=binsdef_diphoton_dR_EBEB;
+    else if (splitting=="EBEE") binsdef=binsdef_diphoton_dR_EBEE;
+    else if (splitting=="EEEE") binsdef=binsdef_diphoton_dR_EEEE;
+  }
   
   fit_output *fr[n_bins];
 
@@ -2225,6 +2241,15 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
     else if (splitting=="EBEE") binsdef=binsdef_diphoton_dphi_EBEE;
     else if (splitting=="EEEE") binsdef=binsdef_diphoton_dphi_EEEE;
   }
+  if (diffvariable=="dR"){
+    if (splitting=="EBEB")      bins_to_run+=n_templates_dR_EBEB;
+    else if (splitting=="EBEE") bins_to_run+=n_templates_dR_EBEE;
+    else if (splitting=="EEEE") bins_to_run+=n_templates_dR_EEEE; 
+    else bins_to_run+=n_templates_dR_EEEE;
+    if (splitting=="EBEB")      binsdef=binsdef_diphoton_dR_EBEB;
+    else if (splitting=="EBEE") binsdef=binsdef_diphoton_dR_EBEE;
+    else if (splitting=="EEEE") binsdef=binsdef_diphoton_dR_EEEE;
+  }
 
 
 
@@ -2281,6 +2306,7 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
     translation.insert(std::pair<TString,TString>(TString("diphotonpt"),TString("qtgg")));
     translation.insert(std::pair<TString,TString>(TString("costhetastar"),TString("costhetastar")));
     translation.insert(std::pair<TString,TString>(TString("dphi"),TString("deltaphi")));
+    translation.insert(std::pair<TString,TString>(TString("dR"),TString("dR")));
     eff_file->GetObject(Form("h_%s_%s_WithTotErr",translation[diffvariable].Data(),splitting.Data()),eff);
   }
   assert (eff!=NULL);
@@ -2300,6 +2326,7 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
     translation2.insert(std::pair<TString,TString>(TString("diphotonpt"),TString("pt")));
     translation2.insert(std::pair<TString,TString>(TString("costhetastar"),TString("costt")));
     translation2.insert(std::pair<TString,TString>(TString("dphi"),TString("phi")));
+    translation2.insert(std::pair<TString,TString>(TString("dR"),TString("dR")));
     TFile *unfoldunc_file = new TFile("plots/Unfolding_SysErr.root");
     TString unfoldunc_name = Form("Unfolding_RelativeSysErr_%s_%s",translation2[diffvariable].Data(),splitting.Data());
     unfoldunc_file->GetObject(unfoldunc_name.Data(),unfoldunc);
@@ -2842,6 +2869,7 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
       translation.insert(std::pair<TString,TString>(TString("diphotonpt"),TString("qtgg")));
       translation.insert(std::pair<TString,TString>(TString("costhetastar"),TString("costhetastar")));
       translation.insert(std::pair<TString,TString>(TString("dphi"),TString("deltaphi")));
+      translation.insert(std::pair<TString,TString>(TString("dR"),TString("dR")));
       eff_file->GetObject(Form("h_%s_%s_WithTotErr",translation[diffvariable].Data(),"EBEB"),eff[0]);
       eff_file->GetObject(Form("h_%s_%s_WithTotErr",translation[diffvariable].Data(),"EBEE"),eff[1]);
       eff_file->GetObject(Form("h_%s_%s_WithTotErr",translation[diffvariable].Data(),"EEEE"),eff[2]);
@@ -2887,6 +2915,7 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
     translation2.insert(std::pair<TString,TString>(TString("diphotonpt"),TString("pt")));
     translation2.insert(std::pair<TString,TString>(TString("costhetastar"),TString("costt")));
     translation2.insert(std::pair<TString,TString>(TString("dphi"),TString("phi")));
+    translation2.insert(std::pair<TString,TString>(TString("dR"),TString("dR")));
     TFile *unfoldnevt_file = new TFile("plots/Unfolding_SysErr.root");
     unfoldnevt_file->GetObject(Form("Unfolding_Nevt_%s_EBEB",translation2[diffvariable].Data()),unfoldnevt[0]);
     unfoldnevt_file->GetObject(Form("Unfolding_Nevt_%s_EBEE",translation2[diffvariable].Data()),unfoldnevt[1]);

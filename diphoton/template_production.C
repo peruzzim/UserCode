@@ -476,6 +476,15 @@ void template_production::Loop(int maxevents)
 	  bin_couple = Choose_bin_dphi(dphi,event_ok_for_dataset_local);
 	  value_diffvariable=dphi;
 	}
+	if (*diffvariable==TString("dR")){
+	  float phi1 = pholead_SCphi;
+	  float phi2 = photrail_SCphi;
+	  float dphi = AbsDeltaPhi(phi1,phi2);
+	  float deta = pholead_SCeta-photrail_SCeta;
+	  float dR = sqrt(deta*deta+dphi*dphi);
+	  bin_couple = Choose_bin_dR(dR,event_ok_for_dataset_local);
+	  value_diffvariable=dR;
+	}
       
 	if (bin_couple<0) continue;
 	

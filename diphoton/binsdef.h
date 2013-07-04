@@ -7,7 +7,7 @@
 #include "TMath.h"
 #include <iostream>
 
-TString __variables__[] = {TString("invmass"),TString("diphotonpt"),TString("costhetastar"),TString("dphi")};
+TString __variables__[] = {TString("invmass"),TString("diphotonpt"),TString("costhetastar"),TString("dphi"),TString("dR")};
 std::vector<TString> diffvariables_list (__variables__, __variables__ + sizeof(__variables__) / sizeof(TString) );
 
 std::map<TString,TString> diffvariables_names_list_;
@@ -17,6 +17,7 @@ TString diffvariables_names_list(TString diffvariable){
     diffvariables_names_list_[TString("diphotonpt")]=TString("p_{T, #gamma #gamma}");
     diffvariables_names_list_[TString("costhetastar")]=TString("|cos #theta^{*}|");
     diffvariables_names_list_[TString("dphi")]=TString("#Delta #phi_{#gamma #gamma}");
+    diffvariables_names_list_[TString("dR")]=TString("#Delta R_{#gamma #gamma}");
   }
   return diffvariables_names_list_[diffvariable];
 };
@@ -28,6 +29,7 @@ TString diffvariables_units_list(TString diffvariable){
     diffvariables_units_list_[TString("diphotonpt")]=TString("GeV");
     diffvariables_units_list_[TString("costhetastar")]=TString("");
     diffvariables_units_list_[TString("dphi")]=TString("");
+    diffvariables_units_list_[TString("dR")]=TString("");
   }
   return diffvariables_units_list_[diffvariable];
 };
@@ -83,6 +85,14 @@ const float Pi = TMath::Pi();
 float binsdef_diphoton_dphi_EBEB[n_bins+1]={0,0.2*Pi,0.4*Pi,0.6*Pi,0.7*Pi,0.8*Pi,0.84*Pi,0.88*Pi,0.90*Pi,0.92*Pi,0.94*Pi,0.96*Pi,0.98*Pi,1.0*Pi,1.01*Pi};
 float binsdef_diphoton_dphi_EBEE[n_bins+1]={0,0.2*Pi,0.4*Pi,0.6*Pi,0.7*Pi,0.8*Pi,0.84*Pi,0.88*Pi,0.90*Pi,0.92*Pi,0.94*Pi,0.96*Pi,0.98*Pi,1.0*Pi,1.01*Pi};
 float binsdef_diphoton_dphi_EEEE[n_bins+1]={0,0.2*Pi,0.4*Pi,0.6*Pi,0.7*Pi,0.8*Pi,0.84*Pi,0.88*Pi,0.90*Pi,0.92*Pi,0.94*Pi,0.96*Pi,0.98*Pi,1.0*Pi,1.01*Pi};
+
+int n_templates_dR_EBEB=7;
+int n_templates_dR_EBEE=7;
+int n_templates_dR_EEEE=7;
+const float MaxDrExperiment = sqrt(pow(5.,2)+pow(Pi,2)); // = 5.90
+float binsdef_diphoton_dR_EBEB[n_bins+1]={0.45,1.0,2.0,2.5,3.0,3.5,4.5,MaxDrExperiment};
+float binsdef_diphoton_dR_EBEE[n_bins+1]={0.45,1.0,2.0,2.5,3.0,3.5,4.5,MaxDrExperiment};
+float binsdef_diphoton_dR_EEEE[n_bins+1]={0.45,1.0,2.0,2.5,3.0,3.5,4.5,MaxDrExperiment};
 
 
 float AbsDeltaPhi(double phi1, double phi2){
