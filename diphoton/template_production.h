@@ -48,8 +48,8 @@ public :
    TTree          *fChain;   //!pointer to the analyzed TTree or TChain
    Int_t           fCurrent; //!current Tree number in a TChain
 
-   vector<float> invmass_vector;
-   vector<float> diphotonpt_vector;
+//   vector<float> invmass_vector;
+//   vector<float> diphotonpt_vector;
 
    // Declaration of leaf types
    Float_t         event_luminormfactor;
@@ -418,20 +418,6 @@ public :
 
    bool dosignal;
 
-   TH1F *histo_pt[2];
-   TH1F *histo_eta;
-   TH2F *histo_pt_eta;
-   TH2F *histo_rho_sigma;
-   TH2F *histo_pu_nvtx;
-
-   TH1F *template_signal[2][n_templates+1];
-   TH1F *template_background[2][n_templates+1];
-
-   TH1F *histo_pu_rew;
-   //   float FindNewPUWeight(int npu);
-   //   void InitializeNewPUReweighting(TString source, TString target);
-
-
   RooRealVar *roovar1;
   RooRealVar *roovar2;
   RooRealVar *roopt1;
@@ -442,20 +428,12 @@ public :
   RooRealVar *rooeta2;
   RooRealVar *roorho;
   RooRealVar *roosigma;
-  //  RooRealVar *roovar_helper;
   RooRealVar *rooweight;
 
-  RooDataSet *roodset_signal[2][n_templates+1][2];
-  RooDataSet *roodset_background[2][n_templates+1][2];
+  RooDataSet *roodset_signal[2][2];
+  RooDataSet *roodset_background[2][2];
 
-   //   TH1F *obs_hist_single[2][n_templates];
-   //   TH2F *obs_hist[3][n_templates];
 
-   //   std::vector<TString> diffvariables_list;
-
-   std::map<TString, TH1F*> obs_hist_single;
-   std::map<TString, TH2F*> obs_hist;
-   std::map<TString, TH1F*> obs_hist_distribution;
    std::map<TString, RooDataSet*> obs_roodset;
    std::map<TString, RooDataSet*> template2d_roodset;
 
@@ -463,13 +441,6 @@ public :
    std::map<TString, TH1F*> true_purity_isppevent;
    std::map<TString, TH1F*> true_purity_isnotppevent;
 
-   std::map<TString, std::vector<float> > weights_2p[3];
-   std::map<TString, std::vector<float> > weights_2f[3];
-   std::map<TString, std::vector<float> > weights_1p1f[3];
-
-   TString get_name_obs_single(int region, int bin);
-   TString get_name_obs(int region, TString diffvariable, int bin);
-   TString get_name_obs_distribution(int region, TString diffvariable);
    TString get_name_obs_roodset(int region, TString diffvariable, int bin);
    TString get_name_true_purity(int region, TString diffvariable);
    TString get_name_true_purity_ispp(int region, TString diffvariable);
@@ -486,20 +457,9 @@ public :
    TH2F *hist2d_coneet;
    TH2F *hist2d_coneenergy;
 
-   bool pt_reweighting_initialized;
-   bool do_pt_reweighting;
-
-   bool eta_reweighting_initialized;
-   bool do_eta_reweighting;
-
-   bool pt_eta_reweighting_initialized;
-   bool do_pt_eta_reweighting;
-
    Float_t pholead_outvar;
    Float_t photrail_outvar;
    Int_t candcounter;
-
-   Bool_t purew_initialized;
 
    Bool_t initialized;
 
@@ -525,23 +485,8 @@ public :
    Int_t Choose_bin_eta(float eta, int region);
    Int_t Choose_bin_sieie(float sieie, int region);
 
-   //   float FindPtWeight(float pt, float eta);
-   //   void Initialize_Pt_Reweighting(TString dset1, TString dset2, TString temp1, TString temp2);
-   void SetNoPtReweighting();
-
-   //   float FindEtaWeight(float eta);
-   //   void Initialize_Eta_Reweighting(TString dset1, TString dset2, TString temp1, TString temp2);
-   void SetNoEtaReweighting();
-
-   //   float FindPtEtaWeight(float pt, float eta);
-   //   void Initialize_Pt_Eta_Reweighting(TString dset1, TString dset2, TString temp1, TString temp2);
-   void SetNoPtEtaReweighting();
-
    float getpuenergy(int reg, float eta);
 
-   TH1F *histo_pt_reweighting[2];
-   TH1F *histo_eta_reweighting;
-   TH2F *histo_pt_eta_reweighting;
 };
 
 #endif
@@ -551,18 +496,6 @@ template_production::template_production(TTree *tree)
 {
 
   TH1F::SetDefaultSumw2(kTRUE);
-
-// if parameter tree is not specified (or zero), connect the file
-// used to generate this class and read the Tree.
-
-//   if (tree == 0) {
-//      TFile *f = (TFile*)gROOT->GetListOfFiles()->FindObject("mc_inclusive.root");
-//      if (!f || !f->IsOpen()) {
-//         f = new TFile("mc_inclusive.root");
-//      }
-//      f->GetObject("Tree",tree);
-//
-//   }
 
    if (tree==0) std::cout << "Tree not ready!" << std::endl;
    if (!tree) return;
@@ -577,17 +510,6 @@ template_production::template_production(TTree *tree)
    do1p1ftemplate = false;
    do2ftemplate = false;
 
-   pt_reweighting_initialized = 0;
-   do_pt_reweighting = 0;
-
-   eta_reweighting_initialized = 0;
-   do_eta_reweighting = 0;
-
-   pt_eta_reweighting_initialized = 0;
-   do_pt_eta_reweighting = 0;
-
-   purew_initialized = 0;
-
 }
 
 void template_production::Setup(Bool_t _isdata, TString _mode, TString _differentialvariable){
@@ -595,25 +517,6 @@ void template_production::Setup(Bool_t _isdata, TString _mode, TString _differen
   isdata=_isdata;
   mode=_mode;
   differentialvariable=_differentialvariable;
-
-//  diffvariables_list.push_back(TString("invmass"));
-//  diffvariables_list.push_back(TString("diphotonpt"));
-//  diffvariables_list.push_back(TString("costhetastar"));
-//  diffvariables_list.push_back(TString("dphi"));
-
-  for (int k=0; k<3; k++){
-    for (std::vector<TString>::const_iterator diffvariable = diffvariables_list.begin(); diffvariable!=diffvariables_list.end(); diffvariable++){
-      weights_2p[k][*diffvariable].clear();
-      weights_2f[k][*diffvariable].clear();
-      weights_1p1f[k][*diffvariable].clear();
-      for (int i=0; i<n_bins; i++) {
-	weights_2p[k][*diffvariable].push_back(0);
-	weights_2f[k][*diffvariable].push_back(0);
-	weights_1p1f[k][*diffvariable].push_back(0);
-    }
-    }
-  }
-
 
   Init();
 
@@ -638,109 +541,35 @@ void template_production::Setup(Bool_t _isdata, TString _mode, TString _differen
   roosieie2 = new RooRealVar("roosieie2","roosieie2",0,0.045);
   roorho = new RooRealVar("roorho","roorho",0,50);
   roosigma = new RooRealVar("roosigma","roosigma",0,50);
-  //  roovar_helper = new RooRealVar("roovar_helper","roovar_helper",leftrange,rightrange);
   rooweight = new RooRealVar("rooweight","rooweight",0,5);
 
 
   for (int i=0; i<2; i++){
-    TString name="histo_pt_";
-    TString reg;
-    if (i==0) reg="EB"; else if (i==1) reg="EE";
-    name.Append(reg);
-    histo_pt[i] = new TH1F(name.Data(),name.Data(),55,25,300);
-  }
-
-  histo_eta = new TH1F("histo_eta","histo_eta",25,0,2.5);
-  histo_pt_eta = new TH2F("histo_pt_eta","histo_pt_eta",55,25,300,25,0,2.5);
-  histo_rho_sigma = new TH2F("histo_rho_sigma","histo_rho_sigma",n_rho_cats,rhobins,n_sigma_cats,sigmabins);
-  histo_pu_nvtx = new TH2F("histo_pu_nvtx","histo_pu_nvtx",50,0,50,50,0,50);
-
-  // template_{signal,background}[EB,EE][n_templates]
-  for (int i=0; i<2; i++)
-    for (int j=0; j<n_templates+1; j++) {
       TString name_signal="signal";
       TString reg;
       if (i==0) reg="EB"; else if (i==1) reg="EE";
-      TString t=Form("template_%s_%s_b%d",name_signal.Data(),reg.Data(),j);
-      template_signal[i][j] = new TH1F(t.Data(),t.Data(),n_histobins,leftrange,rightrange);
-      template_signal[i][j]->Sumw2();
-      TString t2=Form("roodset_%s_%s_b%d_rv%d",name_signal.Data(),reg.Data(),j,1);
-      roodset_signal[i][j][0] = new RooDataSet(t2.Data(),t2.Data(),RooArgSet(*roovar1,*roopt1,*roosieie1,*rooeta1,*roorho,*roosigma,*rooweight),WeightVar(*rooweight));
-      t2=Form("roodset_%s_%s_b%d_rv%d",name_signal.Data(),reg.Data(),j,2);
-      roodset_signal[i][j][1] = new RooDataSet(t2.Data(),t2.Data(),RooArgSet(*roovar2,*roopt2,*roosieie2,*rooeta2,*roorho,*roosigma,*rooweight),WeightVar(*rooweight));
+      TString t2=Form("roodset_%s_%s_rv%d",name_signal.Data(),reg.Data(),1);
+      roodset_signal[i][0] = new RooDataSet(t2.Data(),t2.Data(),RooArgSet(*roovar1,*roopt1,*roosieie1,*rooeta1,*roorho,*roosigma,*rooweight),WeightVar(*rooweight));
+      t2=Form("roodset_%s_%s_rv%d",name_signal.Data(),reg.Data(),2);
+      roodset_signal[i][1] = new RooDataSet(t2.Data(),t2.Data(),RooArgSet(*roovar2,*roopt2,*roosieie2,*rooeta2,*roorho,*roosigma,*rooweight),WeightVar(*rooweight));
     }
-  for (int i=0; i<2; i++)
-    for (int j=0; j<n_templates+1; j++) {
+  for (int i=0; i<2; i++){
       TString name_background="background";
       TString reg;
       if (i==0) reg="EB"; else if (i==1) reg="EE";
-      TString t=Form("template_%s_%s_b%d",name_background.Data(),reg.Data(),j);
-      template_background[i][j] = new TH1F(t.Data(),t.Data(),n_histobins,leftrange,rightrange);
-      template_background[i][j]->Sumw2();
-      TString t2=Form("roodset_%s_%s_b%d_rv%d",name_background.Data(),reg.Data(),j,1);
-      roodset_background[i][j][0] = new RooDataSet(t2.Data(),t2.Data(),RooArgSet(*roovar1,*roopt1,*roosieie1,*rooeta1,*roorho,*roosigma,*rooweight),WeightVar(*rooweight));
-      t2=Form("roodset_%s_%s_b%d_rv%d",name_background.Data(),reg.Data(),j,2);
-      roodset_background[i][j][1] = new RooDataSet(t2.Data(),t2.Data(),RooArgSet(*roovar2,*roopt2,*roosieie2,*rooeta2,*roorho,*roosigma,*rooweight),WeightVar(*rooweight));
-    }
-  for (int i=0; i<2; i++)
-    for (int j=0; j<n_templates+1; j++) {
-      TString name="hist2d_iso_ncand";
-      TString reg;
-      if (i==0) reg="EB"; else if (i==1) reg="EE";
-      TString t=Form("%s_%s_b%d",name.Data(),reg.Data(),j);
-      hist2d_iso_ncand[i][j] = new TH2F(t.Data(),t.Data(),n_histobins,leftrange,rightrange,10,0,10);
-      hist2d_iso_ncand[i][j]->Sumw2();
+      TString t2=Form("roodset_%s_%s_rv%d",name_background.Data(),reg.Data(),1);
+      roodset_background[i][0] = new RooDataSet(t2.Data(),t2.Data(),RooArgSet(*roovar1,*roopt1,*roosieie1,*rooeta1,*roorho,*roosigma,*rooweight),WeightVar(*rooweight));
+      t2=Form("roodset_%s_%s_rv%d",name_background.Data(),reg.Data(),2);
+      roodset_background[i][1] = new RooDataSet(t2.Data(),t2.Data(),RooArgSet(*roovar2,*roopt2,*roosieie2,*rooeta2,*roorho,*roosigma,*rooweight),WeightVar(*rooweight));
     }
 
-  Double_t etabinsfor2d[26] = {0.0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0,1.1,1.2,1.3,1.4442,1.56,1.653,1.7,1.8,1.9,2.0,2.1,2.2,2.3,2.4,2.5};
-      
-  hist2d_singlecandet = new TH2F("hist2d_singlecandet","hist2d_singlecandet",500,0,5,25,etabinsfor2d);
-  hist2d_singlecandet->GetYaxis()->SetTitle("ET");
-
-  hist2d_singlecandenergy = new TH2F("hist2d_singlecandenergy","hist2d_singlecandenergy",500,0,5,25,etabinsfor2d);
-  hist2d_singlecandenergy->GetYaxis()->SetTitle("E");
-
-  hist2d_singlecanddeta = new TH2F("hist2d_singlecanddeta","hist2d_singlecanddeta",450,-0.45,0.45,25,etabinsfor2d);
-  hist2d_singlecanddeta->GetYaxis()->SetTitle("dEta");
-
-  hist2d_singlecanddphi = new TH2F("hist2d_singlecanddphi","hist2d_singlecanddphi",450,-0.45,0.45,25,etabinsfor2d);
-  hist2d_singlecanddphi->GetYaxis()->SetTitle("dPhi");
-
-  hist2d_singlecanddR = new TH2F("hist2d_singlecanddR","hist2d_singlecanddR",450,0,0.45,25,etabinsfor2d);
-  hist2d_singlecanddR->GetYaxis()->SetTitle("dR");
-
-  hist2d_coneet = new TH2F("hist2d_coneet","hist2d_coneet",500,0,5,25,etabinsfor2d);
-  hist2d_coneet->GetYaxis()->SetTitle("ET");
-
-  hist2d_coneenergy = new TH2F("hist2d_coneenergy","hist2d_coneenergy",500,0,5,25,etabinsfor2d);
-  hist2d_coneenergy->GetYaxis()->SetTitle("E");
-
-
-
-  for (int i=0; i<2; i++)
-    for (int j=0; j<n_templates+1; j++) {
-      TString name_signal="obs_hist_single";
-      TString reg;
-      if (i==0) reg="EB"; else if (i==1) reg="EE";
-      TString t=Form("%s_%s_b%d",name_signal.Data(),reg.Data(),j);
-      obs_hist_single[t] = new TH1F(t.Data(),t.Data(),n_histobins,leftrange,rightrange);
-      obs_hist_single[t]->Sumw2();
-    }
-  
 
   for (std::vector<TString>::const_iterator diffvariable = diffvariables_list.begin(); diffvariable!=diffvariables_list.end(); diffvariable++){
+
     for (int i=0; i<3; i++) {
       TString reg;
       if (i==0) reg="EBEB"; else if (i==1) reg="EBEE"; else if (i==2) reg="EEEE"; else if (i==3) reg="EEEB";
       for (int j=0; j<n_templates+1; j++) {
-	TString t=Form("obs_hist_%s_%s_b%d",reg.Data(),diffvariable->Data(),j);
-	obs_hist[t] = new TH2F(t.Data(),t.Data(),n_histobins,leftrange,rightrange,n_histobins,leftrange,rightrange);
-	obs_hist[t]->Sumw2();
-	if (j==0){
-	  TString tb=Form("obs_hist_distribution_%s_%s",reg.Data(),diffvariable->Data());
-	  obs_hist_distribution[tb] = new TH1F(tb.Data(),tb.Data(),100,binsdef_diphoton_invmass_EBEB[0],binsdef_diphoton_invmass_EBEB[n_templates_invmass_EBEB]);
-	  obs_hist_distribution[tb]->Sumw2();
-	}
 	TString t2=Form("obs_roodset_%s_%s_b%d",reg.Data(),diffvariable->Data(),j);
 	RooArgSet args(*roovar1,*roovar2,*roopt1,*roosieie1,*rooeta1,*roopt2,*roosieie2,*rooeta2);
 	args.add(RooArgSet(*roorho,*roosigma,*rooweight));
@@ -794,7 +623,6 @@ void template_production::Setup(Bool_t _isdata, TString _mode, TString _differen
       }
 
 
-
       TString t3=Form("true_purity_%s_%s",reg.Data(),diffvariable->Data());
       true_purity[t3] = new TProfile(t3.Data(),t3.Data(),bins_to_run,binsdef);
       TString t3_ispp=Form("ispp_true_purity_%s_%s",reg.Data(),diffvariable->Data());
@@ -813,9 +641,6 @@ void template_production::Setup(Bool_t _isdata, TString _mode, TString _differen
 
   for (int i=0; i<3; i++)
     for (unsigned int j=0; j<tobuild.size(); j++) {
-      //      TString reg;
-      //      if (i==0) reg="EBEB"; else if (i==1) reg="EBEE"; else if (i==2) reg="EEEE"; 
-      //      if (i!=1 && tobuild[j]=="bkgsig") continue;
       TString t2 = get_name_template2d_roodset(i,tobuild[j]);
       RooArgSet args(*roovar1,*roovar2,*roopt1,*roosieie1,*rooeta1,*roopt2,*roosieie2,*rooeta2);
       args.add(RooArgSet(*roorho,*roosigma,*rooweight));
@@ -829,283 +654,6 @@ void template_production::Setup(Bool_t _isdata, TString _mode, TString _differen
   
 };
 
-//void template_production::Initialize_Eta_Reweighting(TString dset1, TString dset2, TString temp1, TString temp2){
-//
-//  TString file1="forreweight_";
-//  file1.Append(dset1);
-//  file1.Append("_");
-//  file1.Append(temp1);
-//  file1.Append(".root");
-//
-//  TString file2="forreweight_";
-//  file2.Append(dset2);
-//  file2.Append("_");
-//  file2.Append(temp2);
-//  file2.Append(".root");
-//
-//
-//  TFile *f1 = new TFile(file1.Data(),"read");
-//  TFile *f2 = new TFile(file2.Data(),"read");
-//
-//  TString name1="";
-//  if (dset1=="data") name1.Append("data_Tree_"); else name1.Append("mc_Tree_");
-//  if (temp1=="bkg") name1.Append("background_template/");
-//  if (temp1=="sig") name1.Append("signal_template/");
-//  if (temp1=="rcone") name1.Append("randomcone_signal_template/");
-//  if (temp1=="impinging") name1.Append("impinging_track_template/");
-//  if (temp1=="sieiesideband") name1.Append("sieiesideband_sel/");
-//  if (temp1=="combisosideband") name1.Append("combisosideband_sel/");
-//  name1.Append("histo_eta");
-//
-//  TString name2="";
-//  if (dset2=="data") name2.Append("data_Tree_"); else name2.Append("mc_Tree_");
-//  if (temp2=="bkg") name2.Append("background_template/");
-//  if (temp2=="sig") name2.Append("signal_template/");
-//  if (temp2=="rcone") name2.Append("randomcone_signal_template/");
-//  if (temp2=="impinging") name2.Append("impinging_track_template/");
-//  if (temp2=="sieiesideband") name2.Append("sieiesideband_sel/");
-//  if (temp2=="combisosideband") name2.Append("combisosideband_sel/");
-//  name2.Append("histo_eta");
-//
-//  TH1F *h[2];
-//  f1->GetObject(name1,h[0]);
-//  f2->GetObject(name2,h[1]);
-//  assert(h[0]!=NULL);
-//  assert(h[1]!=NULL);
-//
-//  h[0]->Print();
-//  h[1]->Print();
-//
-//  TH1F *newhist = (TH1F*)(h[1]->Clone("etareweight"));
-//  assert(newhist!=NULL);
-//  newhist->Print();
-//
-//  newhist->Scale(1.0/newhist->Integral());
-//  h[0]->Scale(1.0/h[0]->Integral());
-//
-//  newhist->Divide(h[0]);
-//
-//  eta_reweighting_initialized = 1;
-//  do_eta_reweighting = 1;
-//
-//  histo_eta_reweighting = newhist;
-//
-//};
-//
-//void template_production::Initialize_Pt_Eta_Reweighting(TString dset1, TString dset2, TString temp1, TString temp2){
-//
-//  TString file1="forreweight_";
-//  file1.Append(dset1);
-//  file1.Append("_");
-//  file1.Append(temp1);
-//  file1.Append(".root");
-//
-//  TString file2="forreweight_";
-//  file2.Append(dset2);
-//  file2.Append("_");
-//  file2.Append(temp2);
-//  file2.Append(".root");
-//
-//
-//  TFile *f1 = new TFile(file1.Data(),"read");
-//  TFile *f2 = new TFile(file2.Data(),"read");
-//
-//  TString name1="";
-//  if (dset1=="data") name1.Append("data_Tree_"); else name1.Append("mc_Tree_");
-//  if (temp1=="bkg") name1.Append("background_template/");
-//  if (temp1=="sig") name1.Append("signal_template/");
-//  if (temp1=="rcone") name1.Append("randomcone_signal_template/");
-//  if (temp1=="impinging") name1.Append("impinging_track_template/");
-//  if (temp1=="sieiesideband") name1.Append("sieiesideband_sel/");
-//  if (temp1=="combisosideband") name1.Append("combisosideband_sel/");
-//  name1.Append("histo_pt_eta");
-//
-//  TString name2="";
-//  if (dset2=="data") name2.Append("data_Tree_"); else name2.Append("mc_Tree_");
-//  if (temp2=="bkg") name2.Append("background_template/");
-//  if (temp2=="sig") name2.Append("signal_template/");
-//  if (temp2=="rcone") name2.Append("randomcone_signal_template/");
-//  if (temp2=="impinging") name2.Append("impinging_track_template/");
-//  if (temp2=="sieiesideband") name2.Append("sieiesideband_sel/");
-//  if (temp2=="combisosideband") name2.Append("combisosideband_sel/");
-//  name2.Append("histo_pt_eta");
-//
-//  TH2F *h[2];
-//  f1->GetObject(name1,h[0]);
-//  f2->GetObject(name2,h[1]);
-//  assert(h[0]!=NULL);
-//  assert(h[1]!=NULL);
-//
-//  h[0]->Print();
-//  h[1]->Print();
-//
-//  TH2F *newhist = (TH2F*)(h[1]->Clone("ptetareweight"));
-//  assert(newhist!=NULL);
-//  newhist->Print();
-//
-//  newhist->Scale(1.0/newhist->Integral());
-//  h[0]->Scale(1.0/h[0]->Integral());
-//
-//  newhist->Divide(h[0]);
-//
-//  pt_eta_reweighting_initialized = 1;
-//  do_pt_eta_reweighting = 1;
-//
-//  histo_pt_eta_reweighting = newhist;
-//
-//};
-//
-//void template_production::Initialize_Pt_Reweighting(TString dset1, TString dset2, TString temp1, TString temp2){
-//
-//  TString regions[2];
-//  regions[0]="EB";
-//  regions[1]="EE";
-//
-//  for (int i=0; i<2; i++){
-//
-//    TString reg=regions[i];
-//
-//    TString file1="forreweight_";
-//    file1.Append(dset1);
-//    file1.Append("_");
-//    file1.Append(temp1);
-//    file1.Append(".root");
-//
-//    TString file2="forreweight_";
-//    file2.Append(dset2);
-//    file2.Append("_");
-//    file2.Append(temp2);
-//    file2.Append(".root");
-//
-//
-//    TFile *f1 = new TFile(file1.Data(),"read");
-//    TFile *f2 = new TFile(file2.Data(),"read");
-//
-//
-//    TString name1="";
-//    if (dset1=="data") name1.Append("data_Tree_"); else name1.Append("mc_Tree_");
-//    if (temp1=="bkg") name1.Append("background_template/");
-//    if (temp1=="sig") name1.Append("signal_template/");
-//    if (temp1=="rcone") name1.Append("randomcone_signal_template/");
-//    if (temp1=="impinging") name1.Append("impinging_track_template/");
-//    if (temp1=="sieiesideband") name1.Append("sieiesideband_sel/");
-//    if (temp1=="combisosideband") name1.Append("combisosideband_sel/");
-//    name1.Append("histo_pt_");
-//    name1.Append(reg);
-//
-//    TString name2="";
-//    if (dset2=="data") name2.Append("data_Tree_"); else name2.Append("mc_Tree_");
-//    if (temp2=="bkg") name2.Append("background_template/");
-//    if (temp2=="sig") name2.Append("signal_template/");
-//    if (temp2=="rcone") name2.Append("randomcone_signal_template/");
-//    if (temp2=="impinging") name2.Append("impinging_track_template/");
-//    if (temp2=="sieiesideband") name2.Append("sieiesideband_sel/");
-//    if (temp2=="combisosideband") name2.Append("combisosideband_sel/");
-//    name2.Append("histo_pt_");
-//    name2.Append(reg);
-//
-//    TH1F *h[2];
-//    f1->GetObject(name1,h[0]);
-//    f2->GetObject(name2,h[1]);
-//    assert(h[0]!=NULL);
-//    assert(h[1]!=NULL);
-//
-//    h[0]->Print();
-//    h[1]->Print();
-//
-//    TH1F *newhist = (TH1F*)(h[1]->Clone(Form("reweight_%s",reg.Data())));
-//    assert(newhist!=NULL);
-//    newhist->Print();
-//
-//    newhist->Scale(1.0/newhist->Integral());
-//    h[0]->Scale(1.0/h[0]->Integral());
-//
-//    newhist->Divide(h[0]);
-//
-//    pt_reweighting_initialized = 1;
-//    do_pt_reweighting = 1;
-//
-//    histo_pt_reweighting[i] = newhist;
-//
-//  }
-//
-//};
-
-void template_production::SetNoPtReweighting(){
-  pt_reweighting_initialized = 1;
-  do_pt_reweighting = 0;
-};
-
-void template_production::SetNoEtaReweighting(){
-  eta_reweighting_initialized = 1;
-  do_eta_reweighting = 0;
-};
-
-void template_production::SetNoPtEtaReweighting(){
-  pt_eta_reweighting_initialized = 1;
-  do_pt_eta_reweighting = 0;
-};
-
-//float template_production::FindPtWeight(float pt, float eta){
-//
-//  if (!pt_reweighting_initialized){
-//    std::cout << "PT REWEIGHTING NOT INITIALIZED" << std::endl;
-//    return -999;
-//  }
-//
-//  if (!do_pt_reweighting) return 1;
-//
-//  TH1F *h;
-//  if (fabs(eta)<1.5) h=histo_pt_reweighting[0]; else h=histo_pt_reweighting[1];
-//
-//  if (pt>h->GetXaxis()->GetXmax() || pt<h->GetXaxis()->GetXmin()) return 1;
-//  float res = h->GetBinContent(h->FindBin(pt));
-//  if (res==0) res=1;
-//  //  std::cout << res << std::endl;
-//  return res;
-//  
-//};
-//
-//float template_production::FindEtaWeight(float eta){
-//
-//  eta = fabs(eta);
-//
-//  if (!eta_reweighting_initialized){
-//    std::cout << "ETA REWEIGHTING NOT INITIALIZED" << std::endl;
-//    return -999;
-//  }
-//
-//  if (!do_eta_reweighting) return 1;
-//
-//  TH1F *h = histo_eta_reweighting;
-//
-//  if (eta>h->GetXaxis()->GetXmax() || eta<h->GetXaxis()->GetXmin()) return 1;
-//  float res = h->GetBinContent(h->FindBin(eta));
-//
-//  return res;
-//  
-//};
-//
-//float template_production::FindPtEtaWeight(float pt, float eta){
-//
-//  eta = fabs(eta);
-//
-//  if (!pt_eta_reweighting_initialized){
-//    std::cout << "PT_ETA REWEIGHTING NOT INITIALIZED" << std::endl;
-//    return -999;
-//  }
-//
-//  if (!do_pt_eta_reweighting) return 1;
-//
-//  TH2F *h = histo_pt_eta_reweighting;
-//
-//  if (pt>h->GetXaxis()->GetXmax() || pt<h->GetXaxis()->GetXmin()) return 1;
-//  if (eta>h->GetYaxis()->GetXmax() || eta<h->GetYaxis()->GetXmin()) return 1;
-//  float res = h->GetBinContent(h->FindBin(pt,eta));
-//
-//  return res;
-//  
-//};
 
 template_production::~template_production()
 {
@@ -1373,34 +921,9 @@ void template_production::WriteOutput(const char* filename, const TString _dirna
 
   if (dosignaltemplate || dobackgroundtemplate) {
 
-    for (int i=0; i<2; i++) histo_pt[i]->Write();
-    histo_eta->Write();
-    histo_pt_eta->Write();
-    histo_rho_sigma->Write();
-    histo_pu_nvtx->Write();
 
-    for (int i=0; i<2; i++) for (int l=0; l<n_templates; l++) template_signal[i][n_templates]->Add(template_signal[i][l]);
-    for (int i=0; i<2; i++) for (int l=0; l<n_templates; l++) template_background[i][n_templates]->Add(template_background[i][l]);
-    for (int k=0; k<2; k++) for (int i=0; i<2; i++) for (int l=0; l<n_templates; l++) roodset_signal[i][n_templates][k]->append(*(roodset_signal[i][l][k]));
-    for (int k=0; k<2; k++) for (int i=0; i<2; i++) for (int l=0; l<n_templates; l++) roodset_background[i][n_templates][k]->append(*(roodset_background[i][l][k]));
-    for (int i=0; i<2; i++) for (int l=0; l<n_templates; l++) hist2d_iso_ncand[i][n_templates]->Add(hist2d_iso_ncand[i][l]);
-
-
-    for (int i=0; i<2; i++) for (int l=0; l<n_templates+1; l++) template_signal[i][l]->Write();
-    for (int i=0; i<2; i++) for (int l=0; l<n_templates+1; l++) template_background[i][l]->Write();
-    for (int k=0; k<2; k++) for (int i=0; i<2; i++) for (int l=0; l<n_templates+1; l++) (roodset_signal[i][l][k])->Write();
-    for (int k=0; k<2; k++) for (int i=0; i<2; i++) for (int l=0; l<n_templates+1; l++) (roodset_background[i][l][k])->Write();
-    for (int i=0; i<2; i++) for (int l=0; l<n_templates+1; l++) hist2d_iso_ncand[i][l]->Write();
-
-
-    hist2d_singlecandet->Write();
-    hist2d_singlecandenergy->Write();
-    hist2d_singlecanddeta->Write();
-    hist2d_singlecanddphi->Write();
-    hist2d_singlecanddR->Write();
-    hist2d_coneet->Write();
-    hist2d_coneenergy->Write();
-
+    for (int k=0; k<2; k++) for (int i=0; i<2; i++) (roodset_signal[i][k])->Write();
+    for (int k=0; k<2; k++) for (int i=0; i<2; i++) (roodset_background[i][k])->Write();
 
   }
 
@@ -1413,21 +936,14 @@ void template_production::WriteOutput(const char* filename, const TString _dirna
   if (dodistribution) {
 
     for (std::vector<TString>::const_iterator diffvariable = diffvariables_list.begin(); diffvariable!=diffvariables_list.end(); diffvariable++){
-      for (int i=0; i<2; i++)
-	for (int j=0; j<n_templates; j++) {
-	  obs_hist_single[get_name_obs_single(i,n_templates)]->Add(obs_hist_single[get_name_obs_single(i,j)]);
-	}
       for (int i=0; i<3; i++)
 	for (int j=0; j<n_templates; j++) {
-	  obs_hist[get_name_obs(i,*diffvariable,n_templates)]->Add(obs_hist[get_name_obs(i,*diffvariable,j)]);
 	  obs_roodset[get_name_obs_roodset(i,*diffvariable,n_templates)]->append(*(obs_roodset[get_name_obs_roodset(i,*diffvariable,j)]));
 	}
     }
 
-    for (std::map<TString, TH1F*>::const_iterator it = obs_hist_single.begin(); it!=obs_hist_single.end(); it++) it->second->Write();
-    for (std::map<TString, TH2F*>::const_iterator it = obs_hist.begin(); it!=obs_hist.end(); it++) it->second->Write();
-    for (std::map<TString, TH1F*>::const_iterator it = obs_hist_distribution.begin(); it!=obs_hist_distribution.end(); it++) it->second->Write();
     for (std::map<TString, RooDataSet*>::const_iterator it = obs_roodset.begin(); it!=obs_roodset.end(); it++) (it->second)->Write();
+
     for (std::map<TString, TProfile*>::const_iterator it = true_purity.begin(); it!=true_purity.end(); it++) (it->second)->Write();
     for (std::map<TString, TH1F*>::const_iterator it = true_purity_isppevent.begin(); it!=true_purity_isppevent.end(); it++) (it->second)->Write();
     for (std::map<TString, TH1F*>::const_iterator it = true_purity_isnotppevent.begin(); it!=true_purity_isnotppevent.end(); it++) (it->second)->Write();
@@ -1441,29 +957,6 @@ void template_production::WriteOutput(const char* filename, const TString _dirna
 };
 
 
-TString template_production::get_name_obs_single(int region, int bin){
-  TString name_signal="obs_hist_single";
-  TString reg;
-  if (region==0) reg="EB"; else reg="EE";
-  TString t=Form("%s_%s_b%d",name_signal.Data(),reg.Data(),bin);
-  return t;
-};
-
-TString template_production::get_name_obs(int region, TString diffvariable, int bin){
-  TString name_signal="obs_hist";
-  TString reg;
-  if (region==0) reg="EBEB"; else if (region==1) reg="EBEE"; else if (region==2) reg="EEEE"; else if (region==3) reg="EEEB";
-  TString t=Form("%s_%s_%s_b%d",name_signal.Data(),reg.Data(),diffvariable.Data(),bin);
-  return t;
-};
-
-TString template_production::get_name_obs_distribution(int region, TString diffvariable){
-  TString name_signal="obs_hist_distribution";
-  TString reg;
-  if (region==0) reg="EBEB"; else if (region==1) reg="EBEE"; else if (region==2) reg="EEEE"; else if (region==3) reg="EEEB";
-  TString t=Form("%s_%s_%s",name_signal.Data(),reg.Data(),diffvariable.Data());
-  return t;
-};
 
 TString template_production::get_name_obs_roodset(int region, TString diffvariable, int bin){
   TString name_signal="obs_roodset";
@@ -1735,39 +1228,6 @@ float template_production::AbsDeltaPhi(double phi1, double phi2){
   return TMath::Abs(result);
 }
 
-//void template_production::InitializeNewPUReweighting(TString source, TString target){
-//
-//  TH1F *num;
-//  TH1D *num_;
-//  TH1F *den;
-//
-//  TFile *f1 = TFile::Open(target.Data(),"read");
-//  TFile *f2 = TFile::Open(source.Data(),"read");
-//
-//  f1->GetObject("pileup",num_);
-//  f2->GetObject("NumPU_noweight",den);
-//  
-//  num = new TH1F();
-//  num_->Copy(*num);
-//
-//  num->Sumw2(); num->Scale(1.0/num->Integral());
-//  den->Sumw2(); den->Scale(1.0/den->Integral());
-//
-//  num->Divide(den);
-//
-//  histo_pu_rew = num;
-//  purew_initialized = 1;
-//
-//  std::cout << "WARNING: OVERWRITING OLD PU WEIGHTS WITH NEW REWEIGHTING" << std::endl;
-//
-//  return;
-//
-//};
-//
-//float template_production::FindNewPUWeight(int npu){
-//  if (!purew_initialized) return -999;
-//  return histo_pu_rew->GetBinContent(histo_pu_rew->FindBin(npu));
-//};
 
 #endif // #ifdef template_production_cxx
 

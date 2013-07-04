@@ -7,20 +7,7 @@ using namespace std;
 
 void template_production::Loop(int maxevents)
 {
-  //     This is the loop skeleton where:
-  //    jentry is the global entry number in the chain
-  //    ientry is the entry number in the current Tree
-  //  Note that the argument to GetEntry must be:
-  //    jentry for TChain::GetEntry
-  //    ientry for TTree::GetEntry and TBranch::GetEntry
-  //
-  //       To read only selected branches, Insert statements like:
-  // METHOD1:
-  //    fChain->SetBranchStatus("*",0);  // disable all branches
-  //    fChain->SetBranchStatus("branchname",1);  // activate branchname
-  // METHOD2: replace line
-  //    fChain->GetEntry(jentry);       //read all branches
-  //by  b_branchname->GetEntry(ientry); //read only this branch
+
   if (fChain == 0) return;
   if (!initialized){
     std::cout << "Not initialized! Call Setup() first." << std::endl;
@@ -32,8 +19,6 @@ void template_production::Loop(int maxevents)
   int limit_entries = maxevents;
   //int limit_entries = 1e+4;
   //int limit_entries = -1;
-
-
 
 
   Long64_t nbytes = 0, nb = 0;
@@ -88,8 +73,6 @@ void template_production::Loop(int maxevents)
     Int_t reg_lead;
     Int_t reg_trail;
 
-    // categorization:
-    // templates 0:EB 1:EE (only EBEB and EEEE events used)
     // dataset 0:EBEB 3/4->1:EBEE 2:EEEE
 
     if (fabs(pholead_SCeta)<1.4442 && fabs(photrail_SCeta)<1.4442) {
@@ -113,8 +96,6 @@ void template_production::Loop(int maxevents)
       reg_trail=0;
     }
     else std::cout << "We have a problem here!!!" << std::endl;
-
-    //    std::cout << event_ok_for_dataset << " " << fabs(pholead_SCeta) << " " << fabs(photrail_SCeta) << std::endl;
 
 
 //    if (differentialvariable=="photoniso"){
@@ -183,18 +164,7 @@ void template_production::Loop(int maxevents)
 	e_recalc+=e;
 	number_recalc++;
 
-	//	hist2d_singlecandet->Fill(et,eta,weight*ptweight_lead);
-	//	hist2d_singlecandenergy->Fill(e,eta,weight*ptweight_lead);
-	//	hist2d_singlecandet->Fill(et/pholead_pt,eta,weight*ptweight_lead);
-	//	hist2d_singlecandenergy->Fill(e/pholead_energy,eta,weight*ptweight_lead);
-	//	hist2d_singlecanddeta->Fill(deta,eta,weight*ptweight_lead);
-	//	hist2d_singlecanddphi->Fill(dphi,eta,weight*ptweight_lead);
-	//	hist2d_singlecanddR->Fill(dR,eta,weight*ptweight_lead);
       }
-
-//      hist2d_coneet->Fill(et_recalc,fabs(pholead_SCeta),weight*ptweight_lead);
-//      hist2d_coneenergy->Fill(e_recalc,fabs(pholead_SCeta),weight*ptweight_lead);
-//      hist2d_iso_ncand[reg_lead][bin_lead]->Fill(et_recalc,number_recalc,weight*ptweight_lead);
 
       pholead_outvar=et_recalc;
 
@@ -235,7 +205,6 @@ void template_production::Loop(int maxevents)
 
       }
 
-
       photrail_outvar=et_recalc;
 
       if (printout) std::cout << "---" << std::endl;
@@ -245,23 +214,10 @@ void template_production::Loop(int maxevents)
     roorho->setVal(event_rho);
     roosigma->setVal(event_sigma);
 
-    Int_t bin_lead = Choose_bin_eta(pholead_SCeta,reg_lead);
-    Int_t bin_trail = dodistribution ? Choose_bin_eta(photrail_SCeta,reg_trail) : -999;
-
-    //    std::cout << pholead_outvar << " " << photrail_outvar << std::endl;
-    
     pholead_outvar-=getpuenergy(reg_lead,pholead_SCeta);
     if (dodistribution) photrail_outvar-=getpuenergy(reg_trail,photrail_SCeta);
     if (do2ptemplate || do1p1ftemplate || do2ftemplate) photrail_outvar-=getpuenergy(reg_trail,photrail_SCeta);
     
-
-//    float scale_lead = 1;
-//    float scale_trail = 1;
-//    if (mode=="muon") {scale_lead = 1.066;} // not using trail here
-//    else if (differentialvariable=="chargediso") {scale_lead = 1+2.5e-3; scale_trail=1+2.5e-3;}
-//    else if (differentialvariable=="photoniso") {scale_lead = pholead_scareaSF; scale_trail = photrail_scareaSF;}
-//    pholead_outvar/=scale_lead;
-//    photrail_outvar/=scale_trail;
 
     if (recalc_lead){
       if (pholead_outvar<-100) std::cout << "PROBLEM WITH ISOLATION CALCULATION!!!" << std::endl;
@@ -278,23 +234,7 @@ void template_production::Loop(int maxevents)
       if (photrail_outvar>=rightrange) photrail_outvar=rightrange-1e-5; // overflow in last bin 
     }
 
-//    if (pholead_outvar<-10 || photrail_outvar<-10) std::cout << "PROBLEM WITH ISOLATION CALCULATION!!!" << std::endl;
-//    if (pholead_outvar<leftrange) pholead_outvar=leftrange;
-//    if (photrail_outvar<leftrange) photrail_outvar=leftrange;
-//    if (pholead_outvar>=rightrange) pholead_outvar=rightrange-1e-5; // overflow in last bin
-//    if (photrail_outvar>=rightrange) photrail_outvar=rightrange-1e-5; // overflow in last bin
-//    if (pholead_outvar<leftrange)   continue;
-//    if (pholead_outvar>=rightrange) continue;
-//    if (dodistribution||do2dtemplate){
-//      if (photrail_outvar<leftrange)  continue;
-//      if (photrail_outvar>=rightrange)continue;
-//    }
-
-
-//    if (purew_initialized) event_weight=FindNewPUWeight(event_nPU);
     Float_t weight=event_luminormfactor*event_Kfactor*event_weight;
-    float ptweight_lead = 1;
-    float ptweight_trail = 1;
 
     if (mode=="standard_2frag" || mode=="2pgen_2frag" || mode=="1p1fbothgen_2frag" || mode=="1pgen1fside_2frag") {
       if (pholead_PhoMCmatchexitcode==1 && pholead_GenPhotonIsoDR04<5) weight*=2;
@@ -304,24 +244,9 @@ void template_production::Loop(int maxevents)
       if (pholead_PhoMCmatchexitcode==1 && pholead_GenPhotonIsoDR04<5) weight*=2;
     }
 
-//    if (do_pt_reweighting) ptweight_lead*=FindPtWeight(pholead_pt,pholead_SCeta);
-//    if (do_eta_reweighting) ptweight_lead*=FindEtaWeight(pholead_SCeta);
-//    if (do_pt_reweighting) ptweight_trail*=FindPtWeight(photrail_pt,photrail_SCeta);
-//    if (do_eta_reweighting) ptweight_trail*=FindEtaWeight(photrail_SCeta);
-//
-//    if (do_pt_eta_reweighting) {
-//      ptweight_lead*=FindPtEtaWeight(pholead_pt,pholead_SCeta);
-//      ptweight_trail*=FindPtEtaWeight(photrail_pt,photrail_SCeta);
-//    }
-//
-
-    histo_pu_nvtx->Fill(event_nPU,event_nRecVtx,weight);
-
-
     if (dosignaltemplate||dobackgroundtemplate){
 
       if (dosignaltemplate){
-	template_signal[reg_lead][bin_lead]->Fill(pholead_outvar,weight*ptweight_lead);
 	roovar1->setVal(pholead_outvar);
 	roovar2->setVal(pholead_outvar);
 	roopt1->setVal(pholead_pt);
@@ -330,18 +255,12 @@ void template_production::Loop(int maxevents)
 	roosieie2->setVal(pholead_sieie);
 	rooeta1->setVal(fabs(pholead_SCeta));
 	rooeta2->setVal(fabs(pholead_SCeta));
-	rooweight->setVal(weight*ptweight_lead);
-	roodset_signal[reg_lead][bin_lead][0]->add(RooArgList(*roovar1,*roopt1,*roosieie1,*rooeta1,*roorho,*roosigma),weight*ptweight_lead);
-	roodset_signal[reg_lead][bin_lead][1]->add(RooArgList(*roovar2,*roopt2,*roosieie2,*rooeta2,*roorho,*roosigma),weight*ptweight_lead);
-	histo_pt[reg_lead]->Fill(pholead_pt,weight*ptweight_lead);
-	histo_eta->Fill(fabs(pholead_SCeta),weight*ptweight_lead);
-	histo_pt_eta->Fill(pholead_pt,fabs(pholead_SCeta),weight*ptweight_lead);
-	histo_rho_sigma->Fill(event_rho,event_sigma,weight*ptweight_lead);
-	//	std::cout << weight << " " << weight*ptweight_lead << std::endl;
+	rooweight->setVal(weight);
+	roodset_signal[reg_lead][0]->add(RooArgList(*roovar1,*roopt1,*roosieie1,*rooeta1,*roorho,*roosigma),weight);
+	roodset_signal[reg_lead][1]->add(RooArgList(*roovar2,*roopt2,*roosieie2,*rooeta2,*roorho,*roosigma),weight);
       }
       
       if (dobackgroundtemplate){
-	  template_background[reg_lead][bin_lead]->Fill(pholead_outvar,weight*ptweight_lead);
 	  roovar1->setVal(pholead_outvar);
 	  roovar2->setVal(pholead_outvar); 
 	  roopt1->setVal(pholead_pt);
@@ -350,13 +269,9 @@ void template_production::Loop(int maxevents)
 	  roosieie2->setVal(pholead_sieie);
 	  rooeta1->setVal(fabs(pholead_SCeta));
 	  rooeta2->setVal(fabs(pholead_SCeta));
-	  rooweight->setVal(weight*ptweight_lead);
-	  roodset_background[reg_lead][bin_lead][0]->add(RooArgList(*roovar1,*roopt1,*roosieie1,*rooeta1,*roorho,*roosigma),weight*ptweight_lead);
-	  roodset_background[reg_lead][bin_lead][1]->add(RooArgList(*roovar2,*roopt2,*roosieie2,*rooeta2,*roorho,*roosigma),weight*ptweight_lead);
-	  histo_pt[reg_lead]->Fill(pholead_pt,weight*ptweight_lead);
-	  histo_eta->Fill(fabs(pholead_SCeta),weight*ptweight_lead);
-	  histo_pt_eta->Fill(pholead_pt,fabs(pholead_SCeta),weight*ptweight_lead);
-	  histo_rho_sigma->Fill(event_rho,event_sigma,weight*ptweight_lead);
+	  rooweight->setVal(weight);
+	  roodset_background[reg_lead][0]->add(RooArgList(*roovar1,*roopt1,*roosieie1,*rooeta1,*roorho,*roosigma),weight);
+	  roodset_background[reg_lead][1]->add(RooArgList(*roovar2,*roopt2,*roosieie2,*rooeta2,*roorho,*roosigma),weight);
       }
       
     }
@@ -407,14 +322,10 @@ void template_production::Loop(int maxevents)
 	args.add(RooArgSet(*roorho,*roosigma));
 	template2d_roodset[get_name_template2d_roodset(event_ok_for_dataset_local,sigorbkg)]->add(args,weight);
 
-    }
+    } // end if do2dtemplate
 
     if (dodistribution && event_ok_for_dataset>-1){
 
-      obs_hist_single[get_name_obs_single(reg_lead,bin_lead)]->Fill(pholead_outvar,weight*ptweight_lead);
-      obs_hist_single[get_name_obs_single(reg_trail,bin_trail)]->Fill(photrail_outvar,weight*ptweight_trail);
-
-    
       for (std::vector<TString>::const_iterator diffvariable = diffvariables_list.begin(); diffvariable!=diffvariables_list.end(); diffvariable++){
 
 	Int_t bin_couple = -999;
@@ -425,7 +336,7 @@ void template_production::Loop(int maxevents)
 	if (*diffvariable==TString("invmass")) {
 	  bin_couple = Choose_bin_invmass(dipho_mgg_photon,event_ok_for_dataset_local);
 	  value_diffvariable=dipho_mgg_photon;
-	  invmass_vector.push_back(value_diffvariable);
+	  //	  invmass_vector.push_back(value_diffvariable);
 	}
 	if (*diffvariable==TString("diphotonpt")){
 	  float px = pholead_px+photrail_px;
@@ -433,7 +344,7 @@ void template_production::Loop(int maxevents)
 	  float pt = sqrt(px*px+py*py);
 	  bin_couple = Choose_bin_diphotonpt(pt,event_ok_for_dataset_local);
 	  value_diffvariable=pt;
-	  diphotonpt_vector.push_back(value_diffvariable);
+	  //	  diphotonpt_vector.push_back(value_diffvariable);
 	}
 	if (*diffvariable==TString("costhetastar")){
 	  TLorentzVector pho1(pholead_px,pholead_py,pholead_pz,pholead_energy);
@@ -514,9 +425,6 @@ void template_production::Loop(int maxevents)
 	  temp=etain1; etain1=etain2; etain2=temp;
 	}
       
-
-	obs_hist_distribution[get_name_obs_distribution(event_ok_for_dataset_local,*diffvariable)]->Fill(value_diffvariable,weight);
-	obs_hist[get_name_obs(event_ok_for_dataset_local,*diffvariable,bin_couple)]->Fill(in1,in2,weight);
 	roovar1->setVal(in1);
 	roovar2->setVal(in2);
 	roopt1->setVal(ptin1);
@@ -538,43 +446,24 @@ void template_production::Loop(int maxevents)
 	  else true_purity_isnotppevent[get_name_true_purity_isnotpp(event_ok_for_dataset_local,*diffvariable)]->Fill(value_diffvariable,weight);
 	}
 
-//	if (!isdata) { SISTEMARE;
-//	  if (leadistruesig && trailistruesig) weights_2p[event_ok_for_dataset_local][*diffvariable][bin_couple]+=weight;
-//	  else if (!leadistruesig && !trailistruesig) weights_2f[event_ok_for_dataset_local][*diffvariable][bin_couple]+=weight;
-//	  else weights_1p1f[event_ok_for_dataset_local][*diffvariable][bin_couple]+=weight;
-//	}
 
       }
       
-    }
+    } // end if dodistribution
     
 
 
 
   } // end event loop
-  std::cout << "ended event loop" << std::endl;
+  std::cout << "Event loop finished" << std::endl;
 
-//  // gen-level purities printout
-//  for (int k=0; k<3; k++){
-//    if (k==0) std::cout << "EBEB" << std::endl;
-//    if (k==1) std::cout << "EBEE" << std::endl;
-//    if (k==2) std::cout << "EEEE" << std::endl;
-//    for (std::vector<TString>::const_iterator diffvariable = diffvariables_list.begin(); diffvariable!=diffvariables_list.end(); diffvariable++){
-//      std::cout << diffvariable->Data() << std::endl;
-//      for (int i=0; i<n_bins; i++) {
-//	if (weights_2p[k][*diffvariable][i]==0) continue;
-//	std::cout << "bin " << i << " " << weights_2p[k][*diffvariable][i] << " " << weights_1p1f[k][*diffvariable][i] << " " << weights_2f[k][*diffvariable][i] << std::endl;
-//	std::cout << "bin " << i << " " << weights_2p[k][*diffvariable][i]/(weights_2p[k][*diffvariable][i]+weights_1p1f[k][*diffvariable][i]+weights_2f[k][*diffvariable][i]) << std::endl;
-//      }
-//    }
+
+//  if (invmass_vector.size()>0){
+//    std::sort(invmass_vector.begin(),invmass_vector.end());
+//    std::sort(diphotonpt_vector.begin(),diphotonpt_vector.end());
+//    for (int i=1; i<10; i++) std::cout << "invmass" << invmass_vector.at(invmass_vector.size()-i) << std::endl;
+//    for (int i=1; i<10; i++) std::cout << "diphotonpt" << diphotonpt_vector.at(diphotonpt_vector.size()-i) << std::endl;
 //  }
-
-  if (invmass_vector.size()>0){
-    std::sort(invmass_vector.begin(),invmass_vector.end());
-    std::sort(diphotonpt_vector.begin(),diphotonpt_vector.end());
-    for (int i=1; i<10; i++) std::cout << "invmass" << invmass_vector.at(invmass_vector.size()-i) << std::endl;
-    for (int i=1; i<10; i++) std::cout << "diphotonpt" << diphotonpt_vector.at(diphotonpt_vector.size()-i) << std::endl;
-  }
 
 };
 
@@ -650,14 +539,10 @@ void gen_templates(TString filename="input.root", TString mode="", bool isdata=1
   template_production *temp = new template_production(t);
   temp->Setup(isdata,mode,differentialvariable);
 
-  temp->SetNoPtReweighting();
-  temp->SetNoEtaReweighting();
-  temp->SetNoPtEtaReweighting();
-
   if (maxevents>0) temp->Loop(maxevents); else temp->Loop();
-  std::cout << "exited from event loop" << std::endl;
+  std::cout << "Exited from event loop" << std::endl;
   temp->WriteOutput(outfile,treename_chosen.Data());
-  std::cout << "written output" << std::endl;
+  std::cout << "Written output" << std::endl;
 
   file->Close();
 
@@ -758,10 +643,6 @@ std::vector<std::vector<TProfile*> > template_production::GetPUScaling(bool doEB
       std::cout << "Processing entry " << jentry << std::endl;
     }
 
-    //    bool isbarrel = (fabs(pholead_SCeta)<1.4442);
-
-    //    event_weight = FindNewPUWeight(event_nPU);
-
 
     float pholead_phoiso=-999;
     { // recalc phoiso w/cleaning
@@ -774,8 +655,8 @@ std::vector<std::vector<TProfile*> > template_production::GetPUScaling(bool doEB
 
 	float et=pholead_photonpfcandets[i];
 	float e=pholead_photonpfcandenergies[i];
-//	float deta=pholead_photonpfcanddetas[i];
-//	float dphi=pholead_photonpfcanddphis[i];
+	//	float deta=pholead_photonpfcanddetas[i];
+	//	float dphi=pholead_photonpfcanddphis[i];
 	//	float dR=sqrt(deta*deta+dphi*dphi);
 	float eta=fabs(TMath::ACosH(e/et));
 
@@ -826,14 +707,8 @@ std::vector<std::vector<TProfile*> > template_production::GetPUScaling(bool doEB
     Int_t bin_lead = Choose_bin_eta(pholead_SCeta,(doEB) ? 0 : 1);
 
     prof_iso[bin_lead]->Fill(event_nRecVtx,pholead_outvar,weight);
-
-    
     prof_iso_pu[bin_lead]->Fill(event_nRecVtx,pholead_outvar,weight);
-
-
     prof_rho[bin_lead]->Fill(event_nRecVtx,event_rho*3.14*0.4*0.4,weight);
-
-    
 
   }
 
