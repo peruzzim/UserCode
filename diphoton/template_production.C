@@ -320,6 +320,8 @@ void template_production::Loop(int maxevents)
 	rooweight->setVal(weight);
 	RooArgSet args(*roovar1,*roovar2,*roopt1,*roopt2,*roosieie1,*roosieie2,*rooeta1,*rooeta2);
 	args.add(RooArgSet(*roorho,*roosigma));
+	FillDiffVariables(); // WARNING: WORKS ONLY IF DIFF VARIABLES ARE NOT SENSITIVE TO SWAPPING 1 WITH 2
+	args.add(*rooargset_diffvariables);
 	template2d_roodset[get_name_template2d_roodset(event_ok_for_dataset_local,sigorbkg)]->add(args,weight);
 
     } // end if do2dtemplate
@@ -333,68 +335,29 @@ void template_production::Loop(int maxevents)
 	float value_diffvariable;
 	int event_ok_for_dataset_local = event_ok_for_dataset;
 
+	FillDiffVariables(); // WARNING: WORKS ONLY IF DIFF VARIABLES ARE NOT SENSITIVE TO SWAPPING 1 WITH 2
+
 	if (*diffvariable==TString("invmass")) {
-	  bin_couple = Choose_bin_invmass(dipho_mgg_photon,event_ok_for_dataset_local);
-	  value_diffvariable=dipho_mgg_photon;
+	  value_diffvariable=roovar_invmass->getVal();
+	  bin_couple = Choose_bin_invmass(value_diffvariable,event_ok_for_dataset_local);
 	  //	  invmass_vector.push_back(value_diffvariable);
 	}
 	if (*diffvariable==TString("diphotonpt")){
-	  float px = pholead_px+photrail_px;
-	  float py = pholead_py+photrail_py;
-	  float pt = sqrt(px*px+py*py);
-	  bin_couple = Choose_bin_diphotonpt(pt,event_ok_for_dataset_local);
-	  value_diffvariable=pt;
+	  value_diffvariable=roovar_diphotonpt->getVal();
+	  bin_couple = Choose_bin_diphotonpt(value_diffvariable,event_ok_for_dataset_local);
 	  //	  diphotonpt_vector.push_back(value_diffvariable);
 	}
 	if (*diffvariable==TString("costhetastar")){
-	  TLorentzVector pho1(pholead_px,pholead_py,pholead_pz,pholead_energy);
-	  TLorentzVector pho2(photrail_px,photrail_py,photrail_pz,photrail_energy);
-
-// COS THETASTAR HX
-//	  TVector3 boost = (pho1+pho2).BoostVector();
-//	  TLorentzVector boostedpho1 = pho1;
-//	  boostedpho1.Boost(-boost);
-//	  float thetastar1 = boostedpho1.Angle(boost);
-//	  bin_couple = Choose_bin_costhetastar(fabs(TMath::Cos(thetastar1)),event_ok_for_dataset_local);
-//	  value_diffvariable=fabs(TMath::Cos(thetastar1));
-
-// DELTA ETA
-//	  value_diffvariable = fabs(TMath::TanH((pho1.Rapidity()-pho2.Rapidity())/2));
-//	  bin_couple = Choose_bin_costhetastar(value_diffvariable,event_ok_for_dataset_local);
-
-// COS THETASTAR CS
-	  TLorentzVector b1,b2,diphoton;
-	  b1.SetPx(0); b1.SetPy(0); b1.SetPz( 3500); b1.SetE(3500);
-	  b2.SetPx(0); b2.SetPy(0); b2.SetPz(-3500); b2.SetE(3500);
-	  TLorentzVector boostedpho1 = pho1; 
-	  TLorentzVector boostedpho2 = pho2; 
-	  TLorentzVector boostedb1 = b1; 
-	  TLorentzVector boostedb2 = b2; 
-	  TVector3 boost = (pho1+pho2).BoostVector();
-	  boostedpho1.Boost(-boost);
-	  boostedpho2.Boost(-boost);
-	  boostedb1.Boost(-boost);
-	  boostedb2.Boost(-boost);
-	  TVector3 direction_cs = (boostedb1.Vect().Unit()-boostedb2.Vect().Unit()).Unit();
-	  value_diffvariable = fabs(TMath::Cos(direction_cs.Angle(boostedpho1.Vect())));
+	  value_diffvariable = roovar_costhetastar->getVal();
 	  bin_couple = Choose_bin_costhetastar(value_diffvariable,event_ok_for_dataset_local); 
-
 	}
 	if (*diffvariable==TString("dphi")){
-	  float phi1 = pholead_SCphi;
-	  float phi2 = photrail_SCphi;
-	  float dphi = AbsDeltaPhi(phi1,phi2);
-	  bin_couple = Choose_bin_dphi(dphi,event_ok_for_dataset_local);
-	  value_diffvariable=dphi;
+	  value_diffvariable=roovar_dphi->getVal();
+	  bin_couple = Choose_bin_dphi(value_diffvariable,event_ok_for_dataset_local);
 	}
 	if (*diffvariable==TString("dR")){
-	  float phi1 = pholead_SCphi;
-	  float phi2 = photrail_SCphi;
-	  float dphi = AbsDeltaPhi(phi1,phi2);
-	  float deta = pholead_SCeta-photrail_SCeta;
-	  float dR = sqrt(deta*deta+dphi*dphi);
-	  bin_couple = Choose_bin_dR(dR,event_ok_for_dataset_local);
-	  value_diffvariable=dR;
+	  value_diffvariable=roovar_dR->getVal();
+	  bin_couple = Choose_bin_dR(value_diffvariable,event_ok_for_dataset_local);
 	}
       
 	if (bin_couple<0) continue;
@@ -436,6 +399,7 @@ void template_production::Loop(int maxevents)
 	rooweight->setVal(weight);
 	RooArgSet args(*roovar1,*roovar2,*roopt1,*roopt2,*roosieie1,*roosieie2,*rooeta1,*rooeta2);
 	args.add(RooArgSet(*roorho,*roosigma));
+	args.add(*rooargset_diffvariables);
 	obs_roodset[get_name_obs_roodset(event_ok_for_dataset_local,*diffvariable,bin_couple)]->add(args,weight);
 
 	if (!isdata){

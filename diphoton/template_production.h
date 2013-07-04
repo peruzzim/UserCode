@@ -430,6 +430,14 @@ public :
   RooRealVar *roosigma;
   RooRealVar *rooweight;
 
+  RooRealVar *roovar_invmass;
+  RooRealVar *roovar_diphotonpt;
+  RooRealVar *roovar_costhetastar;
+  RooRealVar *roovar_dphi;
+  RooRealVar *roovar_dR;
+
+  RooArgSet *rooargset_diffvariables;
+
   RooDataSet *roodset_signal[2][2];
   RooDataSet *roodset_background[2][2];
 
@@ -466,6 +474,8 @@ public :
    Bool_t isdata;
 
    TString mode;
+
+   void FillDiffVariables();
 
    Bool_t dosignaltemplate;
    Bool_t dobackgroundtemplate;
@@ -543,6 +553,13 @@ void template_production::Setup(Bool_t _isdata, TString _mode, TString _differen
   roosigma = new RooRealVar("roosigma","roosigma",0,50);
   rooweight = new RooRealVar("rooweight","rooweight",0,5);
 
+  roovar_invmass = new RooRealVar("roovar_invmass","roovar_invmass",binsdef_diphoton_invmass_EBEB[0],binsdef_diphoton_invmass_EBEB[n_templates_invmass_EBEB]);
+  roovar_diphotonpt = new RooRealVar("roovar_diphotonpt","roovar_diphotonpt",binsdef_diphoton_diphotonpt_EBEB[0],binsdef_diphoton_diphotonpt_EBEB[n_templates_diphotonpt_EBEB]);
+  roovar_costhetastar = new RooRealVar("roovar_costhetastar","roovar_costhetastar",binsdef_diphoton_costhetastar_EBEB[0],binsdef_diphoton_costhetastar_EBEB[n_templates_costhetastar_EBEB]);
+  roovar_dphi = new RooRealVar("roovar_dphi","roovar_dphi",binsdef_diphoton_dphi_EBEB[0],binsdef_diphoton_dphi_EBEB[n_templates_dphi_EBEB]);
+  roovar_dR = new RooRealVar("roovar_dR","roovar_dR",binsdef_diphoton_dR_EBEB[0],binsdef_diphoton_dR_EBEB[n_templates_dR_EBEB]);
+
+  rooargset_diffvariables = new RooArgSet(*roovar_invmass,*roovar_diphotonpt,*roovar_costhetastar,*roovar_dphi,*roovar_dR);
 
   for (int i=0; i<2; i++){
       TString name_signal="signal";
@@ -573,6 +590,7 @@ void template_production::Setup(Bool_t _isdata, TString _mode, TString _differen
 	TString t2=Form("obs_roodset_%s_%s_b%d",reg.Data(),diffvariable->Data(),j);
 	RooArgSet args(*roovar1,*roovar2,*roopt1,*roosieie1,*rooeta1,*roopt2,*roosieie2,*rooeta2);
 	args.add(RooArgSet(*roorho,*roosigma,*rooweight));
+	args.add(*rooargset_diffvariables);
 	obs_roodset[t2] = new RooDataSet(t2.Data(),t2.Data(),args,WeightVar(*rooweight));
       }
 
@@ -644,6 +662,7 @@ void template_production::Setup(Bool_t _isdata, TString _mode, TString _differen
       TString t2 = get_name_template2d_roodset(i,tobuild[j]);
       RooArgSet args(*roovar1,*roovar2,*roopt1,*roosieie1,*rooeta1,*roopt2,*roosieie2,*rooeta2);
       args.add(RooArgSet(*roorho,*roosigma,*rooweight));
+      args.add(*rooargset_diffvariables);
       template2d_roodset[t2]= new RooDataSet(t2.Data(),t2.Data(),args,WeightVar(*rooweight));
     }
   
@@ -918,6 +937,12 @@ void template_production::WriteOutput(const char* filename, const TString _dirna
   roosigma->Write();
   rooweight->Write();
 
+  roovar_invmass->Write();
+  roovar_diphotonpt->Write();
+  roovar_costhetastar->Write();
+  roovar_dphi->Write();
+  roovar_dR->Write();
+  
 
   if (dosignaltemplate || dobackgroundtemplate) {
 
@@ -1228,6 +1253,65 @@ float template_production::AbsDeltaPhi(double phi1, double phi2){
   return TMath::Abs(result);
 }
 
+void template_production::FillDiffVariables(){
+
+  roovar_invmass->setVal(dipho_mgg_photon);
+  {
+    float px = pholead_px+photrail_px;
+    float py = pholead_py+photrail_py;
+    float pt = sqrt(px*px+py*py);    
+    roovar_diphotonpt->setVal(pt);
+  }
+  {
+    TLorentzVector pho1(pholead_px,pholead_py,pholead_pz,pholead_energy);
+    TLorentzVector pho2(photrail_px,photrail_py,photrail_pz,photrail_energy);
+    
+    // COS THETASTAR HX
+    //	  TVector3 boost = (pho1+pho2).BoostVector();
+    //	  TLorentzVector boostedpho1 = pho1;
+    //	  boostedpho1.Boost(-boost);
+    //	  float thetastar1 = boostedpho1.Angle(boost);
+    //	  bin_couple = Choose_bin_costhetastar(fabs(TMath::Cos(thetastar1)),event_ok_for_dataset_local);
+    //	  value_diffvariable=fabs(TMath::Cos(thetastar1));
+    
+    // DELTA ETA
+    //	  value_diffvariable = fabs(TMath::TanH((pho1.Rapidity()-pho2.Rapidity())/2));
+    //	  bin_couple = Choose_bin_costhetastar(value_diffvariable,event_ok_for_dataset_local);
+    
+    // COS THETASTAR CS
+    TLorentzVector b1,b2,diphoton;
+    b1.SetPx(0); b1.SetPy(0); b1.SetPz( 3500); b1.SetE(3500);
+    b2.SetPx(0); b2.SetPy(0); b2.SetPz(-3500); b2.SetE(3500);
+    TLorentzVector boostedpho1 = pho1; 
+    TLorentzVector boostedpho2 = pho2; 
+    TLorentzVector boostedb1 = b1; 
+    TLorentzVector boostedb2 = b2; 
+    TVector3 boost = (pho1+pho2).BoostVector();
+    boostedpho1.Boost(-boost);
+    boostedpho2.Boost(-boost);
+    boostedb1.Boost(-boost);
+    boostedb2.Boost(-boost);
+    TVector3 direction_cs = (boostedb1.Vect().Unit()-boostedb2.Vect().Unit()).Unit();
+    roovar_costhetastar->setVal( fabs(TMath::Cos(direction_cs.Angle(boostedpho1.Vect()))) );
+  }
+  {
+    float phi1 = pholead_SCphi;
+    float phi2 = photrail_SCphi;
+    float dphi = AbsDeltaPhi(phi1,phi2);
+    roovar_dphi->setVal(dphi);
+  }
+  {
+    float phi1 = pholead_SCphi;
+    float phi2 = photrail_SCphi;
+    float dphi = AbsDeltaPhi(phi1,phi2);
+    float deta = pholead_SCeta-photrail_SCeta;
+    float dR = sqrt(deta*deta+dphi*dphi);
+    roovar_dR->setVal(dR);
+  }
+  
+  return;
+
+};
 
 #endif // #ifdef template_production_cxx
 
