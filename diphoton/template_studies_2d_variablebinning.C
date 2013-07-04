@@ -2457,6 +2457,7 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
     float rel_error_on_purity_pp = events_dy*purity_dy_err*scale_dy/(pp*tot_events/eff_overflow/intlumi-events_dy*purity_dy*scale_dy);
 
     std::cout << "bin " << bin << std::endl;
+    std::cout << "Data/MC DY " << unfoldingdy_data/unfoldingdy_mc << std::endl;
     std::cout << "UNFOLDING DY FACTOR " << scale_dy << std::endl;
     std::cout << unfoldingdy_data << " " << unfoldingdy_mc << std::endl;
     std::cout << "SUBTRACTION " << events_dy*purity_dy*scale_dy/(pp*tot_events/eff_overflow/intlumi) << std::endl;
@@ -3774,7 +3775,8 @@ void plot_datasets_axis1(std::vector<RooDataSet*> dset, TString outname, legend_
   TLatex a;
   a.SetNDC();
   a.SetTextSize(0.03);
-  a.DrawLatex(0.63,0.6,"#splitline{CMS Preliminary}{#sqrt{s} = 7 TeV L = 5.0 fb^{-1}}");
+  if (legendup)  a.DrawLatex(0.63,0.6,"#splitline{CMS Preliminary}{#sqrt{s} = 7 TeV L = 5.0 fb^{-1}}");
+  else a.DrawLatex(0.63,0.85,"#splitline{CMS Preliminary}{#sqrt{s} = 7 TeV L = 5.0 fb^{-1}}");
 
   comp->SaveAs(Form("%s.%s",outname.Data(),"root"));
   comp->SaveAs(Form("%s.%s",outname.Data(),"pdf"));

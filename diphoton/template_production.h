@@ -460,6 +460,8 @@ public :
    std::map<TString, RooDataSet*> template2d_roodset;
 
    std::map<TString, TProfile*> true_purity;
+   std::map<TString, TH1F*> true_purity_isppevent;
+   std::map<TString, TH1F*> true_purity_isnotppevent;
 
    std::map<TString, std::vector<float> > weights_2p[3];
    std::map<TString, std::vector<float> > weights_2f[3];
@@ -470,6 +472,8 @@ public :
    TString get_name_obs_distribution(int region, TString diffvariable);
    TString get_name_obs_roodset(int region, TString diffvariable, int bin);
    TString get_name_true_purity(int region, TString diffvariable);
+   TString get_name_true_purity_ispp(int region, TString diffvariable);
+   TString get_name_true_purity_isnotpp(int region, TString diffvariable);
    TString get_name_template2d_roodset(int region, TString sigorbkg);
 
    TH2F *hist2d_iso_ncand[2][n_templates+1];
@@ -783,8 +787,12 @@ void template_production::Setup(Bool_t _isdata, TString _mode, TString _differen
 
 
       TString t3=Form("true_purity_%s_%s",reg.Data(),diffvariable->Data());
-      std::cout << t3.Data() << " " << bins_to_run << std::endl;
       true_purity[t3] = new TProfile(t3.Data(),t3.Data(),bins_to_run,binsdef);
+      TString t3_ispp=Form("ispp_true_purity_%s_%s",reg.Data(),diffvariable->Data());
+      true_purity_isppevent[t3_ispp] = new TH1F(t3_ispp.Data(),t3_ispp.Data(),bins_to_run,binsdef);
+      TString t3_isnotpp=Form("isnotpp_true_purity_%s_%s",reg.Data(),diffvariable->Data());
+      true_purity_isnotppevent[t3_isnotpp] = new TH1F(t3_isnotpp.Data(),t3_isnotpp.Data(),bins_to_run,binsdef);
+
     }
 
   }
@@ -1412,6 +1420,8 @@ void template_production::WriteOutput(const char* filename, const TString _dirna
     for (std::map<TString, TH1F*>::const_iterator it = obs_hist_distribution.begin(); it!=obs_hist_distribution.end(); it++) it->second->Write();
     for (std::map<TString, RooDataSet*>::const_iterator it = obs_roodset.begin(); it!=obs_roodset.end(); it++) (it->second)->Write();
     for (std::map<TString, TProfile*>::const_iterator it = true_purity.begin(); it!=true_purity.end(); it++) (it->second)->Write();
+    for (std::map<TString, TH1F*>::const_iterator it = true_purity_isppevent.begin(); it!=true_purity_isppevent.end(); it++) (it->second)->Write();
+    for (std::map<TString, TH1F*>::const_iterator it = true_purity_isnotppevent.begin(); it!=true_purity_isnotppevent.end(); it++) (it->second)->Write();
 
   }
 
@@ -1456,6 +1466,22 @@ TString template_production::get_name_obs_roodset(int region, TString diffvariab
 
 TString template_production::get_name_true_purity(int region, TString diffvariable){
   TString name_signal="true_purity";
+  TString reg;
+  if (region==0) reg="EBEB"; else if (region==1) reg="EBEE"; else if (region==2) reg="EEEE"; else if (region==3) reg="EEEB";
+  TString t=Form("%s_%s_%s",name_signal.Data(),reg.Data(),diffvariable.Data());
+  return t;
+};
+
+TString template_production::get_name_true_purity_ispp(int region, TString diffvariable){
+  TString name_signal="ispp_true_purity";
+  TString reg;
+  if (region==0) reg="EBEB"; else if (region==1) reg="EBEE"; else if (region==2) reg="EEEE"; else if (region==3) reg="EEEB";
+  TString t=Form("%s_%s_%s",name_signal.Data(),reg.Data(),diffvariable.Data());
+  return t;
+};
+
+TString template_production::get_name_true_purity_isnotpp(int region, TString diffvariable){
+  TString name_signal="isnotpp_true_purity";
   TString reg;
   if (region==0) reg="EBEB"; else if (region==1) reg="EBEE"; else if (region==2) reg="EEEE"; else if (region==3) reg="EEEB";
   TString t=Form("%s_%s_%s",name_signal.Data(),reg.Data(),diffvariable.Data());
