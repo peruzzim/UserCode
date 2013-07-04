@@ -501,19 +501,19 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
   if (doxcheckstemplates) {
 
     TFile *fmctrue_s = new TFile("outphoton_allmc_sig.root","read");
-    fmctrue_s->GetObject(Form("mc_Tree_1Dsignal_template/roodset_signal_%s_b%d_rv1",s1.Data(),bin),dset_mctrue_s);
+    fmctrue_s->GetObject(Form("mc_Tree_1Dsignal_template/roodset_signal_%s_b%d_rv1",s1.Data(),n_bins),dset_mctrue_s);
     assert(dset_mctrue_s);
 
     TFile *fmcfrag_s = new TFile("outphoton_allmc_frag.root","read");
-    fmcfrag_s->GetObject(Form("mc_Tree_1Dsignal_template/roodset_signal_%s_b%d_rv1",s1.Data(),bin),dset_mcfrag_s);
+    fmcfrag_s->GetObject(Form("mc_Tree_1Dsignal_template/roodset_signal_%s_b%d_rv1",s1.Data(),n_bins),dset_mcfrag_s);
     assert(dset_mcfrag_s);
   
     TFile *fmcnofrag_s = new TFile("outphoton_allmc_nofrag.root","read");
-    fmcnofrag_s->GetObject(Form("mc_Tree_1Dsignal_template/roodset_signal_%s_b%d_rv1",s1.Data(),bin),dset_mcnofrag_s);
+    fmcnofrag_s->GetObject(Form("mc_Tree_1Dsignal_template/roodset_signal_%s_b%d_rv1",s1.Data(),n_bins),dset_mcnofrag_s);
     assert(dset_mcnofrag_s);
   
     TFile *fmcrcone_s = new TFile("outphoton_allmc_rcone.root","read");
-    fmcrcone_s->GetObject(Form("mc_Tree_1Drandomcone_template/roodset_signal_%s_b%d_rv1",s1.Data(),bin),dset_mcrcone_s);
+    fmcrcone_s->GetObject(Form("mc_Tree_1Drandomcone_template/roodset_signal_%s_b%d_rv1",s1.Data(),n_bins),dset_mcrcone_s);
     assert(dset_mcrcone_s);
   
     TFile *fzee_s = new TFile("outphoton_data_zee.root","read");
@@ -524,11 +524,11 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
     assert(dset_zee_s);
 
     TFile *fmctrue_b = new TFile("outphoton_allmc_bkg.root","read");
-    fmctrue_b->GetObject(Form("mc_Tree_1Dbackground_template/roodset_background_%s_b%d_rv1",s1.Data(),bin),dset_mctrue_b);
+    fmctrue_b->GetObject(Form("mc_Tree_1Dbackground_template/roodset_background_%s_b%d_rv1",s1.Data(),n_bins),dset_mctrue_b);
     assert(dset_mctrue_b);
 
     TFile *fmcrcone_b = new TFile("outphoton_allmc_sieiesideband.root","read");
-    fmcrcone_b->GetObject(Form("mc_Tree_1Dsideband_template/roodset_background_%s_b%d_rv1",s1.Data(),bin),dset_mcrcone_b);
+    fmcrcone_b->GetObject(Form("mc_Tree_1Dsideband_template/roodset_background_%s_b%d_rv1",s1.Data(),n_bins),dset_mcrcone_b);
     assert(dset_mcrcone_b);
   
     dset_mctrue_s = (RooDataSet*)(dset_mctrue_s->reduce(Name("dset_mctrue_s"),Cut(Form("roovar1<%f",rightrange-1e-5))));
@@ -2330,6 +2330,18 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
   TH1F *histo_bias_templateshapeMCfakedrivenEE = NULL;
   TH1F *histo_bias_templateshape2frag = NULL;
 
+  bool skipZsubtraction = skipsystematics;
+
+  skipZsubtraction = false; // DEBUG: force Z subtraciton on
+
+  if (!skipZsubtraction){
+    file_standardsel_dy = new TFile("outphoton_dy_standard.root");
+    assert(file_standardsel_dy);
+    file_pixelrevsel_dy_data = new TFile("outphoton_data_pixelrev.root");
+    assert(file_pixelrevsel_dy_data);
+    file_pixelrevsel_dy_mc = new TFile("outphoton_dy_pixelrev.root");
+    assert(file_pixelrevsel_dy_mc);    
+  }
 
   if (!skipsystematics){
     TFile *file_bias_purefitbias  = new TFile(Form("plots/histo_bias_purefitbias_%s_%s_allbins.root",diffvariable.Data(),splitting.Data()));
@@ -2338,12 +2350,6 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
     TFile *file_bias_templatestatistics  = new TFile(Form("plots/histo_bias_templatestatistics_%s_%s_allbins.root",diffvariable.Data(),splitting.Data()));
     file_bias_templatestatistics->GetObject("histo_bias_templatestatistics",histo_bias_templatestatistics);
     assert(histo_bias_templatestatistics);
-    file_standardsel_dy = new TFile("outphoton_dy_standard.root");
-    assert(file_standardsel_dy);
-    file_pixelrevsel_dy_data = new TFile("outphoton_data_pixelrev.root");
-    assert(file_pixelrevsel_dy_data);
-    file_pixelrevsel_dy_mc = new TFile("outphoton_dy_pixelrev.root");
-    assert(file_pixelrevsel_dy_mc);
     if (splitting!="EEEE"){
     TFile *file_bias_templateshapepromptEB = new TFile(Form("plots/histo_bias_templateshapeMCpromptdrivenEB_%s_%s_allbins.root",diffvariable.Data(),splitting.Data()));
     file_bias_templateshapepromptEB->GetObject("histo_bias_templateshapeMCpromptdrivenEB",histo_bias_templateshapeMCpromptdrivenEB);
@@ -2418,7 +2424,7 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
 
     //    std::cout << "start loop: " << std::endl;
 
-    float unfoldingdy_mc_all = (!skipsystematics) ? ((RooDataSet*)(file_pixelrevsel_dy_mc->Get(Form("mc_Tree_2DZee_pixelvetoreversed_selection/obs_roodset_%s_%s_b%d",splitting.Data(),diffvariable.Data(),n_bins))))->sumEntries() : 0;
+    float unfoldingdy_mc_all = (!skipZsubtraction) ? ((RooDataSet*)(file_pixelrevsel_dy_mc->Get(Form("mc_Tree_2DZee_pixelvetoreversed_selection/obs_roodset_%s_%s_b%d",splitting.Data(),diffvariable.Data(),n_bins))))->sumEntries() : 0;
 
   for (int bin=0; bin<bins_to_run; bin++) {
 
@@ -2435,20 +2441,18 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
     float tot_events = eventshisto->GetBinContent(bin+1);
     float eff_overflow = overflowremovaleffhisto->GetBinContent(bin+1);
 
-    if (!skipsystematics) assert((RooDataSet*)(file_standardsel_dy->Get(Form("mc_Tree_2Dstandard_selection/obs_roodset_%s_%s_b%d",splitting.Data(),diffvariable.Data(),bin))));
-    float events_dy = (!skipsystematics) ? ((RooDataSet*)(file_standardsel_dy->Get(Form("mc_Tree_2Dstandard_selection/obs_roodset_%s_%s_b%d",splitting.Data(),diffvariable.Data(),bin))))->sumEntries() : 0; // normalized to 1/fb, xsec normalized to 2475 
+    if (!skipZsubtraction) assert((RooDataSet*)(file_standardsel_dy->Get(Form("mc_Tree_2Dstandard_selection/obs_roodset_%s_%s_b%d",splitting.Data(),diffvariable.Data(),bin))));
+    float events_dy = (!skipZsubtraction) ? ((RooDataSet*)(file_standardsel_dy->Get(Form("mc_Tree_2Dstandard_selection/obs_roodset_%s_%s_b%d",splitting.Data(),diffvariable.Data(),bin))))->sumEntries() : 0; // normalized to 1/fb, xsec normalized to 2475 
 
-    float unfoldingdy_data = (!skipsystematics) ? ((RooDataSet*)(file_pixelrevsel_dy_data->Get(Form("data_Tree_2DZee_pixelvetoreversed_selection/obs_roodset_%s_%s_b%d",splitting.Data(),diffvariable.Data(),bin))))->sumEntries()/intlumi : 1;
-    float unfoldingdy_mc = (!skipsystematics) ? ((RooDataSet*)(file_pixelrevsel_dy_mc->Get(Form("mc_Tree_2DZee_pixelvetoreversed_selection/obs_roodset_%s_%s_b%d",splitting.Data(),diffvariable.Data(),bin))))->sumEntries() : 1;
+    float unfoldingdy_data = (!skipZsubtraction) ? ((RooDataSet*)(file_pixelrevsel_dy_data->Get(Form("data_Tree_2DZee_pixelvetoreversed_selection/obs_roodset_%s_%s_b%d",splitting.Data(),diffvariable.Data(),bin))))->sumEntries()/intlumi : 0;
+    float unfoldingdy_mc = (!skipZsubtraction) ? ((RooDataSet*)(file_pixelrevsel_dy_mc->Get(Form("mc_Tree_2DZee_pixelvetoreversed_selection/obs_roodset_%s_%s_b%d",splitting.Data(),diffvariable.Data(),bin))))->sumEntries() : 0;
 
     float purity_dy = syst_purity_dy[splitting].first;
     float purity_dy_err = syst_purity_dy[splitting].second;
-    float scale_dy = unfoldingdy_data/unfoldingdy_mc;
+    float scale_dy = (!skipZsubtraction) ? unfoldingdy_data/unfoldingdy_mc : 0;
 
-    if (!skipsystematics){
-      if (unfoldingdy_mc/unfoldingdy_mc_all<0.01) scale_dy=3048./2475.;
-//      if (((RooDataSet*)(file_pixelrevsel_dy_data->Get(Form("data_Tree_2DZee_pixelvetoreversed_selection/obs_roodset_%s_%s_b%d",splitting.Data(),diffvariable.Data(),bin))))->numEntries()<100) scale_dy=3048./2475.;
-//      if (((RooDataSet*)(file_pixelrevsel_dy_mc->Get(Form("mc_Tree_2DZee_pixelvetoreversed_selection/obs_roodset_%s_%s_b%d",splitting.Data(),diffvariable.Data(),bin))))->numEntries()<100) scale_dy=3048./2475.;
+    if (!skipZsubtraction){
+      if (unfoldingdy_mc/unfoldingdy_mc_all<0.01) scale_dy=3048./2475.; // fix for low stat bins
     }
 
     if (splitting=="EBEB") scale_dy*=pow(0.979,2);
@@ -2465,16 +2469,17 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
     xsec->SetBinContent(bin+1,(pp*tot_events/eff_overflow/intlumi-events_dy*purity_dy*scale_dy)/xsec->GetBinWidth(bin+1));
     xsec_withsyst->SetBinContent(bin+1,xsec->GetBinContent(bin+1));
     xsec_ngammagammayield->SetBinContent(bin+1,pp*tot_events/eff_overflow-events_dy*purity_dy*scale_dy*intlumi);
-    //    std::cout << xsec_ngammagammayield->GetBinContent(bin+1) << std::endl;
+    std::cout << xsec_ngammagammayield->GetBinContent(bin+1) << std::endl;
 
-    float shapesyst1 = (splitting!="EEEE") ? pp*fabs(histo_bias_templateshapeMCpromptdrivenEB->GetBinContent(bin+1)-1) : 0;
-    float shapesyst2 = (splitting!="EEEE") ? pp*fabs(histo_bias_templateshapeMCfakedrivenEB->GetBinContent(bin+1)-1) : 0;
-    float shapesyst3 = (splitting!="EBEB") ? pp*fabs(histo_bias_templateshapeMCpromptdrivenEE->GetBinContent(bin+1)-1) : 0;
-    float shapesyst4 = (splitting!="EBEB") ? pp*fabs(histo_bias_templateshapeMCfakedrivenEE->GetBinContent(bin+1)-1) : 0;
-    float shapesyst5 = pp*fabs(histo_bias_templateshape2frag->GetBinContent(bin+1)-1);
+    float shapesyst1 = (!skipsystematics && splitting!="EEEE") ? pp*fabs(histo_bias_templateshapeMCpromptdrivenEB->GetBinContent(bin+1)-1) : 0;
+    float shapesyst2 = (!skipsystematics && splitting!="EEEE") ? pp*fabs(histo_bias_templateshapeMCfakedrivenEB->GetBinContent(bin+1)-1) : 0;
+    float shapesyst3 = (!skipsystematics && splitting!="EBEB") ? pp*fabs(histo_bias_templateshapeMCpromptdrivenEE->GetBinContent(bin+1)-1) : 0;
+    float shapesyst4 = (!skipsystematics && splitting!="EBEB") ? pp*fabs(histo_bias_templateshapeMCfakedrivenEE->GetBinContent(bin+1)-1) : 0;
+    float shapesyst5 = (!skipsystematics) ? pp*fabs(histo_bias_templateshape2frag->GetBinContent(bin+1)-1) : 0;
 
     float purity_error_withsyst = pp_err;
     if (!skipsystematics) purity_error_withsyst = sqrt(pow(pp_err,2) + pow(pp*histo_bias_templatestatistics->GetBinContent(bin+1),2) + pow(pp_err*histo_bias_purefitbias->GetBinContent(bin+1),2) + pow(shapesyst1,2) + pow(shapesyst2,2) + pow(shapesyst3,2) + pow(shapesyst4,2) + pow(shapesyst5,2) + pow(pp*rel_error_on_purity_pp,2));
+
 
     float errpoiss=1.0/sqrt(tot_events);
     float err=sqrt(pow(pp_err/pp,2)+pow(errpoiss,2));
