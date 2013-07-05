@@ -7,6 +7,17 @@
 void efficiency_raw_producer::Loop()
 {
 
+
+  const bool apply_scale_factors = true;
+
+  TFile *file_scalefactor_zee = new TFile("histo_scalefactor_Zee_totaluncertainty.root","read");
+  TH2F *h_zee=NULL; file_scalefactor_zee->GetObject("histo_withsyst",h_zee);
+  TFile *file_scalefactor_zuug = new TFile("histo_scalefactor_Zuug_totaluncertainty.root","read");
+  TH1F *h_zuug=NULL; file_scalefactor_zuug->GetObject("h_zuug",h_zuug);
+  assert (h_zee);
+  assert (h_zuug);
+
+
    if (fChain == 0) return;
 
    Long64_t nentries = fChain->GetEntriesFast();
@@ -77,6 +88,13 @@ void efficiency_raw_producer::Loop()
       
 	  if (bin_couple<0) continue;
 	    
+	  if (apply_scale_factors && tree_found_match) {
+	    weight *= h_zee->GetBinContent(h_zee->FindBin(pholead_GEN_pt<h_zee->GetXaxis()->GetXmax() ? pholead_GEN_pt : h_zee->GetXaxis()->GetXmax()-1e-5 ,fabs(pholead_GEN_eta)));
+	    weight *= h_zee->GetBinContent(h_zee->FindBin(photrail_GEN_pt<h_zee->GetXaxis()->GetXmax() ? photrail_GEN_pt : h_zee->GetXaxis()->GetXmax()-1e-5 ,fabs(photrail_GEN_eta)));
+	    weight *= h_zuug->GetBinContent(h_zuug->FindBin(fabs(pholead_GEN_eta)));
+	    weight *= h_zuug->GetBinContent(h_zuug->FindBin(fabs(photrail_GEN_eta)));
+	  }
+
 	  if (tree_found_match) histo_pass[get_name_histo_pass(event_ok_for_dataset_local,*diffvariable)]->Fill(value_diffvariable,weight);
 	  else histo_fail[get_name_histo_fail(event_ok_for_dataset_local,*diffvariable)]->Fill(value_diffvariable,weight);
 
