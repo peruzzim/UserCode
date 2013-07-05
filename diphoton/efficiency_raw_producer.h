@@ -52,10 +52,16 @@ public :
    Float_t         event_weight;
    Float_t         pholead_pt;
    Float_t         photrail_pt;
+   Float_t         pholead_eta;
+   Float_t         photrail_eta;
+   Float_t         pholead_phi;
+   Float_t         photrail_phi;
    Float_t         pholead_SCeta;
    Float_t         photrail_SCeta;
    Float_t         pholead_SCphi;
    Float_t         photrail_SCphi;
+   Float_t         pholead_r9;
+   Float_t         photrail_r9;
    Float_t         pholead_GEN_pt;
    Float_t         photrail_GEN_pt;
    Float_t         pholead_GEN_eta;
@@ -72,10 +78,16 @@ public :
    TBranch        *b_event_weight;   //!
    TBranch        *b_pholead_pt;   //!
    TBranch        *b_photrail_pt;   //!
+   TBranch        *b_pholead_eta;   //!
+   TBranch        *b_photrail_eta;   //!
+   TBranch        *b_pholead_phi;   //!
+   TBranch        *b_photrail_phi;   //!
    TBranch        *b_pholead_SCeta;   //!
    TBranch        *b_photrail_SCeta;   //!
    TBranch        *b_pholead_SCphi;   //!
    TBranch        *b_photrail_SCphi;   //!
+   TBranch        *b_pholead_r9;   //!
+   TBranch        *b_photrail_r9;   //!
    TBranch        *b_pholead_GEN_pt;   //!
    TBranch        *b_photrail_GEN_pt;   //!
    TBranch        *b_pholead_GEN_eta;   //!
@@ -273,10 +285,16 @@ void efficiency_raw_producer::Init(TTree *tree)
    fChain->SetBranchAddress("event_weight", &event_weight, &b_event_weight);
    fChain->SetBranchAddress("pholead_pt", &pholead_pt, &b_pholead_pt);
    fChain->SetBranchAddress("photrail_pt", &photrail_pt, &b_photrail_pt);
+   fChain->SetBranchAddress("pholead_eta", &pholead_eta, &b_pholead_eta);
+   fChain->SetBranchAddress("photrail_eta", &photrail_eta, &b_photrail_eta);
+   fChain->SetBranchAddress("pholead_phi", &pholead_phi, &b_pholead_phi);
+   fChain->SetBranchAddress("photrail_phi", &photrail_phi, &b_photrail_phi);
    fChain->SetBranchAddress("pholead_SCeta", &pholead_SCeta, &b_pholead_SCeta);
    fChain->SetBranchAddress("photrail_SCeta", &photrail_SCeta, &b_photrail_SCeta);
    fChain->SetBranchAddress("pholead_SCphi", &pholead_SCphi, &b_pholead_SCphi);
    fChain->SetBranchAddress("photrail_SCphi", &photrail_SCphi, &b_photrail_SCphi);
+   fChain->SetBranchAddress("pholead_r9", &pholead_r9, &b_pholead_r9);
+   fChain->SetBranchAddress("photrail_r9", &photrail_r9, &b_photrail_r9);
    fChain->SetBranchAddress("pholead_GEN_pt", &pholead_GEN_pt, &b_pholead_GEN_pt);
    fChain->SetBranchAddress("photrail_GEN_pt", &photrail_GEN_pt, &b_photrail_GEN_pt);
    fChain->SetBranchAddress("pholead_GEN_eta", &pholead_GEN_eta, &b_pholead_GEN_eta);

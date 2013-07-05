@@ -1,3 +1,5 @@
+#define DOTESTING 0
+
 #define efficiency_raw_producer_cxx
 #include "efficiency_raw_producer.h"
 #include <TH2.h>
@@ -7,11 +9,16 @@
 void efficiency_raw_producer::Loop()
 {
 
+#ifdef DOTESTING
   TH1F *true_reco = (TH1F*)(histo_pass[get_name_histo_pass(0,"invmass")]->Clone("reco"));
   TH1F *true_reco_nofakes = (TH1F*)(histo_pass[get_name_histo_pass(0,"invmass")]->Clone("reco_nofakes"));
   TH1F *true_gen = (TH1F*)(histo_pass[get_name_histo_pass(0,"invmass")]->Clone("gen"));
+#endif
 
   const bool apply_scale_factors = true;
+  const bool do_energy_smearing = true;
+
+  TRandom3 *rand = new TRandom3(0);
 
   TFile *file_scalefactor_zee = new TFile("histo_scalefactor_Zee_totaluncertainty.root","read");
   TH2F *h_zee=NULL; file_scalefactor_zee->GetObject("histo_withsyst",h_zee);
@@ -73,6 +80,11 @@ void efficiency_raw_producer::Loop()
 
       if (event_ok_for_dataset<=-1) continue;
 	
+      if (do_energy_smearing){
+	pholead_pt*=rand->Gaus(1,Smearing(pholead_SCeta,pholead_r9));
+	photrail_pt*=rand->Gaus(1,Smearing(photrail_SCeta,photrail_r9));
+      }
+
 	for (std::vector<TString>::const_iterator diffvariable = diffvariables_list.begin(); diffvariable!=diffvariables_list.end(); diffvariable++){
 
 	  Int_t bin_couple = -999;	 
@@ -169,10 +181,12 @@ void efficiency_raw_producer::Loop()
 	    else if (tree_found_reco) responsewitheff[get_name_responsewitheff(event_ok_for_dataset_local,*diffvariable)]->Fake(value_diffvariable,weight);
 	  }
 
+#ifdef DOTESTING
 	  if (tree_found_reco && event_ok_for_dataset_local==0 && (*diffvariable==TString("invmass"))) true_reco->Fill(value_diffvariable,weight);
 	  if (tree_found_match && event_ok_for_dataset_local==0 && (*diffvariable==TString("invmass"))) true_reco_nofakes->Fill(value_diffvariable,weight);
 	  if (tree_found_gen && event_ok_for_dataset_local==0 &&(*diffvariable==TString("invmass"))) true_gen->Fill(value_diffvariableGEN,weight);
-	  
+#endif
+
 	}
 
 
@@ -222,6 +236,7 @@ void efficiency_raw_producer::Loop()
 
 
 
+#ifdef DOTESTING
    TH1F *true_reco_effnounf = (TH1F*)(true_reco_nofakes->Clone("true_reco_effnounf"));
    TH1F *true_reco_effunf = (TH1F*)(true_reco_nofakes->Clone("true_reco_effunf"));
 
@@ -256,7 +271,7 @@ void efficiency_raw_producer::Loop()
    TH1D *u3 = (TH1D*)(unf3.Hreco());
    u3->SetLineColor(kYellow);
    u3->Draw("same");
-
+#endif
 
 
 
@@ -287,3 +302,4 @@ float efficiency_raw_producer::Smearing(float eta, float r9){
   return r/100.;
 
 }
+
