@@ -1,5 +1,3 @@
-#define DOTESTING 0
-
 #define efficiency_raw_producer_cxx
 #include "efficiency_raw_producer.h"
 #include <TH2.h>
@@ -9,11 +7,9 @@
 void efficiency_raw_producer::Loop()
 {
 
-#ifdef DOTESTING
   TH1F *true_reco = (TH1F*)(histo_pass[get_name_histo_pass(0,"invmass")]->Clone("reco"));
   TH1F *true_reco_nofakes = (TH1F*)(histo_pass[get_name_histo_pass(0,"invmass")]->Clone("reco_nofakes"));
   TH1F *true_gen = (TH1F*)(histo_pass[get_name_histo_pass(0,"invmass")]->Clone("gen"));
-#endif
 
   const bool apply_scale_factors = true;
   const bool do_energy_smearing = true;
@@ -181,11 +177,10 @@ void efficiency_raw_producer::Loop()
 	    else if (tree_found_reco) responsewitheff[get_name_responsewitheff(event_ok_for_dataset_local,*diffvariable)]->Fake(value_diffvariable,weight);
 	  }
 
-#ifdef DOTESTING
+
 	  if (tree_found_reco && event_ok_for_dataset_local==0 && (*diffvariable==TString("invmass"))) true_reco->Fill(value_diffvariable,weight);
 	  if (tree_found_match && event_ok_for_dataset_local==0 && (*diffvariable==TString("invmass"))) true_reco_nofakes->Fill(value_diffvariable,weight);
 	  if (tree_found_gen && event_ok_for_dataset_local==0 &&(*diffvariable==TString("invmass"))) true_gen->Fill(value_diffvariableGEN,weight);
-#endif
 
 	}
 
@@ -236,42 +231,67 @@ void efficiency_raw_producer::Loop()
 
 
 
-#ifdef DOTESTING
+
    TH1F *true_reco_effnounf = (TH1F*)(true_reco_nofakes->Clone("true_reco_effnounf"));
    TH1F *true_reco_effunf = (TH1F*)(true_reco_nofakes->Clone("true_reco_effunf"));
 
    true_gen->SetLineColor(kRed);
    true_gen->SetMarkerColor(kRed);
    true_gen->SetMarkerStyle(20);
-   true_gen->Draw("P");
+
 
    true_reco->SetLineColor(kBlack);
    true_reco->SetMarkerColor(kBlack);
    true_reco->SetMarkerStyle(20);
-   true_reco->Draw("sameP");
 
+
+   // NO UNFOLDING
    true_reco_effnounf->SetLineColor(kMagenta);
    true_reco_effnounf->Divide(histo_eff[get_name_histo_eff(0,"invmass")]);
-   true_reco_effnounf->Draw("same");
+   true_reco_effnounf->SetMarkerColor(kMagenta);
+   true_reco_effnounf->SetMarkerStyle(20);
 
-
-   RooUnfoldBayes unf1(responsewithfakes[get_name_responsewithfakes(0,"invmass")],true_reco,4);
-   TH1D *u1 = (TH1D*)(unf1.Hreco());
-   u1->Divide(histo_eff[get_name_histo_eff(0,"invmass")]);
-   u1->SetLineColor(kBlue);
-   u1->Draw("same");
-  
+   // ONE SHOT, EFF+UNFOLDING INSIEME
    RooUnfoldBayes unf2(responsewitheff[get_name_responsewitheff(0,"invmass")],true_reco,4);
    TH1D *u2 = (TH1D*)(unf2.Hreco());
    u2->SetLineColor(kGreen);
-   u2->Draw("same");
+   u2->SetMarkerColor(kGreen);
+   u2->SetMarkerStyle(20);
 
+   // EFFICIENZA E UNFOLDING IN SEQUENZA (ATTUALE)
    true_reco_effunf->Divide(histo_eff[get_name_histo_eff(0,"invmass")]);
    RooUnfoldBayes unf3(responsewithmatch[get_name_responsewithmatch(0,"invmass")],true_reco_effunf,4);
    TH1D *u3 = (TH1D*)(unf3.Hreco());
-   u3->SetLineColor(kYellow);
-   u3->Draw("same");
-#endif
+   u3->SetLineColor(kBlue);
+   u3->SetMarkerColor(kBlue);
+   u3->SetMarkerStyle(20);
+   RooUnfoldBinByBin unf3b(responsewithmatch[get_name_responsewithmatch(0,"invmass")],true_reco_effunf);
+   TH1D *u3b = (TH1D*)(unf3b.Hreco());
+   u3b->SetLineColor(kYellow);
+   u3b->SetMarkerColor(kYellow);
+   u3b->SetMarkerStyle(20);
+
+
+//   true_gen->Draw("P");
+//   true_reco->Draw("sameP");
+//   true_reco_effnounf->Draw("same");
+//   u2->Draw("same");
+//   u3->Draw("same");
+
+   true_reco->Divide(true_gen);
+   true_reco_effnounf->Divide(true_gen);
+   u2->Divide(true_gen);
+   u3->Divide(true_gen);
+   u3b->Divide(true_gen);
+   true_reco->Draw("P");
+   true_reco->SetAxisRange(0.8,1.2,"Y");
+   true_reco_effnounf->Draw("sameP");
+   u2->Draw("sameP");
+   u3->Draw("sameP");
+   u3b->Draw("sameP");
+
+
+
 
 
 
