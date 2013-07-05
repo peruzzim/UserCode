@@ -30,7 +30,6 @@ void efficiency_raw_producer::Loop()
       // if (Cut(ientry) < 0) continue;
       
       if (!tree_found_gen) continue;
-
       
       Int_t event_ok_for_dataset=-1;
 
@@ -52,26 +51,63 @@ void efficiency_raw_producer::Loop()
 
       Float_t weight=event_luminormfactor*event_Kfactor*event_weight;
 
-      if (event_ok_for_dataset>-1){
+      if (event_ok_for_dataset<=-1) continue;
 	
 	for (std::vector<TString>::const_iterator diffvariable = diffvariables_list.begin(); diffvariable!=diffvariables_list.end(); diffvariable++){
-	  
-	  Int_t bin_couple = -999;
-	    
+
+	  Int_t bin_couple = -999;	 
+ 	  Int_t bin_coupleGEN = -999;
+
 	  float value_diffvariable;
+	  float value_diffvariableGEN;
 	  int event_ok_for_dataset_local = event_ok_for_dataset;
+
 
 	  FillDiffVariablesGEN(); // WARNING: WORKS ONLY IF DIFF VARIABLES ARE NOT SENSITIVE TO SWAPPING 1 WITH 2
 
 	  if (*diffvariable==TString("invmass")) {
+	    value_diffvariableGEN=localvarGEN_invmass;
+	    bin_coupleGEN = Choose_bin_invmass(value_diffvariableGEN,event_ok_for_dataset_local);
+	  }
+	  if (*diffvariable==TString("diphotonpt")){
+	    value_diffvariableGEN=localvarGEN_diphotonpt;
+	    bin_coupleGEN = Choose_bin_diphotonpt(value_diffvariableGEN,event_ok_for_dataset_local);
+	  }
+	  if (*diffvariable==TString("costhetastar")){
+	    value_diffvariableGEN = localvarGEN_costhetastar;
+	    bin_coupleGEN = Choose_bin_costhetastar(value_diffvariableGEN,event_ok_for_dataset_local); 
+	  }
+	  if (*diffvariable==TString("dphi")){
+	    value_diffvariableGEN=localvarGEN_dphi;
+	    bin_coupleGEN = Choose_bin_dphi(value_diffvariableGEN,event_ok_for_dataset_local);
+	  }
+	  if (*diffvariable==TString("dR")){
+	    value_diffvariableGEN=localvarGEN_dR;
+	    bin_coupleGEN = Choose_bin_dR(value_diffvariableGEN,event_ok_for_dataset_local);
+	  }
+      
+	  if (bin_coupleGEN<0) continue; // this should never happen
+	    
+	  if (apply_scale_factors && tree_found_match) {
+	    weight *= h_zee->GetBinContent(h_zee->FindBin(pholead_GEN_pt<h_zee->GetXaxis()->GetXmax() ? pholead_GEN_pt : h_zee->GetXaxis()->GetXmax()-1e-5 ,fabs(pholead_GEN_eta)));
+	    weight *= h_zee->GetBinContent(h_zee->FindBin(photrail_GEN_pt<h_zee->GetXaxis()->GetXmax() ? photrail_GEN_pt : h_zee->GetXaxis()->GetXmax()-1e-5 ,fabs(photrail_GEN_eta)));
+	    weight *= h_zuug->GetBinContent(h_zuug->FindBin(fabs(pholead_GEN_eta)));
+	    weight *= h_zuug->GetBinContent(h_zuug->FindBin(fabs(photrail_GEN_eta)));
+	  }
+
+	  if (tree_found_match) histo_pass[get_name_histo_pass(event_ok_for_dataset_local,*diffvariable)]->Fill(value_diffvariableGEN,weight);
+	  else histo_fail[get_name_histo_fail(event_ok_for_dataset_local,*diffvariable)]->Fill(value_diffvariableGEN,weight);
+
+	  if (tree_found_match){
+
+	  FillDiffVariables(); // WARNING: WORKS ONLY IF DIFF VARIABLES ARE NOT SENSITIVE TO SWAPPING 1 WITH 2
+	  if (*diffvariable==TString("invmass")) {
 	    value_diffvariable=localvar_invmass;
 	    bin_couple = Choose_bin_invmass(value_diffvariable,event_ok_for_dataset_local);
-	    //  invmass_vector.push_back(value_diffvariable);
 	  }
 	  if (*diffvariable==TString("diphotonpt")){
 	    value_diffvariable=localvar_diphotonpt;
 	    bin_couple = Choose_bin_diphotonpt(value_diffvariable,event_ok_for_dataset_local);
-	    //  diphotonpt_vector.push_back(value_diffvariable);
 	  }
 	  if (*diffvariable==TString("costhetastar")){
 	    value_diffvariable = localvar_costhetastar;
@@ -85,25 +121,23 @@ void efficiency_raw_producer::Loop()
 	    value_diffvariable=localvar_dR;
 	    bin_couple = Choose_bin_dR(value_diffvariable,event_ok_for_dataset_local);
 	  }
-      
-	  if (bin_couple<0) continue;
-	    
-	  if (apply_scale_factors && tree_found_match) {
-	    weight *= h_zee->GetBinContent(h_zee->FindBin(pholead_GEN_pt<h_zee->GetXaxis()->GetXmax() ? pholead_GEN_pt : h_zee->GetXaxis()->GetXmax()-1e-5 ,fabs(pholead_GEN_eta)));
-	    weight *= h_zee->GetBinContent(h_zee->FindBin(photrail_GEN_pt<h_zee->GetXaxis()->GetXmax() ? photrail_GEN_pt : h_zee->GetXaxis()->GetXmax()-1e-5 ,fabs(photrail_GEN_eta)));
-	    weight *= h_zuug->GetBinContent(h_zuug->FindBin(fabs(pholead_GEN_eta)));
-	    weight *= h_zuug->GetBinContent(h_zuug->FindBin(fabs(photrail_GEN_eta)));
+	  if (bin_couple<0) response[get_name_response(event_ok_for_dataset_local,*diffvariable)]->Fill(value_diffvariable,value_diffvariableGEN); // bin_couple==0 should never happen
+
 	  }
 
-	  if (tree_found_match) histo_pass[get_name_histo_pass(event_ok_for_dataset_local,*diffvariable)]->Fill(value_diffvariable,weight);
-	  else histo_fail[get_name_histo_fail(event_ok_for_dataset_local,*diffvariable)]->Fill(value_diffvariable,weight);
-
 	}
-      
-      }
 
 
    } // end event loop
+
+
+   TFile *fu = new TFile("unfolding.root","recreate");
+   fu->cd();
+   for (int i=0; i<3; i++)
+     for (std::vector<TString>::const_iterator diffvariable = diffvariables_list.begin(); diffvariable!=diffvariables_list.end(); diffvariable++){
+       response[get_name_response(i,*diffvariable)]->Write(get_name_response(i,*diffvariable).Data());
+     }
+   fu->Close();
 
 
    for (int i=0; i<3; i++)

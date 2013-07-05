@@ -8,6 +8,7 @@
 #ifndef efficiency_raw_producer_h
 #define efficiency_raw_producer_h
 
+#include "RooUnfold-1.1.1/src/RooUnfold.h"
 
 #include "binsdef.h"
 
@@ -93,20 +94,31 @@ public :
    virtual Bool_t   Notify();
    virtual void     Show(Long64_t entry = -1);
 
+   void FillDiffVariables();
    void FillDiffVariablesGEN();
+
    TString get_name_histo_pass(int region, TString diffvariable);
    TString get_name_histo_fail(int region, TString diffvariable);
    TString get_name_histo_eff(int region, TString diffvariable);
+   TString get_name_response(int region, TString diffvariable);
 
    std::map<TString, TH1F*> histo_eff;
    std::map<TString, TH1F*> histo_pass;
    std::map<TString, TH1F*> histo_fail;
+
+   std::map<TString, RooUnfoldResponse*> response;
 
    Float_t   localvar_invmass;
    Float_t   localvar_diphotonpt;
    Float_t   localvar_costhetastar;
    Float_t   localvar_dphi;
    Float_t   localvar_dR;
+
+   Float_t   localvarGEN_invmass;
+   Float_t   localvarGEN_diphotonpt;
+   Float_t   localvarGEN_costhetastar;
+   Float_t   localvarGEN_dphi;
+   Float_t   localvarGEN_dR;
 
    Int_t Choose_bin_invmass(float invmass, int region);
    Int_t Choose_bin_diphotonpt(float diphotonpt, int region);
@@ -192,6 +204,12 @@ efficiency_raw_producer::efficiency_raw_producer(TTree *tree) : fChain(0)
        histo_fail[t3_fail] = new TH1F(t3_fail.Data(),t3_fail.Data(),bins_to_run,binsdef);
        histo_fail[t3_fail]->Sumw2();
 
+       TH1F *proto_h_gen = (TH1F*)(histo_pass[t3_pass]->Clone("GEN"));
+       proto_h_gen->SetTitle("GEN");
+       TH1F *proto_h_reco = (TH1F*)(histo_pass[t3_pass]->Clone("RECO"));
+       proto_h_reco->SetTitle("RECO");
+
+       response[get_name_response(i,*diffvariable)] = new RooUnfoldResponse(proto_h_gen,proto_h_reco); // histo_pass is used as template for binning here, contents are not used
 
      }
 
@@ -288,13 +306,57 @@ void efficiency_raw_producer::Show(Long64_t entry)
 //}
 
 
+void efficiency_raw_producer::FillDiffVariables(){
+
+  TLorentzVector pho1; pho1.SetPtEtaPhiM(pholead_pt,pholead_SCeta,pholead_SCphi,0); // UNIFORMARE LE DEFINIZIONI DELLE QUANTITA' QUI
+  TLorentzVector pho2; pho2.SetPtEtaPhiM(photrail_pt,photrail_SCeta,photrail_SCphi,0);
+
+  localvar_invmass = (pho1+pho2).M();
+  localvar_diphotonpt = (pho1+pho2).Pt();
+
+  {
+    // COS THETASTAR CS
+    TLorentzVector b1,b2,diphoton;
+    b1.SetPx(0); b1.SetPy(0); b1.SetPz( 3500); b1.SetE(3500);
+    b2.SetPx(0); b2.SetPy(0); b2.SetPz(-3500); b2.SetE(3500);
+    TLorentzVector boostedpho1 = pho1; 
+    TLorentzVector boostedpho2 = pho2; 
+    TLorentzVector boostedb1 = b1; 
+    TLorentzVector boostedb2 = b2; 
+    TVector3 boost = (pho1+pho2).BoostVector();
+    boostedpho1.Boost(-boost);
+    boostedpho2.Boost(-boost);
+    boostedb1.Boost(-boost);
+    boostedb2.Boost(-boost);
+    TVector3 direction_cs = (boostedb1.Vect().Unit()-boostedb2.Vect().Unit()).Unit();
+    localvar_costhetastar=( fabs(TMath::Cos(direction_cs.Angle(boostedpho1.Vect()))) );
+  }
+  {
+    float phi1 = pholead_SCphi;
+    float phi2 = photrail_SCphi;
+    float dphi = AbsDeltaPhi(phi1,phi2);
+    localvar_dphi=(dphi);
+  }
+  {
+    float phi1 = pholead_SCphi;
+    float phi2 = photrail_SCphi;
+    float dphi = AbsDeltaPhi(phi1,phi2);
+    float deta = pholead_SCeta-photrail_SCeta;
+    float dR = sqrt(deta*deta+dphi*dphi);
+    localvar_dR=(dR);
+  }
+
+  return;
+
+}
+
 void efficiency_raw_producer::FillDiffVariablesGEN(){
 
   TLorentzVector pho1; pho1.SetPtEtaPhiM(pholead_GEN_pt,pholead_GEN_eta,pholead_GEN_phi,0);
   TLorentzVector pho2; pho2.SetPtEtaPhiM(photrail_GEN_pt,photrail_GEN_eta,photrail_GEN_phi,0);
 
-  localvar_invmass = (pho1+pho2).M();
-  localvar_diphotonpt = (pho1+pho2).Pt();
+  localvarGEN_invmass = (pho1+pho2).M();
+  localvarGEN_diphotonpt = (pho1+pho2).Pt();
  
   {
     TLorentzVector b1,b2,diphoton;
@@ -310,13 +372,13 @@ void efficiency_raw_producer::FillDiffVariablesGEN(){
     boostedb1.Boost(-boost);
     boostedb2.Boost(-boost);
     TVector3 direction_cs = (boostedb1.Vect().Unit()-boostedb2.Vect().Unit()).Unit();
-    localvar_costhetastar = fabs(TMath::Cos(direction_cs.Angle(boostedpho1.Vect()))) ;
+    localvarGEN_costhetastar = fabs(TMath::Cos(direction_cs.Angle(boostedpho1.Vect()))) ;
   }
   {
     float phi1 = pholead_GEN_phi;
     float phi2 = photrail_GEN_phi;
     float dphi = AbsDeltaPhi(phi1,phi2);
-    localvar_dphi = dphi;
+    localvarGEN_dphi = dphi;
   }
   {
     float phi1 = pholead_GEN_phi;
@@ -324,7 +386,7 @@ void efficiency_raw_producer::FillDiffVariablesGEN(){
     float dphi = AbsDeltaPhi(phi1,phi2);
     float deta = pholead_GEN_eta-photrail_GEN_eta;
     float dR = sqrt(deta*deta+dphi*dphi);
-    localvar_dR = dR;
+    localvarGEN_dR = dR;
   }
   
   return;
@@ -360,6 +422,13 @@ TString efficiency_raw_producer::get_name_histo_eff(int region, TString diffvari
   return t;
 }
 
+TString efficiency_raw_producer::get_name_response(int region, TString diffvariable){
+  TString name_signal="response";
+  TString reg;
+  if (region==0) reg="EBEB"; else if (region==1) reg="EBEE"; else if (region==2) reg="EEEE"; else if (region==3) reg="EEEB";
+  TString t=Form("%s_%s_%s",name_signal.Data(),reg.Data(),diffvariable.Data());
+  return t;
+}
 
 Int_t efficiency_raw_producer::Choose_bin_invmass(float invmass, int region){
 
