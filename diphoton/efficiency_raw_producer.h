@@ -52,10 +52,16 @@ public :
    Float_t         event_weight;
    Float_t         pholead_pt;
    Float_t         photrail_pt;
+   Float_t         pholead_eta;
+   Float_t         photrail_eta;
+   Float_t         pholead_phi;
+   Float_t         photrail_phi;
    Float_t         pholead_SCeta;
    Float_t         photrail_SCeta;
    Float_t         pholead_SCphi;
    Float_t         photrail_SCphi;
+   Float_t         pholead_r9;
+   Float_t         photrail_r9;
    Float_t         pholead_GEN_pt;
    Float_t         photrail_GEN_pt;
    Float_t         pholead_GEN_eta;
@@ -72,10 +78,16 @@ public :
    TBranch        *b_event_weight;   //!
    TBranch        *b_pholead_pt;   //!
    TBranch        *b_photrail_pt;   //!
+   TBranch        *b_pholead_eta;   //!
+   TBranch        *b_photrail_eta;   //!
+   TBranch        *b_pholead_phi;   //!
+   TBranch        *b_photrail_phi;   //!
    TBranch        *b_pholead_SCeta;   //!
    TBranch        *b_photrail_SCeta;   //!
    TBranch        *b_pholead_SCphi;   //!
    TBranch        *b_photrail_SCphi;   //!
+   TBranch        *b_pholead_r9;   //!
+   TBranch        *b_photrail_r9;   //!
    TBranch        *b_pholead_GEN_pt;   //!
    TBranch        *b_photrail_GEN_pt;   //!
    TBranch        *b_pholead_GEN_eta;   //!
@@ -102,13 +114,17 @@ public :
    TString get_name_histo_pass(int region, TString diffvariable);
    TString get_name_histo_fail(int region, TString diffvariable);
    TString get_name_histo_eff(int region, TString diffvariable);
-   TString get_name_response(int region, TString diffvariable);
+   TString get_name_responsewithmatch(int region, TString diffvariable);
+   TString get_name_responsewithfakes(int region, TString diffvariable);
+   TString get_name_responsewitheff(int region, TString diffvariable);
 
    std::map<TString, TH1F*> histo_eff;
    std::map<TString, TH1F*> histo_pass;
    std::map<TString, TH1F*> histo_fail;
 
-   std::map<TString, RooUnfoldResponse*> response;
+   std::map<TString, RooUnfoldResponse*> responsewithmatch;
+   std::map<TString, RooUnfoldResponse*> responsewithfakes;
+   std::map<TString, RooUnfoldResponse*> responsewitheff;
 
    Float_t   localvar_invmass;
    Float_t   localvar_diphotonpt;
@@ -128,6 +144,7 @@ public :
    Int_t Choose_bin_dphi(float dphi, int region, bool veto_overflow = false);
    Int_t Choose_bin_dR(float dR, int region, bool veto_overflow = false);
 
+   float Smearing(float eta, float r9);
 
 };
 
@@ -211,12 +228,15 @@ efficiency_raw_producer::efficiency_raw_producer(TTree *tree) : fChain(0)
        TH1F *proto_h_reco = (TH1F*)(histo_pass[t3_pass]->Clone("RECO"));
        proto_h_reco->SetTitle("RECO");
 
-       response[get_name_response(i,*diffvariable)] = new RooUnfoldResponse(proto_h_gen,proto_h_reco); // histo_pass is used as template for binning here, contents are not used
+       responsewithmatch[get_name_responsewithmatch(i,*diffvariable)] = new RooUnfoldResponse(proto_h_gen,proto_h_reco); // histo_pass is used as template for binning here, contents are not used
+       responsewithfakes[get_name_responsewithfakes(i,*diffvariable)] = new RooUnfoldResponse(proto_h_gen,proto_h_reco); // histo_pass is used as template for binning here, contents are not used
+       responsewitheff[get_name_responsewitheff(i,*diffvariable)] = new RooUnfoldResponse(proto_h_gen,proto_h_reco); // histo_pass is used as template for binning here, contents are not used
 
      }
 
 
    }
+
 }
 
 efficiency_raw_producer::~efficiency_raw_producer()
@@ -265,10 +285,16 @@ void efficiency_raw_producer::Init(TTree *tree)
    fChain->SetBranchAddress("event_weight", &event_weight, &b_event_weight);
    fChain->SetBranchAddress("pholead_pt", &pholead_pt, &b_pholead_pt);
    fChain->SetBranchAddress("photrail_pt", &photrail_pt, &b_photrail_pt);
+   fChain->SetBranchAddress("pholead_eta", &pholead_eta, &b_pholead_eta);
+   fChain->SetBranchAddress("photrail_eta", &photrail_eta, &b_photrail_eta);
+   fChain->SetBranchAddress("pholead_phi", &pholead_phi, &b_pholead_phi);
+   fChain->SetBranchAddress("photrail_phi", &photrail_phi, &b_photrail_phi);
    fChain->SetBranchAddress("pholead_SCeta", &pholead_SCeta, &b_pholead_SCeta);
    fChain->SetBranchAddress("photrail_SCeta", &photrail_SCeta, &b_photrail_SCeta);
    fChain->SetBranchAddress("pholead_SCphi", &pholead_SCphi, &b_pholead_SCphi);
    fChain->SetBranchAddress("photrail_SCphi", &photrail_SCphi, &b_photrail_SCphi);
+   fChain->SetBranchAddress("pholead_r9", &pholead_r9, &b_pholead_r9);
+   fChain->SetBranchAddress("photrail_r9", &photrail_r9, &b_photrail_r9);
    fChain->SetBranchAddress("pholead_GEN_pt", &pholead_GEN_pt, &b_pholead_GEN_pt);
    fChain->SetBranchAddress("photrail_GEN_pt", &photrail_GEN_pt, &b_photrail_GEN_pt);
    fChain->SetBranchAddress("pholead_GEN_eta", &pholead_GEN_eta, &b_pholead_GEN_eta);
@@ -310,8 +336,8 @@ void efficiency_raw_producer::Show(Long64_t entry)
 
 void efficiency_raw_producer::FillDiffVariables(){
 
-  TLorentzVector pho1; pho1.SetPtEtaPhiM(pholead_pt,pholead_SCeta,pholead_SCphi,0); // UNIFORMARE LE DEFINIZIONI DELLE QUANTITA' QUI
-  TLorentzVector pho2; pho2.SetPtEtaPhiM(photrail_pt,photrail_SCeta,photrail_SCphi,0);
+  TLorentzVector pho1; pho1.SetPtEtaPhiM(pholead_pt,pholead_eta,pholead_phi,0); 
+  TLorentzVector pho2; pho2.SetPtEtaPhiM(photrail_pt,photrail_eta,photrail_phi,0);
 
   localvar_invmass = (pho1+pho2).M();
   localvar_diphotonpt = (pho1+pho2).Pt();
@@ -334,16 +360,16 @@ void efficiency_raw_producer::FillDiffVariables(){
     localvar_costhetastar=( fabs(TMath::Cos(direction_cs.Angle(boostedpho1.Vect()))) );
   }
   {
-    float phi1 = pholead_SCphi;
-    float phi2 = photrail_SCphi;
+    float phi1 = pholead_phi;
+    float phi2 = photrail_phi;
     float dphi = AbsDeltaPhi(phi1,phi2);
     localvar_dphi=(dphi);
   }
   {
-    float phi1 = pholead_SCphi;
-    float phi2 = photrail_SCphi;
+    float phi1 = pholead_phi;
+    float phi2 = photrail_phi;
     float dphi = AbsDeltaPhi(phi1,phi2);
-    float deta = pholead_SCeta-photrail_SCeta;
+    float deta = pholead_eta-photrail_eta;
     float dR = sqrt(deta*deta+dphi*dphi);
     localvar_dR=(dR);
   }
@@ -424,8 +450,24 @@ TString efficiency_raw_producer::get_name_histo_eff(int region, TString diffvari
   return t;
 }
 
-TString efficiency_raw_producer::get_name_response(int region, TString diffvariable){
-  TString name_signal="response";
+TString efficiency_raw_producer::get_name_responsewithmatch(int region, TString diffvariable){
+  TString name_signal="responsewithmatch";
+  TString reg;
+  if (region==0) reg="EBEB"; else if (region==1) reg="EBEE"; else if (region==2) reg="EEEE"; else if (region==3) reg="EEEB";
+  TString t=Form("%s_%s_%s",name_signal.Data(),reg.Data(),diffvariable.Data());
+  return t;
+}
+
+TString efficiency_raw_producer::get_name_responsewithfakes(int region, TString diffvariable){
+  TString name_signal="responsewithfakes";
+  TString reg;
+  if (region==0) reg="EBEB"; else if (region==1) reg="EBEE"; else if (region==2) reg="EEEE"; else if (region==3) reg="EEEB";
+  TString t=Form("%s_%s_%s",name_signal.Data(),reg.Data(),diffvariable.Data());
+  return t;
+}
+
+TString efficiency_raw_producer::get_name_responsewitheff(int region, TString diffvariable){
+  TString name_signal="responsewitheff";
   TString reg;
   if (region==0) reg="EBEB"; else if (region==1) reg="EBEE"; else if (region==2) reg="EEEE"; else if (region==3) reg="EEEB";
   TString t=Form("%s_%s_%s",name_signal.Data(),reg.Data(),diffvariable.Data());

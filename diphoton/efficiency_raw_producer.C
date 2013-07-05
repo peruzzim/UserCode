@@ -7,8 +7,16 @@
 void efficiency_raw_producer::Loop()
 {
 
-
   const bool apply_scale_factors = true;
+  const bool do_energy_smearing = true;
+
+  /* testing
+  TH1F *true_reco = (TH1F*)(histo_pass[get_name_histo_pass(0,"invmass")]->Clone("reco"));
+  TH1F *true_reco_nofakes = (TH1F*)(histo_pass[get_name_histo_pass(0,"invmass")]->Clone("reco_nofakes"));
+  TH1F *true_gen = (TH1F*)(histo_pass[get_name_histo_pass(0,"invmass")]->Clone("gen"));
+  */
+
+  TRandom3 *rand = new TRandom3(0);
 
   TFile *file_scalefactor_zee = new TFile("histo_scalefactor_Zee_totaluncertainty.root","read");
   TH2F *h_zee=NULL; file_scalefactor_zee->GetObject("histo_withsyst",h_zee);
@@ -51,16 +59,16 @@ void efficiency_raw_producer::Loop()
 	else std::cout << "We have a problem here!!!" << std::endl;
       }
       else if (tree_found_reco){
-	if (fabs(pholead_SCeta)<1.4442 && fabs(photrail_SCeta)<1.4442) {
+	if (fabs(pholead_eta)<1.4442 && fabs(photrail_eta)<1.4442) {
 	  event_ok_for_dataset=0;
 	}
-	else if (fabs(pholead_SCeta)>1.56 && fabs(photrail_SCeta)>1.56) {
+	else if (fabs(pholead_eta)>1.56 && fabs(photrail_eta)>1.56) {
 	  event_ok_for_dataset=2;
 	}
-	else if (fabs(pholead_SCeta)<1.4442 && fabs(photrail_SCeta)>1.56) {
+	else if (fabs(pholead_eta)<1.4442 && fabs(photrail_eta)>1.56) {
 	  event_ok_for_dataset=1;
 	}
-	else if (fabs(pholead_SCeta)>1.56 && fabs(photrail_SCeta)<1.4442) {
+	else if (fabs(pholead_eta)>1.56 && fabs(photrail_eta)<1.4442) {
 	  event_ok_for_dataset=1;
 	}
 	else std::cout << "We have a problem here!!!" << std::endl;
@@ -70,6 +78,11 @@ void efficiency_raw_producer::Loop()
 
       if (event_ok_for_dataset<=-1) continue;
 	
+      if (do_energy_smearing){
+	pholead_pt*=rand->Gaus(1,Smearing(pholead_SCeta,pholead_r9));
+	photrail_pt*=rand->Gaus(1,Smearing(photrail_SCeta,photrail_r9));
+      }
+
 	for (std::vector<TString>::const_iterator diffvariable = diffvariables_list.begin(); diffvariable!=diffvariables_list.end(); diffvariable++){
 
 	  Int_t bin_couple = -999;	 
@@ -104,17 +117,21 @@ void efficiency_raw_producer::Loop()
 	    bin_coupleGEN = Choose_bin_dR(value_diffvariableGEN,event_ok_for_dataset_local);
 	  }
       
-	  if (bin_coupleGEN<0) break; // this should never happen
-	    
-	  if (apply_scale_factors && tree_found_match) {
-	    weight *= h_zee->GetBinContent(h_zee->FindBin(pholead_GEN_pt<h_zee->GetXaxis()->GetXmax() ? pholead_GEN_pt : h_zee->GetXaxis()->GetXmax()-1e-5 ,fabs(pholead_GEN_eta)));
-	    weight *= h_zee->GetBinContent(h_zee->FindBin(photrail_GEN_pt<h_zee->GetXaxis()->GetXmax() ? photrail_GEN_pt : h_zee->GetXaxis()->GetXmax()-1e-5 ,fabs(photrail_GEN_eta)));
-	    weight *= h_zuug->GetBinContent(h_zuug->FindBin(fabs(pholead_GEN_eta)));
-	    weight *= h_zuug->GetBinContent(h_zuug->FindBin(fabs(photrail_GEN_eta)));
 	  }
 
-	  if (tree_found_match) histo_pass[get_name_histo_pass(event_ok_for_dataset_local,*diffvariable)]->Fill(value_diffvariableGEN,weight);
-	  else histo_fail[get_name_histo_fail(event_ok_for_dataset_local,*diffvariable)]->Fill(value_diffvariableGEN,weight);
+	  if (tree_found_gen && bin_coupleGEN>=0){
+
+	    float addweight=1;
+
+	  if (apply_scale_factors && tree_found_match) {
+	    addweight *= h_zee->GetBinContent(h_zee->FindBin(pholead_GEN_pt<h_zee->GetXaxis()->GetXmax() ? pholead_GEN_pt : h_zee->GetXaxis()->GetXmax()-1e-5 ,fabs(pholead_GEN_eta)));
+	    addweight *= h_zee->GetBinContent(h_zee->FindBin(photrail_GEN_pt<h_zee->GetXaxis()->GetXmax() ? photrail_GEN_pt : h_zee->GetXaxis()->GetXmax()-1e-5 ,fabs(photrail_GEN_eta)));
+	    addweight *= h_zuug->GetBinContent(h_zuug->FindBin(fabs(pholead_GEN_eta)));
+	    addweight *= h_zuug->GetBinContent(h_zuug->FindBin(fabs(photrail_GEN_eta)));
+	  }
+
+	  if (tree_found_match) histo_pass[get_name_histo_pass(event_ok_for_dataset_local,*diffvariable)]->Fill(value_diffvariableGEN,weight*addweight);
+	  else histo_fail[get_name_histo_fail(event_ok_for_dataset_local,*diffvariable)]->Fill(value_diffvariableGEN,weight*addweight);
 
 	  }
 
@@ -122,6 +139,7 @@ void efficiency_raw_producer::Loop()
 	  if (tree_found_reco){
 
 	  FillDiffVariables(); // WARNING: WORKS ONLY IF DIFF VARIABLES ARE NOT SENSITIVE TO SWAPPING 1 WITH 2
+
 	  if (*diffvariable==TString("invmass")) {
 	    value_diffvariable=localvar_invmass;
 	    bin_couple = Choose_bin_invmass(value_diffvariable,event_ok_for_dataset_local,true);
@@ -143,13 +161,30 @@ void efficiency_raw_producer::Loop()
 	    bin_couple = Choose_bin_dR(value_diffvariable,event_ok_for_dataset_local,true);
 	  }
 
-	  if (bin_couple<0) break;
-
-	  if (tree_found_match) response[get_name_response(event_ok_for_dataset_local,*diffvariable)]->Fill(value_diffvariable,value_diffvariableGEN,weight);
-	  else response[get_name_response(event_ok_for_dataset_local,*diffvariable)]->Fake(value_diffvariable,weight);
+	  if (bin_couple<0) {tree_found_reco=false; tree_found_match=false;}
 
 	  }
 
+
+
+	  if (tree_found_match) responsewithmatch[get_name_responsewithmatch(event_ok_for_dataset_local,*diffvariable)]->Fill(value_diffvariable,value_diffvariableGEN,weight);
+
+	  if (tree_found_reco){
+	    if (tree_found_match) responsewithfakes[get_name_responsewithfakes(event_ok_for_dataset_local,*diffvariable)]->Fill(value_diffvariable,value_diffvariableGEN,weight);
+	    else responsewithfakes[get_name_responsewithfakes(event_ok_for_dataset_local,*diffvariable)]->Fake(value_diffvariable,weight);
+	  }
+
+	  if (tree_found_reco || tree_found_gen){
+	    if (tree_found_match) responsewitheff[get_name_responsewitheff(event_ok_for_dataset_local,*diffvariable)]->Fill(value_diffvariable,value_diffvariableGEN,weight);
+	    else if (tree_found_gen) responsewitheff[get_name_responsewitheff(event_ok_for_dataset_local,*diffvariable)]->Miss(value_diffvariableGEN,weight);
+	    else if (tree_found_reco) responsewitheff[get_name_responsewitheff(event_ok_for_dataset_local,*diffvariable)]->Fake(value_diffvariable,weight);
+	  }
+
+	  /* testing
+	  if (tree_found_reco && event_ok_for_dataset_local==0 && (*diffvariable==TString("invmass"))) true_reco->Fill(value_diffvariable,weight);
+	  if (tree_found_match && event_ok_for_dataset_local==0 && (*diffvariable==TString("invmass"))) true_reco_nofakes->Fill(value_diffvariable,weight);
+	  if (tree_found_gen && event_ok_for_dataset_local==0 &&(*diffvariable==TString("invmass"))) true_gen->Fill(value_diffvariableGEN,weight);
+	  */
 	}
 
 
@@ -160,7 +195,9 @@ void efficiency_raw_producer::Loop()
    fu->cd();
    for (int i=0; i<3; i++)
      for (std::vector<TString>::const_iterator diffvariable = diffvariables_list.begin(); diffvariable!=diffvariables_list.end(); diffvariable++){
-       response[get_name_response(i,*diffvariable)]->Write(get_name_response(i,*diffvariable).Data());
+       responsewithmatch[get_name_responsewithmatch(i,*diffvariable)]->Write(get_name_responsewithmatch(i,*diffvariable).Data());
+       responsewithfakes[get_name_responsewithfakes(i,*diffvariable)]->Write(get_name_responsewithfakes(i,*diffvariable).Data());
+       responsewitheff[get_name_responsewitheff(i,*diffvariable)]->Write(get_name_responsewitheff(i,*diffvariable).Data());
      }
    fu->Close();
 
@@ -193,4 +230,99 @@ void efficiency_raw_producer::Loop()
 
    f->Close();
 
+
+
+
+
+   /* testing
+   TH1F *true_reco_effnounf = (TH1F*)(true_reco_nofakes->Clone("true_reco_effnounf"));
+   TH1F *true_reco_effunf = (TH1F*)(true_reco_nofakes->Clone("true_reco_effunf"));
+
+   true_gen->SetLineColor(kRed);
+   true_gen->SetMarkerColor(kRed);
+   true_gen->SetMarkerStyle(20);
+
+
+   true_reco->SetLineColor(kBlack);
+   true_reco->SetMarkerColor(kBlack);
+   true_reco->SetMarkerStyle(20);
+
+
+   // NO UNFOLDING
+   true_reco_effnounf->SetLineColor(kMagenta);
+   true_reco_effnounf->Divide(histo_eff[get_name_histo_eff(0,"invmass")]);
+   true_reco_effnounf->SetMarkerColor(kMagenta);
+   true_reco_effnounf->SetMarkerStyle(20);
+
+   // ONE SHOT, EFF+UNFOLDING INSIEME
+   RooUnfoldBayes unf2(responsewitheff[get_name_responsewitheff(0,"invmass")],true_reco,4);
+   TH1D *u2 = (TH1D*)(unf2.Hreco());
+   u2->SetLineColor(kGreen);
+   u2->SetMarkerColor(kGreen);
+   u2->SetMarkerStyle(20);
+
+   // EFFICIENZA E UNFOLDING IN SEQUENZA (ATTUALE)
+   true_reco_effunf->Divide(histo_eff[get_name_histo_eff(0,"invmass")]);
+   RooUnfoldBayes unf3(responsewithmatch[get_name_responsewithmatch(0,"invmass")],true_reco_effunf,4);
+   TH1D *u3 = (TH1D*)(unf3.Hreco());
+   u3->SetLineColor(kBlue);
+   u3->SetMarkerColor(kBlue);
+   u3->SetMarkerStyle(20);
+   RooUnfoldBinByBin unf3b(responsewithmatch[get_name_responsewithmatch(0,"invmass")],true_reco_effunf);
+   TH1D *u3b = (TH1D*)(unf3b.Hreco());
+   u3b->SetLineColor(kYellow);
+   u3b->SetMarkerColor(kYellow);
+   u3b->SetMarkerStyle(20);
+
+
+//   true_gen->Draw("P");
+//   true_reco->Draw("sameP");
+//   true_reco_effnounf->Draw("same");
+//   u2->Draw("same");
+//   u3->Draw("same");
+
+   true_reco->Divide(true_gen);
+   true_reco_effnounf->Divide(true_gen);
+   u2->Divide(true_gen);
+   u3->Divide(true_gen);
+   u3b->Divide(true_gen);
+   true_reco->Draw("P");
+   true_reco->SetAxisRange(0.8,1.2,"Y");
+   true_reco_effnounf->Draw("sameP");
+   u2->Draw("sameP");
+   u3->Draw("sameP");
+   u3b->Draw("sameP");
+
+   */
+
+
+
+
 }
+
+
+float efficiency_raw_producer::Smearing(float eta, float r9){
+
+  // Smearings from Shervin for regression energy, 16Jan rereco
+
+  eta = fabs(eta);
+
+  float r=0;
+
+  if (r9<0.94){
+    if (eta<1) r= 0.96;
+    else if (eta<1.4442) r= 1.96;
+    else if (eta<2) r= 2.79;
+    else r= 3.01;
+  }
+  else {
+    if (eta<1) r= 0.74;
+    else if (eta<1.4442) r= 1.43;
+    else if (eta<2) r= 2.68;
+    else r= 2.93;
+  }
+
+  return r/100.;
+
+}
+
