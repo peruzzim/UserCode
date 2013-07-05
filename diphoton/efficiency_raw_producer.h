@@ -96,9 +96,9 @@ public :
    void FillDiffVariablesGEN();
    TString get_name_histo_pass(int region, TString diffvariable);
    TString get_name_histo_fail(int region, TString diffvariable);
-   TString get_name_histo_raweff(int region, TString diffvariable);
+   TString get_name_histo_eff(int region, TString diffvariable);
 
-   std::map<TString, TH1F*> histo_raweff;
+   std::map<TString, TH1F*> histo_eff;
    std::map<TString, TH1F*> histo_pass;
    std::map<TString, TH1F*> histo_fail;
 
@@ -183,8 +183,8 @@ efficiency_raw_producer::efficiency_raw_producer(TTree *tree) : fChain(0)
 
 
 
-//       TString t3=get_name_histo_raweff(i,diffvariable->Data());
-//       histo_raweff[t3] = new TH1F(t3.Data(),t3.Data(),bins_to_run,binsdef);
+//       TString t3=get_name_histo_eff(i,diffvariable->Data());
+//       histo_eff[t3] = new TH1F(t3.Data(),t3.Data(),bins_to_run,binsdef);
        TString t3_pass=get_name_histo_pass(i,diffvariable->Data());
        histo_pass[t3_pass] = new TH1F(t3_pass.Data(),t3_pass.Data(),bins_to_run,binsdef);
        histo_pass[t3_pass]->Sumw2();
@@ -347,8 +347,8 @@ TString efficiency_raw_producer::get_name_histo_fail(int region, TString diffvar
   return t;
 }
 
-TString efficiency_raw_producer::get_name_histo_raweff(int region, TString diffvariable){
-  TString name_signal="histo_raweff";
+TString efficiency_raw_producer::get_name_histo_eff(int region, TString diffvariable){
+  TString name_signal="histo_eff";
   TString reg;
   if (region==0) reg="EBEB"; else if (region==1) reg="EBEE"; else if (region==2) reg="EEEE"; else if (region==3) reg="EEEB";
   TString t=Form("%s_%s_%s",name_signal.Data(),reg.Data(),diffvariable.Data());

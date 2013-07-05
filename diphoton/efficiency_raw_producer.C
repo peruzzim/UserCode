@@ -108,21 +108,21 @@ void efficiency_raw_producer::Loop()
 
    for (int i=0; i<3; i++)
      for (std::vector<TString>::const_iterator diffvariable = diffvariables_list.begin(); diffvariable!=diffvariables_list.end(); diffvariable++){
-       histo_raweff[get_name_histo_raweff(i,*diffvariable)] = (TH1F*)(histo_pass[get_name_histo_pass(i,*diffvariable)]->Clone(get_name_histo_raweff(i,*diffvariable).Data()));
-       histo_raweff[get_name_histo_raweff(i,*diffvariable)]->SetTitle(get_name_histo_raweff(i,*diffvariable).Data());
+       histo_eff[get_name_histo_eff(i,*diffvariable)] = (TH1F*)(histo_pass[get_name_histo_pass(i,*diffvariable)]->Clone(get_name_histo_eff(i,*diffvariable).Data()));
+       histo_eff[get_name_histo_eff(i,*diffvariable)]->SetTitle(get_name_histo_eff(i,*diffvariable).Data());
        TH1F *histo_tot = (TH1F*)(histo_pass[get_name_histo_pass(i,*diffvariable)]->Clone("tot"));
        histo_tot->Add(histo_fail[get_name_histo_fail(i,*diffvariable)]);
-       histo_raweff[get_name_histo_raweff(i,*diffvariable)]->Divide(histo_tot);
+       histo_eff[get_name_histo_eff(i,*diffvariable)]->Divide(histo_eff[get_name_histo_eff(i,*diffvariable)],histo_tot,1,1,"B");
        delete histo_tot;
      }
 
-   TFile *f = new TFile ("raw_efficiency.root","recreate");
+   TFile *f = new TFile ("efficiency.root","recreate");
    f->cd();
 
    for (std::vector<TString>::const_iterator diffvariable = diffvariables_list.begin(); diffvariable!=diffvariables_list.end(); diffvariable++)
      for (int i=0; i<3; i++){
-       histo_raweff[get_name_histo_raweff(i,*diffvariable)]->SetAxisRange(0,1,"Y");
-       histo_raweff[get_name_histo_raweff(i,*diffvariable)]->Write();
+       histo_eff[get_name_histo_eff(i,*diffvariable)]->SetAxisRange(0,1,"Y");
+       histo_eff[get_name_histo_eff(i,*diffvariable)]->Write();
      }
 
    f->mkdir("other_histos");
