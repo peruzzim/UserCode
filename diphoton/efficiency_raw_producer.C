@@ -261,3 +261,29 @@ void efficiency_raw_producer::Loop()
 
 
 }
+
+
+float efficiency_raw_producer::Smearing(float eta, float r9){
+
+  // Smearings from Shervin for regression energy, 16Jan rereco
+
+  eta = fabs(eta);
+
+  float r=0;
+
+  if (r9<0.94){
+    if (eta<1) r= 0.96;
+    else if (eta<1.4442) r= 1.96;
+    else if (eta<2) r= 2.79;
+    else r= 3.01;
+  }
+  else {
+    if (eta<1) r= 0.74;
+    else if (eta<1.4442) r= 1.43;
+    else if (eta<2) r= 2.68;
+    else r= 2.93;
+  }
+
+  return r/100.;
+
+}

@@ -132,6 +132,7 @@ public :
    Int_t Choose_bin_dphi(float dphi, int region, bool veto_overflow = false);
    Int_t Choose_bin_dR(float dR, int region, bool veto_overflow = false);
 
+   float Smearing(float eta, float r9);
 
 };
 
