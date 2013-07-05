@@ -9,6 +9,8 @@
 #define efficiency_raw_producer_h
 
 #include "RooUnfold-1.1.1/src/RooUnfold.h"
+#include "RooUnfold-1.1.1/src/RooUnfoldBayes.h"
+#include "RooUnfold-1.1.1/src/RooUnfoldBinByBin.h"
 
 #include "binsdef.h"
 
@@ -120,11 +122,11 @@ public :
    Float_t   localvarGEN_dphi;
    Float_t   localvarGEN_dR;
 
-   Int_t Choose_bin_invmass(float invmass, int region);
-   Int_t Choose_bin_diphotonpt(float diphotonpt, int region);
-   Int_t Choose_bin_costhetastar(float costhetastar, int region);
-   Int_t Choose_bin_dphi(float dphi, int region);
-   Int_t Choose_bin_dR(float dR, int region);
+   Int_t Choose_bin_invmass(float invmass, int region, bool veto_overflow = false);
+   Int_t Choose_bin_diphotonpt(float diphotonpt, int region, bool veto_overflow = false);
+   Int_t Choose_bin_costhetastar(float costhetastar, int region, bool veto_overflow = false);
+   Int_t Choose_bin_dphi(float dphi, int region, bool veto_overflow = false);
+   Int_t Choose_bin_dR(float dR, int region, bool veto_overflow = false);
 
 
 };
@@ -430,7 +432,7 @@ TString efficiency_raw_producer::get_name_response(int region, TString diffvaria
   return t;
 }
 
-Int_t efficiency_raw_producer::Choose_bin_invmass(float invmass, int region){
+Int_t efficiency_raw_producer::Choose_bin_invmass(float invmass, int region, bool veto_overflow){
 
   int index;
 
@@ -445,7 +447,7 @@ Int_t efficiency_raw_producer::Choose_bin_invmass(float invmass, int region){
   assert (cuts!=NULL);
   assert (index!=0);
 
-  cuts[index]=9999;
+  cuts[index]= veto_overflow ? cuts[index-1] : 9999;
 
   if (invmass<cuts[0]){
     std::cout << "WARNING: called bin choice for out-of-range value mass " << invmass << " cuts[0]= " << cuts[0] << std::endl;
@@ -454,13 +456,13 @@ Int_t efficiency_raw_producer::Choose_bin_invmass(float invmass, int region){
 
   for (int i=0; i<index; i++) if ((invmass>=cuts[i]) && (invmass<cuts[i+1])) return i;
   
-  std::cout << "WARNING: called bin choice for out-of-range value mass " << invmass << std::endl;
+  if (!veto_overflow) std::cout << "WARNING: called bin choice for out-of-range value mass " << invmass << std::endl;
   return -999;
 
 
 };
 
-Int_t efficiency_raw_producer::Choose_bin_diphotonpt(float diphotonpt, int region){
+Int_t efficiency_raw_producer::Choose_bin_diphotonpt(float diphotonpt, int region, bool veto_overflow){
 
   int index;
 
@@ -475,7 +477,7 @@ Int_t efficiency_raw_producer::Choose_bin_diphotonpt(float diphotonpt, int regio
   assert (cuts!=NULL);
   assert (index!=0);
 
-  cuts[index]=9999;
+  cuts[index]= veto_overflow ? cuts[index-1] : 9999;
 
   if (diphotonpt<cuts[0]){
     std::cout << "WARNING: called bin choice for out-of-range value diphotonpt " << diphotonpt << " cuts[0]= " << cuts[0] << std::endl;
@@ -484,13 +486,13 @@ Int_t efficiency_raw_producer::Choose_bin_diphotonpt(float diphotonpt, int regio
 
   for (int i=0; i<index; i++) if ((diphotonpt>=cuts[i]) && (diphotonpt<cuts[i+1])) return i;
   
-  std::cout << "WARNING: called bin choice for out-of-range value diphotonpt " << diphotonpt << std::endl;
+  if (!veto_overflow) std::cout << "WARNING: called bin choice for out-of-range value diphotonpt " << diphotonpt << std::endl;
   return -999;
 
 
 };
 
-Int_t efficiency_raw_producer::Choose_bin_costhetastar(float costhetastar, int region){
+Int_t efficiency_raw_producer::Choose_bin_costhetastar(float costhetastar, int region, bool veto_overflow){
 
   int index;
 
@@ -505,7 +507,7 @@ Int_t efficiency_raw_producer::Choose_bin_costhetastar(float costhetastar, int r
   assert (cuts!=NULL);
   assert (index!=0);
 
-  cuts[index]=9999;
+  cuts[index]= veto_overflow ? cuts[index-1] : 9999;
 
   if (costhetastar<cuts[0]){
     std::cout << "WARNING: called bin choice for out-of-range value " << costhetastar << " cuts[0]= " << cuts[0] << std::endl;
@@ -514,13 +516,13 @@ Int_t efficiency_raw_producer::Choose_bin_costhetastar(float costhetastar, int r
 
   for (int i=0; i<index; i++) if ((costhetastar>=cuts[i]) && (costhetastar<cuts[i+1])) return i;
   
-  std::cout << "WARNING: called bin choice for out-of-range value " << costhetastar << std::endl;
+  if (!veto_overflow) std::cout << "WARNING: called bin choice for out-of-range value " << costhetastar << std::endl;
   return -999;
 
 
 };
 
-Int_t efficiency_raw_producer::Choose_bin_dphi(float dphi, int region){
+Int_t efficiency_raw_producer::Choose_bin_dphi(float dphi, int region, bool veto_overflow){
 
   int index;
 
@@ -535,7 +537,7 @@ Int_t efficiency_raw_producer::Choose_bin_dphi(float dphi, int region){
   assert (cuts!=NULL);
   assert (index!=0);
 
-  cuts[index]=9999;
+  cuts[index]= veto_overflow ? cuts[index-1] : 9999;
 
   if (dphi<cuts[0]){
     std::cout << "WARNING: called bin choice for out-of-range value " << dphi << " cuts[0]= " << cuts[0] << std::endl;
@@ -544,13 +546,13 @@ Int_t efficiency_raw_producer::Choose_bin_dphi(float dphi, int region){
 
   for (int i=0; i<index; i++) if ((dphi>=cuts[i]) && (dphi<cuts[i+1])) return i;
   
-  std::cout << "WARNING: called bin choice for out-of-range value " << dphi << std::endl;
+  if (!veto_overflow) std::cout << "WARNING: called bin choice for out-of-range value " << dphi << std::endl;
   return -999;
 
 
 };
 
-Int_t efficiency_raw_producer::Choose_bin_dR(float dR, int region){
+Int_t efficiency_raw_producer::Choose_bin_dR(float dR, int region, bool veto_overflow){
 
   int index;
 
@@ -565,7 +567,7 @@ Int_t efficiency_raw_producer::Choose_bin_dR(float dR, int region){
   assert (cuts!=NULL);
   assert (index!=0);
 
-  cuts[index]=9999;
+  cuts[index]= veto_overflow ? cuts[index-1] : 9999;
 
   if (dR<cuts[0]){
     std::cout << "WARNING: called bin choice for out-of-range value " << dR << " cuts[0]= " << cuts[0] << std::endl;
@@ -574,7 +576,7 @@ Int_t efficiency_raw_producer::Choose_bin_dR(float dR, int region){
 
   for (int i=0; i<index; i++) if ((dR>=cuts[i]) && (dR<cuts[i+1])) return i;
   
-  std::cout << "WARNING: called bin choice for out-of-range value " << dR << std::endl;
+  if (!veto_overflow) std::cout << "WARNING: called bin choice for out-of-range value " << dR << std::endl;
   return -999;
 
 

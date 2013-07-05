@@ -29,26 +29,43 @@ void efficiency_raw_producer::Loop()
       nb = fChain->GetEntry(jentry);   nbytes += nb;
       // if (Cut(ientry) < 0) continue;
       
-      if (!tree_found_gen) continue;
+      if (!tree_found_gen && !tree_found_reco) continue;
       
       Int_t event_ok_for_dataset=-1;
 
       // dataset 0:EBEB 3/4->1:EBEE 2:EEEE
 
-      if (fabs(pholead_GEN_eta)<1.4442 && fabs(photrail_GEN_eta)<1.4442) {
-	event_ok_for_dataset=0;
+      if (tree_found_gen){
+	if (fabs(pholead_GEN_eta)<1.4442 && fabs(photrail_GEN_eta)<1.4442) {
+	  event_ok_for_dataset=0;
+	}
+	else if (fabs(pholead_GEN_eta)>1.56 && fabs(photrail_GEN_eta)>1.56) {
+	  event_ok_for_dataset=2;
+	}
+	else if (fabs(pholead_GEN_eta)<1.4442 && fabs(photrail_GEN_eta)>1.56) {
+	  event_ok_for_dataset=1;
+	}
+	else if (fabs(pholead_GEN_eta)>1.56 && fabs(photrail_GEN_eta)<1.4442) {
+	  event_ok_for_dataset=1;
+	}
+	else std::cout << "We have a problem here!!!" << std::endl;
       }
-      else if (fabs(pholead_GEN_eta)>1.56 && fabs(photrail_GEN_eta)>1.56) {
-	event_ok_for_dataset=2;
+      else if (tree_found_reco){
+	if (fabs(pholead_SCeta)<1.4442 && fabs(photrail_SCeta)<1.4442) {
+	  event_ok_for_dataset=0;
+	}
+	else if (fabs(pholead_SCeta)>1.56 && fabs(photrail_SCeta)>1.56) {
+	  event_ok_for_dataset=2;
+	}
+	else if (fabs(pholead_SCeta)<1.4442 && fabs(photrail_SCeta)>1.56) {
+	  event_ok_for_dataset=1;
+	}
+	else if (fabs(pholead_SCeta)>1.56 && fabs(photrail_SCeta)<1.4442) {
+	  event_ok_for_dataset=1;
+	}
+	else std::cout << "We have a problem here!!!" << std::endl;
       }
-      else if (fabs(pholead_GEN_eta)<1.4442 && fabs(photrail_GEN_eta)>1.56) {
-	event_ok_for_dataset=1;
-      }
-      else if (fabs(pholead_GEN_eta)>1.56 && fabs(photrail_GEN_eta)<1.4442) {
-	event_ok_for_dataset=1;
-      }
-      else std::cout << "We have a problem here!!!" << std::endl;
-
+      
       Float_t weight=event_luminormfactor*event_Kfactor*event_weight;
 
       if (event_ok_for_dataset<=-1) continue;
@@ -62,6 +79,7 @@ void efficiency_raw_producer::Loop()
 	  float value_diffvariableGEN;
 	  int event_ok_for_dataset_local = event_ok_for_dataset;
 
+	  if (tree_found_gen){
 
 	  FillDiffVariablesGEN(); // WARNING: WORKS ONLY IF DIFF VARIABLES ARE NOT SENSITIVE TO SWAPPING 1 WITH 2
 
@@ -86,7 +104,7 @@ void efficiency_raw_producer::Loop()
 	    bin_coupleGEN = Choose_bin_dR(value_diffvariableGEN,event_ok_for_dataset_local);
 	  }
       
-	  if (bin_coupleGEN<0) continue; // this should never happen
+	  if (bin_coupleGEN<0) break; // this should never happen
 	    
 	  if (apply_scale_factors && tree_found_match) {
 	    weight *= h_zee->GetBinContent(h_zee->FindBin(pholead_GEN_pt<h_zee->GetXaxis()->GetXmax() ? pholead_GEN_pt : h_zee->GetXaxis()->GetXmax()-1e-5 ,fabs(pholead_GEN_eta)));
@@ -98,30 +116,37 @@ void efficiency_raw_producer::Loop()
 	  if (tree_found_match) histo_pass[get_name_histo_pass(event_ok_for_dataset_local,*diffvariable)]->Fill(value_diffvariableGEN,weight);
 	  else histo_fail[get_name_histo_fail(event_ok_for_dataset_local,*diffvariable)]->Fill(value_diffvariableGEN,weight);
 
-	  if (tree_found_match){
+	  }
+
+
+	  if (tree_found_reco){
 
 	  FillDiffVariables(); // WARNING: WORKS ONLY IF DIFF VARIABLES ARE NOT SENSITIVE TO SWAPPING 1 WITH 2
 	  if (*diffvariable==TString("invmass")) {
 	    value_diffvariable=localvar_invmass;
-	    bin_couple = Choose_bin_invmass(value_diffvariable,event_ok_for_dataset_local);
+	    bin_couple = Choose_bin_invmass(value_diffvariable,event_ok_for_dataset_local,true);
 	  }
 	  if (*diffvariable==TString("diphotonpt")){
 	    value_diffvariable=localvar_diphotonpt;
-	    bin_couple = Choose_bin_diphotonpt(value_diffvariable,event_ok_for_dataset_local);
+	    bin_couple = Choose_bin_diphotonpt(value_diffvariable,event_ok_for_dataset_local,true);
 	  }
 	  if (*diffvariable==TString("costhetastar")){
 	    value_diffvariable = localvar_costhetastar;
-	    bin_couple = Choose_bin_costhetastar(value_diffvariable,event_ok_for_dataset_local); 
+	    bin_couple = Choose_bin_costhetastar(value_diffvariable,event_ok_for_dataset_local,true); 
 	  }
 	  if (*diffvariable==TString("dphi")){
 	    value_diffvariable=localvar_dphi;
-	    bin_couple = Choose_bin_dphi(value_diffvariable,event_ok_for_dataset_local);
+	    bin_couple = Choose_bin_dphi(value_diffvariable,event_ok_for_dataset_local,true);
 	  }
 	  if (*diffvariable==TString("dR")){
 	    value_diffvariable=localvar_dR;
-	    bin_couple = Choose_bin_dR(value_diffvariable,event_ok_for_dataset_local);
+	    bin_couple = Choose_bin_dR(value_diffvariable,event_ok_for_dataset_local,true);
 	  }
-	  if (bin_couple<0) response[get_name_response(event_ok_for_dataset_local,*diffvariable)]->Fill(value_diffvariable,value_diffvariableGEN); // bin_couple==0 should never happen
+
+	  if (bin_couple<0) break;
+
+	  if (tree_found_match) response[get_name_response(event_ok_for_dataset_local,*diffvariable)]->Fill(value_diffvariable,value_diffvariableGEN,weight);
+	  else response[get_name_response(event_ok_for_dataset_local,*diffvariable)]->Fake(value_diffvariable,weight);
 
 	  }
 
@@ -138,7 +163,6 @@ void efficiency_raw_producer::Loop()
        response[get_name_response(i,*diffvariable)]->Write(get_name_response(i,*diffvariable).Data());
      }
    fu->Close();
-
 
    for (int i=0; i<3; i++)
      for (std::vector<TString>::const_iterator diffvariable = diffvariables_list.begin(); diffvariable!=diffvariables_list.end(); diffvariable++){
