@@ -215,6 +215,9 @@ void efficiency_raw_producer::Loop()
    f->Close();
 
 
+   TH1F *true_reco_effnounf = (TH1F*)(true_reco->Clone("true_reco_effnounf"));
+   TH1F *true_reco_effunf = (TH1F*)(true_reco->Clone("true_reco_effunf"));
+
    true_gen->SetLineColor(kRed);
    true_gen->SetMarkerColor(kRed);
    true_gen->SetMarkerStyle(20);
@@ -225,21 +228,27 @@ void efficiency_raw_producer::Loop()
    true_reco->SetMarkerStyle(20);
    true_reco->Draw("sameP");
 
+   true_reco_effnounf->SetLineColor(kMagenta);
+   true_reco_effnounf->Divide(histo_eff[get_name_histo_eff(0,"invmass")]);
+   true_reco_effnounf->Draw("same");
+
 
    RooUnfoldBayes unf1(response[get_name_response(0,"invmass")],true_reco,4);
    TH1D *u1 = (TH1D*)(unf1.Hreco());
    u1->Divide(histo_eff[get_name_histo_eff(0,"invmass")]);
    u1->SetLineColor(kBlue);
    u1->Draw("same");
-
+  
    RooUnfoldBayes unf2(responsewitheff[get_name_responsewitheff(0,"invmass")],true_reco,4);
    TH1D *u2 = (TH1D*)(unf2.Hreco());
    u2->SetLineColor(kGreen);
    u2->Draw("same");
 
-
-
-
+   true_reco_effunf->Divide(histo_eff[get_name_histo_eff(0,"invmass")]);
+   RooUnfoldBayes unf3(response[get_name_response(0,"invmass")],true_reco_effunf,4);
+   TH1D *u3 = (TH1D*)(unf3.Hreco());
+   u3->SetLineColor(kYellow);
+   u3->Draw("same");
 
 
 
