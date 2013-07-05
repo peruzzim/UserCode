@@ -348,10 +348,15 @@ TString efficiency_raw_producer::get_name_histo_fail(int region, TString diffvar
 }
 
 TString efficiency_raw_producer::get_name_histo_eff(int region, TString diffvariable){
-  TString name_signal="histo_eff";
   TString reg;
   if (region==0) reg="EBEB"; else if (region==1) reg="EBEE"; else if (region==2) reg="EEEE"; else if (region==3) reg="EEEB";
-  TString t=Form("%s_%s_%s",name_signal.Data(),reg.Data(),diffvariable.Data());
+  std::map<TString,TString> translation;
+  translation.insert(std::pair<TString,TString>(TString("invmass"),TString("mgg")));
+  translation.insert(std::pair<TString,TString>(TString("diphotonpt"),TString("qtgg")));
+  translation.insert(std::pair<TString,TString>(TString("costhetastar"),TString("costhetastar")));
+  translation.insert(std::pair<TString,TString>(TString("dphi"),TString("deltaphi")));
+  translation.insert(std::pair<TString,TString>(TString("dR"),TString("dR")));
+  TString t=Form("h_%s_%s_WithTotErr",reg.Data(),translation[diffvariable].Data());
   return t;
 }
 
