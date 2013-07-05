@@ -7,12 +7,14 @@
 void efficiency_raw_producer::Loop()
 {
 
+  const bool apply_scale_factors = true;
+  const bool do_energy_smearing = true;
+
+  /* testing
   TH1F *true_reco = (TH1F*)(histo_pass[get_name_histo_pass(0,"invmass")]->Clone("reco"));
   TH1F *true_reco_nofakes = (TH1F*)(histo_pass[get_name_histo_pass(0,"invmass")]->Clone("reco_nofakes"));
   TH1F *true_gen = (TH1F*)(histo_pass[get_name_histo_pass(0,"invmass")]->Clone("gen"));
-
-  const bool apply_scale_factors = true;
-  const bool do_energy_smearing = true;
+  */
 
   TRandom3 *rand = new TRandom3(0);
 
@@ -57,16 +59,16 @@ void efficiency_raw_producer::Loop()
 	else std::cout << "We have a problem here!!!" << std::endl;
       }
       else if (tree_found_reco){
-	if (fabs(pholead_SCeta)<1.4442 && fabs(photrail_SCeta)<1.4442) {
+	if (fabs(pholead_eta)<1.4442 && fabs(photrail_eta)<1.4442) {
 	  event_ok_for_dataset=0;
 	}
-	else if (fabs(pholead_SCeta)>1.56 && fabs(photrail_SCeta)>1.56) {
+	else if (fabs(pholead_eta)>1.56 && fabs(photrail_eta)>1.56) {
 	  event_ok_for_dataset=2;
 	}
-	else if (fabs(pholead_SCeta)<1.4442 && fabs(photrail_SCeta)>1.56) {
+	else if (fabs(pholead_eta)<1.4442 && fabs(photrail_eta)>1.56) {
 	  event_ok_for_dataset=1;
 	}
-	else if (fabs(pholead_SCeta)>1.56 && fabs(photrail_SCeta)<1.4442) {
+	else if (fabs(pholead_eta)>1.56 && fabs(photrail_eta)<1.4442) {
 	  event_ok_for_dataset=1;
 	}
 	else std::cout << "We have a problem here!!!" << std::endl;
@@ -137,6 +139,7 @@ void efficiency_raw_producer::Loop()
 	  if (tree_found_reco){
 
 	  FillDiffVariables(); // WARNING: WORKS ONLY IF DIFF VARIABLES ARE NOT SENSITIVE TO SWAPPING 1 WITH 2
+
 	  if (*diffvariable==TString("invmass")) {
 	    value_diffvariable=localvar_invmass;
 	    bin_couple = Choose_bin_invmass(value_diffvariable,event_ok_for_dataset_local,true);
@@ -177,11 +180,11 @@ void efficiency_raw_producer::Loop()
 	    else if (tree_found_reco) responsewitheff[get_name_responsewitheff(event_ok_for_dataset_local,*diffvariable)]->Fake(value_diffvariable,weight);
 	  }
 
-
+	  /* testing
 	  if (tree_found_reco && event_ok_for_dataset_local==0 && (*diffvariable==TString("invmass"))) true_reco->Fill(value_diffvariable,weight);
 	  if (tree_found_match && event_ok_for_dataset_local==0 && (*diffvariable==TString("invmass"))) true_reco_nofakes->Fill(value_diffvariable,weight);
 	  if (tree_found_gen && event_ok_for_dataset_local==0 &&(*diffvariable==TString("invmass"))) true_gen->Fill(value_diffvariableGEN,weight);
-
+	  */
 	}
 
 
@@ -231,7 +234,7 @@ void efficiency_raw_producer::Loop()
 
 
 
-
+   /* testing
    TH1F *true_reco_effnounf = (TH1F*)(true_reco_nofakes->Clone("true_reco_effnounf"));
    TH1F *true_reco_effunf = (TH1F*)(true_reco_nofakes->Clone("true_reco_effunf"));
 
@@ -290,7 +293,7 @@ void efficiency_raw_producer::Loop()
    u3->Draw("sameP");
    u3b->Draw("sameP");
 
-
+   */
 
 
 

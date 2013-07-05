@@ -336,8 +336,8 @@ void efficiency_raw_producer::Show(Long64_t entry)
 
 void efficiency_raw_producer::FillDiffVariables(){
 
-  TLorentzVector pho1; pho1.SetPtEtaPhiM(pholead_pt,pholead_SCeta,pholead_SCphi,0); // UNIFORMARE LE DEFINIZIONI DELLE QUANTITA' QUI
-  TLorentzVector pho2; pho2.SetPtEtaPhiM(photrail_pt,photrail_SCeta,photrail_SCphi,0);
+  TLorentzVector pho1; pho1.SetPtEtaPhiM(pholead_pt,pholead_eta,pholead_phi,0); 
+  TLorentzVector pho2; pho2.SetPtEtaPhiM(photrail_pt,photrail_eta,photrail_phi,0);
 
   localvar_invmass = (pho1+pho2).M();
   localvar_diphotonpt = (pho1+pho2).Pt();
@@ -360,16 +360,16 @@ void efficiency_raw_producer::FillDiffVariables(){
     localvar_costhetastar=( fabs(TMath::Cos(direction_cs.Angle(boostedpho1.Vect()))) );
   }
   {
-    float phi1 = pholead_SCphi;
-    float phi2 = photrail_SCphi;
+    float phi1 = pholead_phi;
+    float phi2 = photrail_phi;
     float dphi = AbsDeltaPhi(phi1,phi2);
     localvar_dphi=(dphi);
   }
   {
-    float phi1 = pholead_SCphi;
-    float phi2 = photrail_SCphi;
+    float phi1 = pholead_phi;
+    float phi2 = photrail_phi;
     float dphi = AbsDeltaPhi(phi1,phi2);
-    float deta = pholead_SCeta-photrail_SCeta;
+    float deta = pholead_eta-photrail_eta;
     float dR = sqrt(deta*deta+dphi*dphi);
     localvar_dR=(dR);
   }
