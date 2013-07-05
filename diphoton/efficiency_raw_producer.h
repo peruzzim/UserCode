@@ -102,14 +102,16 @@ public :
    TString get_name_histo_pass(int region, TString diffvariable);
    TString get_name_histo_fail(int region, TString diffvariable);
    TString get_name_histo_eff(int region, TString diffvariable);
-   TString get_name_response(int region, TString diffvariable);
+   TString get_name_responsewithmatch(int region, TString diffvariable);
+   TString get_name_responsewithfakes(int region, TString diffvariable);
    TString get_name_responsewitheff(int region, TString diffvariable);
 
    std::map<TString, TH1F*> histo_eff;
    std::map<TString, TH1F*> histo_pass;
    std::map<TString, TH1F*> histo_fail;
 
-   std::map<TString, RooUnfoldResponse*> response;
+   std::map<TString, RooUnfoldResponse*> responsewithmatch;
+   std::map<TString, RooUnfoldResponse*> responsewithfakes;
    std::map<TString, RooUnfoldResponse*> responsewitheff;
 
    Float_t   localvar_invmass;
@@ -213,7 +215,8 @@ efficiency_raw_producer::efficiency_raw_producer(TTree *tree) : fChain(0)
        TH1F *proto_h_reco = (TH1F*)(histo_pass[t3_pass]->Clone("RECO"));
        proto_h_reco->SetTitle("RECO");
 
-       response[get_name_response(i,*diffvariable)] = new RooUnfoldResponse(proto_h_gen,proto_h_reco); // histo_pass is used as template for binning here, contents are not used
+       responsewithmatch[get_name_responsewithmatch(i,*diffvariable)] = new RooUnfoldResponse(proto_h_gen,proto_h_reco); // histo_pass is used as template for binning here, contents are not used
+       responsewithfakes[get_name_responsewithfakes(i,*diffvariable)] = new RooUnfoldResponse(proto_h_gen,proto_h_reco); // histo_pass is used as template for binning here, contents are not used
        responsewitheff[get_name_responsewitheff(i,*diffvariable)] = new RooUnfoldResponse(proto_h_gen,proto_h_reco); // histo_pass is used as template for binning here, contents are not used
 
      }
@@ -428,8 +431,16 @@ TString efficiency_raw_producer::get_name_histo_eff(int region, TString diffvari
   return t;
 }
 
-TString efficiency_raw_producer::get_name_response(int region, TString diffvariable){
-  TString name_signal="response";
+TString efficiency_raw_producer::get_name_responsewithmatch(int region, TString diffvariable){
+  TString name_signal="responsewithmatch";
+  TString reg;
+  if (region==0) reg="EBEB"; else if (region==1) reg="EBEE"; else if (region==2) reg="EEEE"; else if (region==3) reg="EEEB";
+  TString t=Form("%s_%s_%s",name_signal.Data(),reg.Data(),diffvariable.Data());
+  return t;
+}
+
+TString efficiency_raw_producer::get_name_responsewithfakes(int region, TString diffvariable){
+  TString name_signal="responsewithfakes";
   TString reg;
   if (region==0) reg="EBEB"; else if (region==1) reg="EBEE"; else if (region==2) reg="EEEE"; else if (region==3) reg="EEEB";
   TString t=Form("%s_%s_%s",name_signal.Data(),reg.Data(),diffvariable.Data());

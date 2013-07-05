@@ -8,6 +8,7 @@ void efficiency_raw_producer::Loop()
 {
 
   TH1F *true_reco = (TH1F*)(histo_pass[get_name_histo_pass(0,"invmass")]->Clone("reco"));
+  TH1F *true_reco_nofakes = (TH1F*)(histo_pass[get_name_histo_pass(0,"invmass")]->Clone("reco_nofakes"));
   TH1F *true_gen = (TH1F*)(histo_pass[get_name_histo_pass(0,"invmass")]->Clone("gen"));
 
   const bool apply_scale_factors = true;
@@ -108,20 +109,19 @@ void efficiency_raw_producer::Loop()
       
 	  }
 
-
-
 	  if (tree_found_gen && bin_coupleGEN>=0){
 
-	  if (apply_scale_factors && tree_found_match) {
-	    weight *= h_zee->GetBinContent(h_zee->FindBin(pholead_GEN_pt<h_zee->GetXaxis()->GetXmax() ? pholead_GEN_pt : h_zee->GetXaxis()->GetXmax()-1e-5 ,fabs(pholead_GEN_eta)));
-	    weight *= h_zee->GetBinContent(h_zee->FindBin(photrail_GEN_pt<h_zee->GetXaxis()->GetXmax() ? photrail_GEN_pt : h_zee->GetXaxis()->GetXmax()-1e-5 ,fabs(photrail_GEN_eta)));
-	    weight *= h_zuug->GetBinContent(h_zuug->FindBin(fabs(pholead_GEN_eta)));
-	    weight *= h_zuug->GetBinContent(h_zuug->FindBin(fabs(photrail_GEN_eta)));
+	    float addweight=1;
 
+	  if (apply_scale_factors && tree_found_match) {
+	    addweight *= h_zee->GetBinContent(h_zee->FindBin(pholead_GEN_pt<h_zee->GetXaxis()->GetXmax() ? pholead_GEN_pt : h_zee->GetXaxis()->GetXmax()-1e-5 ,fabs(pholead_GEN_eta)));
+	    addweight *= h_zee->GetBinContent(h_zee->FindBin(photrail_GEN_pt<h_zee->GetXaxis()->GetXmax() ? photrail_GEN_pt : h_zee->GetXaxis()->GetXmax()-1e-5 ,fabs(photrail_GEN_eta)));
+	    addweight *= h_zuug->GetBinContent(h_zuug->FindBin(fabs(pholead_GEN_eta)));
+	    addweight *= h_zuug->GetBinContent(h_zuug->FindBin(fabs(photrail_GEN_eta)));
 	  }
 
-	  if (tree_found_match) histo_pass[get_name_histo_pass(event_ok_for_dataset_local,*diffvariable)]->Fill(value_diffvariableGEN,weight);
-	  else histo_fail[get_name_histo_fail(event_ok_for_dataset_local,*diffvariable)]->Fill(value_diffvariableGEN,weight);
+	  if (tree_found_match) histo_pass[get_name_histo_pass(event_ok_for_dataset_local,*diffvariable)]->Fill(value_diffvariableGEN,weight*addweight);
+	  else histo_fail[get_name_histo_fail(event_ok_for_dataset_local,*diffvariable)]->Fill(value_diffvariableGEN,weight*addweight);
 
 	  }
 
@@ -150,24 +150,27 @@ void efficiency_raw_producer::Loop()
 	    bin_couple = Choose_bin_dR(value_diffvariable,event_ok_for_dataset_local,true);
 	  }
 
-	  }
-
-
-	  if (tree_found_reco && bin_couple>=0){
-
-	  if (tree_found_match) response[get_name_response(event_ok_for_dataset_local,*diffvariable)]->Fill(value_diffvariable,value_diffvariableGEN,weight);
-	  else response[get_name_response(event_ok_for_dataset_local,*diffvariable)]->Fake(value_diffvariable,weight);
+	  if (bin_couple<0) {tree_found_reco=false; tree_found_match=false;}
 
 	  }
 
-	  if ((tree_found_reco && bin_couple>=0) || tree_found_gen){
 
-	    if (tree_found_match && bin_couple>=0) responsewitheff[get_name_responsewitheff(event_ok_for_dataset_local,*diffvariable)]->Fill(value_diffvariable,value_diffvariableGEN,weight);
+
+	  if (tree_found_match) responsewithmatch[get_name_responsewithmatch(event_ok_for_dataset_local,*diffvariable)]->Fill(value_diffvariable,value_diffvariableGEN,weight);
+
+	  if (tree_found_reco){
+	    if (tree_found_match) responsewithfakes[get_name_responsewithfakes(event_ok_for_dataset_local,*diffvariable)]->Fill(value_diffvariable,value_diffvariableGEN,weight);
+	    else responsewithfakes[get_name_responsewithfakes(event_ok_for_dataset_local,*diffvariable)]->Fake(value_diffvariable,weight);
+	  }
+
+	  if (tree_found_reco || tree_found_gen){
+	    if (tree_found_match) responsewitheff[get_name_responsewitheff(event_ok_for_dataset_local,*diffvariable)]->Fill(value_diffvariable,value_diffvariableGEN,weight);
 	    else if (tree_found_gen) responsewitheff[get_name_responsewitheff(event_ok_for_dataset_local,*diffvariable)]->Miss(value_diffvariableGEN,weight);
-	    else if (tree_found_reco && bin_couple>=0) responsewitheff[get_name_responsewitheff(event_ok_for_dataset_local,*diffvariable)]->Fake(value_diffvariable,weight);
+	    else if (tree_found_reco) responsewitheff[get_name_responsewitheff(event_ok_for_dataset_local,*diffvariable)]->Fake(value_diffvariable,weight);
 	  }
 
-	  if (tree_found_reco && bin_couple>=0 && tree_found_match && event_ok_for_dataset_local==0 && (*diffvariable==TString("invmass"))) true_reco->Fill(value_diffvariable,weight);
+	  if (tree_found_reco && event_ok_for_dataset_local==0 && (*diffvariable==TString("invmass"))) true_reco->Fill(value_diffvariable,weight);
+	  if (tree_found_match && event_ok_for_dataset_local==0 && (*diffvariable==TString("invmass"))) true_reco_nofakes->Fill(value_diffvariable,weight);
 	  if (tree_found_gen && event_ok_for_dataset_local==0 &&(*diffvariable==TString("invmass"))) true_gen->Fill(value_diffvariableGEN,weight);
 	  
 	}
@@ -180,7 +183,8 @@ void efficiency_raw_producer::Loop()
    fu->cd();
    for (int i=0; i<3; i++)
      for (std::vector<TString>::const_iterator diffvariable = diffvariables_list.begin(); diffvariable!=diffvariables_list.end(); diffvariable++){
-       response[get_name_response(i,*diffvariable)]->Write(get_name_response(i,*diffvariable).Data());
+       responsewithmatch[get_name_responsewithmatch(i,*diffvariable)]->Write(get_name_responsewithmatch(i,*diffvariable).Data());
+       responsewithfakes[get_name_responsewithfakes(i,*diffvariable)]->Write(get_name_responsewithfakes(i,*diffvariable).Data());
        responsewitheff[get_name_responsewitheff(i,*diffvariable)]->Write(get_name_responsewitheff(i,*diffvariable).Data());
      }
    fu->Close();
@@ -215,8 +219,11 @@ void efficiency_raw_producer::Loop()
    f->Close();
 
 
-   TH1F *true_reco_effnounf = (TH1F*)(true_reco->Clone("true_reco_effnounf"));
-   TH1F *true_reco_effunf = (TH1F*)(true_reco->Clone("true_reco_effunf"));
+
+
+
+   TH1F *true_reco_effnounf = (TH1F*)(true_reco_nofakes->Clone("true_reco_effnounf"));
+   TH1F *true_reco_effunf = (TH1F*)(true_reco_nofakes->Clone("true_reco_effunf"));
 
    true_gen->SetLineColor(kRed);
    true_gen->SetMarkerColor(kRed);
@@ -233,7 +240,7 @@ void efficiency_raw_producer::Loop()
    true_reco_effnounf->Draw("same");
 
 
-   RooUnfoldBayes unf1(response[get_name_response(0,"invmass")],true_reco,4);
+   RooUnfoldBayes unf1(responsewithfakes[get_name_responsewithfakes(0,"invmass")],true_reco,4);
    TH1D *u1 = (TH1D*)(unf1.Hreco());
    u1->Divide(histo_eff[get_name_histo_eff(0,"invmass")]);
    u1->SetLineColor(kBlue);
@@ -245,7 +252,7 @@ void efficiency_raw_producer::Loop()
    u2->Draw("same");
 
    true_reco_effunf->Divide(histo_eff[get_name_histo_eff(0,"invmass")]);
-   RooUnfoldBayes unf3(response[get_name_response(0,"invmass")],true_reco_effunf,4);
+   RooUnfoldBayes unf3(responsewithmatch[get_name_responsewithmatch(0,"invmass")],true_reco_effunf,4);
    TH1D *u3 = (TH1D*)(unf3.Hreco());
    u3->SetLineColor(kYellow);
    u3->Draw("same");
