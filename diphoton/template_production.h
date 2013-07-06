@@ -19,6 +19,7 @@
 #include "RooDataSet.h"
 #include "TRandom3.h"
 #include "RooArgSet.h"
+#include "RooArgList.h"
 #include "RooRealVar.h"
 #include <TH2.h>
 #include <TStyle.h>
@@ -458,16 +459,6 @@ public :
    TString get_name_true_purity_ispp(int region, TString diffvariable);
    TString get_name_true_purity_isnotpp(int region, TString diffvariable);
    TString get_name_template2d_roodset(int region, TString sigorbkg);
-
-   TH2F *hist2d_iso_ncand[2][n_templates+1];
-
-   TH2F *hist2d_singlecandet;
-   TH2F *hist2d_singlecanddeta;
-   TH2F *hist2d_singlecanddphi;
-   TH2F *hist2d_singlecanddR;
-   TH2F *hist2d_singlecandenergy;
-   TH2F *hist2d_coneet;
-   TH2F *hist2d_coneenergy;
 
    Float_t pholead_outvar;
    Float_t photrail_outvar;
@@ -931,6 +922,9 @@ void template_production::WriteOutput(const char* filename, const TString _dirna
   out->mkdir(dirname.Data());
   out->cd(dirname.Data());
 
+  out->mkdir(Form("%s/roofit",dirname.Data()));
+  out->cd(Form("%s/roofit",dirname.Data()));
+
   roovar1->Write();
   roovar2->Write();
   roopt1->Write();
@@ -975,9 +969,45 @@ void template_production::WriteOutput(const char* filename, const TString _dirna
 
     for (std::map<TString, RooDataSet*>::const_iterator it = obs_roodset.begin(); it!=obs_roodset.end(); it++) (it->second)->Write();
 
+    out->mkdir(Form("%s/gen_purity",dirname.Data()));
+    out->cd(Form("%s/gen_purity",dirname.Data()));
+
     for (std::map<TString, TProfile*>::const_iterator it = true_purity.begin(); it!=true_purity.end(); it++) (it->second)->Write();
     for (std::map<TString, TH1F*>::const_iterator it = true_purity_isppevent.begin(); it!=true_purity_isppevent.end(); it++) (it->second)->Write();
     for (std::map<TString, TH1F*>::const_iterator it = true_purity_isnotppevent.begin(); it!=true_purity_isnotppevent.end(); it++) (it->second)->Write();
+
+  }
+
+  out->mkdir(Form("%s/plots",dirname.Data()));
+  out->cd(Form("%s/plots",dirname.Data()));
+
+  {
+
+    RooArgList toplot;
+    toplot.add(*rooargset_diffvariables);
+    toplot.add(RooArgSet(*roovar1,*roovar2,*roopt1,*roosieie1,*rooeta1,*roopt2,*roosieie2,*rooeta2));
+    toplot.add(RooArgSet(*roorho,*roosigma));
+    
+    for (int k=0; k<toplot.getSize(); k++){
+      
+      if (do2dtemplate){
+	for (std::map<TString, RooDataSet*>::const_iterator it = template2d_roodset.begin(); it!=template2d_roodset.end(); it++) {
+	  RooRealVar *thisvar = (RooRealVar*)(toplot.at(k));
+	  RooPlot *thisplot = thisvar->frame(Name(Form("%s_%s",thisvar->GetName(),(it->second)->GetName())));
+	  (it->second)->plotOn(thisplot);
+	  thisplot->Write();
+	}
+      }
+      if (dodistribution){
+	for (std::map<TString, RooDataSet*>::const_iterator it = obs_roodset.begin(); it!=obs_roodset.end(); it++) {
+	  RooRealVar *thisvar = (RooRealVar*)(toplot.at(k));
+	  RooPlot *thisplot = thisvar->frame(Name(Form("%s_%s",thisvar->GetName(),(it->second)->GetName())));
+	  (it->second)->plotOn(thisplot);
+	  thisplot->Write();
+	}
+      }
+
+    }
 
   }
 
