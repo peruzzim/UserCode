@@ -296,61 +296,11 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
   else if (splitting=="EBEE") {s1="EB"; s2="EE";}
   bool sym  = (s1==s2);
   
-  if (do_syst_string=="savepdfMCtrue2D" ||  do_syst_string=="doMCtrue" || do_syst_string=="doMCtrue_2frag"){
-    if(!dir_t2p)   inputfile_t2p->GetObject("mc_Tree_2Dtruesigsig_template",dir_t2p);
-    if(!dir_t1p1f) inputfile_t1p1f->GetObject("mc_Tree_2Dtruesigbkg_template",dir_t1p1f);
-    if(!dir_t2f)   inputfile_t2f->GetObject("mc_Tree_2Dtruebkgbkg_template",dir_t2f);
-    if(!dir_d)     inputfile_d->GetObject("mc_Tree_2Dstandard_selection",dir_d);
-  }
-  else if (do_syst_string=="savepdfMCtrue1D" || do_syst_string=="templateshape2frag"){
-    if(!dir_t2p)   inputfile_t2p->GetObject("mc_Tree_2Dtruesigsig_template",dir_t2p);
-    if(!dir_t1p1f) inputfile_t1p1f->GetObject("mc_Tree_2Dtruesigbkg_template",dir_t1p1f);
-    if(!dir_t2f)   inputfile_t2f->GetObject("mc_Tree_2Dtruebkgbkg_template",dir_t2f);
-    if(!dir_d)     inputfile_d->GetObject("data_Tree_2Dstandard_selection",dir_d);
-  }
-  else if (do_syst_string=="doMCpromptdriven"){
-    if(!dir_t2p)   inputfile_t2p->GetObject("mc_Tree_2Drandomcone_template",dir_t2p);
-    if(!dir_t1p1f) inputfile_t1p1f->GetObject("mc_Tree_2Drconeplusgenfake_template",dir_t1p1f);
-    if(!dir_t2f)   inputfile_t2f->GetObject("mc_Tree_2Dtruebkgbkg_template",dir_t2f);
-    if(!dir_d)     inputfile_d->GetObject("mc_Tree_2Dstandard_selection",dir_d);
-  }
-  else if (do_syst_string=="templateshapeMCpromptdrivenEB" || do_syst_string=="templateshapeMCpromptdrivenEE"){
-    if(!dir_t2p)   inputfile_t2p->GetObject("mc_Tree_2Drandomcone_template",dir_t2p);
-    if(!dir_t1p1f) inputfile_t1p1f->GetObject("mc_Tree_2Drconeplusgenfake_template",dir_t1p1f);
-    if(!dir_t2f)   inputfile_t2f->GetObject("mc_Tree_2Dtruebkgbkg_template",dir_t2f);
-    if(!dir_d)     inputfile_d->GetObject("data_Tree_2Dstandard_selection",dir_d);
-  }
-  else if (do_syst_string=="doMCfakedriven"){
-    if(!dir_t2p)   inputfile_t2p->GetObject("mc_Tree_2Dtruesigsig_template",dir_t2p);
-    if(!dir_t1p1f) inputfile_t1p1f->GetObject("mc_Tree_2Dgenpromptplussideband_template",dir_t1p1f);
-    if(!dir_t2f)   inputfile_t2f->GetObject("mc_Tree_2Dsideband_template",dir_t2f);
-    if(!dir_d)     inputfile_d->GetObject("mc_Tree_2Dstandard_selection",dir_d);
-  }
-  else if (do_syst_string=="templateshapeMCfakedrivenEB" || do_syst_string=="templateshapeMCfakedrivenEE"){
-    if(!dir_t2p)   inputfile_t2p->GetObject("mc_Tree_2Dtruesigsig_template",dir_t2p);
-    if(!dir_t1p1f) inputfile_t1p1f->GetObject("mc_Tree_2Dgenpromptplussideband_template",dir_t1p1f);
-    if(!dir_t2f)   inputfile_t2f->GetObject("mc_Tree_2Dsideband_template",dir_t2f);
-    if(!dir_d)     inputfile_d->GetObject("data_Tree_2Dstandard_selection",dir_d);
-  }
-  else if (do_syst_string=="subtractionZee"){
-    if(!dir_t2p)   inputfile_t2p->GetObject("mc_Tree_2Dtruesigsig_template",dir_t2p);
-    if(!dir_t1p1f) inputfile_t1p1f->GetObject("mc_Tree_2Dtruesigbkg_template",dir_t1p1f);
-    if(!dir_t2f)   inputfile_t2f->GetObject("mc_Tree_2Dtruebkgbkg_template",dir_t2f);
-    if(!dir_d)     inputfile_d->GetObject("mc_Tree_2Dstandard_selection",dir_d);
-  }  
-  else if (do_syst_string=="doMCfulldriven") {
-    if(!dir_t2p)   inputfile_t2p->GetObject("mc_Tree_2Drandomcone_template",dir_t2p);
-    if(!dir_t1p1f) inputfile_t1p1f->GetObject("mc_Tree_2Drandomconesideband_template",dir_t1p1f);
-    if(!dir_t2f)   inputfile_t2f->GetObject("mc_Tree_2Dsideband_template",dir_t2f);
-    if(!dir_d)     inputfile_d->GetObject("mc_Tree_2Dstandard_selection",dir_d);
-  }  
-  else {
-    if(!dir_t2p)   inputfile_t2p->GetObject("data_Tree_2Drandomcone_template",dir_t2p);
-    if(!dir_t1p1f) inputfile_t1p1f->GetObject("data_Tree_2Drandomconesideband_template",dir_t1p1f);
-    if(!dir_t2f)   inputfile_t2f->GetObject("data_Tree_2Dsideband_template",dir_t2f);
-    if(!dir_d)     inputfile_d->GetObject("data_Tree_2Dstandard_selection",dir_d);
-  }  
-    
+  if(!dir_t2p)   inputfile_t2p->GetObject("roofit",dir_t2p);
+  if(!dir_t1p1f) inputfile_t1p1f->GetObject("roofit",dir_t1p1f);
+  if(!dir_t2f)   inputfile_t2f->GetObject("roofit",dir_t2f);
+  if(!dir_d)     inputfile_d->GetObject("roofit",dir_d);
+
   assert(dir_t2p);
   assert(dir_t1p1f);
   assert(dir_t2f);

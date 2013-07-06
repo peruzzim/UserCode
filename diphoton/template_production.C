@@ -508,7 +508,7 @@ void gen_templates(TString filename="input.root", TString mode="", bool isdata=1
 
   if (maxevents>0) temp->Loop(maxevents); else temp->Loop();
   std::cout << "Exited from event loop" << std::endl;
-  temp->WriteOutput(outfile,treename_chosen.Data());
+  temp->WriteOutput(outfile);
   std::cout << "Written output" << std::endl;
 
   file->Close();
