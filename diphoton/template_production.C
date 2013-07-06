@@ -469,6 +469,9 @@ void gen_templates(TString filename="input.root", TString mode="", bool isdata=1
   TString treename_chosen="";
   if (mode=="standard") treename_chosen=treename[0];
   if (mode=="standard_2frag") treename_chosen=treename[0];
+  if (mode=="standard_2pgen") treename_chosen=treename[13];
+  if (mode=="standard_1p1fbothgen") treename_chosen=treename[14];
+  if (mode=="standard_2fgen") treename_chosen=treename[15];
   if (mode=="signal") treename_chosen=treename[11];
   if (mode=="signal_2frag") treename_chosen=treename[11];
   if (mode=="fragmentation") treename_chosen=treename[11];
