@@ -407,7 +407,7 @@ public :
    virtual Bool_t   Notify();
    virtual void     Show(Long64_t entry = -1);
 
-   void     WriteOutput(const char* filename, const TString dirname);
+   void     WriteOutput(const char* filename);
 
    void Setup(Bool_t _isdata, TString _mode, TString _differentialvariable);
 
@@ -915,16 +915,11 @@ void template_production::Show(Long64_t entry)
 /*    return 1; */
 /* } */
 
-void template_production::WriteOutput(const char* filename, const TString _dirname){
+void template_production::WriteOutput(const char* filename){
   TFile *out = TFile::Open(filename,"update");
-  TString dirname("");
-  if (isdata) dirname.Append("data_"); else dirname.Append("mc_");
-  dirname.Append(_dirname.Data());
-  out->mkdir(dirname.Data());
-  out->cd(dirname.Data());
 
-  out->mkdir(Form("%s/roofit",dirname.Data()));
-  out->cd(Form("%s/roofit",dirname.Data()));
+  out->mkdir("roofit");
+  out->cd("roofit");
 
   roovar1->Write();
   roovar2->Write();
@@ -970,8 +965,8 @@ void template_production::WriteOutput(const char* filename, const TString _dirna
 
     for (std::map<TString, RooDataSet*>::const_iterator it = obs_roodset.begin(); it!=obs_roodset.end(); it++) (it->second)->Write();
 
-    out->mkdir(Form("%s/gen_purity",dirname.Data()));
-    out->cd(Form("%s/gen_purity",dirname.Data()));
+    out->mkdir("purity");
+    out->cd("purity");
 
     for (std::map<TString, TProfile*>::const_iterator it = true_purity.begin(); it!=true_purity.end(); it++) (it->second)->Write();
     for (std::map<TString, TH1F*>::const_iterator it = true_purity_isppevent.begin(); it!=true_purity_isppevent.end(); it++) (it->second)->Write();
@@ -979,8 +974,8 @@ void template_production::WriteOutput(const char* filename, const TString _dirna
 
   }
 
-  out->mkdir(Form("%s/plots",dirname.Data()));
-  out->cd(Form("%s/plots",dirname.Data()));
+  out->mkdir("plots");
+  out->cd("plots");
 
   {
 
