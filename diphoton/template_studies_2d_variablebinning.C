@@ -1,5 +1,6 @@
 bool global_doplots = true;
 bool doxcheckstemplates = true;
+bool dolightcomparisonwithstandardsel = true;
 
 #include <assert.h>
 
@@ -63,9 +64,10 @@ using namespace std;
 using namespace RooFit;
 
 typedef struct {
-  TString title;
-  std::vector<TString> leg;
-} legend_struct;
+  RooDataSet *dset;
+  TString legend;
+  Int_t color;
+} plot_dataset_struct;
 
 typedef struct {
   RooFitResult *fr_pass1;
@@ -103,7 +105,7 @@ void reweight_rho(RooDataSet **dset, RooDataSet *dsetdestination, RooPlot *plot)
 void reweight_sigma(RooDataSet **dset, RooDataSet *dsetdestination);
 void reweight_rhosigma(RooDataSet **dset, RooDataSet *dsetdestination, bool deleteold = kTRUE);
 void validate_reweighting(RooDataSet *dset, RooDataSet *dsetdestination, int numvar);
-void plot_datasets_axis1(std::vector<RooDataSet*> dset, TString outname, legend_struct legdata, std::vector<int> colors, bool legendup=true, bool dolin=false);
+void plot_datasets_axis1(std::vector<plot_dataset_struct> dsets, TString outname, TString legtitle, bool legendup=true, bool dolin=false);
 void plot_template_dependency_axis1(RooDataSet *dset, TString variable, float min, float max, int bins, bool dobinned=0);
 void produce_category_binning(RooDataSet **dset, bool deleteold=kTRUE);
 void randomize_dataset_statistically_binned(RooDataSet **dset);
@@ -498,6 +500,8 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
   */
 
 
+
+
   RooDataSet *dset_mctrue_s = NULL;
   RooDataSet *dset_mcfrag_s = NULL;
   RooDataSet *dset_mcnofrag_s = NULL;
@@ -595,103 +599,154 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
       dataset_bkg_axis1_2 = (RooDataSet*)(dataset_bkg_axis1->reduce(Name("dataset_bkg_axis1_2"),Cut(Form("roosieie1>%f",0.032))));
     }
 
-    legend_struct sigleg;
-    sigleg.title = Form("Signal template %s",s1.Data());
-    sigleg.leg.push_back(TString("Rand. cone in data"));
-    sigleg.leg.push_back(TString("Photon Iso in MC"));
-    sigleg.leg.push_back(TString("Rand. cone in MC"));
-    sigleg.leg.push_back(TString("Zee in data"));
-    std::vector<RooDataSet*> sigdsets;
-    sigdsets.push_back(dataset_sig_axis1);
-    sigdsets.push_back(dset_mctrue_s);
-    sigdsets.push_back(dset_mcrcone_s);
-    sigdsets.push_back(dset_zee_s);
-    std::vector<int> sigcol;
-    sigcol.push_back(kBlack);
-    sigcol.push_back(kRed);
-    sigcol.push_back(kBlue);
-    sigcol.push_back(kGreen+2);
-    plot_datasets_axis1(sigdsets,Form("plots/histo_template_sig_withZ_%s_log",s1.Data()),sigleg,sigcol);
-    plot_datasets_axis1(sigdsets,Form("plots/histo_template_sig_withZ_%s_lin",s1.Data()),sigleg,sigcol,true,true);
-    sigdsets.pop_back();
-    sigleg.leg.pop_back();
-    sigcol.pop_back();
-    plot_datasets_axis1(sigdsets,Form("plots/histo_template_sig_%s_log",s1.Data()),sigleg,sigcol);
-    plot_datasets_axis1(sigdsets,Form("plots/histo_template_sig_%s_lin",s1.Data()),sigleg,sigcol,true,true);
-    sigdsets.erase(sigdsets.begin());
-    sigleg.leg.erase(sigleg.leg.begin());
-    sigcol.erase(sigcol.begin());
-    plot_datasets_axis1(sigdsets,Form("plots/histo_template_sig_onlyMC_%s_log",s1.Data()),sigleg,sigcol);
-    plot_datasets_axis1(sigdsets,Form("plots/histo_template_sig_onlyMC_%s_lin",s1.Data()),sigleg,sigcol,true,true);
-    sigdsets.pop_back();
-    sigleg.leg.pop_back();
-    sigcol.pop_back();
-    sigleg.leg.push_back(TString("Direct photon Iso in MC"));
-    sigleg.leg.push_back(TString("Frag. photon Iso in MC"));
-    sigleg.leg.push_back(TString("Rand. cone in MC"));
-    sigdsets.push_back(dset_mcnofrag_s);
-    sigdsets.push_back(dset_mcfrag_s);
-    sigdsets.push_back(dset_mcrcone_s);
-    sigcol.push_back(kCyan);
-    sigcol.push_back(kOrange);
-    sigcol.push_back(kBlue);
-    plot_datasets_axis1(sigdsets,Form("plots/histo_template_sig_onlyMCwithfrag_%s_log",s1.Data()),sigleg,sigcol);
-    plot_datasets_axis1(sigdsets,Form("plots/histo_template_sig_onlyMCwithfrag_%s_lin",s1.Data()),sigleg,sigcol,true,true);
 
+    plot_dataset_struct str_dataset_axis1;
+    str_dataset_axis1.dset = dataset_axis1;
+    str_dataset_axis1.legend = "Photon Iso in selection";
+    str_dataset_axis1.color = kYellow;
+    plot_dataset_struct str_dataset_sig_axis1;
+    str_dataset_sig_axis1.dset = dataset_sig_axis1;
+    str_dataset_sig_axis1.legend = "Rand. cone in data";
+    str_dataset_sig_axis1.color = kBlack;
+    plot_dataset_struct str_dset_mctrue_s;
+    str_dset_mctrue_s.dset = dset_mctrue_s;
+    str_dset_mctrue_s.legend = "Photon Iso in MC";
+    str_dset_mctrue_s.color = kRed;
+    plot_dataset_struct str_dset_mcrcone_s;
+    str_dset_mcrcone_s.dset = dset_mcrcone_s;
+    str_dset_mcrcone_s.legend = "Rand. cone in MC";
+    str_dset_mcrcone_s.color = kBlue;
+    plot_dataset_struct str_dset_zee_s;
+    str_dset_zee_s.dset = dset_zee_s;
+    str_dset_zee_s.legend = "Zee in data";
+    str_dset_zee_s.color = kGreen+2;
+    plot_dataset_struct str_dset_mcnofrag_s;
+    str_dset_mcnofrag_s.dset = dset_mcnofrag_s;
+    str_dset_mcnofrag_s.legend = "Direct photon Iso in MC";
+    str_dset_mcnofrag_s.color = kCyan;
+    plot_dataset_struct str_dset_mcfrag_s;
+    str_dset_mcfrag_s.dset = dset_mcfrag_s;
+    str_dset_mcfrag_s.legend = "Frag. photon Iso in MC";
+    str_dset_mcfrag_s.color = kOrange;
+    plot_dataset_struct str_dataset_bkg_axis1;
+    str_dataset_bkg_axis1.dset = dataset_bkg_axis1;
+    str_dataset_bkg_axis1.legend = "Sieie sideband in data";
+    str_dataset_bkg_axis1.color = kBlack;
+    plot_dataset_struct str_dataset_bkg_axis1_1;
+    str_dataset_bkg_axis1_1.dset = dataset_bkg_axis1_1;
+    str_dataset_bkg_axis1_1.legend = "Sieie sideband in data / left";
+    str_dataset_bkg_axis1_1.color = kBlack;
+    plot_dataset_struct str_dataset_bkg_axis1_2;
+    str_dataset_bkg_axis1_2.dset = dataset_bkg_axis1_2;
+    str_dataset_bkg_axis1_2.legend = "Sieie sideband in data / right";
+    str_dataset_bkg_axis1_2.color = kBlack;
+    plot_dataset_struct str_dset_mctrue_b;
+    str_dset_mctrue_b.dset = dset_mctrue_b;
+    str_dset_mctrue_b.legend = "Photon Iso in MC fakes";
+    str_dset_mctrue_b.color = kRed;
+    plot_dataset_struct str_dset_mcrcone_b;
+    str_dset_mcrcone_b.dset = dset_mcrcone_b;
+    str_dset_mcrcone_b.legend = "Sieie sideband in MC";
+    str_dset_mcrcone_b.color = kBlue;
+    plot_dataset_struct str_dset_mcrcone_b1;
+    str_dset_mcrcone_b1.dset = dset_mcrcone_b1;
+    str_dset_mcrcone_b1.legend = "Sieie sideband in MC / left";
+    str_dset_mcrcone_b1.color = kBlue;
+    plot_dataset_struct str_dset_mcrcone_b2;
+    str_dset_mcrcone_b2.dset = dset_mcrcone_b2;
+    str_dset_mcrcone_b2.legend = "Sieie sideband in MC / right";
+    str_dset_mcrcone_b2.color = kBlue;
 
-    legend_struct bkgleg;
-    bkgleg.title = Form("Background template %s",s1.Data());
-    bkgleg.leg.push_back(TString("Sieie sideband in data"));
-    bkgleg.leg.push_back(TString("Sieie sideband in data / left"));
-    bkgleg.leg.push_back(TString("Sieie sideband in data / right"));
-    bkgleg.leg.push_back(TString("Photon Iso in MC fakes"));
-    bkgleg.leg.push_back(TString("Sieie sideband in MC"));
-    bkgleg.leg.push_back(TString("Sieie sideband in MC / left"));
-    bkgleg.leg.push_back(TString("Sieie sideband in MC / right"));
-    std::vector<RooDataSet*> bkgdsets;
-    bkgdsets.push_back(dataset_bkg_axis1);
-    bkgdsets.push_back(dataset_bkg_axis1_1);
-    bkgdsets.push_back(dataset_bkg_axis1_2);
-    bkgdsets.push_back(dset_mctrue_b);
-    bkgdsets.push_back(dset_mcrcone_b);
-    bkgdsets.push_back(dset_mcrcone_b1);
-    bkgdsets.push_back(dset_mcrcone_b2);
-    std::vector<int> bkgcol;
-    bkgcol.push_back(kBlack);
-    bkgcol.push_back(kBlack);
-    bkgcol.push_back(kBlack);
-    bkgcol.push_back(kRed);
-    bkgcol.push_back(kBlue);
-    bkgcol.push_back(kBlue);
-    bkgcol.push_back(kBlue);
-    plot_datasets_axis1(bkgdsets,Form("plots/histo_template_bkg_slicesieie_%s_log",s1.Data()),bkgleg,bkgcol,false);
-    plot_datasets_axis1(bkgdsets,Form("plots/histo_template_bkg_slicesieie_%s_lin",s1.Data()),bkgleg,bkgcol,true,true);
-    std::vector<TString>::iterator it1 = bkgleg.leg.begin();
-    std::vector<RooDataSet*>::iterator it2 = bkgdsets.begin();
-    std::vector<int>::iterator it3 = bkgcol.begin();
-    it1++; it2++; it3++;
-    bkgleg.leg.erase(it1);
-    bkgdsets.erase(it2);
-    bkgcol.erase(it3);
-    bkgleg.leg.erase(it1);
-    bkgdsets.erase(it2);
-    bkgcol.erase(it3);
-    it1++; it2++; it3++;
-    it1++; it2++; it3++;
-    bkgleg.leg.erase(it1);
-    bkgdsets.erase(it2);
-    bkgcol.erase(it3);
-    bkgleg.leg.erase(it1);
-    bkgdsets.erase(it2);
-    bkgcol.erase(it3);
-    plot_datasets_axis1(bkgdsets,Form("plots/histo_template_bkg_%s_log",s1.Data()),bkgleg,bkgcol,false);
-    plot_datasets_axis1(bkgdsets,Form("plots/histo_template_bkg_%s_lin",s1.Data()),bkgleg,bkgcol,true,true);
-    bkgdsets.erase(bkgdsets.begin());
-    bkgleg.leg.erase(bkgleg.leg.begin());
-    bkgcol.erase(bkgcol.begin());
-    plot_datasets_axis1(bkgdsets,Form("plots/histo_template_bkg_onlyMC_%s_log",s1.Data()),bkgleg,bkgcol,false);
-    plot_datasets_axis1(bkgdsets,Form("plots/histo_template_bkg_onlyMC_%s_lin",s1.Data()),bkgleg,bkgcol,true,true);
+    {
+    std::vector<plot_dataset_struct> vec;
+    vec.push_back(str_dataset_axis1);
+    vec.push_back(str_dataset_sig_axis1);
+    vec.push_back(str_dset_mctrue_s);
+    vec.push_back(str_dset_mcrcone_s);
+    plot_datasets_axis1(vec,Form("plots/histo_template_sig_compwithsel_%s_log_%s_%s_b%d",s1.Data(),diffvariable.Data(),splitting.Data(),bin),Form("Signal template %s",s1.Data()));
+    plot_datasets_axis1(vec,Form("plots/histo_template_sig_compwithsel_%s_lin_%s_%s_b%d",s1.Data(),diffvariable.Data(),splitting.Data(),bin),Form("Signal template %s",s1.Data()),true,true);
+    }
+    {
+    std::vector<plot_dataset_struct> vec;
+    vec.push_back(str_dataset_axis1);
+    vec.push_back(str_dataset_bkg_axis1);
+    vec.push_back(str_dset_mctrue_b);
+    vec.push_back(str_dset_mcrcone_b);
+    plot_datasets_axis1(vec,Form("plots/histo_template_bkg_compwithsel_%s_log_%s_%s_b%d",s1.Data(),diffvariable.Data(),splitting.Data(),bin),Form("Background template %s",s1.Data()),false);
+    plot_datasets_axis1(vec,Form("plots/histo_template_bkg_compwithsel_%s_lin_%s_%s_b%d",s1.Data(),diffvariable.Data(),splitting.Data(),bin),Form("Background template %s",s1.Data()),true,true);
+    }
 
+    if (dolightcomparisonwithstandardsel) return NULL;
+
+    {
+    std::vector<plot_dataset_struct> vec;
+    vec.push_back(str_dataset_sig_axis1);
+    vec.push_back(str_dset_mctrue_s);
+    vec.push_back(str_dset_mcrcone_s);
+    vec.push_back(str_dset_zee_s);
+    plot_datasets_axis1(vec,Form("plots/histo_template_sig_withZ_%s_log",s1.Data()),Form("Signal template %s",s1.Data()));
+    plot_datasets_axis1(vec,Form("plots/histo_template_sig_withZ_%s_lin",s1.Data()),Form("Signal template %s",s1.Data()),true,true);
+    }
+    {
+    std::vector<plot_dataset_struct> vec;
+    vec.push_back(str_dataset_sig_axis1);
+    vec.push_back(str_dset_mctrue_s);
+    vec.push_back(str_dset_mcrcone_s);
+    plot_datasets_axis1(vec,Form("plots/histo_template_sig_%s_log",s1.Data()),Form("Signal template %s",s1.Data()));
+    plot_datasets_axis1(vec,Form("plots/histo_template_sig_%s_lin",s1.Data()),Form("Signal template %s",s1.Data()),true,true);
+    }
+    {
+    std::vector<plot_dataset_struct> vec;
+    vec.push_back(str_dset_mctrue_s);
+    vec.push_back(str_dset_mcrcone_s);
+    plot_datasets_axis1(vec,Form("plots/histo_template_sig_onlyMC_%s_log",s1.Data()),Form("Signal template %s",s1.Data()));
+    plot_datasets_axis1(vec,Form("plots/histo_template_sig_onlyMC_%s_lin",s1.Data()),Form("Signal template %s",s1.Data()),true,true);
+    }
+    {
+    std::vector<plot_dataset_struct> vec;
+    vec.push_back(str_dset_mctrue_s);
+    vec.push_back(str_dset_mcnofrag_s);
+    vec.push_back(str_dset_mcfrag_s);
+    vec.push_back(str_dset_mcrcone_s);
+    plot_datasets_axis1(vec,Form("plots/histo_template_sig_onlyMCwithfrag_%s_log",s1.Data()),Form("Signal template %s",s1.Data()));
+    plot_datasets_axis1(vec,Form("plots/histo_template_sig_onlyMCwithfrag_%s_lin",s1.Data()),Form("Signal template %s",s1.Data()),true,true);
+    }
+    {
+    std::vector<plot_dataset_struct> vec;
+    vec.push_back(str_dataset_sig_axis1);
+    vec.push_back(str_dset_mctrue_s);
+    vec.push_back(str_dset_mcrcone_s);
+    plot_datasets_axis1(vec,Form("plots/histo_template_sig_%s_log",s1.Data()),Form("Signal template %s",s1.Data()));
+    plot_datasets_axis1(vec,Form("plots/histo_template_sig_%s_lin",s1.Data()),Form("Signal template %s",s1.Data()),true,true);
+    }
+
+    {
+    std::vector<plot_dataset_struct> vec;
+    vec.push_back(str_dataset_bkg_axis1);
+    vec.push_back(str_dset_mctrue_b);
+    vec.push_back(str_dset_mcrcone_b);
+    plot_datasets_axis1(vec,Form("plots/histo_template_bkg_%s_log",s1.Data()),Form("Background template %s",s1.Data()),false);
+    plot_datasets_axis1(vec,Form("plots/histo_template_bkg_%s_lin",s1.Data()),Form("Background template %s",s1.Data()),true,true);
+    }
+    {
+    std::vector<plot_dataset_struct> vec;
+    vec.push_back(str_dset_mctrue_b);
+    vec.push_back(str_dset_mcrcone_b);
+    plot_datasets_axis1(vec,Form("plots/histo_template_bkg_onlyMC_%s_log",s1.Data()),Form("Background template %s",s1.Data()),false);
+    plot_datasets_axis1(vec,Form("plots/histo_template_bkg_onlyMC_%s_lin",s1.Data()),Form("Background template %s",s1.Data()),true,true);
+    }
+    {
+    std::vector<plot_dataset_struct> vec;
+    vec.push_back(str_dataset_bkg_axis1);
+    vec.push_back(str_dataset_bkg_axis1_1);
+    vec.push_back(str_dataset_bkg_axis1_2);
+    vec.push_back(str_dset_mctrue_b);
+    vec.push_back(str_dset_mcrcone_b);
+    vec.push_back(str_dset_mcrcone_b1);
+    vec.push_back(str_dset_mcrcone_b2);
+    plot_datasets_axis1(vec,Form("plots/histo_template_bkg_slicesieie_%s_log",s1.Data()),Form("Background template %s",s1.Data()),false);
+    plot_datasets_axis1(vec,Form("plots/histo_template_bkg_slicesieie_%s_lin",s1.Data()),Form("Background template %s",s1.Data()),true,true);
+    }
 
     return NULL;
   
@@ -3752,35 +3807,31 @@ void validate_reweighting(RooDataSet *dset, RooDataSet *dsetdestination, int num
 
 };
 
-void plot_datasets_axis1(std::vector<RooDataSet*> dset, TString outname, legend_struct legdata, std::vector<int> colors, bool legendup, bool dolin){
-
-  //  assert(dset.size()>0 && dset.size()<5);
-  assert(dset.size() == legdata.leg.size());
+void plot_datasets_axis1(std::vector<plot_dataset_struct> dsets, TString outname, TString legtitle, bool legendup, bool dolin){
 
   const char* varname = "roovar1";
-  const RooDataSet* dset1 = dset[0];
-  const int ndsets = (int)(dset.size());
+  const int ndsets = (int)(dsets.size());
 
   TH1F *h[100];
 
   for (int j=0; j<ndsets; j++){
     h[j] = new TH1F(Form("histo_%d_rv%d",j,1),Form("histo_%d_rv%d",j,1),n_histobins,leftrange,rightrange);
-    for (int i=0; i<dset[j]->numEntries(); i++) h[j]->Fill(dset[j]->get(i)->getRealValue(varname),dset[j]->store()->weight(i));
+    for (int i=0; i<(dsets[j].dset)->numEntries(); i++) h[j]->Fill((dsets[j].dset)->get(i)->getRealValue(varname),(dsets[j].dset)->store()->weight(i));
     h[j]->Scale(1.0/h[j]->Integral());
     h[j]->SetLineWidth(2);
-    h[j]->SetLineColor(colors[j]);
-    h[j]->SetMarkerColor(colors[j]);
+    h[j]->SetLineColor(dsets[j].color);
+    h[j]->SetMarkerColor(dsets[j].color);
     h[j]->SetTitle("");
     //    if (legdata.leg[j].Index("data",4)!=kNPOS) h[j]->SetMarkerStyle(20);
     h[j]->SetMarkerStyle(kFullCircle);
-    if (legdata.leg[j].Index("left",4)!=kNPOS) h[j]->SetMarkerStyle(kOpenTriangleUp);
-    if (legdata.leg[j].Index("right",5)!=kNPOS) h[j]->SetMarkerStyle(kOpenSquare);
+    if (dsets[j].legend.Index("left",4)!=kNPOS) h[j]->SetMarkerStyle(kOpenTriangleUp);
+    if (dsets[j].legend.Index("right",5)!=kNPOS) h[j]->SetMarkerStyle(kOpenSquare);
     h[j]->SetStats(0);
     h[j]->GetXaxis()->SetTitle("Photon PFIso (GeV)");
     //    h[j]->GetXaxis()->SetRangeUser(0,6);
   }
 
-  TCanvas *comp = new TCanvas(Form("comparison_%s",dset1->GetName()),Form("comparison_%s",dset1->GetName()));
+  TCanvas *comp = new TCanvas("shape_comparison");
 
   float max=0;
   for (int j=0; j<ndsets; j++){
@@ -3796,13 +3847,13 @@ void plot_datasets_axis1(std::vector<RooDataSet*> dset, TString outname, legend_
   for (int j=1; j<ndsets; j++) h[j]->Draw("same");
   h[0]->Draw("same");
 
-  TLegend *leg = (legendup) ? new TLegend(0.6,0.7,0.9,0.9,legdata.title.Data()) : new TLegend(0.6,0.15,0.9,0.35,legdata.title.Data());
+  TLegend *leg = (legendup) ? new TLegend(0.6,0.7,0.9,0.9,legtitle.Data()) : new TLegend(0.6,0.15,0.9,0.35,legtitle.Data());
   leg->SetFillColor(kWhite);
 
   for (int j=0; j<ndsets; j++) {
 //    if (legdata.leg[j].Index("data",4)!=kNPOS) leg->AddEntry(h[j],legdata.leg[j].Data(),"p");
 //    else leg->AddEntry(h[j],legdata.leg[j].Data(),"lp");
-      leg->AddEntry(h[j],legdata.leg[j].Data(),"lp");
+      leg->AddEntry(h[j],dsets[j].legend.Data(),"lp");
   }
   leg->Draw();
 
