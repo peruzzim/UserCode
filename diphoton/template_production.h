@@ -70,6 +70,8 @@ public :
    Float_t         dipho_mgg_newCorrLocal;
    Float_t         pholead_eta;
    Float_t         photrail_eta;
+   Float_t         pholead_phi;
+   Float_t         photrail_phi;
    Float_t         pholead_px;
    Float_t         photrail_px;
    Float_t         pholead_py;
@@ -240,6 +242,8 @@ public :
    TBranch        *b_dipho_mgg_newCorrLocal;   //!
    TBranch        *b_pholead_eta;   //!
    TBranch        *b_photrail_eta;   //!
+   TBranch        *b_pholead_phi;   //!
+   TBranch        *b_photrail_phi;   //!
    TBranch        *b_pholead_px;   //!
    TBranch        *b_photrail_px;   //!
    TBranch        *b_pholead_py;   //!
@@ -736,6 +740,8 @@ void template_production::Init()
    fChain->SetBranchAddress("dipho_mgg_newCorrLocal", &dipho_mgg_newCorrLocal, &b_dipho_mgg_newCorrLocal);
    fChain->SetBranchAddress("pholead_eta", &pholead_eta, &b_pholead_eta);
    fChain->SetBranchAddress("photrail_eta", &photrail_eta, &b_photrail_eta);
+   fChain->SetBranchAddress("pholead_phi", &pholead_phi, &b_pholead_phi);
+   fChain->SetBranchAddress("photrail_phi", &photrail_phi, &b_photrail_phi);
    fChain->SetBranchAddress("pholead_px", &pholead_px, &b_pholead_px);
    fChain->SetBranchAddress("photrail_px", &photrail_px, &b_photrail_px);
    fChain->SetBranchAddress("pholead_py", &pholead_py, &b_pholead_py);
@@ -1295,16 +1301,16 @@ void template_production::FillDiffVariables(){
     roovar_costhetastar->setVal( fabs(TMath::Cos(direction_cs.Angle(boostedpho1.Vect()))) );
   }
   {
-    float phi1 = pholead_SCphi;
-    float phi2 = photrail_SCphi;
+    float phi1 = pholead_phi;
+    float phi2 = photrail_phi;
     float dphi = AbsDeltaPhi(phi1,phi2);
     roovar_dphi->setVal(dphi);
   }
   {
-    float phi1 = pholead_SCphi;
-    float phi2 = photrail_SCphi;
+    float phi1 = pholead_phi;
+    float phi2 = photrail_phi;
     float dphi = AbsDeltaPhi(phi1,phi2);
-    float deta = pholead_SCeta-photrail_SCeta;
+    float deta = pholead_eta-photrail_eta;
     float dR = sqrt(deta*deta+dphi*dphi);
     roovar_dR->setVal(dR);
   }

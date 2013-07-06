@@ -59,16 +59,16 @@ void efficiency_raw_producer::Loop()
 	else std::cout << "We have a problem here!!!" << std::endl;
       }
       else if (tree_found_reco){
-	if (fabs(pholead_eta)<1.4442 && fabs(photrail_eta)<1.4442) {
+	if (fabs(pholead_SCeta)<1.4442 && fabs(photrail_SCeta)<1.4442) {
 	  event_ok_for_dataset=0;
 	}
-	else if (fabs(pholead_eta)>1.56 && fabs(photrail_eta)>1.56) {
+	else if (fabs(pholead_SCeta)>1.56 && fabs(photrail_SCeta)>1.56) {
 	  event_ok_for_dataset=2;
 	}
-	else if (fabs(pholead_eta)<1.4442 && fabs(photrail_eta)>1.56) {
+	else if (fabs(pholead_SCeta)<1.4442 && fabs(photrail_SCeta)>1.56) {
 	  event_ok_for_dataset=1;
 	}
-	else if (fabs(pholead_eta)>1.56 && fabs(photrail_eta)<1.4442) {
+	else if (fabs(pholead_SCeta)>1.56 && fabs(photrail_SCeta)<1.4442) {
 	  event_ok_for_dataset=1;
 	}
 	else std::cout << "We have a problem here!!!" << std::endl;
