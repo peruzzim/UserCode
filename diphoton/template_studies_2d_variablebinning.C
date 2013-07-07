@@ -463,34 +463,34 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
   if (doxcheckstemplates) {
 
     TFile *fmctrue_s = new TFile("outphoton_allmc_sig.root","read");
-    fmctrue_s->GetObject(Form("mc_Tree_1Dsignal_template/roodset_signal_%s_b%d_rv1",s1.Data(),n_bins),dset_mctrue_s);
+    fmctrue_s->GetObject(Form("roofit/roodset_signal_%s_rv1",s1.Data()),dset_mctrue_s);
     assert(dset_mctrue_s);
 
     TFile *fmcfrag_s = new TFile("outphoton_allmc_frag.root","read");
-    fmcfrag_s->GetObject(Form("mc_Tree_1Dsignal_template/roodset_signal_%s_b%d_rv1",s1.Data(),n_bins),dset_mcfrag_s);
+    fmcfrag_s->GetObject(Form("roofit/roodset_signal_%s_rv1",s1.Data()),dset_mcfrag_s);
     assert(dset_mcfrag_s);
   
     TFile *fmcnofrag_s = new TFile("outphoton_allmc_nofrag.root","read");
-    fmcnofrag_s->GetObject(Form("mc_Tree_1Dsignal_template/roodset_signal_%s_b%d_rv1",s1.Data(),n_bins),dset_mcnofrag_s);
+    fmcnofrag_s->GetObject(Form("roofit/roodset_signal_%s_rv1",s1.Data()),dset_mcnofrag_s);
     assert(dset_mcnofrag_s);
   
     TFile *fmcrcone_s = new TFile("outphoton_allmc_rcone.root","read");
-    fmcrcone_s->GetObject(Form("mc_Tree_1Drandomcone_template/roodset_signal_%s_b%d_rv1",s1.Data(),n_bins),dset_mcrcone_s);
+    fmcrcone_s->GetObject(Form("roofit/roodset_signal_%s_rv1",s1.Data()),dset_mcrcone_s);
     assert(dset_mcrcone_s);
   
     TFile *fzee_s = new TFile("outphoton_data_zee.root","read");
     RooDataSet *dset_zee_s_2d = NULL;
-    fzee_s->GetObject(Form("data_Tree_2DZee_pixelvetoreversed_selection/template_roodset_%s_sigsig",splitting.Data()),dset_zee_s_2d);
+    fzee_s->GetObject(Form("roofit/template_roodset_%s_sigsig",splitting.Data()),dset_zee_s_2d);
     assert(dset_zee_s_2d);
     dset_zee_s = (RooDataSet*)(dset_zee_s_2d->reduce(Name("dset_zee_s"),SelectVars(RooArgList(*roovar1,*roopt1,*roosieie1,*rooeta1,*roorho,*roosigma))));
     assert(dset_zee_s);
 
     TFile *fmctrue_b = new TFile("outphoton_allmc_bkg.root","read");
-    fmctrue_b->GetObject(Form("mc_Tree_1Dbackground_template/roodset_background_%s_b%d_rv1",s1.Data(),n_bins),dset_mctrue_b);
+    fmctrue_b->GetObject(Form("roofit/roodset_background_%s_rv1",s1.Data()),dset_mctrue_b);
     assert(dset_mctrue_b);
 
     TFile *fmcrcone_b = new TFile("outphoton_allmc_sieiesideband.root","read");
-    fmcrcone_b->GetObject(Form("mc_Tree_1Dsideband_template/roodset_background_%s_b%d_rv1",s1.Data(),n_bins),dset_mcrcone_b);
+    fmcrcone_b->GetObject(Form("roofit/roodset_background_%s_rv1",s1.Data()),dset_mcrcone_b);
     assert(dset_mcrcone_b);
   
     dset_mctrue_s = (RooDataSet*)(dset_mctrue_s->reduce(Name("dset_mctrue_s"),Cut(Form("roovar1<%f",rightrange-1e-5))));
@@ -553,7 +553,7 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
     plot_dataset_struct str_dataset_axis1;
     str_dataset_axis1.dset = dataset_axis1;
     str_dataset_axis1.legend = "Photon Iso in selection";
-    str_dataset_axis1.color = kYellow;
+    str_dataset_axis1.color = kGreen;
     plot_dataset_struct str_dataset_sig_axis1;
     str_dataset_sig_axis1.dset = dataset_sig_axis1;
     str_dataset_sig_axis1.legend = "Rand. cone in data";
@@ -716,31 +716,31 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
   if (do_syst_string==TString("savepdfMCtrue1D") || do_syst_string==TString("templateshapeMCpromptdrivenEB") || do_syst_string==TString("templateshapeMCfakedrivenEB") || do_syst_string==TString("templateshapeMCpromptdrivenEE") || do_syst_string==TString("templateshapeMCfakedrivenEE") || do_syst_string==TString("templateshape2frag")) {
 
     TFile *fmctrue_s = new TFile("outphoton_allmc_sig.root","read");
-    fmctrue_s->GetObject(Form("mc_Tree_1Dsignal_template/roodset_signal_%s_b%d_rv1",s1.Data(),n_bins),dset_mctrue_s_rv1);
-    fmctrue_s->GetObject(Form("mc_Tree_1Dsignal_template/roodset_signal_%s_b%d_rv2",s2.Data(),n_bins),dset_mctrue_s_rv2);
+    fmctrue_s->GetObject(Form("roofit/roodset_signal_%s_rv1",s1.Data()),dset_mctrue_s_rv1);
+    fmctrue_s->GetObject(Form("roofit/roodset_signal_%s_rv2",s2.Data()),dset_mctrue_s_rv2);
     assert(dset_mctrue_s_rv1);
     assert(dset_mctrue_s_rv2);
     TFile *fmcrcone_s;
     if (do_syst_string==TString("templateshape2frag")){
       fmcrcone_s = new TFile("outphoton_allmc_sig_2frag.root","read");
-      fmcrcone_s->GetObject(Form("mc_Tree_1Dsignal_template/roodset_signal_%s_b%d_rv1",s1.Data(),n_bins),dset_mcrcone_s_rv1);
-      fmcrcone_s->GetObject(Form("mc_Tree_1Dsignal_template/roodset_signal_%s_b%d_rv2",s2.Data(),n_bins),dset_mcrcone_s_rv2);
+      fmcrcone_s->GetObject(Form("roofit/roodset_signal_%s_rv1",s1.Data()),dset_mcrcone_s_rv1);
+      fmcrcone_s->GetObject(Form("roofit/roodset_signal_%s_rv2",s2.Data()),dset_mcrcone_s_rv2);
     }
     else {
       fmcrcone_s = new TFile("outphoton_allmc_rcone.root","read");
-      fmcrcone_s->GetObject(Form("mc_Tree_1Drandomcone_template/roodset_signal_%s_b%d_rv1",s1.Data(),n_bins),dset_mcrcone_s_rv1);
-      fmcrcone_s->GetObject(Form("mc_Tree_1Drandomcone_template/roodset_signal_%s_b%d_rv2",s2.Data(),n_bins),dset_mcrcone_s_rv2);
+      fmcrcone_s->GetObject(Form("roofit/roodset_signal_%s_rv1",s1.Data()),dset_mcrcone_s_rv1);
+      fmcrcone_s->GetObject(Form("roofit/roodset_signal_%s_rv2",s2.Data()),dset_mcrcone_s_rv2);
     }
     assert(dset_mcrcone_s_rv1);
     assert(dset_mcrcone_s_rv2);
     TFile *fmctrue_b = new TFile("outphoton_allmc_bkg.root","read");
-    fmctrue_b->GetObject(Form("mc_Tree_1Dbackground_template/roodset_background_%s_b%d_rv1",s1.Data(),n_bins),dset_mctrue_b_rv1);
-    fmctrue_b->GetObject(Form("mc_Tree_1Dbackground_template/roodset_background_%s_b%d_rv2",s2.Data(),n_bins),dset_mctrue_b_rv2);
+    fmctrue_b->GetObject(Form("roofit/roodset_background_%s_rv1",s1.Data()),dset_mctrue_b_rv1);
+    fmctrue_b->GetObject(Form("roofit/roodset_background_%s_rv2",s2.Data()),dset_mctrue_b_rv2);
     assert(dset_mctrue_b_rv1);
     assert(dset_mctrue_b_rv2);
     TFile *fmcrcone_b = new TFile("outphoton_allmc_sieiesideband.root","read");
-    fmcrcone_b->GetObject(Form("mc_Tree_1Dsideband_template/roodset_background_%s_b%d_rv1",s1.Data(),n_bins),dset_mcrcone_b_rv1);
-    fmcrcone_b->GetObject(Form("mc_Tree_1Dsideband_template/roodset_background_%s_b%d_rv2",s2.Data(),n_bins),dset_mcrcone_b_rv2);
+    fmcrcone_b->GetObject(Form("roofit/roodset_background_%s_rv1",s1.Data()),dset_mcrcone_b_rv1);
+    fmcrcone_b->GetObject(Form("roofit/roodset_background_%s_rv2",s2.Data()),dset_mcrcone_b_rv2);
     assert(dset_mcrcone_b_rv1);
     assert(dset_mcrcone_b_rv2);
 
@@ -2456,7 +2456,7 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
 
     //    std::cout << "start loop: " << std::endl;
 
-    float unfoldingdy_mc_all = (!skipZsubtraction) ? ((RooDataSet*)(file_pixelrevsel_dy_mc->Get(Form("mc_Tree_2DZee_pixelvetoreversed_selection/obs_roodset_%s_%s_b%d",splitting.Data(),diffvariable.Data(),n_bins))))->sumEntries() : 0;
+    float unfoldingdy_mc_all = (!skipZsubtraction) ? ((RooDataSet*)(file_pixelrevsel_dy_mc->Get(Form("roofit/obs_roodset_%s_%s_b%d",splitting.Data(),diffvariable.Data(),n_bins))))->sumEntries() : 0;
 
   for (int bin=0; bin<bins_to_run; bin++) {
 
@@ -2473,11 +2473,11 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
     float tot_events = eventshisto->GetBinContent(bin+1);
     float eff_overflow = overflowremovaleffhisto->GetBinContent(bin+1);
 
-    if (!skipZsubtraction) assert((RooDataSet*)(file_standardsel_dy->Get(Form("mc_Tree_2Dstandard_selection/obs_roodset_%s_%s_b%d",splitting.Data(),diffvariable.Data(),bin))));
-    float events_dy = (!skipZsubtraction) ? ((RooDataSet*)(file_standardsel_dy->Get(Form("mc_Tree_2Dstandard_selection/obs_roodset_%s_%s_b%d",splitting.Data(),diffvariable.Data(),bin))))->sumEntries() : 0; // normalized to 1/fb, xsec normalized to 2475 
+    if (!skipZsubtraction) assert((RooDataSet*)(file_standardsel_dy->Get(Form("roofit/obs_roodset_%s_%s_b%d",splitting.Data(),diffvariable.Data(),bin))));
+    float events_dy = (!skipZsubtraction) ? ((RooDataSet*)(file_standardsel_dy->Get(Form("roofit/obs_roodset_%s_%s_b%d",splitting.Data(),diffvariable.Data(),bin))))->sumEntries() : 0; // normalized to 1/fb, xsec normalized to 2475 
 
-    float unfoldingdy_data = (!skipZsubtraction) ? ((RooDataSet*)(file_pixelrevsel_dy_data->Get(Form("data_Tree_2DZee_pixelvetoreversed_selection/obs_roodset_%s_%s_b%d",splitting.Data(),diffvariable.Data(),bin))))->sumEntries()/intlumi : 0;
-    float unfoldingdy_mc = (!skipZsubtraction) ? ((RooDataSet*)(file_pixelrevsel_dy_mc->Get(Form("mc_Tree_2DZee_pixelvetoreversed_selection/obs_roodset_%s_%s_b%d",splitting.Data(),diffvariable.Data(),bin))))->sumEntries() : 0;
+    float unfoldingdy_data = (!skipZsubtraction) ? ((RooDataSet*)(file_pixelrevsel_dy_data->Get(Form("roofit/obs_roodset_%s_%s_b%d",splitting.Data(),diffvariable.Data(),bin))))->sumEntries()/intlumi : 0;
+    float unfoldingdy_mc = (!skipZsubtraction) ? ((RooDataSet*)(file_pixelrevsel_dy_mc->Get(Form("roofit/obs_roodset_%s_%s_b%d",splitting.Data(),diffvariable.Data(),bin))))->sumEntries() : 0;
 
     float purity_dy = syst_purity_dy[splitting].first;
     float purity_dy_err = syst_purity_dy[splitting].second;
