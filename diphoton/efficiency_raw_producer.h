@@ -149,6 +149,8 @@ public :
 
    float Smearing(float eta, float r9);
 
+   void DivideByBinSize(TH1* h);
+
 };
 
 #endif
