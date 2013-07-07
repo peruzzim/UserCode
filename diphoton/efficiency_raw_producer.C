@@ -10,10 +10,10 @@ void efficiency_raw_producer::Loop()
   const bool apply_scale_factors = true;
   const bool do_energy_smearing = true;
 
-  /* testing
+  // monitoring
   TH1F *true_reco = (TH1F*)(histo_pass[get_name_histo_pass(0,"invmass")]->Clone("reco"));
   TH1F *true_gen = (TH1F*)(histo_pass[get_name_histo_pass(0,"invmass")]->Clone("gen"));
-  */
+
 
   TRandom3 *rand = new TRandom3(0);
 
@@ -176,10 +176,9 @@ void efficiency_raw_producer::Loop()
 	    else if (gen_in_acc && !gen_in_acc_has_matched_reco) responsewitheff[get_name_responsewitheff(event_ok_for_dataset_local,*diffvariable)]->Miss(value_diffvariableGEN,weight);
 	  }
 
-	  /* testing
+	  // monitoring
 	  if (reco_has_matched_gen_no_acceptance && event_ok_for_dataset_local==0 && (*diffvariable==TString("invmass"))) true_reco->Fill(value_diffvariable,weight);
 	  if (gen_in_acc && event_ok_for_dataset_local==0 &&(*diffvariable==TString("invmass"))) true_gen->Fill(value_diffvariableGEN,weight);
-	  */
 
 	}
 
@@ -228,10 +227,10 @@ void efficiency_raw_producer::Loop()
 
 
 
+   // monitoring
 
-   /* testing
-   TH1F *true_reco_effonly = (TH1F*)(true_reco_nofakes->Clone("true_reco_effonly"));
-   TH1F *true_reco_effunf = (TH1F*)(true_reco_nofakes->Clone("true_reco_effunf"));
+   TH1F *true_reco_effonly = (TH1F*)(true_reco->Clone("true_reco_effonly"));
+   TH1F *true_reco_effunf = (TH1F*)(true_reco->Clone("true_reco_effunf"));
 
    true_gen->SetLineColor(kRed);
    true_gen->SetMarkerColor(kRed);
@@ -267,6 +266,12 @@ void efficiency_raw_producer::Loop()
    u3b->SetMarkerColor(kYellow);
    u3b->SetMarkerStyle(20);
 
+   DivideByBinSize(true_gen);
+   DivideByBinSize(true_reco);
+   DivideByBinSize(true_reco_effonly);
+   DivideByBinSize(u2);
+   DivideByBinSize(u3);
+   DivideByBinSize(u3b);
 
    true_gen->Draw("P");
    true_reco->Draw("sameP");
@@ -277,8 +282,7 @@ void efficiency_raw_producer::Loop()
 
 
 
-   */
-
+   
 
 
 
@@ -310,3 +314,9 @@ float efficiency_raw_producer::Smearing(float eta, float r9){
 
 }
 
+void efficiency_raw_producer::DivideByBinSize(TH1* h){
+
+  for (int i=1; i<=h->GetNbinsX(); i++) h->SetBinContent(i,h->GetBinContent(i)/h->GetBinWidth(i));
+  for (int i=1; i<=h->GetNbinsX(); i++) h->SetBinError(i,h->GetBinError(i)/h->GetBinWidth(i));
+
+}
