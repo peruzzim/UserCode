@@ -1,6 +1,6 @@
 bool global_doplots = true;
-bool doxcheckstemplates = true;
-bool dolightcomparisonwithstandardsel = true;
+bool doxcheckstemplates = false;
+bool dolightcomparisonwithstandardsel = false;
 
 #include <assert.h>
 

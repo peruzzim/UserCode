@@ -45,7 +45,6 @@ class efficiency_raw_producer {
 public :
    TTree          *fChain;   //!pointer to the analyzed TTree or TChain
    Int_t           fCurrent; //!current Tree number in a TChain
-
    // Declaration of leaf types
    Float_t         event_luminormfactor;
    Float_t         event_Kfactor;
@@ -68,9 +67,12 @@ public :
    Float_t         photrail_GEN_eta;
    Float_t         pholead_GEN_phi;
    Float_t         photrail_GEN_phi;
-   Bool_t          tree_found_reco;
-   Bool_t          tree_found_gen;
-   Bool_t          tree_found_match;
+   Bool_t          reco_has_matched_gen_no_acceptance;
+   Bool_t          reco_has_matched_gen_within_acceptance;
+   Bool_t          reco_has_matched_gen_outside_acceptance;
+   Bool_t          gen_in_acc;
+   Bool_t          gen_in_acc_has_matched_reco;
+   Bool_t          gen_in_acc_has_no_matched_reco;
 
    // List of branches
    TBranch        *b_event_luminormfactor;   //!
@@ -94,9 +96,12 @@ public :
    TBranch        *b_photrail_GEN_eta;   //!
    TBranch        *b_pholead_GEN_phi;   //!
    TBranch        *b_photrail_GEN_phi;   //!
-   TBranch        *b_tree_found_reco;   //!
-   TBranch        *b_tree_found_gen;   //!
-   TBranch        *b_tree_found_match;   //!
+   TBranch        *b_reco_has_matched_gen_no_acceptance;   //!
+   TBranch        *b_reco_has_matched_gen_within_acceptance;   //!
+   TBranch        *b_reco_has_matched_gen_outside_acceptance;   //!
+   TBranch        *b_gen_in_acc;   //!
+   TBranch        *b_gen_in_acc_has_matched_reco;   //!
+   TBranch        *b_gen_in_acc_has_no_matched_reco;   //!
 
    efficiency_raw_producer(TTree *tree=0);
    virtual ~efficiency_raw_producer();
@@ -114,16 +119,14 @@ public :
    TString get_name_histo_pass(int region, TString diffvariable);
    TString get_name_histo_fail(int region, TString diffvariable);
    TString get_name_histo_eff(int region, TString diffvariable);
-   TString get_name_responsewithmatch(int region, TString diffvariable);
-   TString get_name_responsewithfakes(int region, TString diffvariable);
+   TString get_name_response(int region, TString diffvariable);
    TString get_name_responsewitheff(int region, TString diffvariable);
 
    std::map<TString, TH1F*> histo_eff;
    std::map<TString, TH1F*> histo_pass;
    std::map<TString, TH1F*> histo_fail;
 
-   std::map<TString, RooUnfoldResponse*> responsewithmatch;
-   std::map<TString, RooUnfoldResponse*> responsewithfakes;
+   std::map<TString, RooUnfoldResponse*> response;
    std::map<TString, RooUnfoldResponse*> responsewitheff;
 
    Float_t   localvar_invmass;
@@ -228,8 +231,7 @@ efficiency_raw_producer::efficiency_raw_producer(TTree *tree) : fChain(0)
        TH1F *proto_h_reco = (TH1F*)(histo_pass[t3_pass]->Clone("RECO"));
        proto_h_reco->SetTitle("RECO");
 
-       responsewithmatch[get_name_responsewithmatch(i,*diffvariable)] = new RooUnfoldResponse(proto_h_gen,proto_h_reco); // histo_pass is used as template for binning here, contents are not used
-       responsewithfakes[get_name_responsewithfakes(i,*diffvariable)] = new RooUnfoldResponse(proto_h_gen,proto_h_reco); // histo_pass is used as template for binning here, contents are not used
+       response[get_name_response(i,*diffvariable)] = new RooUnfoldResponse(proto_h_gen,proto_h_reco); // histo_pass is used as template for binning here, contents are not used
        responsewitheff[get_name_responsewitheff(i,*diffvariable)] = new RooUnfoldResponse(proto_h_gen,proto_h_reco); // histo_pass is used as template for binning here, contents are not used
 
      }
@@ -301,9 +303,12 @@ void efficiency_raw_producer::Init(TTree *tree)
    fChain->SetBranchAddress("photrail_GEN_eta", &photrail_GEN_eta, &b_photrail_GEN_eta);
    fChain->SetBranchAddress("pholead_GEN_phi", &pholead_GEN_phi, &b_pholead_GEN_phi);
    fChain->SetBranchAddress("photrail_GEN_phi", &photrail_GEN_phi, &b_photrail_GEN_phi);
-   fChain->SetBranchAddress("tree_found_reco", &tree_found_reco, &b_tree_found_reco);
-   fChain->SetBranchAddress("tree_found_gen", &tree_found_gen, &b_tree_found_gen);
-   fChain->SetBranchAddress("tree_found_match", &tree_found_match, &b_tree_found_match);
+   fChain->SetBranchAddress("reco_has_matched_gen_no_acceptance", &reco_has_matched_gen_no_acceptance, &b_reco_has_matched_gen_no_acceptance);
+   fChain->SetBranchAddress("reco_has_matched_gen_within_acceptance", &reco_has_matched_gen_within_acceptance, &b_reco_has_matched_gen_within_acceptance);
+   fChain->SetBranchAddress("reco_has_matched_gen_outside_acceptance", &reco_has_matched_gen_outside_acceptance, &b_reco_has_matched_gen_outside_acceptance);
+   fChain->SetBranchAddress("gen_in_acc", &gen_in_acc, &b_gen_in_acc);
+   fChain->SetBranchAddress("gen_in_acc_has_matched_reco", &gen_in_acc_has_matched_reco, &b_gen_in_acc_has_matched_reco);
+   fChain->SetBranchAddress("gen_in_acc_has_no_matched_reco", &gen_in_acc_has_no_matched_reco, &b_gen_in_acc_has_no_matched_reco);
    Notify();
 }
 
@@ -374,6 +379,8 @@ void efficiency_raw_producer::FillDiffVariables(){
     localvar_dR=(dR);
   }
 
+
+
   return;
 
 }
@@ -414,6 +421,14 @@ void efficiency_raw_producer::FillDiffVariablesGEN(){
     float dphi = AbsDeltaPhi(phi1,phi2);
     float deta = pholead_GEN_eta-photrail_GEN_eta;
     float dR = sqrt(deta*deta+dphi*dphi);
+    if (!(dR>0 && dR<6)) {
+      std::cout << dR << " " << phi1 << " " << phi2 << " " << deta << std::endl;
+      std::cout << gen_in_acc << " " << reco_has_matched_gen_no_acceptance << std::endl;
+      std::cout << pholead_GEN_pt << " " << pholead_GEN_eta << " " << pholead_GEN_phi << std::endl;
+      std::cout << pholead_pt << " " << pholead_eta << " " << pholead_phi  << std::endl;
+      std::cout << photrail_GEN_pt << " " << photrail_GEN_eta << " " << photrail_GEN_phi << std::endl;
+      std::cout << photrail_pt << " " << photrail_eta << " " << photrail_phi  << std::endl;
+    }
     localvarGEN_dR = dR;
   }
   
@@ -450,16 +465,8 @@ TString efficiency_raw_producer::get_name_histo_eff(int region, TString diffvari
   return t;
 }
 
-TString efficiency_raw_producer::get_name_responsewithmatch(int region, TString diffvariable){
-  TString name_signal="responsewithmatch";
-  TString reg;
-  if (region==0) reg="EBEB"; else if (region==1) reg="EBEE"; else if (region==2) reg="EEEE"; else if (region==3) reg="EEEB";
-  TString t=Form("%s_%s_%s",name_signal.Data(),reg.Data(),diffvariable.Data());
-  return t;
-}
-
-TString efficiency_raw_producer::get_name_responsewithfakes(int region, TString diffvariable){
-  TString name_signal="responsewithfakes";
+TString efficiency_raw_producer::get_name_response(int region, TString diffvariable){
+  TString name_signal="response";
   TString reg;
   if (region==0) reg="EBEB"; else if (region==1) reg="EBEE"; else if (region==2) reg="EEEE"; else if (region==3) reg="EEEB";
   TString t=Form("%s_%s_%s",name_signal.Data(),reg.Data(),diffvariable.Data());

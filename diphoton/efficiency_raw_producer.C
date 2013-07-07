@@ -37,28 +37,11 @@ void efficiency_raw_producer::Loop()
       nb = fChain->GetEntry(jentry);   nbytes += nb;
       // if (Cut(ientry) < 0) continue;
       
-      if (!tree_found_gen && !tree_found_reco) continue;
-      
       Int_t event_ok_for_dataset=-1;
 
       // dataset 0:EBEB 3/4->1:EBEE 2:EEEE
 
-      if (tree_found_gen){
-	if (fabs(pholead_GEN_eta)<1.4442 && fabs(photrail_GEN_eta)<1.4442) {
-	  event_ok_for_dataset=0;
-	}
-	else if (fabs(pholead_GEN_eta)>1.56 && fabs(photrail_GEN_eta)>1.56) {
-	  event_ok_for_dataset=2;
-	}
-	else if (fabs(pholead_GEN_eta)<1.4442 && fabs(photrail_GEN_eta)>1.56) {
-	  event_ok_for_dataset=1;
-	}
-	else if (fabs(pholead_GEN_eta)>1.56 && fabs(photrail_GEN_eta)<1.4442) {
-	  event_ok_for_dataset=1;
-	}
-	else std::cout << "We have a problem here!!!" << std::endl;
-      }
-      else if (tree_found_reco){
+      if (reco_has_matched_gen_no_acceptance){
 	if (fabs(pholead_SCeta)<1.4442 && fabs(photrail_SCeta)<1.4442) {
 	  event_ok_for_dataset=0;
 	}
@@ -73,12 +56,27 @@ void efficiency_raw_producer::Loop()
 	}
 	else std::cout << "We have a problem here!!!" << std::endl;
       }
+      else if (gen_in_acc){
+	if (fabs(pholead_GEN_eta)<1.4442 && fabs(photrail_GEN_eta)<1.4442) {
+	  event_ok_for_dataset=0;
+	}
+	else if (fabs(pholead_GEN_eta)>1.566 && fabs(photrail_GEN_eta)>1.566) {
+	  event_ok_for_dataset=2;
+	}
+	else if (fabs(pholead_GEN_eta)<1.4442 && fabs(photrail_GEN_eta)>1.566) {
+	  event_ok_for_dataset=1;
+	}
+	else if (fabs(pholead_GEN_eta)>1.566 && fabs(photrail_GEN_eta)<1.4442) {
+	  event_ok_for_dataset=1;
+	}
+	else std::cout << "We have a problem here!!!" << std::endl;
+      }
       
       Float_t weight=event_luminormfactor*event_Kfactor*event_weight;
 
       if (event_ok_for_dataset<=-1) continue;
 	
-      if (do_energy_smearing){
+      if (reco_has_matched_gen_no_acceptance && do_energy_smearing){
 	pholead_pt*=rand->Gaus(1,Smearing(pholead_SCeta,pholead_r9));
 	photrail_pt*=rand->Gaus(1,Smearing(photrail_SCeta,photrail_r9));
       }
@@ -92,7 +90,7 @@ void efficiency_raw_producer::Loop()
 	  float value_diffvariableGEN;
 	  int event_ok_for_dataset_local = event_ok_for_dataset;
 
-	  if (tree_found_gen){
+	  if (gen_in_acc || reco_has_matched_gen_no_acceptance){
 
 	  FillDiffVariablesGEN(); // WARNING: WORKS ONLY IF DIFF VARIABLES ARE NOT SENSITIVE TO SWAPPING 1 WITH 2
 
@@ -119,24 +117,24 @@ void efficiency_raw_producer::Loop()
       
 	  }
 
-	  if (tree_found_gen && bin_coupleGEN>=0){
+	  if (gen_in_acc && bin_coupleGEN>=0){
 
 	    float addweight=1;
 
-	  if (apply_scale_factors && tree_found_match) {
+	  if (apply_scale_factors && gen_in_acc_has_matched_reco) {
 	    addweight *= h_zee->GetBinContent(h_zee->FindBin(pholead_GEN_pt<h_zee->GetXaxis()->GetXmax() ? pholead_GEN_pt : h_zee->GetXaxis()->GetXmax()-1e-5 ,fabs(pholead_GEN_eta)));
 	    addweight *= h_zee->GetBinContent(h_zee->FindBin(photrail_GEN_pt<h_zee->GetXaxis()->GetXmax() ? photrail_GEN_pt : h_zee->GetXaxis()->GetXmax()-1e-5 ,fabs(photrail_GEN_eta)));
 	    addweight *= h_zuug->GetBinContent(h_zuug->FindBin(fabs(pholead_GEN_eta)));
 	    addweight *= h_zuug->GetBinContent(h_zuug->FindBin(fabs(photrail_GEN_eta)));
 	  }
 
-	  if (tree_found_match) histo_pass[get_name_histo_pass(event_ok_for_dataset_local,*diffvariable)]->Fill(value_diffvariableGEN,weight*addweight);
+	  if (gen_in_acc_has_matched_reco) histo_pass[get_name_histo_pass(event_ok_for_dataset_local,*diffvariable)]->Fill(value_diffvariableGEN,weight*addweight);
 	  else histo_fail[get_name_histo_fail(event_ok_for_dataset_local,*diffvariable)]->Fill(value_diffvariableGEN,weight*addweight);
 
 	  }
 
 
-	  if (tree_found_reco){
+	  if (reco_has_matched_gen_no_acceptance){
 
 	  FillDiffVariables(); // WARNING: WORKS ONLY IF DIFF VARIABLES ARE NOT SENSITIVE TO SWAPPING 1 WITH 2
 
@@ -161,23 +159,19 @@ void efficiency_raw_producer::Loop()
 	    bin_couple = Choose_bin_dR(value_diffvariable,event_ok_for_dataset_local,true);
 	  }
 
-	  if (bin_couple<0) {tree_found_reco=false; tree_found_match=false;}
+	  if (bin_couple<0) {reco_has_matched_gen_no_acceptance=false; reco_has_matched_gen_within_acceptance=false; reco_has_matched_gen_outside_acceptance=false;}
 
 	  }
 
-
-
-	  if (tree_found_match) responsewithmatch[get_name_responsewithmatch(event_ok_for_dataset_local,*diffvariable)]->Fill(value_diffvariable,value_diffvariableGEN,weight);
-
-	  if (tree_found_reco){
-	    if (tree_found_match) responsewithfakes[get_name_responsewithfakes(event_ok_for_dataset_local,*diffvariable)]->Fill(value_diffvariable,value_diffvariableGEN,weight);
-	    else responsewithfakes[get_name_responsewithfakes(event_ok_for_dataset_local,*diffvariable)]->Fake(value_diffvariable,weight);
+	  if (reco_has_matched_gen_no_acceptance){
+	    if (reco_has_matched_gen_within_acceptance) response[get_name_response(event_ok_for_dataset_local,*diffvariable)]->Fill(value_diffvariable,value_diffvariableGEN,weight);
+	    else if (reco_has_matched_gen_outside_acceptance) response[get_name_response(event_ok_for_dataset_local,*diffvariable)]->Fake(value_diffvariable,weight);
 	  }
 
-	  if (tree_found_reco || tree_found_gen){
-	    if (tree_found_match) responsewitheff[get_name_responsewitheff(event_ok_for_dataset_local,*diffvariable)]->Fill(value_diffvariable,value_diffvariableGEN,weight);
-	    else if (tree_found_gen) responsewitheff[get_name_responsewitheff(event_ok_for_dataset_local,*diffvariable)]->Miss(value_diffvariableGEN,weight);
-	    else if (tree_found_reco) responsewitheff[get_name_responsewitheff(event_ok_for_dataset_local,*diffvariable)]->Fake(value_diffvariable,weight);
+	  if (reco_has_matched_gen_no_acceptance || gen_in_acc){
+	    if (reco_has_matched_gen_within_acceptance || gen_in_acc_has_matched_reco) responsewitheff[get_name_responsewitheff(event_ok_for_dataset_local,*diffvariable)]->Fill(value_diffvariable,value_diffvariableGEN,weight);
+	    else if (reco_has_matched_gen_outside_acceptance) responsewitheff[get_name_responsewitheff(event_ok_for_dataset_local,*diffvariable)]->Fake(value_diffvariable,weight);
+	    else if (gen_in_acc_has_no_matched_reco) responsewitheff[get_name_responsewitheff(event_ok_for_dataset_local,*diffvariable)]->Miss(value_diffvariableGEN,weight);
 	  }
 
 	  /* testing
@@ -195,8 +189,7 @@ void efficiency_raw_producer::Loop()
    fu->cd();
    for (int i=0; i<3; i++)
      for (std::vector<TString>::const_iterator diffvariable = diffvariables_list.begin(); diffvariable!=diffvariables_list.end(); diffvariable++){
-       responsewithmatch[get_name_responsewithmatch(i,*diffvariable)]->Write(get_name_responsewithmatch(i,*diffvariable).Data());
-       responsewithfakes[get_name_responsewithfakes(i,*diffvariable)]->Write(get_name_responsewithfakes(i,*diffvariable).Data());
+       response[get_name_response(i,*diffvariable)]->Write(get_name_response(i,*diffvariable).Data());
        responsewitheff[get_name_responsewitheff(i,*diffvariable)]->Write(get_name_responsewitheff(i,*diffvariable).Data());
      }
    fu->Close();

@@ -1,0 +1,5 @@
+outphoton_*root
+*~
+*.root
+*.d
+*.so
