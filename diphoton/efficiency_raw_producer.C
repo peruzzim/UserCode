@@ -158,21 +158,21 @@ void efficiency_raw_producer::Loop()
 	    bin_couple = Choose_bin_dR(value_diffvariable,event_ok_for_dataset_local,true);
 	  }
 
-	  if (bin_couple<0) {reco_has_matched_gen_no_acceptance=false; reco_has_matched_gen_within_acceptance=false; reco_has_matched_gen_outside_acceptance=false;}
+	  if (bin_couple<0) {reco_has_matched_gen_no_acceptance=false; reco_has_matched_gen_within_acceptance=false; reco_has_matched_gen_outside_acceptance=false; gen_in_acc_has_matched_reco=false; gen_in_acc_has_no_matched_reco=gen_in_acc;}
 
 	  }
+
 
 	  if (reco_has_matched_gen_no_acceptance){
 	    if (reco_has_matched_gen_within_acceptance) response[get_name_response(event_ok_for_dataset_local,*diffvariable)]->Fill(value_diffvariable,value_diffvariableGEN,weight);
 	    else if (reco_has_matched_gen_outside_acceptance) response[get_name_response(event_ok_for_dataset_local,*diffvariable)]->Fake(value_diffvariable,weight);
 	  }
 
-	  if (reco_has_matched_gen_no_acceptance || gen_in_acc){
-	    if (reco_has_matched_gen_within_acceptance || gen_in_acc_has_matched_reco) responsewitheff[get_name_responsewitheff(event_ok_for_dataset_local,*diffvariable)]->Fill(value_diffvariable,value_diffvariableGEN,weight);
+	  if (reco_has_matched_gen_no_acceptance){
+	    if (reco_has_matched_gen_within_acceptance) responsewitheff[get_name_responsewitheff(event_ok_for_dataset_local,*diffvariable)]->Fill(value_diffvariable,value_diffvariableGEN,weight);
 	    else if (reco_has_matched_gen_outside_acceptance) responsewitheff[get_name_responsewitheff(event_ok_for_dataset_local,*diffvariable)]->Fake(value_diffvariable,weight);
-	    else if (gen_in_acc_has_no_matched_reco) responsewitheff[get_name_responsewitheff(event_ok_for_dataset_local,*diffvariable)]->Miss(value_diffvariableGEN,weight);
 	  }
-
+	  else if (gen_in_acc_has_no_matched_reco) responsewitheff[get_name_responsewitheff(event_ok_for_dataset_local,*diffvariable)]->Miss(value_diffvariableGEN,weight);
 
 	  if (reco_has_matched_gen_no_acceptance && event_ok_for_dataset_local==0 && (*diffvariable==TString("invmass"))) true_reco->Fill(value_diffvariable,weight);
 	  if (gen_in_acc && event_ok_for_dataset_local==0 &&(*diffvariable==TString("invmass"))) true_gen->Fill(value_diffvariableGEN,weight);
