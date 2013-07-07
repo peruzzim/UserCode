@@ -12,7 +12,6 @@ void efficiency_raw_producer::Loop()
 
   /* testing
   TH1F *true_reco = (TH1F*)(histo_pass[get_name_histo_pass(0,"invmass")]->Clone("reco"));
-  TH1F *true_reco_nofakes = (TH1F*)(histo_pass[get_name_histo_pass(0,"invmass")]->Clone("reco_nofakes"));
   TH1F *true_gen = (TH1F*)(histo_pass[get_name_histo_pass(0,"invmass")]->Clone("gen"));
   */
 
@@ -36,7 +35,10 @@ void efficiency_raw_producer::Loop()
       if (ientry < 0) break;
       nb = fChain->GetEntry(jentry);   nbytes += nb;
       // if (Cut(ientry) < 0) continue;
-      
+
+      // BUGFIX for productions up to jul7 included 
+      gen_in_acc_has_no_matched_reco = gen_in_acc && !gen_in_acc_has_matched_reco;
+
       Int_t event_ok_for_dataset=-1;
 
       // dataset 0:EBEB 3/4->1:EBEE 2:EEEE
@@ -171,14 +173,14 @@ void efficiency_raw_producer::Loop()
 	  if (reco_has_matched_gen_no_acceptance || gen_in_acc){
 	    if (reco_has_matched_gen_within_acceptance || gen_in_acc_has_matched_reco) responsewitheff[get_name_responsewitheff(event_ok_for_dataset_local,*diffvariable)]->Fill(value_diffvariable,value_diffvariableGEN,weight);
 	    else if (reco_has_matched_gen_outside_acceptance) responsewitheff[get_name_responsewitheff(event_ok_for_dataset_local,*diffvariable)]->Fake(value_diffvariable,weight);
-	    else if (gen_in_acc_has_no_matched_reco) responsewitheff[get_name_responsewitheff(event_ok_for_dataset_local,*diffvariable)]->Miss(value_diffvariableGEN,weight);
+	    else if (gen_in_acc && !gen_in_acc_has_matched_reco) responsewitheff[get_name_responsewitheff(event_ok_for_dataset_local,*diffvariable)]->Miss(value_diffvariableGEN,weight);
 	  }
 
 	  /* testing
-	  if (tree_found_reco && event_ok_for_dataset_local==0 && (*diffvariable==TString("invmass"))) true_reco->Fill(value_diffvariable,weight);
-	  if (tree_found_match && event_ok_for_dataset_local==0 && (*diffvariable==TString("invmass"))) true_reco_nofakes->Fill(value_diffvariable,weight);
-	  if (tree_found_gen && event_ok_for_dataset_local==0 &&(*diffvariable==TString("invmass"))) true_gen->Fill(value_diffvariableGEN,weight);
+	  if (reco_has_matched_gen_no_acceptance && event_ok_for_dataset_local==0 && (*diffvariable==TString("invmass"))) true_reco->Fill(value_diffvariable,weight);
+	  if (gen_in_acc && event_ok_for_dataset_local==0 &&(*diffvariable==TString("invmass"))) true_gen->Fill(value_diffvariableGEN,weight);
 	  */
+
 	}
 
 
@@ -228,24 +230,22 @@ void efficiency_raw_producer::Loop()
 
 
    /* testing
-   TH1F *true_reco_effnounf = (TH1F*)(true_reco_nofakes->Clone("true_reco_effnounf"));
+   TH1F *true_reco_effonly = (TH1F*)(true_reco_nofakes->Clone("true_reco_effonly"));
    TH1F *true_reco_effunf = (TH1F*)(true_reco_nofakes->Clone("true_reco_effunf"));
 
    true_gen->SetLineColor(kRed);
    true_gen->SetMarkerColor(kRed);
    true_gen->SetMarkerStyle(20);
 
-
    true_reco->SetLineColor(kBlack);
    true_reco->SetMarkerColor(kBlack);
    true_reco->SetMarkerStyle(20);
 
-
    // NO UNFOLDING
-   true_reco_effnounf->SetLineColor(kMagenta);
-   true_reco_effnounf->Divide(histo_eff[get_name_histo_eff(0,"invmass")]);
-   true_reco_effnounf->SetMarkerColor(kMagenta);
-   true_reco_effnounf->SetMarkerStyle(20);
+   true_reco_effonly->SetLineColor(kBlack);
+   true_reco_effonly->SetMarkerColor(kBlack);
+   true_reco_effonly->SetMarkerStyle(21);
+   true_reco_effonly->Divide(histo_eff[get_name_histo_eff(0,"invmass")]);
 
    // ONE SHOT, EFF+UNFOLDING INSIEME
    RooUnfoldBayes unf2(responsewitheff[get_name_responsewitheff(0,"invmass")],true_reco,4);
@@ -256,35 +256,26 @@ void efficiency_raw_producer::Loop()
 
    // EFFICIENZA E UNFOLDING IN SEQUENZA (ATTUALE)
    true_reco_effunf->Divide(histo_eff[get_name_histo_eff(0,"invmass")]);
-   RooUnfoldBayes unf3(responsewithmatch[get_name_responsewithmatch(0,"invmass")],true_reco_effunf,4);
+   RooUnfoldBayes unf3(response[get_name_response(0,"invmass")],true_reco_effunf,4);
    TH1D *u3 = (TH1D*)(unf3.Hreco());
    u3->SetLineColor(kBlue);
    u3->SetMarkerColor(kBlue);
    u3->SetMarkerStyle(20);
-   RooUnfoldBinByBin unf3b(responsewithmatch[get_name_responsewithmatch(0,"invmass")],true_reco_effunf);
+   RooUnfoldBinByBin unf3b(response[get_name_response(0,"invmass")],true_reco_effunf);
    TH1D *u3b = (TH1D*)(unf3b.Hreco());
    u3b->SetLineColor(kYellow);
    u3b->SetMarkerColor(kYellow);
    u3b->SetMarkerStyle(20);
 
 
-//   true_gen->Draw("P");
-//   true_reco->Draw("sameP");
-//   true_reco_effnounf->Draw("same");
-//   u2->Draw("same");
-//   u3->Draw("same");
-
-   true_reco->Divide(true_gen);
-   true_reco_effnounf->Divide(true_gen);
-   u2->Divide(true_gen);
-   u3->Divide(true_gen);
-   u3b->Divide(true_gen);
-   true_reco->Draw("P");
-   true_reco->SetAxisRange(0.8,1.2,"Y");
-   true_reco_effnounf->Draw("sameP");
+   true_gen->Draw("P");
+   true_reco->Draw("sameP");
+   true_reco_effonly->Draw("sameP");
    u2->Draw("sameP");
    u3->Draw("sameP");
    u3b->Draw("sameP");
+
+
 
    */
 
