@@ -225,6 +225,7 @@ public :
    Float_t         photrail_photonpfcanddphis[30];
 
    Float_t pholead_test_rotatedphotoniso[50];
+   Float_t pholead_test_rotatedwithcheckphotoniso[50];
    
    // List of branches
    TBranch        *b_event_luminormfactor;   //!
@@ -399,6 +400,7 @@ public :
    TBranch        *b_photrail_photonpfcanddphis;
 
    TBranch *b_pholead_test_rotatedphotoniso;
+   TBranch *b_pholead_test_rotatedwithcheckphotoniso;
 
    template_production(TTree *tree=0);
    virtual ~template_production();
@@ -450,6 +452,7 @@ public :
   RooDataSet *roodset_background[2][2];
 
   TH1F *scan_cone_histos[2][50];
+  TH1F *scan_conewithcheck_histos[2][50];
 
    std::map<TString, RooDataSet*> obs_roodset;
    std::map<TString, RooDataSet*> template2d_roodset;
@@ -587,6 +590,8 @@ void template_production::Setup(Bool_t _isdata, TString _mode, TString _differen
       int numb = (int)(0.025*k*1000);
       TString title = Form("scan_cone_%s_0p%d",reg.Data(),numb);
       scan_cone_histos[i][k]=new TH1F(title.Data(),title.Data(),n_histobins,leftrange,rightrange);
+      TString title2 = Form("scan_conewithcheck_%s_0p%d",reg.Data(),numb);
+      scan_conewithcheck_histos[i][k]=new TH1F(title2.Data(),title2.Data(),n_histobins,leftrange,rightrange);
     }
   }
 
@@ -899,6 +904,7 @@ void template_production::Init()
    fChain->SetBranchAddress("photrail_photonpfcanddphis",&photrail_photonpfcanddphis, &b_photrail_photonpfcanddphis);
 
    fChain->SetBranchAddress("pholead_test_rotatedphotoniso",&pholead_test_rotatedphotoniso, &b_pholead_test_rotatedphotoniso);
+   fChain->SetBranchAddress("pholead_test_rotatedwithcheckphotoniso",&pholead_test_rotatedwithcheckphotoniso, &b_pholead_test_rotatedwithcheckphotoniso);
 
    Notify();
 }
@@ -1028,23 +1034,27 @@ void template_production::WriteOutput(const char* filename){
 
   for (int i=0; i<2; i++) for (int k=0; k<50; k++) if (scan_cone_histos[i][k]->Integral(0,n_histobins+1)>0) (scan_cone_histos[i][k])->Scale(1.0/scan_cone_histos[i][k]->Integral(0,n_histobins+1));
   for (int i=0; i<2; i++) for (int k=0; k<50; k++) (scan_cone_histos[i][k])->Write();
+  for (int i=0; i<2; i++) for (int k=0; k<50; k++) if (scan_conewithcheck_histos[i][k]->Integral(0,n_histobins+1)>0) (scan_conewithcheck_histos[i][k])->Scale(1.0/scan_conewithcheck_histos[i][k]->Integral(0,n_histobins+1));
+  for (int i=0; i<2; i++) for (int k=0; k<50; k++) (scan_conewithcheck_histos[i][k])->Write();
 
   TCanvas *canv[2];
   for (int i=0; i<1; i++) {
-    TString title = Form("canv_scan_cones_%d",i);
+    TString title = Form("canv_scan_conewithchecks_%d",i);
     canv[i] = new TCanvas(title.Data(),title.Data());
     canv[i]->cd();
     (scan_cone_histos[i][0])->Draw();
     for (int k=1; k<50; k++) if (k%4==0 && k<=(int)(0.4/0.025)) (scan_cone_histos[i][k])->SetLineColor(kAzure+k/4); // interni
     for (int k=1; k<50; k++) if (k%4==0 && k>(int)(0.4/0.025)) (scan_cone_histos[i][k])->SetLineColor(kPink-4+k/4); // esterni
-    for (int k=1; k<50; k++) if (k%4==0) (scan_cone_histos[i][k])->Draw("same");
-    //    for (int k=0; k<50; k++) if (k%4==0) (scan_cone_histos[i][k])->SetLineWidth(2);
+    for (int k=1; k<50; k++) if (k%4==0 && k<=(int)(0.4/0.025)) (scan_conewithcheck_histos[i][k])->SetLineColor(kAzure+k/4); // interni
+    for (int k=1; k<50; k++) if (k%4==0 && k>(int)(0.4/0.025)) (scan_conewithcheck_histos[i][k])->SetLineColor(kPink-4+k/4); // esterni
+    for (int k=1; k<50; k++) if (k%4==0) (scan_conewithcheck_histos[i][k])->Draw("same");
+    //    for (int k=0; k<50; k++) if (k%4==0) (scan_conewithcheck_histos[i][k])->SetLineWidth(2);
     scan_cone_histos[i][0]->SetLineColor(kBlack);
     scan_cone_histos[i][0]->SetLineWidth(kBlack);
     scan_cone_histos[i][0]->Draw("same");
-    scan_cone_histos[i][(int)(0.45/0.025)]->SetLineColor(kRed);
-    scan_cone_histos[i][(int)(0.45/0.025)]->SetLineWidth(2);
-    scan_cone_histos[i][(int)(0.45/0.025)]->Draw("same");
+    scan_conewithcheck_histos[i][(int)(0.45/0.025)]->SetLineColor(kRed);
+    scan_conewithcheck_histos[i][(int)(0.45/0.025)]->SetLineWidth(2);
+    scan_conewithcheck_histos[i][(int)(0.45/0.025)]->Draw("same");
     canv[i]->SetLogy(1);
     canv[i]->SaveAs(Form("%s.root",title.Data()));
     canv[i]->SaveAs(Form("%s.pdf",title.Data()));

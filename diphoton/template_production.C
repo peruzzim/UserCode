@@ -260,6 +260,7 @@ void template_production::Loop(int maxevents)
 	roodset_signal[reg_lead][0]->add(RooArgList(*roovar1,*roopt1,*roosieie1,*rooeta1,*roorho,*roosigma),weight);
 	roodset_signal[reg_lead][1]->add(RooArgList(*roovar2,*roopt2,*roosieie2,*rooeta2,*roorho,*roosigma),weight);
 	if (do_scan_cone) for (int k=0; k<50; k++) scan_cone_histos[reg_lead][k]->Fill(pholead_test_rotatedphotoniso[k]-getpuenergy(reg_lead,pholead_SCeta),weight);
+	if (do_scan_cone) for (int k=0; k<50; k++) if (pholead_test_rotatedwithcheckphotoniso[k]>-100) scan_conewithcheck_histos[reg_lead][k]->Fill(pholead_test_rotatedwithcheckphotoniso[k]-getpuenergy(reg_lead,pholead_SCeta),weight);
       }
       
       if (dobackgroundtemplate){
@@ -275,6 +276,7 @@ void template_production::Loop(int maxevents)
 	  roodset_background[reg_lead][0]->add(RooArgList(*roovar1,*roopt1,*roosieie1,*rooeta1,*roorho,*roosigma),weight);
 	  roodset_background[reg_lead][1]->add(RooArgList(*roovar2,*roopt2,*roosieie2,*rooeta2,*roorho,*roosigma),weight);
 	  if (do_scan_cone) for (int k=0; k<50; k++) scan_cone_histos[reg_lead][k]->Fill(pholead_test_rotatedphotoniso[k]-getpuenergy(reg_lead,pholead_SCeta),weight);
+	  if (do_scan_cone) for (int k=0; k<50; k++) if (pholead_test_rotatedwithcheckphotoniso[k]>-100) scan_conewithcheck_histos[reg_lead][k]->Fill(pholead_test_rotatedwithcheckphotoniso[k]-getpuenergy(reg_lead,pholead_SCeta),weight);
       }
       
     }
