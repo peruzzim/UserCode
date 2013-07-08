@@ -472,7 +472,7 @@ TString efficiency_raw_producer::get_name_histo_eff(int region, TString diffvari
   translation.insert(std::pair<TString,TString>(TString("costhetastar"),TString("costhetastar")));
   translation.insert(std::pair<TString,TString>(TString("dphi"),TString("deltaphi")));
   translation.insert(std::pair<TString,TString>(TString("dR"),TString("dR")));
-  TString t=Form("h_%s_%s_WithTotErr",reg.Data(),translation[diffvariable].Data());
+  TString t=Form("h_%s_%s_WithTotErr",translation[diffvariable].Data(),reg.Data());
   return t;
 }
 
