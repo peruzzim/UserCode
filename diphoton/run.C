@@ -5,7 +5,7 @@
   TString dir;
 
 
- dir=TString("./gg_minitree_020616_data2011_feb4/");
+ dir=TString("./gg_minitree_020616_data2011_jul7/");
 
  gen_templates(dir+TString("input_data.root"),"sigsig",1,"outphoton_data_sigsig.root","photoniso",5e5);
  gen_templates(dir+TString("input_data.root"),"sigbkg",1,"outphoton_data_sigbkg.root","photoniso",-1);
