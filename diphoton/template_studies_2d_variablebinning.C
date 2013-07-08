@@ -792,12 +792,15 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
   }
 
   bool islowstatcat = false;
+  if (diffvariable=="costhetastar" && splitting=="EEEE" && bin==1) islowstatcat=true;
   if (diffvariable=="costhetastar" && splitting=="EEEE" && bin==5) islowstatcat=true;
   if (diffvariable=="costhetastar" && splitting=="EEEE" && bin==6) islowstatcat=true;
   if (diffvariable=="invmass" && bin==15) islowstatcat=true;
   if (diffvariable=="invmass" && splitting=="EEEE" && bin==13) islowstatcat=true;
   if (diffvariable=="invmass" && splitting=="EEEE" && bin==14) islowstatcat=true;
   if (diffvariable=="diphotonpt" && splitting=="EEEE" && bin==19) islowstatcat=true;
+  if (diffvariable=="diphotonpt" && splitting=="EEEE" && bin<=4) islowstatcat=true;
+  if (diffvariable=="dR" && splitting=="EBEE" && bin==6) islowstatcat=true;
 
   find_adaptive_binning(dataset,&n_templatebins,templatebinsboundaries+0,1,islowstatcat ? -999 : -1);
 
