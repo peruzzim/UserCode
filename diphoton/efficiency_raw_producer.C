@@ -9,6 +9,14 @@ void efficiency_raw_producer::Loop()
 
   const bool apply_scale_factors = true;
   const bool do_energy_smearing = true;
+  const bool apply_trigger_efficiency = true;
+
+
+  const float trig_eff_EBEB_highr9 = 1.;
+  const float trig_eff_EBEB_lowr9 = 0.993;
+  const float trig_eff_notEBEB_highr9 = 1.;
+  const float trig_eff_notEBEB_lowr9 = 0.988;
+
 
   // monitoring
   TH1F *true_reco = (TH1F*)(histo_pass[get_name_histo_pass(0,"invmass")]->Clone("reco"));
@@ -129,6 +137,10 @@ void efficiency_raw_producer::Loop()
 	    addweight *= h_zuug->GetBinContent(h_zuug->FindBin(fabs(pholead_SCeta)));
 	    addweight *= h_zuug->GetBinContent(h_zuug->FindBin(fabs(photrail_SCeta)));
 	  }
+	  if (apply_trigger_efficiency && gen_in_acc_has_matched_reco){
+	    if (event_ok_for_dataset_local==0) addweight *= (pholead_r9>0.94 && photrail_r9>0.94) ? trig_eff_EBEB_highr9 : trig_eff_EBEB_lowr9;
+	    else addweight *= (pholead_r9>0.94 && photrail_r9>0.94) ? trig_eff_notEBEB_highr9 : trig_eff_notEBEB_lowr9;
+	  }
 
 	  if (gen_in_acc_has_matched_reco) histo_pass[get_name_histo_pass(event_ok_for_dataset_local,*diffvariable)]->Fill(value_diffvariableGEN,weight*addweight);
 	  else histo_fail[get_name_histo_fail(event_ok_for_dataset_local,*diffvariable)]->Fill(value_diffvariableGEN,weight*addweight);
@@ -246,7 +258,7 @@ void efficiency_raw_producer::Loop()
    true_reco_effonly->SetMarkerStyle(21);
    true_reco_effonly->Divide(histo_eff[get_name_histo_eff(0,"invmass")]);
 
-   // ONE SHOT, EFF+UNFOLDING INSIEME
+   // ONE SHOT, EFF+UNFOLDING INSIEME, NO SCALE FACTORS / HLT
    RooUnfoldBayes unf2(responsewitheff[get_name_responsewitheff(0,"invmass")],true_reco,4);
    TH1D *u2 = (TH1D*)(unf2.Hreco());
    u2->SetLineColor(kGreen);
