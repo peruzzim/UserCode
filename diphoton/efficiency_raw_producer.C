@@ -37,6 +37,9 @@ void efficiency_raw_producer::Loop()
 
    Long64_t nentries = fChain->GetEntriesFast();
 
+   cout << "Efficiency validation" << endl;
+   cout << "Pass/fail category - run/lumi/event - genphoton1(pt,eta,phi) genphotonpt2(pt,eta,phi) - recophoton1(pt,eta,phi) recophoton2(pt,eta,phi) - PUweight scalefactor(zee+zuug+HLT)" << endl;
+
    Long64_t nbytes = 0, nb = 0;
    for (Long64_t jentry=0; jentry<nentries;jentry++) {
       Long64_t ientry = LoadTree(jentry);
@@ -90,8 +93,8 @@ void efficiency_raw_producer::Loop()
 	pholead_pt*=rand->Gaus(1,Smearing(pholead_SCeta,pholead_r9));
 	photrail_pt*=rand->Gaus(1,Smearing(photrail_SCeta,photrail_r9));
       }
-
-	for (std::vector<TString>::const_iterator diffvariable = diffvariables_list.begin(); diffvariable!=diffvariables_list.end(); diffvariable++){
+      
+      for (std::vector<TString>::const_iterator diffvariable = diffvariables_list.begin(); diffvariable!=diffvariables_list.end(); diffvariable++){
 
 	  Int_t bin_couple = -999;	 
  	  Int_t bin_coupleGEN = -999;
@@ -144,6 +147,19 @@ void efficiency_raw_producer::Loop()
 
 	  if (gen_in_acc_has_matched_reco) histo_pass[get_name_histo_pass(event_ok_for_dataset_local,*diffvariable)]->Fill(value_diffvariableGEN,weight*addweight);
 	  else histo_fail[get_name_histo_fail(event_ok_for_dataset_local,*diffvariable)]->Fill(value_diffvariableGEN,weight*addweight);
+
+	  if (diffvariable == diffvariables_list.begin()){
+	    if (gen_in_acc_has_matched_reco) cout << "PASS "; else cout << "FAIL ";
+	    if (event_ok_for_dataset_local==0) cout << "EB-EB "; else if (event_ok_for_dataset_local==1) cout << "EB-EE "; else if (event_ok_for_dataset_local==2) cout << "EE-EE ";
+	    cout << "  -  " ;
+	    cout << event_run << " " << event_lumi << " " << event_number ;
+	    cout << "  -  " ;
+	    cout << pholead_GEN_pt<<","<<pholead_GEN_eta<<","<<pholead_GEN_phi << " " << photrail_GEN_pt<<","<<photrail_GEN_eta<<","<<photrail_GEN_phi << " ";
+	    cout << "  -  " ;
+	    cout << pholead_pt<<","<<pholead_eta<<","<<pholead_phi << " " << photrail_pt<<","<<photrail_eta<<","<<photrail_phi << " ";
+	    cout << "  -  " ;
+	    cout << weight << " " << addweight << endl;
+	  }
 
 	  }
 
