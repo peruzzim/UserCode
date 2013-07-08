@@ -124,10 +124,10 @@ void efficiency_raw_producer::Loop()
 	    float addweight=1;
 
 	  if (apply_scale_factors && gen_in_acc_has_matched_reco) {
-	    addweight *= h_zee->GetBinContent(h_zee->FindBin(pholead_GEN_pt<h_zee->GetXaxis()->GetXmax() ? pholead_GEN_pt : h_zee->GetXaxis()->GetXmax()-1e-5 ,fabs(pholead_GEN_eta)));
-	    addweight *= h_zee->GetBinContent(h_zee->FindBin(photrail_GEN_pt<h_zee->GetXaxis()->GetXmax() ? photrail_GEN_pt : h_zee->GetXaxis()->GetXmax()-1e-5 ,fabs(photrail_GEN_eta)));
-	    addweight *= h_zuug->GetBinContent(h_zuug->FindBin(fabs(pholead_GEN_eta)));
-	    addweight *= h_zuug->GetBinContent(h_zuug->FindBin(fabs(photrail_GEN_eta)));
+	    addweight *= h_zee->GetBinContent(h_zee->FindBin(pholead_pt<h_zee->GetXaxis()->GetXmax() ? pholead_pt : h_zee->GetXaxis()->GetXmax()-1e-5 ,fabs(pholead_SCeta)));
+	    addweight *= h_zee->GetBinContent(h_zee->FindBin(photrail_pt<h_zee->GetXaxis()->GetXmax() ? photrail_pt : h_zee->GetXaxis()->GetXmax()-1e-5 ,fabs(photrail_SCeta)));
+	    addweight *= h_zuug->GetBinContent(h_zuug->FindBin(fabs(pholead_SCeta)));
+	    addweight *= h_zuug->GetBinContent(h_zuug->FindBin(fabs(photrail_SCeta)));
 	  }
 
 	  if (gen_in_acc_has_matched_reco) histo_pass[get_name_histo_pass(event_ok_for_dataset_local,*diffvariable)]->Fill(value_diffvariableGEN,weight*addweight);
