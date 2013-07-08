@@ -460,7 +460,7 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
   RooDataSet *dset_mctrue_b = NULL;
   RooDataSet *dset_mcrcone_b = NULL;
 
-  if (doxcheckstemplates) {
+  if (doxcheckstemplates || dolightcomparisonwithstandardsel) {
 
     TFile *fmctrue_s = new TFile("outphoton_allmc_sig.root","read");
     fmctrue_s->GetObject(Form("roofit/roodset_signal_%s_rv1",s1.Data()),dset_mctrue_s);
@@ -607,26 +607,27 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
     str_dset_mcrcone_b2.legend = "Sieie sideband in MC / right";
     str_dset_mcrcone_b2.color = kBlue;
 
-    {
-    std::vector<plot_dataset_struct> vec;
-    vec.push_back(str_dataset_axis1);
-    vec.push_back(str_dataset_sig_axis1);
-    vec.push_back(str_dset_mctrue_s);
-    vec.push_back(str_dset_mcrcone_s);
-    plot_datasets_axis1(vec,Form("plots/histo_template_sig_compwithsel_%s_log_%s_%s_b%d",s1.Data(),diffvariable.Data(),splitting.Data(),bin),Form("Signal template %s",s1.Data()));
-    plot_datasets_axis1(vec,Form("plots/histo_template_sig_compwithsel_%s_lin_%s_%s_b%d",s1.Data(),diffvariable.Data(),splitting.Data(),bin),Form("Signal template %s",s1.Data()),true,true);
+    if (dolightcomparisonwithstandardsel){
+      {
+	std::vector<plot_dataset_struct> vec;
+	vec.push_back(str_dataset_axis1);
+	vec.push_back(str_dataset_sig_axis1);
+	vec.push_back(str_dset_mctrue_s);
+	vec.push_back(str_dset_mcrcone_s);
+	plot_datasets_axis1(vec,Form("plots/histo_template_sig_compwithsel_%s_log_%s_%s_b%d",s1.Data(),diffvariable.Data(),splitting.Data(),bin),Form("Signal template %s",s1.Data()));
+	plot_datasets_axis1(vec,Form("plots/histo_template_sig_compwithsel_%s_lin_%s_%s_b%d",s1.Data(),diffvariable.Data(),splitting.Data(),bin),Form("Signal template %s",s1.Data()),true,true);
+      }
+      {
+	std::vector<plot_dataset_struct> vec;
+	vec.push_back(str_dataset_axis1);
+	vec.push_back(str_dataset_bkg_axis1);
+	vec.push_back(str_dset_mctrue_b);
+	vec.push_back(str_dset_mcrcone_b);
+	plot_datasets_axis1(vec,Form("plots/histo_template_bkg_compwithsel_%s_log_%s_%s_b%d",s1.Data(),diffvariable.Data(),splitting.Data(),bin),Form("Background template %s",s1.Data()),false);
+	plot_datasets_axis1(vec,Form("plots/histo_template_bkg_compwithsel_%s_lin_%s_%s_b%d",s1.Data(),diffvariable.Data(),splitting.Data(),bin),Form("Background template %s",s1.Data()),true,true);
+      }
+      return NULL;
     }
-    {
-    std::vector<plot_dataset_struct> vec;
-    vec.push_back(str_dataset_axis1);
-    vec.push_back(str_dataset_bkg_axis1);
-    vec.push_back(str_dset_mctrue_b);
-    vec.push_back(str_dset_mcrcone_b);
-    plot_datasets_axis1(vec,Form("plots/histo_template_bkg_compwithsel_%s_log_%s_%s_b%d",s1.Data(),diffvariable.Data(),splitting.Data(),bin),Form("Background template %s",s1.Data()),false);
-    plot_datasets_axis1(vec,Form("plots/histo_template_bkg_compwithsel_%s_lin_%s_%s_b%d",s1.Data(),diffvariable.Data(),splitting.Data(),bin),Form("Background template %s",s1.Data()),true,true);
-    }
-
-    if (dolightcomparisonwithstandardsel) return NULL;
 
     {
     std::vector<plot_dataset_struct> vec;
