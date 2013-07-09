@@ -54,12 +54,28 @@ void apply_unfolding(){
 
     TH1F unfolded;
     _unfolded->Copy(unfolded);
-    unfolded.SetName(Form("Unfolding_Nevt_%s_%s",diffvariable->Data(),reg.Data()));
-    unfolded.SetTitle(Form("Unfolding_Nevt_%s_%s",diffvariable->Data(),reg.Data()));
+    
+    std::map<TString,TString> translation2;
+    translation2.insert(std::pair<TString,TString>(TString("invmass"),TString("mgg")));
+    translation2.insert(std::pair<TString,TString>(TString("diphotonpt"),TString("pt")));
+    translation2.insert(std::pair<TString,TString>(TString("costhetastar"),TString("costt")));
+    translation2.insert(std::pair<TString,TString>(TString("dphi"),TString("phi")));
+    translation2.insert(std::pair<TString,TString>(TString("dR"),TString("dR")));
+    unfolded.SetName(Form("Unfolding_Nevt_%s_%s",translation2[TString(diffvariable->Data())].Data(),reg.Data()));
+    unfolded.SetTitle(Form("Unfolding_Nevt_%s_%s",translation2[TString(diffvariable->Data())].Data(),reg.Data()));
+    
     unfolded.Print();
+
+    TH1F unfolded_relsyserr;
+    unfolded.Copy(unfolded_relsyserr);
+    unfolded_relsyserr.SetName(Form("Unfolding_RelativeSysErr_%s_%s",translation2[TString(diffvariable->Data())].Data(),reg.Data()));
+    unfolded_relsyserr.SetTitle(Form("Unfolding_RelativeSysErr_%s_%s",translation2[TString(diffvariable->Data())].Data(),reg.Data()));
+    unfolded_relsyserr.Reset();
+    unfolded_relsyserr.Print();
 
     outfile->cd();
     unfolded.Write();
+    unfolded_relsyserr.Write();
 
   }
   }
