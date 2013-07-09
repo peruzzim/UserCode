@@ -1,6 +1,7 @@
-bool global_doplots = true;
+bool global_doplots = false;
 bool doxcheckstemplates = false;
-bool dolightcomparisonwithstandardsel = false;
+bool dolightcomparisonwithstandardselsig = false;
+bool dolightcomparisonwithstandardselbkg = true;
 
 #include <assert.h>
 
@@ -272,7 +273,7 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
     inputfilename_t2p   = "outphoton_allmc_sigsig.root";
     inputfilename_t1p1f = "outphoton_allmc_sigbkg.root";
     inputfilename_t2f   = "outphoton_allmc_bkgbkg.root";
-    inputfilename_d     = "outphoton_allmc_standard.root";
+    inputfilename_d     = "outphoton_allmc_standard_2fgen.root";
   }  
   else {
     inputfilename_t2p   = "outphoton_data_sigsig.root";
@@ -460,7 +461,9 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
   RooDataSet *dset_mctrue_b = NULL;
   RooDataSet *dset_mcrcone_b = NULL;
 
-  if (doxcheckstemplates || dolightcomparisonwithstandardsel) {
+  if (doxcheckstemplates || dolightcomparisonwithstandardselsig || dolightcomparisonwithstandardselbkg) {
+
+    if (dolightcomparisonwithstandardselsig || dolightcomparisonwithstandardselbkg) if (splitting=="EBEE") return NULL;
 
     TFile *fmctrue_s = new TFile("outphoton_allmc_sig.root","read");
     fmctrue_s->GetObject(Form("roofit/roodset_signal_%s_rv1",s1.Data()),dset_mctrue_s);
@@ -607,7 +610,7 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
     str_dset_mcrcone_b2.legend = "Sieie sideband in MC / right";
     str_dset_mcrcone_b2.color = kBlue;
 
-    if (dolightcomparisonwithstandardsel){
+    if (dolightcomparisonwithstandardselsig){
       {
 	std::vector<plot_dataset_struct> vec;
 	vec.push_back(str_dataset_axis1);
@@ -617,6 +620,9 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
 	plot_datasets_axis1(vec,Form("plots/histo_template_sig_compwithsel_%s_log_%s_%s_b%d",s1.Data(),diffvariable.Data(),splitting.Data(),bin),Form("Signal template %s",s1.Data()));
 	plot_datasets_axis1(vec,Form("plots/histo_template_sig_compwithsel_%s_lin_%s_%s_b%d",s1.Data(),diffvariable.Data(),splitting.Data(),bin),Form("Signal template %s",s1.Data()),true,true);
       }
+      return NULL;
+    }
+    if (dolightcomparisonwithstandardselbkg){
       {
 	std::vector<plot_dataset_struct> vec;
 	vec.push_back(str_dataset_axis1);
@@ -2043,7 +2049,7 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
 
   }
 
-  bool writeoutpurity = (do_syst_string==TString(""));
+  bool writeoutpurity = (do_syst_string==TString("") || do_syst_string==TString("doMCfulldriven"));
 
   if (writeoutpurity){
 
