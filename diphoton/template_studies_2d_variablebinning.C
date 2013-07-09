@@ -2327,7 +2327,8 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
 
 
   TH1F *unfoldunc = NULL;
-  {
+
+  if (!skipsystematics){
     std::map<TString,TString> translation2;
     translation2.insert(std::pair<TString,TString>(TString("invmass"),TString("mgg")));
     translation2.insert(std::pair<TString,TString>(TString("diphotonpt"),TString("pt")));
@@ -2337,8 +2338,9 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
     TFile *unfoldunc_file = new TFile("plots/Unfolding_SysErr.root");
     TString unfoldunc_name = Form("Unfolding_RelativeSysErr_%s_%s",translation2[diffvariable].Data(),splitting.Data());
     unfoldunc_file->GetObject(unfoldunc_name.Data(),unfoldunc);
+    assert (unfoldunc!=NULL);
   }
-  assert (unfoldunc!=NULL);
+
 
   TFile *purity_file = new TFile(Form("plots/histo_purity_%s_%s_allbins.root",diffvariable.Data(),splitting.Data()));
   purity_file->GetObject("purity_sigsig",purity[0]);
@@ -3293,8 +3295,9 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
 
 };
 
-void post_process_all(bool skipsystematics = false){
+void post_process_all(bool skipsystematics = false, TString var=""){
   for (std::vector<TString>::const_iterator it = diffvariables_list.begin(); it!=diffvariables_list.end(); it++){
+    if (var!="" && var!=*it) continue;
     post_process(it->Data(),"EBEB",skipsystematics);
     post_process(it->Data(),"EBEE",skipsystematics);
     post_process(it->Data(),"EEEE",skipsystematics);
