@@ -1,7 +1,7 @@
-bool global_doplots = false;
+bool global_doplots = true;
 bool doxcheckstemplates = false;
 bool dolightcomparisonwithstandardselsig = false;
-bool dolightcomparisonwithstandardselbkg = true;
+bool dolightcomparisonwithstandardselbkg = false;
 
 #include <assert.h>
 
@@ -798,6 +798,7 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
   }
 
   bool islowstatcat = false;
+  if (splitting=="EEEE") islowstatcat=true;
   if (diffvariable=="costhetastar" && splitting=="EEEE" && bin==1) islowstatcat=true;
   if (diffvariable=="costhetastar" && splitting=="EEEE" && bin==5) islowstatcat=true;
   if (diffvariable=="costhetastar" && splitting=="EEEE" && bin==6) islowstatcat=true;
