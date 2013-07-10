@@ -19,8 +19,8 @@ void efficiency_raw_producer::Loop()
 
 
   // monitoring
-  TH1F *true_reco = (TH1F*)(histo_pass[get_name_histo_pass(0,"invmass")]->Clone("reco"));
-  TH1F *true_gen = (TH1F*)(histo_pass[get_name_histo_pass(0,"invmass")]->Clone("gen"));
+  TH1F *true_reco = (TH1F*)(histo_num[get_name_histo_num(0,"invmass")]->Clone("reco"));
+  TH1F *true_gen = (TH1F*)(histo_num[get_name_histo_num(0,"invmass")]->Clone("gen"));
 
 
   TRandom3 *rand = new TRandom3(0);
@@ -32,13 +32,9 @@ void efficiency_raw_producer::Loop()
   assert (h_zee);
   assert (h_zuug);
 
-
    if (fChain == 0) return;
 
    Long64_t nentries = fChain->GetEntriesFast();
-
-   cout << "Efficiency validation" << endl;
-   cout << "Pass/fail category - run/lumi/event - genphoton1(pt,eta,phi) genphotonpt2(pt,eta,phi) - recophoton1(pt,eta,phi) recophoton2(pt,eta,phi) - PUweight scalefactor(zee+zuug+HLT)" << endl;
 
    Long64_t nbytes = 0, nb = 0;
    for (Long64_t jentry=0; jentry<nentries;jentry++) {
@@ -89,15 +85,18 @@ void efficiency_raw_producer::Loop()
 
       if (event_ok_for_dataset<=-1) continue;
 	
+      assert(reco_has_matched_gen_within_acceptance == gen_in_acc_has_matched_reco);
+
       if (reco_has_matched_gen_no_acceptance && do_energy_smearing){
 	pholead_pt*=rand->Gaus(1,Smearing(pholead_SCeta,pholead_r9));
 	photrail_pt*=rand->Gaus(1,Smearing(photrail_SCeta,photrail_r9));
       }
-      
+
       for (std::vector<TString>::const_iterator diffvariable = diffvariables_list.begin(); diffvariable!=diffvariables_list.end(); diffvariable++){
 
 	  Int_t bin_couple = -999;	 
  	  Int_t bin_coupleGEN = -999;
+	  Bool_t is_overflow = false;
 
 	  float value_diffvariable;
 	  float value_diffvariableGEN;
@@ -128,41 +127,9 @@ void efficiency_raw_producer::Loop()
 	    bin_coupleGEN = Choose_bin_dR(value_diffvariableGEN,event_ok_for_dataset_local);
 	  }
       
-	  }
-
-	  if (gen_in_acc && bin_coupleGEN>=0){
-
-	    float addweight=1;
-
-	  if (apply_scale_factors && gen_in_acc_has_matched_reco) {
-	    addweight *= h_zee->GetBinContent(h_zee->FindBin(pholead_pt<h_zee->GetXaxis()->GetXmax() ? pholead_pt : h_zee->GetXaxis()->GetXmax()-1e-5 ,fabs(pholead_SCeta)));
-	    addweight *= h_zee->GetBinContent(h_zee->FindBin(photrail_pt<h_zee->GetXaxis()->GetXmax() ? photrail_pt : h_zee->GetXaxis()->GetXmax()-1e-5 ,fabs(photrail_SCeta)));
-	    addweight *= h_zuug->GetBinContent(h_zuug->FindBin(fabs(pholead_SCeta)));
-	    addweight *= h_zuug->GetBinContent(h_zuug->FindBin(fabs(photrail_SCeta)));
-	  }
-	  if (apply_trigger_efficiency && gen_in_acc_has_matched_reco){
-	    if (event_ok_for_dataset_local==0) addweight *= (pholead_r9>0.94 && photrail_r9>0.94) ? trig_eff_EBEB_highr9 : trig_eff_EBEB_lowr9;
-	    else addweight *= (pholead_r9>0.94 && photrail_r9>0.94) ? trig_eff_notEBEB_highr9 : trig_eff_notEBEB_lowr9;
-	  }
-
-	  if (gen_in_acc_has_matched_reco) histo_pass[get_name_histo_pass(event_ok_for_dataset_local,*diffvariable)]->Fill(value_diffvariableGEN,weight*addweight);
-	  else histo_fail[get_name_histo_fail(event_ok_for_dataset_local,*diffvariable)]->Fill(value_diffvariableGEN,weight*addweight);
-
-	  if (diffvariable == diffvariables_list.begin()){
-	    if (gen_in_acc_has_matched_reco) cout << "PASS "; else cout << "FAIL ";
-	    if (event_ok_for_dataset_local==0) cout << "EB-EB "; else if (event_ok_for_dataset_local==1) cout << "EB-EE "; else if (event_ok_for_dataset_local==2) cout << "EE-EE ";
-	    cout << "  -  " ;
-	    cout << event_run << " " << event_lumi << " " << event_number ;
-	    cout << "  -  " ;
-	    cout << pholead_GEN_pt<<","<<pholead_GEN_eta<<","<<pholead_GEN_phi << " " << photrail_GEN_pt<<","<<photrail_GEN_eta<<","<<photrail_GEN_phi << " ";
-	    cout << "  -  " ;
-	    cout << pholead_pt<<","<<pholead_eta<<","<<pholead_phi << " " << photrail_pt<<","<<photrail_eta<<","<<photrail_phi << " ";
-	    cout << "  -  " ;
-	    cout << weight << " " << addweight << endl;
-	  }
+	  assert (bin_coupleGEN>=0);
 
 	  }
-
 
 	  if (reco_has_matched_gen_no_acceptance){
 
@@ -170,45 +137,57 @@ void efficiency_raw_producer::Loop()
 
 	  if (*diffvariable==TString("invmass")) {
 	    value_diffvariable=localvar_invmass;
-	    bin_couple = Choose_bin_invmass(value_diffvariable,event_ok_for_dataset_local,true);
+	    bin_couple = Choose_bin_invmass(value_diffvariable,event_ok_for_dataset_local,&is_overflow);
 	  }
 	  if (*diffvariable==TString("diphotonpt")){
 	    value_diffvariable=localvar_diphotonpt;
-	    bin_couple = Choose_bin_diphotonpt(value_diffvariable,event_ok_for_dataset_local,true);
+	    bin_couple = Choose_bin_diphotonpt(value_diffvariable,event_ok_for_dataset_local,&is_overflow);
 	  }
 	  if (*diffvariable==TString("costhetastar")){
 	    value_diffvariable = localvar_costhetastar;
-	    bin_couple = Choose_bin_costhetastar(value_diffvariable,event_ok_for_dataset_local,true); 
+	    bin_couple = Choose_bin_costhetastar(value_diffvariable,event_ok_for_dataset_local,&is_overflow); 
 	  }
 	  if (*diffvariable==TString("dphi")){
 	    value_diffvariable=localvar_dphi;
-	    bin_couple = Choose_bin_dphi(value_diffvariable,event_ok_for_dataset_local,true);
+	    bin_couple = Choose_bin_dphi(value_diffvariable,event_ok_for_dataset_local,&is_overflow);
 	  }
 	  if (*diffvariable==TString("dR")){
 	    value_diffvariable=localvar_dR;
-	    bin_couple = Choose_bin_dR(value_diffvariable,event_ok_for_dataset_local,true);
+	    bin_couple = Choose_bin_dR(value_diffvariable,event_ok_for_dataset_local,&is_overflow);
 	  }
 
-	  if (bin_couple<0) {reco_has_matched_gen_no_acceptance=false; reco_has_matched_gen_within_acceptance=false; reco_has_matched_gen_outside_acceptance=false;}
-
 	  }
 
-	  if (reco_has_matched_gen_no_acceptance){
-	    if (reco_has_matched_gen_within_acceptance) response[get_name_response(event_ok_for_dataset_local,*diffvariable)]->Fill(value_diffvariable,value_diffvariableGEN,weight);
-	    else if (reco_has_matched_gen_outside_acceptance) response[get_name_response(event_ok_for_dataset_local,*diffvariable)]->Fake(value_diffvariable,weight);
-	  }
+	  if (reco_has_matched_gen_no_acceptance) {
 
-	  if (reco_has_matched_gen_no_acceptance || gen_in_acc){
-	    if (reco_has_matched_gen_within_acceptance || gen_in_acc_has_matched_reco) responsewitheff[get_name_responsewitheff(event_ok_for_dataset_local,*diffvariable)]->Fill(value_diffvariable,value_diffvariableGEN,weight);
-	    else if (reco_has_matched_gen_outside_acceptance) responsewitheff[get_name_responsewitheff(event_ok_for_dataset_local,*diffvariable)]->Fake(value_diffvariable,weight);
-	    else if (gen_in_acc && !gen_in_acc_has_matched_reco) responsewitheff[get_name_responsewitheff(event_ok_for_dataset_local,*diffvariable)]->Miss(value_diffvariableGEN,weight);
+	    float addweight=1;
+	    if (apply_scale_factors) {
+	    addweight *= h_zee->GetBinContent(h_zee->FindBin(pholead_pt<h_zee->GetXaxis()->GetXmax() ? pholead_pt : h_zee->GetXaxis()->GetXmax()-1e-5 ,fabs(pholead_SCeta)));
+	    addweight *= h_zee->GetBinContent(h_zee->FindBin(photrail_pt<h_zee->GetXaxis()->GetXmax() ? photrail_pt : h_zee->GetXaxis()->GetXmax()-1e-5 ,fabs(photrail_SCeta)));
+	    addweight *= h_zuug->GetBinContent(h_zuug->FindBin(fabs(pholead_SCeta)));
+	    addweight *= h_zuug->GetBinContent(h_zuug->FindBin(fabs(photrail_SCeta)));
+	    }
+	    if (apply_trigger_efficiency && gen_in_acc_has_matched_reco){
+	      if (event_ok_for_dataset_local==0) addweight *= (pholead_r9>0.94 && photrail_r9>0.94) ? trig_eff_EBEB_highr9 : trig_eff_EBEB_lowr9;
+	      else addweight *= (pholead_r9>0.94 && photrail_r9>0.94) ? trig_eff_notEBEB_highr9 : trig_eff_notEBEB_lowr9;
+	    }
+	    
+	    histo_num[get_name_histo_num(event_ok_for_dataset_local,*diffvariable)]->Fill(value_diffvariableGEN,weight*addweight);
+	    
+	  }
+	  if (gen_in_acc) histo_den[get_name_histo_den(event_ok_for_dataset_local,*diffvariable)]->Fill(value_diffvariableGEN,weight);
+
+	  if (reco_has_matched_gen_no_acceptance) {
+	    if (!is_overflow) response[get_name_response(event_ok_for_dataset_local,*diffvariable)]->Fill(value_diffvariable,value_diffvariableGEN,weight);
+	    else response[get_name_response(event_ok_for_dataset_local,*diffvariable)]->Miss(value_diffvariableGEN,weight);
+
 	  }
 
 	  // monitoring
 	  if (reco_has_matched_gen_no_acceptance && event_ok_for_dataset_local==0 && (*diffvariable==TString("invmass"))) true_reco->Fill(value_diffvariable,weight);
 	  if (gen_in_acc && event_ok_for_dataset_local==0 &&(*diffvariable==TString("invmass"))) true_gen->Fill(value_diffvariableGEN,weight);
 
-	}
+      }
 
 
    } // end event loop
@@ -219,18 +198,14 @@ void efficiency_raw_producer::Loop()
    for (int i=0; i<3; i++)
      for (std::vector<TString>::const_iterator diffvariable = diffvariables_list.begin(); diffvariable!=diffvariables_list.end(); diffvariable++){
        response[get_name_response(i,*diffvariable)]->Write(get_name_response(i,*diffvariable).Data());
-       responsewitheff[get_name_responsewitheff(i,*diffvariable)]->Write(get_name_responsewitheff(i,*diffvariable).Data());
      }
    fu->Close();
 
    for (int i=0; i<3; i++)
      for (std::vector<TString>::const_iterator diffvariable = diffvariables_list.begin(); diffvariable!=diffvariables_list.end(); diffvariable++){
-       histo_eff[get_name_histo_eff(i,*diffvariable)] = (TH1F*)(histo_pass[get_name_histo_pass(i,*diffvariable)]->Clone(get_name_histo_eff(i,*diffvariable).Data()));
+       histo_eff[get_name_histo_eff(i,*diffvariable)] = (TH1F*)(histo_num[get_name_histo_num(i,*diffvariable)]->Clone(get_name_histo_eff(i,*diffvariable).Data()));
        histo_eff[get_name_histo_eff(i,*diffvariable)]->SetTitle(get_name_histo_eff(i,*diffvariable).Data());
-       TH1F *histo_tot = (TH1F*)(histo_pass[get_name_histo_pass(i,*diffvariable)]->Clone("tot"));
-       histo_tot->Add(histo_fail[get_name_histo_fail(i,*diffvariable)]);
-       histo_eff[get_name_histo_eff(i,*diffvariable)]->Divide(histo_eff[get_name_histo_eff(i,*diffvariable)],histo_tot,1,1,"B");
-       delete histo_tot;
+       histo_eff[get_name_histo_eff(i,*diffvariable)]->Divide(histo_num[get_name_histo_num(i,*diffvariable)],histo_den[get_name_histo_den(i,*diffvariable)],1,1,"B");
      }
 
    TFile *f = new TFile ("efficiency.root","recreate");
@@ -246,8 +221,8 @@ void efficiency_raw_producer::Loop()
    f->cd("other_histos");
    for (std::vector<TString>::const_iterator diffvariable = diffvariables_list.begin(); diffvariable!=diffvariables_list.end(); diffvariable++)
      for (int i=0; i<3; i++){
-       histo_pass[get_name_histo_pass(i,*diffvariable)]->Write();
-       histo_fail[get_name_histo_fail(i,*diffvariable)]->Write();
+       histo_num[get_name_histo_num(i,*diffvariable)]->Write();
+       histo_den[get_name_histo_den(i,*diffvariable)]->Write();
      }
 
    f->Close();
@@ -257,9 +232,6 @@ void efficiency_raw_producer::Loop()
 
    // monitoring
 
-   TH1F *true_reco_effonly = (TH1F*)(true_reco->Clone("true_reco_effonly"));
-   TH1F *true_reco_effunf = (TH1F*)(true_reco->Clone("true_reco_effunf"));
-
    true_gen->SetLineColor(kRed);
    true_gen->SetMarkerColor(kRed);
    true_gen->SetMarkerStyle(20);
@@ -268,47 +240,31 @@ void efficiency_raw_producer::Loop()
    true_reco->SetMarkerColor(kBlack);
    true_reco->SetMarkerStyle(20);
 
-   // NO UNFOLDING
-   true_reco_effonly->SetLineColor(kBlack);
-   true_reco_effonly->SetMarkerColor(kBlack);
-   true_reco_effonly->SetMarkerStyle(21);
-   true_reco_effonly->Divide(histo_eff[get_name_histo_eff(0,"invmass")]);
+   // UNFOLDING+EFFICIENZA IN SEQUENZA (ATTUALE)
 
-   // ONE SHOT, EFF+UNFOLDING INSIEME, NO SCALE FACTORS / HLT
-   RooUnfoldBayes unf2(responsewitheff[get_name_responsewitheff(0,"invmass")],true_reco,4);
-   TH1D *u2 = (TH1D*)(unf2.Hreco());
-   u2->SetLineColor(kGreen);
-   u2->SetMarkerColor(kGreen);
-   u2->SetMarkerStyle(20);
-
-   // EFFICIENZA E UNFOLDING IN SEQUENZA (ATTUALE)
-   true_reco_effunf->Divide(histo_eff[get_name_histo_eff(0,"invmass")]);
-   RooUnfoldBayes unf3(response[get_name_response(0,"invmass")],true_reco_effunf,4);
+   RooUnfoldBayes unf3(response[get_name_response(0,"invmass")],true_reco);
    TH1D *u3 = (TH1D*)(unf3.Hreco());
    u3->SetLineColor(kBlue);
    u3->SetMarkerColor(kBlue);
    u3->SetMarkerStyle(20);
-   RooUnfoldBinByBin unf3b(response[get_name_response(0,"invmass")],true_reco_effunf);
+   RooUnfoldBinByBin unf3b(response[get_name_response(0,"invmass")],true_reco);
    TH1D *u3b = (TH1D*)(unf3b.Hreco());
    u3b->SetLineColor(kYellow);
    u3b->SetMarkerColor(kYellow);
    u3b->SetMarkerStyle(20);
 
+   u3->Divide(histo_eff[get_name_histo_eff(0,"invmass")]);
+   u3b->Divide(histo_eff[get_name_histo_eff(0,"invmass")]);
+
    DivideByBinSize(true_gen);
    DivideByBinSize(true_reco);
-   DivideByBinSize(true_reco_effonly);
-   DivideByBinSize(u2);
    DivideByBinSize(u3);
    DivideByBinSize(u3b);
 
    true_gen->Draw("P");
    true_reco->Draw("sameP");
-   true_reco_effonly->Draw("sameP");
-   u2->Draw("sameP");
    u3->Draw("sameP");
    u3b->Draw("sameP");
-
-
 
    
 

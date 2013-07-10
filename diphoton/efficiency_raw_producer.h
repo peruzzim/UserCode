@@ -122,18 +122,16 @@ public :
    void FillDiffVariables();
    void FillDiffVariablesGEN();
 
-   TString get_name_histo_pass(int region, TString diffvariable);
-   TString get_name_histo_fail(int region, TString diffvariable);
+   TString get_name_histo_den(int region, TString diffvariable);
+   TString get_name_histo_num(int region, TString diffvariable);
    TString get_name_histo_eff(int region, TString diffvariable);
    TString get_name_response(int region, TString diffvariable);
-   TString get_name_responsewitheff(int region, TString diffvariable);
 
    std::map<TString, TH1F*> histo_eff;
-   std::map<TString, TH1F*> histo_pass;
-   std::map<TString, TH1F*> histo_fail;
+   std::map<TString, TH1F*> histo_den;
+   std::map<TString, TH1F*> histo_num;
 
    std::map<TString, RooUnfoldResponse*> response;
-   std::map<TString, RooUnfoldResponse*> responsewitheff;
 
    Float_t   localvar_invmass;
    Float_t   localvar_diphotonpt;
@@ -147,11 +145,11 @@ public :
    Float_t   localvarGEN_dphi;
    Float_t   localvarGEN_dR;
 
-   Int_t Choose_bin_invmass(float invmass, int region, bool veto_overflow = false);
-   Int_t Choose_bin_diphotonpt(float diphotonpt, int region, bool veto_overflow = false);
-   Int_t Choose_bin_costhetastar(float costhetastar, int region, bool veto_overflow = false);
-   Int_t Choose_bin_dphi(float dphi, int region, bool veto_overflow = false);
-   Int_t Choose_bin_dR(float dR, int region, bool veto_overflow = false);
+   Int_t Choose_bin_invmass(float invmass, int region, bool *is_overflow=NULL);
+   Int_t Choose_bin_diphotonpt(float diphotonpt, int region, bool *is_overflow=NULL);
+   Int_t Choose_bin_costhetastar(float costhetastar, int region, bool *is_overflow=NULL);
+   Int_t Choose_bin_dphi(float dphi, int region, bool *is_overflow=NULL);
+   Int_t Choose_bin_dR(float dR, int region, bool *is_overflow=NULL);
 
    float Smearing(float eta, float r9);
 
@@ -227,20 +225,19 @@ efficiency_raw_producer::efficiency_raw_producer(TTree *tree) : fChain(0)
 
 //       TString t3=get_name_histo_eff(i,diffvariable->Data());
 //       histo_eff[t3] = new TH1F(t3.Data(),t3.Data(),bins_to_run,binsdef);
-       TString t3_pass=get_name_histo_pass(i,diffvariable->Data());
-       histo_pass[t3_pass] = new TH1F(t3_pass.Data(),t3_pass.Data(),bins_to_run,binsdef);
-       histo_pass[t3_pass]->Sumw2();
-       TString t3_fail=get_name_histo_fail(i,diffvariable->Data());
-       histo_fail[t3_fail] = new TH1F(t3_fail.Data(),t3_fail.Data(),bins_to_run,binsdef);
-       histo_fail[t3_fail]->Sumw2();
+       TString t3_pass=get_name_histo_den(i,diffvariable->Data());
+       histo_den[t3_pass] = new TH1F(t3_pass.Data(),t3_pass.Data(),bins_to_run,binsdef);
+       histo_den[t3_pass]->Sumw2();
+       TString t3_fail=get_name_histo_num(i,diffvariable->Data());
+       histo_num[t3_fail] = new TH1F(t3_fail.Data(),t3_fail.Data(),bins_to_run,binsdef);
+       histo_num[t3_fail]->Sumw2();
 
-       TH1F *proto_h_gen = (TH1F*)(histo_pass[t3_pass]->Clone("GEN"));
+       TH1F *proto_h_gen = (TH1F*)(histo_den[t3_pass]->Clone("GEN"));
        proto_h_gen->SetTitle("GEN");
-       TH1F *proto_h_reco = (TH1F*)(histo_pass[t3_pass]->Clone("RECO"));
+       TH1F *proto_h_reco = (TH1F*)(histo_den[t3_pass]->Clone("RECO"));
        proto_h_reco->SetTitle("RECO");
 
-       response[get_name_response(i,*diffvariable)] = new RooUnfoldResponse(proto_h_gen,proto_h_reco); // histo_pass is used as template for binning here, contents are not used
-       responsewitheff[get_name_responsewitheff(i,*diffvariable)] = new RooUnfoldResponse(proto_h_gen,proto_h_reco); // histo_pass is used as template for binning here, contents are not used
+       response[get_name_response(i,*diffvariable)] = new RooUnfoldResponse(proto_h_gen,proto_h_reco); // histo_den is used as template for binning here, contents are not used
 
      }
 
@@ -447,16 +444,16 @@ void efficiency_raw_producer::FillDiffVariablesGEN(){
 
 }
 
-TString efficiency_raw_producer::get_name_histo_pass(int region, TString diffvariable){
-  TString name_signal="histo_pass";
+TString efficiency_raw_producer::get_name_histo_den(int region, TString diffvariable){
+  TString name_signal="histo_den";
   TString reg;
   if (region==0) reg="EBEB"; else if (region==1) reg="EBEE"; else if (region==2) reg="EEEE"; else if (region==3) reg="EEEB";
   TString t=Form("%s_%s_%s",name_signal.Data(),reg.Data(),diffvariable.Data());
   return t;
 }
 
-TString efficiency_raw_producer::get_name_histo_fail(int region, TString diffvariable){
-  TString name_signal="histo_fail";
+TString efficiency_raw_producer::get_name_histo_num(int region, TString diffvariable){
+  TString name_signal="histo_num";
   TString reg;
   if (region==0) reg="EBEB"; else if (region==1) reg="EBEE"; else if (region==2) reg="EEEE"; else if (region==3) reg="EEEB";
   TString t=Form("%s_%s_%s",name_signal.Data(),reg.Data(),diffvariable.Data());
@@ -484,15 +481,7 @@ TString efficiency_raw_producer::get_name_response(int region, TString diffvaria
   return t;
 }
 
-TString efficiency_raw_producer::get_name_responsewitheff(int region, TString diffvariable){
-  TString name_signal="responsewitheff";
-  TString reg;
-  if (region==0) reg="EBEB"; else if (region==1) reg="EBEE"; else if (region==2) reg="EEEE"; else if (region==3) reg="EEEB";
-  TString t=Form("%s_%s_%s",name_signal.Data(),reg.Data(),diffvariable.Data());
-  return t;
-}
-
-Int_t efficiency_raw_producer::Choose_bin_invmass(float invmass, int region, bool veto_overflow){
+Int_t efficiency_raw_producer::Choose_bin_invmass(float invmass, int region, bool *is_overflow){
 
   int index;
 
@@ -507,22 +496,22 @@ Int_t efficiency_raw_producer::Choose_bin_invmass(float invmass, int region, boo
   assert (cuts!=NULL);
   assert (index!=0);
 
-  cuts[index]= veto_overflow ? cuts[index-1] : 9999;
+  cuts[index]= 9999;
 
   if (invmass<cuts[0]){
     std::cout << "WARNING: called bin choice for out-of-range value mass " << invmass << " cuts[0]= " << cuts[0] << std::endl;
     return -999;
   }
 
-  for (int i=0; i<index; i++) if ((invmass>=cuts[i]) && (invmass<cuts[i+1])) return i;
+  for (int i=0; i<index; i++) if ((invmass>=cuts[i]) && (invmass<cuts[i+1])) {if (is_overflow) *is_overflow = (i==index-1); return i;}
   
-  if (!veto_overflow) std::cout << "WARNING: called bin choice for out-of-range value mass " << invmass << std::endl;
+   std::cout << "WARNING: called bin choice for out-of-range value mass " << invmass << std::endl;
   return -999;
 
 
 };
 
-Int_t efficiency_raw_producer::Choose_bin_diphotonpt(float diphotonpt, int region, bool veto_overflow){
+Int_t efficiency_raw_producer::Choose_bin_diphotonpt(float diphotonpt, int region, bool *is_overflow){
 
   int index;
 
@@ -537,22 +526,22 @@ Int_t efficiency_raw_producer::Choose_bin_diphotonpt(float diphotonpt, int regio
   assert (cuts!=NULL);
   assert (index!=0);
 
-  cuts[index]= veto_overflow ? cuts[index-1] : 9999;
+  cuts[index]= 9999;
 
   if (diphotonpt<cuts[0]){
     std::cout << "WARNING: called bin choice for out-of-range value diphotonpt " << diphotonpt << " cuts[0]= " << cuts[0] << std::endl;
     return -999;
   }
 
-  for (int i=0; i<index; i++) if ((diphotonpt>=cuts[i]) && (diphotonpt<cuts[i+1])) return i;
+  for (int i=0; i<index; i++) if ((diphotonpt>=cuts[i]) && (diphotonpt<cuts[i+1])) {if (is_overflow) *is_overflow = (i==index-1); return i;}
   
-  if (!veto_overflow) std::cout << "WARNING: called bin choice for out-of-range value diphotonpt " << diphotonpt << std::endl;
+   std::cout << "WARNING: called bin choice for out-of-range value diphotonpt " << diphotonpt << std::endl;
   return -999;
 
 
 };
 
-Int_t efficiency_raw_producer::Choose_bin_costhetastar(float costhetastar, int region, bool veto_overflow){
+Int_t efficiency_raw_producer::Choose_bin_costhetastar(float costhetastar, int region, bool *is_overflow){
 
   int index;
 
@@ -567,22 +556,22 @@ Int_t efficiency_raw_producer::Choose_bin_costhetastar(float costhetastar, int r
   assert (cuts!=NULL);
   assert (index!=0);
 
-  cuts[index]= veto_overflow ? cuts[index-1] : 9999;
+  cuts[index]= 9999;
 
   if (costhetastar<cuts[0]){
     std::cout << "WARNING: called bin choice for out-of-range value " << costhetastar << " cuts[0]= " << cuts[0] << std::endl;
     return -999;
   }
 
-  for (int i=0; i<index; i++) if ((costhetastar>=cuts[i]) && (costhetastar<cuts[i+1])) return i;
+  for (int i=0; i<index; i++) if ((costhetastar>=cuts[i]) && (costhetastar<cuts[i+1])) {if (is_overflow) *is_overflow = (i==index-1); return i;}
   
-  if (!veto_overflow) std::cout << "WARNING: called bin choice for out-of-range value " << costhetastar << std::endl;
+   std::cout << "WARNING: called bin choice for out-of-range value " << costhetastar << std::endl;
   return -999;
 
 
 };
 
-Int_t efficiency_raw_producer::Choose_bin_dphi(float dphi, int region, bool veto_overflow){
+Int_t efficiency_raw_producer::Choose_bin_dphi(float dphi, int region, bool *is_overflow){
 
   int index;
 
@@ -597,22 +586,22 @@ Int_t efficiency_raw_producer::Choose_bin_dphi(float dphi, int region, bool veto
   assert (cuts!=NULL);
   assert (index!=0);
 
-  cuts[index]= veto_overflow ? cuts[index-1] : 9999;
+  cuts[index]= 9999;
 
   if (dphi<cuts[0]){
     std::cout << "WARNING: called bin choice for out-of-range value " << dphi << " cuts[0]= " << cuts[0] << std::endl;
     return -999;
   }
 
-  for (int i=0; i<index; i++) if ((dphi>=cuts[i]) && (dphi<cuts[i+1])) return i;
+  for (int i=0; i<index; i++) if ((dphi>=cuts[i]) && (dphi<cuts[i+1])) {if (is_overflow) *is_overflow = (i==index-1); return i;}
   
-  if (!veto_overflow) std::cout << "WARNING: called bin choice for out-of-range value " << dphi << std::endl;
+   std::cout << "WARNING: called bin choice for out-of-range value " << dphi << std::endl;
   return -999;
 
 
 };
 
-Int_t efficiency_raw_producer::Choose_bin_dR(float dR, int region, bool veto_overflow){
+Int_t efficiency_raw_producer::Choose_bin_dR(float dR, int region, bool *is_overflow){
 
   int index;
 
@@ -627,16 +616,16 @@ Int_t efficiency_raw_producer::Choose_bin_dR(float dR, int region, bool veto_ove
   assert (cuts!=NULL);
   assert (index!=0);
 
-  cuts[index]= veto_overflow ? cuts[index-1] : 9999;
+  cuts[index]= 9999;
 
   if (dR<cuts[0]){
     std::cout << "WARNING: called bin choice for out-of-range value " << dR << " cuts[0]= " << cuts[0] << std::endl;
     return -999;
   }
 
-  for (int i=0; i<index; i++) if ((dR>=cuts[i]) && (dR<cuts[i+1])) return i;
+  for (int i=0; i<index; i++) if ((dR>=cuts[i]) && (dR<cuts[i+1])) {if (is_overflow) *is_overflow = (i==index-1); return i;}
   
-  if (!veto_overflow) std::cout << "WARNING: called bin choice for out-of-range value " << dR << std::endl;
+   std::cout << "WARNING: called bin choice for out-of-range value " << dR << std::endl;
   return -999;
 
 
