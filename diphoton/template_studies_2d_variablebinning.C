@@ -1,7 +1,7 @@
 bool global_doplots = false;
 bool doxcheckstemplates = false;
 bool dolightcomparisonwithstandardselsig = false;
-bool dolightcomparisonwithstandardselbkg = true;
+bool dolightcomparisonwithstandardselbkg = false;
 
 #include <assert.h>
 
@@ -364,6 +364,8 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
   assert(dataset_bkgsig_orig);
   assert(dataset_bkgbkg_orig);
   assert(dataset_orig);
+
+  dataset_orig = (RooDataSet*)(dataset_orig->reduce(Name("dataset"),Cut("roovar_dR>0.8")));
 
   RooDataSet *dataset_sigsig = (RooDataSet*)(dataset_sigsig_orig->reduce(Name("dataset_sigsig"),Cut(Form("roovar1<%f && roovar2<%f",rightrange-1e-5,rightrange-1e-5))));
   RooDataSet *dataset_sigbkg = (RooDataSet*)(dataset_sigbkg_orig->reduce(Name("dataset_sigbkg"),Cut(Form("roovar1<%f && roovar2<%f",rightrange-1e-5,rightrange-1e-5))));
@@ -2466,7 +2468,12 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
 
     //    std::cout << "start loop: " << std::endl;
 
-    float unfoldingdy_mc_all = (!skipZsubtraction) ? ((RooDataSet*)(file_pixelrevsel_dy_mc->Get(Form("roofit/obs_roodset_%s_%s_b%d",splitting.Data(),diffvariable.Data(),n_bins))))->sumEntries() : 0;
+    float unfoldingdy_mc_all = 0;
+    if (!skipZsubtraction) {
+      RooDataSet *d = (RooDataSet*)(file_pixelrevsel_dy_mc->Get(Form("roofit/obs_roodset_%s_%s_b%d",splitting.Data(),diffvariable.Data(),n_bins)));
+      d=(RooDataSet*)(d->reduce(Name("bla1"),Cut("roovar_dR>0.8")));
+      unfoldingdy_mc_all = d->sumEntries();
+    }
 
   for (int bin=0; bin<bins_to_run; bin++) {
 
@@ -2484,10 +2491,27 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
     float eff_overflow = overflowremovaleffhisto->GetBinContent(bin+1);
 
     if (!skipZsubtraction) assert((RooDataSet*)(file_standardsel_dy->Get(Form("roofit/obs_roodset_%s_%s_b%d",splitting.Data(),diffvariable.Data(),bin))));
-    float events_dy = (!skipZsubtraction) ? ((RooDataSet*)(file_standardsel_dy->Get(Form("roofit/obs_roodset_%s_%s_b%d",splitting.Data(),diffvariable.Data(),bin))))->sumEntries() : 0; // normalized to 1/fb, xsec normalized to 2475 
+    float events_dy = 0;
+    float unfoldingdy_data = 0;
+    float unfoldingdy_mc = 0;
+    if (!skipZsubtraction){
+      {
+	RooDataSet *d = (RooDataSet*)(file_standardsel_dy->Get(Form("roofit/obs_roodset_%s_%s_b%d",splitting.Data(),diffvariable.Data(),bin)));
+	d=(RooDataSet*)(d->reduce(Name("bla2"),Cut("roovar_dR>0.8")));
+	events_dy = d->sumEntries();
+      }
+      {
+	RooDataSet *d = (RooDataSet*)(file_pixelrevsel_dy_data->Get(Form("roofit/obs_roodset_%s_%s_b%d",splitting.Data(),diffvariable.Data(),bin)));
+	d=(RooDataSet*)(d->reduce(Name("bla3"),Cut("roovar_dR>0.8")));
+	unfoldingdy_data = d->sumEntries();
+      }
+      {
+	RooDataSet *d = (RooDataSet*)(file_pixelrevsel_dy_mc->Get(Form("roofit/obs_roodset_%s_%s_b%d",splitting.Data(),diffvariable.Data(),bin)));
+	d=(RooDataSet*)(d->reduce(Name("bla4"),Cut("roovar_dR>0.8")));
+	unfoldingdy_mc = d->sumEntries();
+      }
+    }
 
-    float unfoldingdy_data = (!skipZsubtraction) ? ((RooDataSet*)(file_pixelrevsel_dy_data->Get(Form("roofit/obs_roodset_%s_%s_b%d",splitting.Data(),diffvariable.Data(),bin))))->sumEntries()/intlumi : 0;
-    float unfoldingdy_mc = (!skipZsubtraction) ? ((RooDataSet*)(file_pixelrevsel_dy_mc->Get(Form("roofit/obs_roodset_%s_%s_b%d",splitting.Data(),diffvariable.Data(),bin))))->sumEntries() : 0;
 
     float purity_dy = syst_purity_dy[splitting].first;
     float purity_dy_err = syst_purity_dy[splitting].second;
