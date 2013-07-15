@@ -1,7 +1,7 @@
 bool global_doplots = false;
-bool doxcheckstemplates = false;
+bool doxcheckstemplates = true;
 bool dolightcomparisonwithstandardselsig = false;
-bool dolightcomparisonwithstandardselbkg = true;
+bool dolightcomparisonwithstandardselbkg = false;
 
 #include <assert.h>
 
@@ -273,7 +273,7 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
     inputfilename_t2p   = "outphoton_allmc_sigsig.root";
     inputfilename_t1p1f = "outphoton_allmc_sigbkg.root";
     inputfilename_t2f   = "outphoton_allmc_bkgbkg.root";
-    inputfilename_d     = "outphoton_allmc_standard_2fgen.root";
+    inputfilename_d     = "outphoton_allmc_standard_1p1fbothgen_fakeaxis1.root";
   }  
   else {
     inputfilename_t2p   = "outphoton_data_sigsig.root";
@@ -460,6 +460,8 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
   RooDataSet *dset_zee_s = NULL;
   RooDataSet *dset_mctrue_b = NULL;
   RooDataSet *dset_mcrcone_b = NULL;
+  RooDataSet *dset_mctrue_noEM = NULL;
+  RooDataSet *dset_mcrcone_noEM = NULL;
 
   if (doxcheckstemplates || dolightcomparisonwithstandardselsig || dolightcomparisonwithstandardselbkg) {
 
@@ -495,6 +497,14 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
     TFile *fmcrcone_b = new TFile("outphoton_allmc_sieiesideband.root","read");
     fmcrcone_b->GetObject(Form("roofit/roodset_background_%s_rv1",s1.Data()),dset_mcrcone_b);
     assert(dset_mcrcone_b);
+
+    TFile *fmctrue_noEM = new TFile("outphoton_allmc_bkg_noEMenr.root","read");
+    fmctrue_noEM->GetObject(Form("roofit/roodset_background_%s_rv1",s1.Data()),dset_mctrue_noEM);
+    assert(dset_mctrue_noEM);
+
+    TFile *fmcrcone_noEM = new TFile("outphoton_allmc_sieiesideband_noEMenr.root","read");
+    fmcrcone_noEM->GetObject(Form("roofit/roodset_background_%s_rv1",s1.Data()),dset_mcrcone_noEM);
+    assert(dset_mcrcone_noEM);
   
     dset_mctrue_s = (RooDataSet*)(dset_mctrue_s->reduce(Name("dset_mctrue_s"),Cut(Form("roovar1<%f",rightrange-1e-5))));
     dset_mcfrag_s = (RooDataSet*)(dset_mcfrag_s->reduce(Name("dset_mcfrag_s"),Cut(Form("roovar1<%f",rightrange-1e-5))));
@@ -502,6 +512,8 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
     dset_mcrcone_s = (RooDataSet*)(dset_mcrcone_s->reduce(Name("dset_mcrcone_s"),Cut(Form("roovar1<%f",rightrange-1e-5))));
     dset_mctrue_b = (RooDataSet*)(dset_mctrue_b->reduce(Name("dset_mctrue_b"),Cut(Form("roovar1<%f",rightrange-1e-5))));
     dset_mcrcone_b = (RooDataSet*)(dset_mcrcone_b->reduce(Name("dset_mcrcone_b"),Cut(Form("roovar1<%f",rightrange-1e-5))));
+    dset_mctrue_noEM = (RooDataSet*)(dset_mctrue_noEM->reduce(Name("dset_mctrue_noEM"),Cut(Form("roovar1<%f",rightrange-1e-5))));
+    dset_mcrcone_noEM = (RooDataSet*)(dset_mcrcone_noEM->reduce(Name("dset_mcrcone_noEM"),Cut(Form("roovar1<%f",rightrange-1e-5))));
     dset_zee_s = (RooDataSet*)(dset_zee_s->reduce(Name("dset_zee_s"),Cut(Form("roovar1<%f",rightrange-1e-5))));
 
     std::cout << "MC datasets" << std::endl;
@@ -512,6 +524,8 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
     dset_zee_s->Print();
     dset_mctrue_b->Print();
     dset_mcrcone_b->Print();
+    dset_mctrue_noEM->Print();
+    dset_mcrcone_noEM->Print();
 
     reweight_rhosigma(&dset_mctrue_s,dataset_axis1);
     reweight_rhosigma(&dset_mcfrag_s,dataset_axis1);
@@ -530,10 +544,16 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
     reweight_pt_1d(&dset_zee_s,dataset_axis1,1);
     reweight_rhosigma(&dset_mctrue_b,dataset_axis1);
     reweight_rhosigma(&dset_mcrcone_b,dataset_axis1);
+    reweight_rhosigma(&dset_mctrue_noEM,dataset_axis1);
+    reweight_rhosigma(&dset_mcrcone_noEM,dataset_axis1);
     reweight_eta_1d(&dset_mctrue_b,dataset_axis1,1);
     reweight_eta_1d(&dset_mcrcone_b,dataset_axis1,1);
+    reweight_eta_1d(&dset_mctrue_noEM,dataset_axis1,1);
+    reweight_eta_1d(&dset_mcrcone_noEM,dataset_axis1,1);
     reweight_pt_1d(&dset_mctrue_b,dataset_axis1,1);
     reweight_pt_1d(&dset_mcrcone_b,dataset_axis1,1);
+    reweight_pt_1d(&dset_mctrue_noEM,dataset_axis1,1);
+    reweight_pt_1d(&dset_mcrcone_noEM,dataset_axis1,1);
 
     RooDataSet *dset_mcrcone_b1 = NULL;
     RooDataSet *dset_mcrcone_b2 = NULL;
@@ -601,6 +621,14 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
     str_dset_mcrcone_b.dset = dset_mcrcone_b;
     str_dset_mcrcone_b.legend = "Sieie sideband in MC";
     str_dset_mcrcone_b.color = kBlue;
+    plot_dataset_struct str_dset_mctrue_noEM;
+    str_dset_mctrue_noEM.dset = dset_mctrue_noEM;
+    str_dset_mctrue_noEM.legend = "Photon Iso in MC fakes, no EM enr.";
+    str_dset_mctrue_noEM.color = kOrange;
+    plot_dataset_struct str_dset_mcrcone_noEM;
+    str_dset_mcrcone_noEM.dset = dset_mcrcone_noEM;
+    str_dset_mcrcone_noEM.legend = "Sieie sideband in MC, no EM enr.";
+    str_dset_mcrcone_noEM.color = kMagenta;
     plot_dataset_struct str_dset_mcrcone_b1;
     str_dset_mcrcone_b1.dset = dset_mcrcone_b1;
     str_dset_mcrcone_b1.legend = "Sieie sideband in MC / left";
@@ -689,6 +717,8 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
     std::vector<plot_dataset_struct> vec;
     vec.push_back(str_dset_mctrue_b);
     vec.push_back(str_dset_mcrcone_b);
+    vec.push_back(str_dset_mctrue_noEM);
+    vec.push_back(str_dset_mcrcone_noEM);
     plot_datasets_axis1(vec,Form("plots/histo_template_bkg_onlyMC_%s_log",s1.Data()),Form("Background template %s",s1.Data()),false);
     plot_datasets_axis1(vec,Form("plots/histo_template_bkg_onlyMC_%s_lin",s1.Data()),Form("Background template %s",s1.Data()),true,true);
     }

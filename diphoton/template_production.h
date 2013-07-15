@@ -589,9 +589,9 @@ void template_production::Setup(Bool_t _isdata, TString _mode, TString _differen
     for (int k=0; k<50; k++) {
       int numb = (int)(0.025*k*1000);
       TString title = Form("scan_cone_%s_0p%d",reg.Data(),numb);
-      scan_cone_histos[i][k]=new TH1F(title.Data(),title.Data(),n_histobins,leftrange,rightrange);
+      scan_cone_histos[i][k]=new TH1F(title.Data(),title.Data(),132,leftrange,30);
       TString title2 = Form("scan_conewithcheck_%s_0p%d",reg.Data(),numb);
-      scan_conewithcheck_histos[i][k]=new TH1F(title2.Data(),title2.Data(),n_histobins,leftrange,rightrange);
+      scan_conewithcheck_histos[i][k]=new TH1F(title2.Data(),title2.Data(),132,leftrange,30);
     }
   }
 
@@ -1039,7 +1039,7 @@ void template_production::WriteOutput(const char* filename){
 
   TCanvas *canv[2];
   for (int i=0; i<1; i++) {
-    TString title = Form("canv_scan_conewithchecks_%d",i);
+    TString title = Form("canv_scan_cone_%d",i);
     canv[i] = new TCanvas(title.Data(),title.Data());
     canv[i]->cd();
     (scan_cone_histos[i][0])->Draw();
