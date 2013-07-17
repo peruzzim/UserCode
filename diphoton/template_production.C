@@ -69,6 +69,58 @@ void template_production::Loop(int maxevents)
 
     if (mode=="cutPFchargediso_signal" || mode=="cutPFchargediso_background" || mode=="cutPFchargediso_randomcone" || mode=="cutPFchargediso_sieiesideband") if (pholead_pho_Cone04ChargedHadronIso_dR02_dz02_dxy01>0.1) continue;
 
+
+    TKDTreeID *kdtree[2];
+    
+    if (mode=="standard"){
+
+      TTree *mytree[2];
+      TFile *f0 = new TFile("outphoton_data_rcone.root");
+      TFile *f1 = new TFile("outphoton_data_sieiesideband.root");
+      f0->GetObject("Tree_1Drandomcone_template",mytree[0]);
+      f0->GetObject("Tree_1Dsideband_template",mytree[1]);
+      assert(mytree[0]); assert(mytree[1]));
+
+      for (int i=0; i<2; i++){
+	
+	int mynentries = mytree[i]->GetEntriesFast();
+
+	float pho_pt;
+	float pho_eta;
+	float evt_rho;
+	float array_pho_pt = new float[mynentries];
+	float array_pho_eta = new float[mynentries];
+	float array_evt_rho = new float[mynentries];
+	mytree[i]->SetBranchStatus("*",0);
+	mytree[i]->SetBranchStatus("pholead_pt",1);
+	mytree[i]->SetBranchStatus("pholead_SCeta",1);
+	mytree[i]->SetBranchStatus("event_rho",1);
+	mytree[i]->SetBranchAddress("pholead_pt",&pho_pt);
+	mytree[i]->SetBranchAddress("pholead_SCeta",&pho_eta);
+	mytree[i]->SetBranchAddress("event_rho",evt_rho);
+	
+	for (int k=0; k<mynentries; k++){
+	  mytree[i]->GetEntry(k);
+	  array_pho_pt[k] = pho_pt;
+	  array_pho_eta[k] = fabs(pho_eta); 
+	  array_evt_rho[k] = evt_rho;
+	}
+	
+	kdtree[i] = new TKDTreeID(nentries,3,1);
+	kdtree[i]->SetData(0,array_pho_eta);
+	kdtree[i]->SetData(1,array_pho_pt);
+	kdtree[i]->SetData(2,array_evt_rho);
+	kdtree[i]->Build();
+	
+      }
+      
+      
+    }
+
+
+
+
+
     Int_t event_ok_for_dataset=-1;
 
     Int_t reg_lead;
@@ -414,6 +466,8 @@ void template_production::Loop(int maxevents)
 	  if (isppevent) true_purity_isppevent[get_name_true_purity_ispp(event_ok_for_dataset_local,*diffvariable)]->Fill(value_diffvariable,weight);
 	  else true_purity_isnotppevent[get_name_true_purity_isnotpp(event_ok_for_dataset_local,*diffvariable)]->Fill(value_diffvariable,weight);
 	}
+
+
 
 
       }
