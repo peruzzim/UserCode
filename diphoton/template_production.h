@@ -500,7 +500,7 @@ public :
    Int_t Choose_bin_dphi(float dphi, int region);
    Int_t Choose_bin_dR(float dR, int region);
 
-   Int_t Choose_bin_pt(float pt, int region);
+   Int_t Choose_bin_pt(float pt);
    Int_t Choose_bin_eta(float eta, int region);
    Int_t Choose_bin_sieie(float sieie, int region);
 
@@ -1274,15 +1274,14 @@ Int_t template_production::Choose_bin_dR(float dR, int region){
 };
 
 
-Int_t template_production::Choose_bin_pt(float pt, int region){
+Int_t template_production::Choose_bin_pt(float pt){
 
   int index;
 
   float *cuts=NULL;
 
-  if (region==0) {cuts=binsdef_single_gamma_EB; index=n_templates_EB;}
-  if (region==1) {cuts=binsdef_single_gamma_EE; index=n_templates_EE;}
-
+  cuts=binsdef_single_gamma_pt; index=n_templates_pt;
+  
   assert (cuts!=NULL);
   assert (index!=0);
 
@@ -1309,8 +1308,8 @@ Int_t template_production::Choose_bin_eta(float eta, int region){
 
   float *cuts=NULL;
 
-  if (region==0) {cuts=binsdef_single_gamma_EB_eta; index=n_templates_EB;}
-  if (region==1) {cuts=binsdef_single_gamma_EE_eta; index=n_templates_EE;}
+  if (region==0) {cuts=binsdef_single_gamma_EB_eta; index=n_templates_EB_eta;}
+  if (region==1) {cuts=binsdef_single_gamma_EE_eta; index=n_templates_EE_eta;}
 
   assert (cuts!=NULL);
   assert (index!=0);

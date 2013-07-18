@@ -107,14 +107,14 @@ void template_production::Loop(int maxevents)
 	
 	for (int k=0; k<mynentries; k++){
 	  mytree[i]->GetEntry(k);
-	  array_pho_pt[k] = pho_pt;
 	  array_pho_eta[k] = fabs(pho_eta); 
 	  array_evt_rho[k] = evt_rho;
-	  match_pho_pt[i].push_back(pho_pt);
-	  match_pho_eta[i].push_back(fabs(pho_eta)); 
-	  match_evt_rho[i].push_back(evt_rho);
+	  array_pho_pt[k] = 1000*Choose_bin_pt(pho_pt);
+	  match_pho_eta[i].push_back(array_pho_eta[k]); 
+	  match_evt_rho[i].push_back(array_evt_rho[k]);
+	  match_pho_pt[i].push_back(array_pho_pt[k]);
 	}
-      
+
 	kdtree[i] = new TKDTreeID(nentries,(i==0) ? 2 : 3,1);
 	kdtree[i]->SetData(0,array_pho_eta);
 	kdtree[i]->SetData(1,array_evt_rho);
@@ -515,8 +515,9 @@ void template_production::Loop(int maxevents)
       { // muovere fuori dal loop diffvariables
 
 	std::cout << "MATCHING" << std::endl;
-	std::cout << fabs(etain1) << " " << event_rho << " " << ptin1 << std::endl;
-	std::cout << fabs(etain2) << " " << event_rho << " " << ptin2 << std::endl;
+	std::cout << etain1 << " " << event_rho << " " << ptin1 << std::endl;
+	std::cout << etain2 << " " << event_rho << " " << ptin2 << std::endl;
+	std::cout << "---" << std::endl;
 
 	matchingtree_event_run = event_run;
 	matchingtree_event_lumi = event_lumi;
@@ -524,39 +525,40 @@ void template_production::Loop(int maxevents)
 
 	int *matches1 = new int[nclosest];
 	double *dists1 = new double[nclosest];
+	int *matches2 = new int[nclosest];
+	double *dists2 = new double[nclosest];
 	double p1[3];
 	double p2[3];
 	p1[0]=fabs(etain1);
 	p1[1]=event_rho*randomgen->Uniform(0,1);
-	p1[2]=ptin1;
+	p1[2]=1000*Choose_bin_pt(ptin1);
+	p2[0]=fabs(etain2);
+	p2[1]=event_rho-p1[1];
+	p2[2]=1000*Choose_bin_pt(ptin2);	  
 	
 	for (int n1=0; n1<2; n1++) for (int n2=0; n2<2; n2++){
+	    std::cout << n1 << " " << n2 << std::endl;
 	    kdtree[n1]->FindNearestNeighbors(p1,nclosest,matches1,dists1);
+	    kdtree[n2]->FindNearestNeighbors(p2,nclosest,matches2,dists2);
 	    for (int l=0; l<nclosest; l++){
-	      float found_rho = match_evt_rho[0].at(matches1[l]);
-	      p2[0]=fabs(etain2);
-	      p2[1]=event_rho-found_rho;
-	      p2[2]=ptin2;	  
-	      int match2[1];
-	      double dist[1];
-	      kdtree[n2]->FindNearestNeighbors(p2,1,match2,dist);
-	      std::cout << match_pho_eta[n1].at(matches1[l]) << " " << match_evt_rho[n1].at(matches1[l]) << " " << match_pho_pt[n1].at(matches1[l]) << std::endl;
-	      std::cout << match_pho_eta[n2].at(match2[0]) << " " << match_evt_rho[n2].at(match2[0]) << " " << match_pho_pt[n2].at(match2[0]) << std::endl;
+	      std::cout << "-" << std::endl;
+	      std::cout << matches1[l] << " " << match_pho_eta[n1].at(matches1[l]) << " " << match_evt_rho[n1].at(matches1[l]) << " " << match_pho_pt[n1].at(matches1[l]) << std::endl;
+	      std::cout << matches2[l] << " " << match_pho_eta[n2].at(matches2[l]) << " " << match_evt_rho[n2].at(matches2[l]) << " " << match_pho_pt[n2].at(matches2[l]) << std::endl;
 	      if (n1==0 && n2==0){	      
 		matchingtree_index_sigsig_1[l] = matches1[l];
-		matchingtree_index_sigsig_2[l] = match2[0];
+		matchingtree_index_sigsig_2[l] = matches2[l];
 	      }
 	      if (n1==0 && n2==1){	      
 		matchingtree_index_sigbkg_1[l] = matches1[l];
-		matchingtree_index_sigbkg_2[l] = match2[0];
+		matchingtree_index_sigbkg_2[l] = matches2[l];
 	      }
 	      if (n1==1 && n2==0){	      
 		matchingtree_index_bkgsig_1[l] = matches1[l];
-		matchingtree_index_bkgsig_2[l] = match2[0];
+		matchingtree_index_bkgsig_2[l] = matches2[l];
 	      }
 	      if (n1==1 && n2==1){	      
 		matchingtree_index_bkgbkg_1[l] = matches1[l];
-		matchingtree_index_bkgbkg_2[l] = match2[0];
+		matchingtree_index_bkgbkg_2[l] = matches2[l];
 	      }
 	    }
 	  }
@@ -564,6 +566,8 @@ void template_production::Loop(int maxevents)
 	matchingtree->Fill();
 	delete[] matches1;
 	delete[] dists1;
+	delete[] matches2;
+	delete[] dists2;
       }
      
 

@@ -49,10 +49,10 @@ Double_t templatebinsboundaries[n_templatebins_max+1];
 
 static const int n_bins=26;
 
-int n_templates_EB=7;
-int n_templates_EE=5;
-float binsdef_single_gamma_EB[n_bins+1]={30,40,50,60,70,80,90,110,140,150};
-float binsdef_single_gamma_EE[n_bins+1]={30,40,50,60,70,80,90,110,120};
+int n_templates_pt=4;
+float binsdef_single_gamma_pt[n_bins+1]={20,35,50,80,150};
+int n_templates_EB_eta=7;
+int n_templates_EE_eta=5;
 float binsdef_single_gamma_EB_eta[n_bins+1]={0,0.2,0.4,0.6,0.8,1,1.2,1.4442};
 float binsdef_single_gamma_EE_eta[n_bins+1]={1.56,1.653,1.8,2,2.2,2.5};
 
@@ -116,7 +116,7 @@ float rhobins[n_rho_cats+1]={0,100};
 //float sigmabins[n_sigma_cats+1]={0,1,2,3,4,5,6,100};
 float sigmabins[n_sigma_cats+1]={0,100};
 
-const int n_eta_cats = n_templates_EB;
+const int n_eta_cats = n_templates_EB_eta;
 int n_eta1eta2_cats = n_eta_cats*n_eta_cats;
 float *etabins = binsdef_single_gamma_EB_eta+0;
 
