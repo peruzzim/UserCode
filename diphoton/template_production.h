@@ -39,6 +39,7 @@
 #include "RooWorkspace.h"
 #include <vector>
 #include <algorithm> 
+#include "TKDTree.h"
 
 using namespace std;
 using namespace RooFit;
@@ -53,6 +54,9 @@ public :
 //   vector<float> diphotonpt_vector;
 
    // Declaration of leaf types
+   Int_t           event_run;
+   Int_t           event_lumi;
+   Int_t           event_number;
    Float_t         event_luminormfactor;
    Float_t         event_Kfactor;
    Float_t         event_weight;
@@ -228,6 +232,9 @@ public :
    Float_t pholead_test_rotatedwithcheckphotoniso[50];
    
    // List of branches
+   TBranch        *b_event_run;   //!
+   TBranch        *b_event_lumi;   //!
+   TBranch        *b_event_number;   //!
    TBranch        *b_event_luminormfactor;   //!
    TBranch        *b_event_Kfactor;   //!
    TBranch        *b_event_weight;   //!
@@ -732,6 +739,9 @@ void template_production::Init()
    fCurrent = -1;
    fChain->SetMakeClass(1);
 
+   fChain->SetBranchAddress("event_run", &event_run, &b_event_run);
+   fChain->SetBranchAddress("event_lumi", &event_lumi, &b_event_lumi);
+   fChain->SetBranchAddress("event_number", &event_number, &b_event_number);
    fChain->SetBranchAddress("event_luminormfactor", &event_luminormfactor, &b_event_luminormfactor);
    fChain->SetBranchAddress("event_Kfactor", &event_Kfactor, &b_event_Kfactor);
    fChain->SetBranchAddress("event_weight", &event_weight, &b_event_weight);

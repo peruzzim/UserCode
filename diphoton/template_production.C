@@ -4,7 +4,7 @@
 
 using namespace std;
 
-bool do_scan_cone = true;
+bool do_scan_cone = false;
 
 void template_production::Loop(int maxevents)
 {
@@ -69,53 +69,92 @@ void template_production::Loop(int maxevents)
 
     if (mode=="cutPFchargediso_signal" || mode=="cutPFchargediso_background" || mode=="cutPFchargediso_randomcone" || mode=="cutPFchargediso_sieiesideband") if (pholead_pho_Cone04ChargedHadronIso_dR02_dz02_dxy01>0.1) continue;
 
+    static const int nclosest = 10;
 
     TKDTreeID *kdtree[2];
+    std::vector<float> match_pho_pt[2];
+    std::vector<float> match_pho_eta[2];
+    std::vector<float> match_evt_rho[2];
     
     if (mode=="standard"){
-
+    
       TTree *mytree[2];
-      TFile *f0 = new TFile("outphoton_data_rcone.root");
-      TFile *f1 = new TFile("outphoton_data_sieiesideband.root");
-      f0->GetObject("Tree_1Drandomcone_template",mytree[0]);
-      f0->GetObject("Tree_1Dsideband_template",mytree[1]);
-      assert(mytree[0]); assert(mytree[1]));
-
+      TFile *f = new TFile("outfile.root"); // DEBUG
+      f->GetObject("Tree_1Drandomcone_template",mytree[0]);
+      f->GetObject("Tree_1Dsideband_template",mytree[1]);
+      assert(mytree[0]); assert(mytree[1]);
+    
       for (int i=0; i<2; i++){
-	
+      
 	int mynentries = mytree[i]->GetEntriesFast();
 
 	float pho_pt;
 	float pho_eta;
 	float evt_rho;
-	float array_pho_pt = new float[mynentries];
-	float array_pho_eta = new float[mynentries];
-	float array_evt_rho = new float[mynentries];
+	TBranch *b_pho_pt;
+	TBranch *b_pho_eta;
+	TBranch *b_evt_rho;
+	double *array_pho_pt = new double[mynentries];
+	double *array_pho_eta = new double[mynentries];
+	double *array_evt_rho = new double[mynentries];
 	mytree[i]->SetBranchStatus("*",0);
 	mytree[i]->SetBranchStatus("pholead_pt",1);
 	mytree[i]->SetBranchStatus("pholead_SCeta",1);
 	mytree[i]->SetBranchStatus("event_rho",1);
-	mytree[i]->SetBranchAddress("pholead_pt",&pho_pt);
-	mytree[i]->SetBranchAddress("pholead_SCeta",&pho_eta);
-	mytree[i]->SetBranchAddress("event_rho",evt_rho);
+	mytree[i]->SetBranchAddress("pholead_pt",&pho_pt,&b_pho_pt);
+	mytree[i]->SetBranchAddress("pholead_SCeta",&pho_eta,&b_pho_eta);
+	mytree[i]->SetBranchAddress("event_rho",&evt_rho,&b_evt_rho);
 	
 	for (int k=0; k<mynentries; k++){
 	  mytree[i]->GetEntry(k);
 	  array_pho_pt[k] = pho_pt;
 	  array_pho_eta[k] = fabs(pho_eta); 
 	  array_evt_rho[k] = evt_rho;
+	  match_pho_pt[i].push_back(pho_pt);
+	  match_pho_eta[i].push_back(fabs(pho_eta)); 
+	  match_evt_rho[i].push_back(evt_rho);
 	}
-	
-	kdtree[i] = new TKDTreeID(nentries,3,1);
+      
+	kdtree[i] = new TKDTreeID(nentries,(i==0) ? 2 : 3,1);
 	kdtree[i]->SetData(0,array_pho_eta);
-	kdtree[i]->SetData(1,array_pho_pt);
-	kdtree[i]->SetData(2,array_evt_rho);
+	kdtree[i]->SetData(1,array_evt_rho);
+	if (i==1) kdtree[i]->SetData(2,array_pho_pt);
 	kdtree[i]->Build();
 	
+      
       }
-      
-      
+ 
     }
+
+
+
+    TFile *matchingfile = new TFile("matchingfile.root","recreate");
+    matchingfile->cd();
+    TTree *matchingtree = new TTree("matchingtree","matchingtree");
+    Int_t matchingtree_bin_diffvariable[5];
+    Int_t matchingtree_event_run;
+    Int_t matchingtree_event_lumi;
+    Int_t matchingtree_event_number;
+    Int_t matchingtree_index_sigsig_1[nclosest];
+    Int_t matchingtree_index_sigsig_2[nclosest];
+    Int_t matchingtree_index_sigbkg_1[nclosest];
+    Int_t matchingtree_index_sigbkg_2[nclosest];
+    Int_t matchingtree_index_bkgsig_1[nclosest];
+    Int_t matchingtree_index_bkgsig_2[nclosest];
+    Int_t matchingtree_index_bkgbkg_1[nclosest];
+    Int_t matchingtree_index_bkgbkg_2[nclosest];
+    matchingtree->Branch("matchingtree_bin_diffvariable",&matchingtree_bin_diffvariable,"matchingtree_bin_diffvariable[5]/I");
+    matchingtree->Branch("matchingtree_event_run",&matchingtree_event_run,"matchingtree_event_run/I");
+    matchingtree->Branch("matchingtree_event_lumi",&matchingtree_event_lumi,"matchingtree_event_lumi/I");
+    matchingtree->Branch("matchingtree_event_number",&matchingtree_event_number,"matchingtree_event_number/I");
+    matchingtree->Branch("matchingtree_index_sigsig_1",&matchingtree_index_sigsig_1,Form("matchingtree_index_sigsig_1[%d]/I",nclosest));
+    matchingtree->Branch("matchingtree_index_sigsig_2",&matchingtree_index_sigsig_2,Form("matchingtree_index_sigsig_2[%d]/I",nclosest));
+    matchingtree->Branch("matchingtree_index_sigbkg_1",&matchingtree_index_sigbkg_1,Form("matchingtree_index_sigbkg_1[%d]/I",nclosest));
+    matchingtree->Branch("matchingtree_index_sigbkg_2",&matchingtree_index_sigbkg_2,Form("matchingtree_index_sigbkg_2[%d]/I",nclosest));
+    matchingtree->Branch("matchingtree_index_bkgsig_1",&matchingtree_index_bkgsig_1,Form("matchingtree_index_bkgsig_1[%d]/I",nclosest));
+    matchingtree->Branch("matchingtree_index_bkgsig_2",&matchingtree_index_bkgsig_2,Form("matchingtree_index_bkgsig_2[%d]/I",nclosest));
+    matchingtree->Branch("matchingtree_index_bkgbkg_1",&matchingtree_index_bkgbkg_1,Form("matchingtree_index_bkgbkg_1[%d]/I",nclosest));
+    matchingtree->Branch("matchingtree_index_bkgbkg_2",&matchingtree_index_bkgbkg_2,Form("matchingtree_index_bkgbkg_2[%d]/I",nclosest));
 
 
 
@@ -385,14 +424,53 @@ void template_production::Loop(int maxevents)
 
     if (dodistribution && event_ok_for_dataset>-1){
 
-      for (std::vector<TString>::const_iterator diffvariable = diffvariables_list.begin(); diffvariable!=diffvariables_list.end(); diffvariable++){
+	 int event_ok_for_dataset_local = event_ok_for_dataset;
 
-	Int_t bin_couple = -999;
-	
-	float value_diffvariable;
-	int event_ok_for_dataset_local = event_ok_for_dataset;
+	 FillDiffVariables(); // WARNING: WORKS ONLY IF DIFF VARIABLES ARE NOT SENSITIVE TO SWAPPING 1 WITH 2
 
-	FillDiffVariables(); // WARNING: WORKS ONLY IF DIFF VARIABLES ARE NOT SENSITIVE TO SWAPPING 1 WITH 2
+	 float in1=pholead_outvar;
+	 float in2=photrail_outvar;
+	 float ptin1=pholead_pt;
+	 float ptin2=photrail_pt;
+	 float sieiein1=pholead_sieie;
+	 float sieiein2=photrail_sieie;
+	 float etain1=fabs(pholead_SCeta);
+	 float etain2=fabs(photrail_SCeta);
+
+	 bool doswap=false;
+
+	 if ((event_ok_for_dataset_local==0 || event_ok_for_dataset_local==2) && (randomgen->Uniform()>0.5)) doswap=true;
+
+	 if (event_ok_for_dataset_local==4) doswap=true;
+
+	 if (event_ok_for_dataset_local==3 || event_ok_for_dataset_local==4) event_ok_for_dataset_local=1;
+
+	 if (doswap){
+	   float temp;
+	   temp=in1; in1=in2; in2=temp;
+	   temp=ptin1; ptin1=ptin2; ptin2=temp;
+	   temp=sieiein1; sieiein1=sieiein2; sieiein2=temp;
+	   temp=etain1; etain1=etain2; etain2=temp;
+	 }
+
+	 roovar1->setVal(in1);
+	 roovar2->setVal(in2);
+	 roopt1->setVal(ptin1);
+	 roopt2->setVal(ptin2);
+	 roosieie1->setVal(sieiein1);
+	 roosieie2->setVal(sieiein2);
+	 rooeta1->setVal(etain1);
+	 rooeta2->setVal(etain2);
+	 rooweight->setVal(weight);
+	 RooArgSet args(*roovar1,*roovar2,*roopt1,*roopt2,*roosieie1,*roosieie2,*rooeta1,*rooeta2);
+	 args.add(RooArgSet(*roorho,*roosigma));
+	 args.add(*rooargset_diffvariables);
+
+       int i_diffvar=0;
+       for (std::vector<TString>::const_iterator diffvariable = diffvariables_list.begin(); diffvariable!=diffvariables_list.end(); diffvariable++){
+
+	 Int_t bin_couple = -999;
+	 float value_diffvariable;
 
 	if (*diffvariable==TString("invmass")) {
 	  value_diffvariable=roovar_invmass->getVal();
@@ -419,44 +497,6 @@ void template_production::Loop(int maxevents)
       
 	if (bin_couple<0) continue;
 	
-	float in1=pholead_outvar;
-	float in2=photrail_outvar;
-	float ptin1=pholead_pt;
-	float ptin2=photrail_pt;
-	float sieiein1=pholead_sieie;
-	float sieiein2=photrail_sieie;
-	float etain1=fabs(pholead_SCeta);
-	float etain2=fabs(photrail_SCeta);
-
-	bool doswap=false;
-
-
-	if ((event_ok_for_dataset_local==0 || event_ok_for_dataset_local==2) && (randomgen->Uniform()>0.5)) doswap=true;
-	
-	if (event_ok_for_dataset_local==4) doswap=true;
-
-	if (event_ok_for_dataset_local==3 || event_ok_for_dataset_local==4) event_ok_for_dataset_local=1;
-
-	if (doswap){
-	  float temp;
-	  temp=in1; in1=in2; in2=temp;
-	  temp=ptin1; ptin1=ptin2; ptin2=temp;
-	  temp=sieiein1; sieiein1=sieiein2; sieiein2=temp;
-	  temp=etain1; etain1=etain2; etain2=temp;
-	}
-      
-	roovar1->setVal(in1);
-	roovar2->setVal(in2);
-	roopt1->setVal(ptin1);
-	roopt2->setVal(ptin2);
-	roosieie1->setVal(sieiein1);
-	roosieie2->setVal(sieiein2);
-	rooeta1->setVal(etain1);
-	rooeta2->setVal(etain2);
-	rooweight->setVal(weight);
-	RooArgSet args(*roovar1,*roovar2,*roopt1,*roopt2,*roosieie1,*roosieie2,*rooeta1,*rooeta2);
-	args.add(RooArgSet(*roorho,*roosigma));
-	args.add(*rooargset_diffvariables);
 	obs_roodset[get_name_obs_roodset(event_ok_for_dataset_local,*diffvariable,bin_couple)]->add(args,weight);
 
 	if (!isdata){
@@ -468,10 +508,68 @@ void template_production::Loop(int maxevents)
 	}
 
 
-
+	matchingtree_bin_diffvariable[i_diffvar++]=bin_couple;
 
       }
-      
+
+      { // muovere fuori dal loop diffvariables
+
+	std::cout << "MATCHING" << std::endl;
+	std::cout << fabs(etain1) << " " << event_rho << " " << ptin1 << std::endl;
+	std::cout << fabs(etain2) << " " << event_rho << " " << ptin2 << std::endl;
+
+	matchingtree_event_run = event_run;
+	matchingtree_event_lumi = event_lumi;
+	matchingtree_event_number = event_number;
+
+	int *matches1 = new int[nclosest];
+	double *dists1 = new double[nclosest];
+	double p1[3];
+	double p2[3];
+	p1[0]=fabs(etain1);
+	p1[1]=event_rho*randomgen->Uniform(0,1);
+	p1[2]=ptin1;
+	
+	for (int n1=0; n1<2; n1++) for (int n2=0; n2<2; n2++){
+	    kdtree[n1]->FindNearestNeighbors(p1,nclosest,matches1,dists1);
+	    for (int l=0; l<nclosest; l++){
+	      float found_rho = match_evt_rho[0].at(matches1[l]);
+	      p2[0]=fabs(etain2);
+	      p2[1]=event_rho-found_rho;
+	      p2[2]=ptin2;	  
+	      int match2[1];
+	      double dist[1];
+	      kdtree[n2]->FindNearestNeighbors(p2,1,match2,dist);
+	      std::cout << match_pho_eta[n1].at(matches1[l]) << " " << match_evt_rho[n1].at(matches1[l]) << " " << match_pho_pt[n1].at(matches1[l]) << std::endl;
+	      std::cout << match_pho_eta[n2].at(match2[0]) << " " << match_evt_rho[n2].at(match2[0]) << " " << match_pho_pt[n2].at(match2[0]) << std::endl;
+	      if (n1==0 && n2==0){	      
+		matchingtree_index_sigsig_1[l] = matches1[l];
+		matchingtree_index_sigsig_2[l] = match2[0];
+	      }
+	      if (n1==0 && n2==1){	      
+		matchingtree_index_sigbkg_1[l] = matches1[l];
+		matchingtree_index_sigbkg_2[l] = match2[0];
+	      }
+	      if (n1==1 && n2==0){	      
+		matchingtree_index_bkgsig_1[l] = matches1[l];
+		matchingtree_index_bkgsig_2[l] = match2[0];
+	      }
+	      if (n1==1 && n2==1){	      
+		matchingtree_index_bkgbkg_1[l] = matches1[l];
+		matchingtree_index_bkgbkg_2[l] = match2[0];
+	      }
+	    }
+	  }
+
+	matchingtree->Fill();
+	delete[] matches1;
+	delete[] dists1;
+      }
+     
+
+
+
+ 
     } // end if dodistribution
     
 
