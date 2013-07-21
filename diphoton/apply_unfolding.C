@@ -27,7 +27,7 @@ using namespace std;
 
 void apply_unfolding(){
 
-  TFile *unf_file = new TFile("plots/unfolding.root","read");
+  TFile *unf_file = new TFile("unfolding.root","read");
 
   TFile *outfile = new TFile("Unfolding_Results.root","recreate");  
 
