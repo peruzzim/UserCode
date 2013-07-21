@@ -27,8 +27,8 @@ void template_production::Loop(int maxevents)
     if (mode=="standard"){
     
       TTree *mytree[2];
-      //      TFile *f = new TFile("/Volumes/diskext/ntuples/gg_minitree_020616_data2011_testnewtemplates_19jul/Photon_Run2011A_16Jan2012_v1_AOD_part1.root"); // DEBUG
-      TFile *f = new TFile("outfile.root"); // DEBUG
+      TFile *f = new TFile("/Volumes/diskext/ntuples/gg_minitree_020616_data2011_testnewtemplates_19jul/Photon_Run2011A_16Jan2012_v1_AOD_part1.root"); // DEBUG
+      //      TFile *f = new TFile("outfile.root"); // DEBUG
       f->GetObject("Tree_1Drandomcone_template",mytree[0]);
       f->GetObject("Tree_1Dsideband_template",mytree[1]);
       assert(mytree[0]); assert(mytree[1]);
@@ -85,7 +85,6 @@ void template_production::Loop(int maxevents)
     TFile *matchingfile = new TFile("matchingfile.root","recreate");
     matchingfile->cd();
     TTree *matchingtree = new TTree("matchingtree","matchingtree");
-    Int_t matchingtree_bin_diffvariable[5];
     Int_t matchingtree_event_run;
     Int_t matchingtree_event_lumi;
     Int_t matchingtree_event_number;
@@ -97,7 +96,6 @@ void template_production::Loop(int maxevents)
     Int_t matchingtree_index_bkgsig_2[nclosest];
     Int_t matchingtree_index_bkgbkg_1[nclosest];
     Int_t matchingtree_index_bkgbkg_2[nclosest];
-    matchingtree->Branch("matchingtree_bin_diffvariable",&matchingtree_bin_diffvariable,"matchingtree_bin_diffvariable[5]/I");
     matchingtree->Branch("matchingtree_event_run",&matchingtree_event_run,"matchingtree_event_run/I");
     matchingtree->Branch("matchingtree_event_lumi",&matchingtree_event_lumi,"matchingtree_event_lumi/I");
     matchingtree->Branch("matchingtree_event_number",&matchingtree_event_number,"matchingtree_event_number/I");
@@ -476,7 +474,6 @@ void template_production::Loop(int maxevents)
 	 args.add(RooArgSet(*roorho,*roosigma));
 	 args.add(*rooargset_diffvariables);
 
-       int i_diffvar=0;
        for (std::vector<TString>::const_iterator diffvariable = diffvariables_list.begin(); diffvariable!=diffvariables_list.end(); diffvariable++){
 
 	 Int_t bin_couple = -999;
@@ -516,9 +513,6 @@ void template_production::Loop(int maxevents)
 	  if (isppevent) true_purity_isppevent[get_name_true_purity_ispp(event_ok_for_dataset_local,*diffvariable)]->Fill(value_diffvariable,weight);
 	  else true_purity_isnotppevent[get_name_true_purity_isnotpp(event_ok_for_dataset_local,*diffvariable)]->Fill(value_diffvariable,weight);
 	}
-
-
-	matchingtree_bin_diffvariable[i_diffvar++]=bin_couple;
 
        }
 
