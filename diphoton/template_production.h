@@ -54,6 +54,7 @@ public :
 //   vector<float> diphotonpt_vector;
 
    // Declaration of leaf types
+   UInt_t          event_fileuuid;
    Int_t           event_run;
    Int_t           event_lumi;
    Int_t           event_number;
@@ -232,6 +233,7 @@ public :
    Float_t pholead_test_rotatedwithcheckphotoniso[50];
    
    // List of branches
+   TBranch        *b_event_fileuuid;   //!
    TBranch        *b_event_run;   //!
    TBranch        *b_event_lumi;   //!
    TBranch        *b_event_number;   //!
@@ -739,6 +741,7 @@ void template_production::Init()
    fCurrent = -1;
    fChain->SetMakeClass(1);
 
+   fChain->SetBranchAddress("event_fileuuid", &event_fileuuid, &b_event_fileuuid);
    fChain->SetBranchAddress("event_run", &event_run, &b_event_run);
    fChain->SetBranchAddress("event_lumi", &event_lumi, &b_event_lumi);
    fChain->SetBranchAddress("event_number", &event_number, &b_event_number);

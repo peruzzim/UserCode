@@ -27,7 +27,7 @@ void template_production::Loop(int maxevents)
     if (mode=="standard"){
     
       TTree *mytree[2];
-      TFile *f = new TFile("/Volumes/diskext/ntuples/gg_minitree_020616_data2011_testnewtemplates_19jul/Photon_Run2011A_16Jan2012_v1_AOD_part1.root"); // DEBUG
+      TFile *f = new TFile("/scratch/peruzzi/ntuples/gg_minitree_020616_data2011_newtemplates_jul21/Photon_Run2011AB_16Jan2012_v1_AOD.root");
       //      TFile *f = new TFile("outfile.root"); // DEBUG
       f->GetObject("Tree_1Drandomcone_template",mytree[0]);
       f->GetObject("Tree_1Dsideband_template",mytree[1]);
@@ -85,6 +85,7 @@ void template_production::Loop(int maxevents)
     TFile *matchingfile = new TFile("matchingfile.root","recreate");
     matchingfile->cd();
     TTree *matchingtree = new TTree("matchingtree","matchingtree");
+    UInt_t matchingtree_event_fileuuid;
     Int_t matchingtree_event_run;
     Int_t matchingtree_event_lumi;
     Int_t matchingtree_event_number;
@@ -96,6 +97,7 @@ void template_production::Loop(int maxevents)
     Int_t matchingtree_index_bkgsig_2[nclosest];
     Int_t matchingtree_index_bkgbkg_1[nclosest];
     Int_t matchingtree_index_bkgbkg_2[nclosest];
+    matchingtree->Branch("matchingtree_event_fileuuid",&matchingtree_event_fileuuid,"matchingtree_event_fileuuid/i");
     matchingtree->Branch("matchingtree_event_run",&matchingtree_event_run,"matchingtree_event_run/I");
     matchingtree->Branch("matchingtree_event_lumi",&matchingtree_event_lumi,"matchingtree_event_lumi/I");
     matchingtree->Branch("matchingtree_event_number",&matchingtree_event_number,"matchingtree_event_number/I");
@@ -522,11 +524,12 @@ void template_production::Loop(int maxevents)
 
 	if (printout){
 	  std::cout << "MATCHING" << std::endl;
-	  std::cout << etain1 << " " << event_rho << " " << ptin1 << std::endl;
-	  std::cout << etain2 << " " << event_rho << " " << ptin2 << std::endl;
+	  std::cout << pholead_SCeta << " " << event_rho << " " << pholead_pt << std::endl;
+	  std::cout << photrail_SCeta << " " << event_rho << " " << photrail_pt << std::endl;
 	  std::cout << "---" << std::endl;
 	}
 
+	matchingtree_event_fileuuid = event_fileuuid;
 	matchingtree_event_run = event_run;
 	matchingtree_event_lumi = event_lumi;
 	matchingtree_event_number = event_number;
@@ -537,12 +540,12 @@ void template_production::Loop(int maxevents)
 	Double_t *dists2 = new Double_t[nclosest];
 	Double_t p1[3];
 	Double_t p2[3];
-	p1[0]=fabs(etain1)/0.1;
+	p1[0]=fabs(pholead_SCeta)/0.1;
 	p1[1]=event_rho/2.0*randomgen->Uniform(0,1);
-	p1[2]=1000*Choose_bin_pt(ptin1);
-	p2[0]=fabs(etain2)/0.1;
+	p1[2]=1000*Choose_bin_pt(pholead_pt);
+	p2[0]=fabs(photrail_SCeta)/0.1;
 	p2[1]=event_rho/2.0-p1[1];
-	p2[2]=1000*Choose_bin_pt(ptin2);	  
+	p2[2]=1000*Choose_bin_pt(photrail_pt);	  
 	
 	for (int n1=0; n1<2; n1++) for (int n2=0; n2<2; n2++){
 	    if (printout) std::cout << n1 << " " << n2 << std::endl;
@@ -554,6 +557,12 @@ void template_production::Loop(int maxevents)
 		std::cout << matches1[l] << " " << match_pho_eta[n1].at(matches1[l]) << " " << match_evt_rho[n1].at(matches1[l]) << " " << match_pho_pt[n1].at(matches1[l]) << std::endl;
 		std::cout << matches2[l] << " " << match_pho_eta[n2].at(matches2[l]) << " " << match_evt_rho[n2].at(matches2[l]) << " " << match_pho_pt[n2].at(matches2[l]) << std::endl;
 	      }
+
+	      if (fabs(pholead_SCeta)<1.4442) if (fabs(match_pho_eta[n1].at(matches1[l]))>1.4442) cout << "MIGRATION ERROR" << endl;
+	      if (fabs(pholead_SCeta)>1.4442) if (fabs(match_pho_eta[n1].at(matches1[l]))<1.4442) cout << "MIGRATION ERROR" << endl;
+	      if (fabs(photrail_SCeta)<1.4442) if (fabs(match_pho_eta[n2].at(matches2[l]))>1.4442) cout << "MIGRATION ERROR" << endl;
+	      if (fabs(photrail_SCeta)>1.4442) if (fabs(match_pho_eta[n2].at(matches2[l]))<1.4442) cout << "MIGRATION ERROR" << endl;
+
 	      if (n1==0 && n2==0){	      
 		matchingtree_index_sigsig_1[l] = matches1[l];
 		matchingtree_index_sigsig_2[l] = matches2[l];
