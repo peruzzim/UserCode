@@ -12,7 +12,9 @@ const int nclosest = 10;
 
 void prepare_matchingfile_forstep2(TString matching, TString data, int jobnumber=-1){
 
-  TFile *m_file = new TFile(matching.Data(),"read");
+  TFile::SetCacheFileDir(".");
+
+  TFile *m_file = TFile::Open(matching.Data(),"CACHEREAD");
   TTree *matchingtree = (TTree*)(m_file->Get("matchingtree"));
 
    UInt_t          matchingtree_event_fileuuid;
@@ -53,7 +55,7 @@ void prepare_matchingfile_forstep2(TString matching, TString data, int jobnumber
    matchingtree->SetBranchAddress("matchingtree_index_bkgbkg_2", matchingtree_index_bkgbkg_2, &b_matchingtree_index_bkgbkg_2);
 
 
-  TFile *d_file = new TFile(data.Data(),"read");
+   TFile *d_file = TFile::Open(data.Data(),"read");
   TTree *InputTree[2];
   InputTree[0] = (TTree*)(d_file->Get("Tree_1Drandomcone_template"));
   InputTree[1] = (TTree*)(d_file->Get("Tree_1Dsideband_template"));
@@ -73,7 +75,6 @@ void prepare_matchingfile_forstep2(TString matching, TString data, int jobnumber
 
 
    std::vector<UInt_t> lista_uuid;
-   lista_uuid.push_back(-1);
    for (Long64_t i=0;i<matchingtree->GetEntriesFast(); i++) {matchingtree->GetEntry(i); lista_uuid.push_back(matchingtree_event_fileuuid);}
    std::sort(lista_uuid.begin(),lista_uuid.end());
    lista_uuid.erase(std::unique(lista_uuid.begin(),lista_uuid.end()),lista_uuid.end());
@@ -81,10 +82,12 @@ void prepare_matchingfile_forstep2(TString matching, TString data, int jobnumber
 
    std::vector<UInt_t> runonthis;
    if (jobnumber>-1){
-     for (unsigned int m=(unsigned int)jobnumber*100; m<((unsigned int)jobnumber+1)*100 && m<lista_uuid.size(); m++){
+     for (unsigned int m=(unsigned int)jobnumber*50; m<((unsigned int)jobnumber+1)*50 && m<lista_uuid.size(); m++){
+       cout << m << " " << lista_uuid.at((unsigned int)m) << endl;
        runonthis.push_back(lista_uuid.at((unsigned int)m));
      }
    }
+   cout << "running on " << runonthis.size() << " files" << endl;
 
    std::map<long, TFile*> newmatchingfile;
    std::map<long, TTree*> newmatchingtree;
@@ -100,8 +103,8 @@ void prepare_matchingfile_forstep2(TString matching, TString data, int jobnumber
        matchingtree->GetEntry(i);
        if (matchingtree_event_fileuuid!=thisuuid) {
 	 if (jobnumber>-1) if (find(runonthis.begin(),runonthis.end(),matchingtree_event_fileuuid)==runonthis.end()) continue;
-	 cout << thisuuid << endl;
 	 if (thisuuid!=0){
+	   cout << "Writing " << thisuuid << endl;
 	   newmatchingtree[thisuuid]->Write();
 	   for (int a=0; a<2; a++) NewInputTree[a][thisuuid]->Write(); 
 	   newmatchingfile[thisuuid]->Close();
@@ -135,6 +138,10 @@ void prepare_matchingfile_forstep2(TString matching, TString data, int jobnumber
        }
        newmatchingtree[matchingtree_event_fileuuid]->Fill();
      }
+     cout << "Writing " << thisuuid << endl;
+     newmatchingtree[thisuuid]->Write();
+     for (int a=0; a<2; a++) NewInputTree[a][thisuuid]->Write(); 
+     newmatchingfile[thisuuid]->Close();
 
 
 
