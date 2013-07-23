@@ -10,7 +10,7 @@ using namespace std;
 
 const int nclosest = 10;
 
-void prepare_matchingfile_forstep2(TString matching, TString data){
+void prepare_matchingfile_forstep2(TString matching, TString data, int jobnumber=-1){
 
   TFile *m_file = new TFile(matching.Data(),"read");
   TTree *matchingtree = (TTree*)(m_file->Get("matchingtree"));
@@ -76,10 +76,15 @@ void prepare_matchingfile_forstep2(TString matching, TString data){
    lista_uuid.push_back(-1);
    for (Long64_t i=0;i<matchingtree->GetEntriesFast(); i++) {matchingtree->GetEntry(i); lista_uuid.push_back(matchingtree_event_fileuuid);}
    std::sort(lista_uuid.begin(),lista_uuid.end());
-   unsigned int size_beforeunique = lista_uuid.size();
    lista_uuid.erase(std::unique(lista_uuid.begin(),lista_uuid.end()),lista_uuid.end());
-   assert(lista_uuid.size()==size_beforeunique);
    cout << lista_uuid.size() << " uuids found" << endl;
+
+   std::vector<UInt_t> runonthis;
+   if (jobnumber>-1){
+     for (unsigned int m=(unsigned int)jobnumber*100; m<((unsigned int)jobnumber+1)*100 && m<lista_uuid.size(); m++){
+       runonthis.push_back(lista_uuid.at((unsigned int)m));
+     }
+   }
 
    std::map<long, TFile*> newmatchingfile;
    std::map<long, TTree*> newmatchingtree;
@@ -94,6 +99,7 @@ void prepare_matchingfile_forstep2(TString matching, TString data){
      for (Long64_t i=0;i<matchingtree->GetEntriesFast(); i++) {
        matchingtree->GetEntry(i);
        if (matchingtree_event_fileuuid!=thisuuid) {
+	 if (jobnumber>-1) if (find(runonthis.begin(),runonthis.end(),matchingtree_event_fileuuid)==runonthis.end()) continue;
 	 cout << thisuuid << endl;
 	 if (thisuuid!=0){
 	   newmatchingtree[thisuuid]->Write();
