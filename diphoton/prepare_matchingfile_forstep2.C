@@ -136,6 +136,16 @@ void prepare_matchingfile_forstep2(TString matching, TString data, int jobnumber
 	 matchingtree_index_1[n1][n2][l] = NewInputTree[n1][matchingtree_event_fileuuid]->GetEntriesFast();
 	 matchingtree_index_2[n1][n2][l] = NewInputTree[n2][matchingtree_event_fileuuid]->GetEntriesFast();
        }
+       for (int l=0; l<nclosest; l++){
+	 matchingtree_index_sigsig_1[l]=matchingtree_index_1[0][0][l];
+	 matchingtree_index_sigbkg_1[l]=matchingtree_index_1[0][1][l];
+	 matchingtree_index_bkgsig_1[l]=matchingtree_index_1[1][0][l];
+	 matchingtree_index_bkgbkg_1[l]=matchingtree_index_1[1][1][l];
+	 matchingtree_index_sigsig_2[l]=matchingtree_index_2[0][0][l];
+	 matchingtree_index_sigbkg_2[l]=matchingtree_index_2[0][1][l];
+	 matchingtree_index_bkgsig_2[l]=matchingtree_index_2[1][0][l];
+	 matchingtree_index_bkgbkg_2[l]=matchingtree_index_2[1][1][l];
+       }
        newmatchingtree[matchingtree_event_fileuuid]->Fill();
      }
      cout << "Writing " << thisuuid << endl;
