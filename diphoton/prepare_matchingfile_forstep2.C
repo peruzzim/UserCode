@@ -14,7 +14,7 @@ void prepare_matchingfile_forstep2(TString matching, TString data, int jobnumber
 
   TFile::SetCacheFileDir(".");
 
-  TFile *m_file = TFile::Open(matching.Data(),"CACHEREAD");
+  TFile *m_file = TFile::Open(matching.Data(),"read");
   TTree *matchingtree = (TTree*)(m_file->Get("matchingtree"));
 
    UInt_t          matchingtree_event_fileuuid;
@@ -131,10 +131,10 @@ void prepare_matchingfile_forstep2(TString matching, TString data, int jobnumber
        for (int n1=0; n1<2; n1++) for (int n2=0; n2<2; n2++) for (int l=0; l<nclosest; l++){
 	 InputTree[n1]->GetEntry(matchingtree_index_1[n1][n2][l]);
 	 NewInputTree[n1][matchingtree_event_fileuuid]->Fill();
+	 matchingtree_index_1[n1][n2][l] = NewInputTree[n1][matchingtree_event_fileuuid]->GetEntriesFast()-1;
 	 InputTree[n2]->GetEntry(matchingtree_index_2[n1][n2][l]);
 	 NewInputTree[n2][matchingtree_event_fileuuid]->Fill();
-	 matchingtree_index_1[n1][n2][l] = NewInputTree[n1][matchingtree_event_fileuuid]->GetEntriesFast();
-	 matchingtree_index_2[n1][n2][l] = NewInputTree[n2][matchingtree_event_fileuuid]->GetEntriesFast();
+	 matchingtree_index_2[n1][n2][l] = NewInputTree[n2][matchingtree_event_fileuuid]->GetEntriesFast()-1;
        }
        for (int l=0; l<nclosest; l++){
 	 matchingtree_index_sigsig_1[l]=matchingtree_index_1[0][0][l];
