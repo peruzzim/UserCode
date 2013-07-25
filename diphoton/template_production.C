@@ -525,8 +525,20 @@ void template_production::Loop(int maxevents)
 	    if (whichnewtemplate==0 && (n1!=0 || n2!=0)) continue;
 	    if (whichnewtemplate==1 && (n1+n2!=1)) continue;
 	    if (whichnewtemplate==2 && (n1!=1 || n2!=1)) continue;
-	    roovar1->setVal((!doswap) ? phoiso_1[n1][n2][l] : phoiso_2[n1][n2][l]);
-	    roovar2->setVal((!doswap) ? phoiso_2[n1][n2][l] : phoiso_1[n1][n2][l]);
+	    if (!doswap){
+	      roovar1->setVal(phoiso_1[n1][n2][l]);
+	      roovar2->setVal(phoiso_2[n1][n2][l]);
+	    }
+	    else {
+	      if (whichnewtemplate==1){
+		roovar1->setVal(phoiso_2[!n1][!n2][l]);
+		roovar2->setVal(phoiso_1[!n1][!n2][l]);
+	      }
+	      else {
+		roovar1->setVal(phoiso_2[n1][n2][l]);
+		roovar2->setVal(phoiso_1[n1][n2][l]);
+	      }
+	    }
 	    if (n1==0 && n2==0) newtempl_roodset[get_name_newtempl_roodset(event_ok_for_dataset_local,*diffvariable,bin_couple,"sigsig")]->add(args2,weight);
 	    else if (n1==0 && n2==1) newtempl_roodset[get_name_newtempl_roodset(event_ok_for_dataset_local,*diffvariable,bin_couple,"sigbkg")]->add(args2,weight);
 	    else if (n1==1 && n2==0) newtempl_roodset[get_name_newtempl_roodset(event_ok_for_dataset_local,*diffvariable,bin_couple,"bkgsig")]->add(args2,weight);
