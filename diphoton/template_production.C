@@ -16,19 +16,32 @@ void template_production::Loop(int maxevents)
   }
 
 
-
-    static const int nclosest = 10;
-
     TKDTreeID *kdtree[2];
     std::vector<float> match_pho_pt[2];
     std::vector<float> match_pho_eta[2];
     std::vector<float> match_evt_rho[2];
-    
-    if (mode=="standard"){
+
+    TFile *matchingfile;
+    TTree *matchingtree;
+    UInt_t matchingtree_event_fileuuid;
+    Int_t matchingtree_event_run;
+    Int_t matchingtree_event_lumi;
+    Int_t matchingtree_event_number;
+    Int_t matchingtree_index_sigsig_1[nclosest];
+    Int_t matchingtree_index_sigsig_2[nclosest];
+    Int_t matchingtree_index_sigbkg_1[nclosest];
+    Int_t matchingtree_index_sigbkg_2[nclosest];
+    Int_t matchingtree_index_bkgsig_1[nclosest];
+    Int_t matchingtree_index_bkgsig_2[nclosest];
+    Int_t matchingtree_index_bkgbkg_1[nclosest];
+    Int_t matchingtree_index_bkgbkg_2[nclosest];
+
+    if (mode=="standard_domatching"){
     
       TTree *mytree[2];
-      TFile *f = new TFile("/scratch/peruzzi/ntuples/gg_minitree_020616_data2011_newtemplates_jul21/Photon_Run2011AB_16Jan2012_v1_AOD.root");
-      //      TFile *f = new TFile("outfile.root"); // DEBUG
+      TFile *f = new TFile("/scratch/peruzzi/ntuples/gg_minitree_020616_data2011_newtemplates_jul24/Photon_Run2011AB_16Jan2012_v1_AOD.root");
+      //      TFile *f = new TFile("/scratch/peruzzi/ntuples/gg_minitree_020616_data2011_newtemplates_jul23_TEST/Photon_Run2011A_16Jan2012_v1_AOD_part2.root");
+      //      TFile *f = new TFile("/shome/peruzzi/macros/outfile.root"); // DEBUG
       f->GetObject("Tree_1Drandomcone_template",mytree[0]);
       f->GetObject("Tree_1Dsideband_template",mytree[1]);
       assert(mytree[0]); assert(mytree[1]);
@@ -77,26 +90,11 @@ void template_production::Loop(int maxevents)
 	cout << "KD-tree built" << endl;
       
       }
- 
-    }
 
 
-
-    TFile *matchingfile = new TFile("matchingfile.root","recreate");
+    matchingfile = new TFile("matchingfile.root","recreate");
     matchingfile->cd();
-    TTree *matchingtree = new TTree("matchingtree","matchingtree");
-    UInt_t matchingtree_event_fileuuid;
-    Int_t matchingtree_event_run;
-    Int_t matchingtree_event_lumi;
-    Int_t matchingtree_event_number;
-    Int_t matchingtree_index_sigsig_1[nclosest];
-    Int_t matchingtree_index_sigsig_2[nclosest];
-    Int_t matchingtree_index_sigbkg_1[nclosest];
-    Int_t matchingtree_index_sigbkg_2[nclosest];
-    Int_t matchingtree_index_bkgsig_1[nclosest];
-    Int_t matchingtree_index_bkgsig_2[nclosest];
-    Int_t matchingtree_index_bkgbkg_1[nclosest];
-    Int_t matchingtree_index_bkgbkg_2[nclosest];
+    matchingtree = new TTree("matchingtree","matchingtree");
     matchingtree->Branch("matchingtree_event_fileuuid",&matchingtree_event_fileuuid,"matchingtree_event_fileuuid/i");
     matchingtree->Branch("matchingtree_event_run",&matchingtree_event_run,"matchingtree_event_run/I");
     matchingtree->Branch("matchingtree_event_lumi",&matchingtree_event_lumi,"matchingtree_event_lumi/I");
@@ -110,14 +108,13 @@ void template_production::Loop(int maxevents)
     matchingtree->Branch("matchingtree_index_bkgbkg_1",&matchingtree_index_bkgbkg_1,Form("matchingtree_index_bkgbkg_1[%d]/I",nclosest));
     matchingtree->Branch("matchingtree_index_bkgbkg_2",&matchingtree_index_bkgbkg_2,Form("matchingtree_index_bkgbkg_2[%d]/I",nclosest));
 
-
+    }
 
 
   Long64_t nentries = fChain->GetEntriesFast();
   int limit_entries = maxevents;
   //int limit_entries = 1e+4;
   //int limit_entries = -1;
-
 
   Long64_t nbytes = 0, nb = 0;
   for (Long64_t jentry=0; jentry<nentries;jentry++) {
@@ -427,7 +424,6 @@ void template_production::Loop(int maxevents)
 	RooArgSet args(*roovar1,*roovar2,*roopt1,*roopt2,*roosieie1,*roosieie2,*rooeta1,*rooeta2);
 	args.add(RooArgSet(*roorho,*roosigma));
 	FillDiffVariables(); // WARNING: WORKS ONLY IF DIFF VARIABLES ARE NOT SENSITIVE TO SWAPPING 1 WITH 2
-	args.add(*rooargset_diffvariables);
 	template2d_roodset[get_name_template2d_roodset(event_ok_for_dataset_local,sigorbkg)]->add(args,weight);
 
     } // end if do2dtemplate
@@ -475,6 +471,8 @@ void template_production::Loop(int maxevents)
 	 RooArgSet args(*roovar1,*roovar2,*roopt1,*roopt2,*roosieie1,*roosieie2,*rooeta1,*rooeta2);
 	 args.add(RooArgSet(*roorho,*roosigma));
 	 args.add(*rooargset_diffvariables);
+	 RooArgSet args2(*roovar1,*roovar2,*roopt1,*roopt2,*roosieie1,*roosieie2,*rooeta1,*rooeta2);
+	 args2.add(RooArgSet(*roorho,*roosigma));
 
        for (std::vector<TString>::const_iterator diffvariable = diffvariables_list.begin(); diffvariable!=diffvariables_list.end(); diffvariable++){
 
@@ -508,6 +506,34 @@ void template_production::Loop(int maxevents)
 	
 	obs_roodset[get_name_obs_roodset(event_ok_for_dataset_local,*diffvariable,bin_couple)]->add(args,weight);
 
+	if (donewtemplates) {
+	  Float_t phoiso_1[2][2][nclosest];
+	  Float_t phoiso_2[2][2][nclosest];
+	  for (int l=0; l<nclosest; l++){
+	    float puen_lead = getpuenergy(reg_lead,pholead_SCeta);
+	    float puen_trail = getpuenergy(reg_trail,photrail_SCeta);
+	    phoiso_1[0][0][l]=phoiso_template_sigsig_1[l]-puen_lead;
+	    phoiso_1[0][1][l]=phoiso_template_sigbkg_1[l]-puen_lead;
+	    phoiso_1[1][0][l]=phoiso_template_bkgsig_1[l]-puen_lead;
+	    phoiso_1[1][1][l]=phoiso_template_bkgbkg_1[l]-puen_lead;
+	    phoiso_2[0][0][l]=phoiso_template_sigsig_2[l]-puen_trail;
+	    phoiso_2[0][1][l]=phoiso_template_sigbkg_2[l]-puen_trail;
+	    phoiso_2[1][0][l]=phoiso_template_bkgsig_2[l]-puen_trail;
+	    phoiso_2[1][1][l]=phoiso_template_bkgbkg_2[l]-puen_trail;
+	  }
+	  for (int n1=0; n1<2; n1++) for (int n2=0; n2<2; n2++) for (int l=0; l<nclosest; l++){
+	    if (whichnewtemplate==0 && (n1!=0 || n2!=0)) continue;
+	    if (whichnewtemplate==1 && (n1+n2!=1)) continue;
+	    if (whichnewtemplate==2 && (n1!=1 || n2!=1)) continue;
+	    roovar1->setVal((!doswap) ? phoiso_1[n1][n2][l] : phoiso_2[n1][n2][l]);
+	    roovar2->setVal((!doswap) ? phoiso_2[n1][n2][l] : phoiso_1[n1][n2][l]);
+	    if (n1==0 && n2==0) newtempl_roodset[get_name_newtempl_roodset(event_ok_for_dataset_local,*diffvariable,bin_couple,"sigsig")]->add(args2,weight);
+	    else if (n1==0 && n2==1) newtempl_roodset[get_name_newtempl_roodset(event_ok_for_dataset_local,*diffvariable,bin_couple,"sigbkg")]->add(args2,weight);
+	    else if (n1==1 && n2==0) newtempl_roodset[get_name_newtempl_roodset(event_ok_for_dataset_local,*diffvariable,bin_couple,"bkgsig")]->add(args2,weight);
+	    else if (n1==1 && n2==1) newtempl_roodset[get_name_newtempl_roodset(event_ok_for_dataset_local,*diffvariable,bin_couple,"bkgbkg")]->add(args2,weight);
+	  }
+	}
+
 	if (!isdata){
 	  int isppevent = 0;
 	  if ( ((pholead_PhoMCmatchexitcode==1 || pholead_PhoMCmatchexitcode==2) && pholead_GenPhotonIsoDR04<5) && ((photrail_PhoMCmatchexitcode==1 || photrail_PhoMCmatchexitcode==2) && photrail_GenPhotonIsoDR04<5) ) isppevent=1;
@@ -518,7 +544,9 @@ void template_production::Loop(int maxevents)
 
        }
 
-      { 
+
+
+       if (mode=="standard_domatching") { 
 
 	const bool printout = false;
 
@@ -601,9 +629,11 @@ void template_production::Loop(int maxevents)
   } // end event loop
   std::cout << "Event loop finished" << std::endl;
 
-  matchingfile->cd();
-  matchingtree->Write();
-  matchingfile->Close();
+  if (mode=="standard_domatching"){
+    matchingfile->cd();
+    matchingtree->Write();
+    matchingfile->Close();
+  }
 
 //  if (invmass_vector.size()>0){
 //    std::sort(invmass_vector.begin(),invmass_vector.end());
@@ -651,6 +681,10 @@ void gen_templates(TString filename="input.root", TString mode="", bool isdata=1
 
   TString treename_chosen="";
   if (mode=="standard") treename_chosen=treename[0];
+  if (mode=="standard_domatching") treename_chosen=treename[0];
+  if (mode=="standard_newtemplates_sigsig") treename_chosen=treename[0];
+  if (mode=="standard_newtemplates_sigbkg") treename_chosen=treename[0];
+  if (mode=="standard_newtemplates_bkgbkg") treename_chosen=treename[0];
   if (mode=="standard_2frag") treename_chosen=treename[0];
   if (mode=="standard_2pgen") treename_chosen=treename[13];
   if (mode=="standard_1p1fbothgen") treename_chosen=treename[14];

@@ -1,5 +1,5 @@
-bool global_doplots = false;
-bool doxcheckstemplates = true;
+bool global_doplots = true;
+bool doxcheckstemplates = false;
 bool dolightcomparisonwithstandardselsig = false;
 bool dolightcomparisonwithstandardselbkg = false;
 
@@ -275,6 +275,12 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
     inputfilename_t2f   = "outphoton_allmc_bkgbkg.root";
     inputfilename_d     = "outphoton_allmc_standard_1p1fbothgen_fakeaxis1.root";
   }  
+  else if (do_syst_string=="newtemplates") {
+    inputfilename_t2p   = "outphoton_data_sigsig_step2.root";
+    inputfilename_t1p1f = "outphoton_data_sigbkg_step2.root";
+    inputfilename_t2f   = "outphoton_data_bkgbkg_step2.root";
+    inputfilename_d     = "outphoton_data_standard.root";
+  }  
   else {
     inputfilename_t2p   = "outphoton_data_sigsig.root";
     inputfilename_t1p1f = "outphoton_data_sigbkg.root";
@@ -354,10 +360,18 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
   RooDataSet *dataset_bkgbkg_orig = NULL;
   RooDataSet *dataset_orig =        NULL;
 
-  dir_t2p->GetObject(Form("template_roodset_%s_sigsig",splitting.Data()),dataset_sigsig_orig);
-  dir_t1p1f->GetObject(Form("template_roodset_%s_sigbkg",splitting.Data()),dataset_sigbkg_orig);
-  dir_t1p1f->GetObject(Form("template_roodset_%s_bkgsig",splitting.Data()),dataset_bkgsig_orig);
-  dir_t2f->GetObject(Form("template_roodset_%s_bkgbkg",splitting.Data()),dataset_bkgbkg_orig);
+  if (do_syst_string!="newtemplates"){
+    dir_t2p->GetObject(Form("template_roodset_%s_sigsig",splitting.Data()),dataset_sigsig_orig);
+    dir_t1p1f->GetObject(Form("template_roodset_%s_sigbkg",splitting.Data()),dataset_sigbkg_orig);
+    dir_t1p1f->GetObject(Form("template_roodset_%s_bkgsig",splitting.Data()),dataset_bkgsig_orig);
+    dir_t2f->GetObject(Form("template_roodset_%s_bkgbkg",splitting.Data()),dataset_bkgbkg_orig);
+  }
+  else {
+    dir_t2p->GetObject(Form("newtempl_roodset_%s_%s_b%d_sigsig",splitting.Data(),diffvariable.Data(),bin),dataset_sigsig_orig);
+    dir_t1p1f->GetObject(Form("newtempl_roodset_%s_%s_b%d_sigbkg",splitting.Data(),diffvariable.Data(),bin),dataset_sigbkg_orig);
+    dir_t1p1f->GetObject(Form("newtempl_roodset_%s_%s_b%d_bkgsig",splitting.Data(),diffvariable.Data(),bin),dataset_bkgsig_orig);
+    dir_t2f->GetObject(Form("newtempl_roodset_%s_%s_b%d_bkgbkg",splitting.Data(),diffvariable.Data(),bin),dataset_bkgbkg_orig);
+  }
   dir_d->GetObject(Form("obs_roodset_%s_%s_b%d",splitting.Data(),diffvariable.Data(),bin),dataset_orig);
   assert(dataset_sigsig_orig);
   assert(dataset_sigbkg_orig);
@@ -380,7 +394,7 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
   dataset->Print();
   const float eff_overflow_removal = dataset_sigsig->sumEntries()/dataset_sigsig_orig->sumEntries();
   std::cout << "TO BE DONE BETTER AFTER REWEIGHTING: Efficiency of overflow removal: " << eff_overflow_removal << std::endl;
-  assert (eff_overflow_removal>0.995);
+  //  assert (eff_overflow_removal>0.995);
 
 
   RooDataSet *dataset_sig_axis1 = (RooDataSet*)(dataset_sigsig->reduce(Name("dataset_sig_axis1"),SelectVars(RooArgList(*roovar1,*roopt1,*roosieie1,*rooeta1,*roorho,*roosigma))));
@@ -2079,7 +2093,7 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
 
   }
 
-  bool writeoutpurity = (do_syst_string==TString("") || do_syst_string==TString("doMCfulldriven"));
+  bool writeoutpurity = (do_syst_string==TString("") || do_syst_string==TString("doMCfulldriven") || do_syst_string==TString("newtemplates"));
 
   if (writeoutpurity){
 
