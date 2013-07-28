@@ -71,6 +71,10 @@ void prepare_matchingfile_forstep2(TString matching, TString data, int jobnumber
     InputTree[i]->SetBranchStatus("allphotonpfcand_vx",1);
     InputTree[i]->SetBranchStatus("allphotonpfcand_vy",1);
     InputTree[i]->SetBranchStatus("allphotonpfcand_vz",1);
+    InputTree[m]->SetBranchStatus("vetoobjects_count",1);
+    InputTree[m]->SetBranchStatus("vetoobjects_eta",1);
+    InputTree[m]->SetBranchStatus("vetoobjects_phi",1);
+
   }
 
 
