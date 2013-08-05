@@ -115,17 +115,20 @@ void template_production::Loop(int maxevents)
   int limit_entries = maxevents;
   //int limit_entries = 1e+4;
   //int limit_entries = -1;
+  const float thr = float(limit_entries)/float(nentries);
 
   Long64_t nbytes = 0, nb = 0;
   for (Long64_t jentry=0; jentry<nentries;jentry++) {
-    Long64_t ientry = LoadTree(jentry);
-    if (ientry < 0) break;
-    nb = fChain->GetEntry(jentry);   nbytes += nb;
+
     if (jentry%100000==0) std::cout << "Processing entry " << jentry << std::endl;
 
     if (limit_entries>0){
-      if (randomgen->Uniform(0,1) > float(limit_entries)/float(nentries)) continue;
+      if (randomgen->Uniform(0,1) > thr) continue;
     }
+
+    Long64_t ientry = LoadTree(jentry);
+    if (ientry < 0) break;
+    nb = fChain->GetEntry(jentry);   nbytes += nb;
 
     //    if (event_nRecVtx>5) continue;
 
