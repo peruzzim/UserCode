@@ -39,9 +39,8 @@ void template_production::Loop(int maxevents)
     if (mode=="standard_domatching"){
     
       TTree *mytree[2];
-      TFile *f = new TFile("/scratch/peruzzi/ntuples/gg_minitree_020616_data2011_newtemplates_jul24/Photon_Run2011AB_16Jan2012_v1_AOD.root");
-      //      TFile *f = new TFile("/scratch/peruzzi/ntuples/gg_minitree_020616_data2011_newtemplates_jul23_TEST/Photon_Run2011A_16Jan2012_v1_AOD_part2.root");
-      //      TFile *f = new TFile("/shome/peruzzi/macros/outfile.root"); // DEBUG
+      TFile *f = new TFile("/scratch/peruzzi/ntuples/gg_minitree_020616_data2011_newtemplates_jul28/Photon_Run2011AB_16Jan2012_v1_AOD.root");
+      //      TFile *f = new TFile("/scratch/peruzzi/ntuples/gg_minitree_020616_mc_full2011purew_jul28/allmc.root");
       f->GetObject("Tree_1Drandomcone_template",mytree[0]);
       f->GetObject("Tree_1Dsideband_template",mytree[1]);
       assert(mytree[0]); assert(mytree[1]);
@@ -115,17 +114,20 @@ void template_production::Loop(int maxevents)
   int limit_entries = maxevents;
   //int limit_entries = 1e+4;
   //int limit_entries = -1;
+  const float thr = float(limit_entries)/float(nentries);
 
   Long64_t nbytes = 0, nb = 0;
   for (Long64_t jentry=0; jentry<nentries;jentry++) {
-    Long64_t ientry = LoadTree(jentry);
-    if (ientry < 0) break;
-    nb = fChain->GetEntry(jentry);   nbytes += nb;
+
     if (jentry%100000==0) std::cout << "Processing entry " << jentry << std::endl;
 
     if (limit_entries>0){
-      if (randomgen->Uniform(0,1) > float(limit_entries)/float(nentries)) continue;
+      if (randomgen->Uniform(0,1) > thr) continue;
     }
+
+    Long64_t ientry = LoadTree(jentry);
+    if (ientry < 0) break;
+    nb = fChain->GetEntry(jentry);   nbytes += nb;
 
     //    if (event_nRecVtx>5) continue;
 
@@ -581,10 +583,12 @@ void template_production::Loop(int maxevents)
 	Double_t p1[3];
 	Double_t p2[3];
 	p1[0]=fabs(pholead_SCeta)/0.1;
-	p1[1]=event_rho/2.0*randomgen->Uniform(0,1);
+	//	p1[1]=event_rho/2.0*randomgen->Uniform(0,1);
+	p1[1]=event_rho/2.0;
 	p1[2]=1000*Choose_bin_pt(pholead_pt);
 	p2[0]=fabs(photrail_SCeta)/0.1;
-	p2[1]=event_rho/2.0-p1[1];
+	//	p2[1]=event_rho/2.0-p1[1];
+	p2[1]=event_rho/2.0;
 	p2[2]=1000*Choose_bin_pt(photrail_pt);	  
 	
 	for (int n1=0; n1<2; n1++) for (int n2=0; n2<2; n2++){
@@ -605,15 +609,18 @@ void template_production::Loop(int maxevents)
 
 	      if (n1==0 && n2==0){	      
 		matchingtree_index_sigsig_1[l] = matches1[l];
-		matchingtree_index_sigsig_2[l] = matches2[l];
+		//		matchingtree_index_sigsig_2[l] = matches2[l];
+		matchingtree_index_sigsig_2[l] = -999;
 	      }
 	      if (n1==0 && n2==1){	      
-		matchingtree_index_sigbkg_1[l] = matches1[l];
+		//		matchingtree_index_sigbkg_1[l] = matches1[l];
+		matchingtree_index_sigbkg_1[l] = -999;
 		matchingtree_index_sigbkg_2[l] = matches2[l];
 	      }
 	      if (n1==1 && n2==0){	      
 		matchingtree_index_bkgsig_1[l] = matches1[l];
-		matchingtree_index_bkgsig_2[l] = matches2[l];
+		//		matchingtree_index_bkgsig_2[l] = matches2[l];
+		matchingtree_index_bkgsig_2[l] = -999;
 	      }
 	      if (n1==1 && n2==1){	      
 		matchingtree_index_bkgbkg_1[l] = matches1[l];
