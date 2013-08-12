@@ -541,6 +541,7 @@ void template_production::Loop(int maxevents)
 		roovar2->setVal(phoiso_1[n1][n2][l]);
 	      }
 	    }
+	    if (roovar1->getVal()<leftrange+1e-5 || roovar2->getVal()<leftrange+1e-5) continue;
 	    if (n1==0 && n2==0) newtempl_roodset[get_name_newtempl_roodset(event_ok_for_dataset_local,*diffvariable,bin_couple,"sigsig")]->add(args2,weight);
 	    else if (n1==0 && n2==1) newtempl_roodset[get_name_newtempl_roodset(event_ok_for_dataset_local,*diffvariable,bin_couple,"sigbkg")]->add(args2,weight);
 	    else if (n1==1 && n2==0) newtempl_roodset[get_name_newtempl_roodset(event_ok_for_dataset_local,*diffvariable,bin_couple,"bkgsig")]->add(args2,weight);
