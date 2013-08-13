@@ -70,10 +70,10 @@ void template_production::Loop(int maxevents)
 	
 	for (int k=0; k<mynentries; k++){
 	  mytree[i]->GetEntry(k);
-	  array_pho_eta[k] = fabs(pho_eta)/0.1; 
+	  array_pho_eta[k] = pho_eta/0.1; 
 	  array_evt_rho[k] = evt_rho/2.0;
 	  array_pho_pt[k] = 1000*Choose_bin_pt(pho_pt);
-	  match_pho_eta[i].push_back(fabs(pho_eta)); 
+	  match_pho_eta[i].push_back(pho_eta); 
 	  match_evt_rho[i].push_back(evt_rho);
 	  match_pho_pt[i].push_back(pho_pt);
 	}
@@ -311,6 +311,9 @@ void template_production::Loop(int maxevents)
       if (printout) std::cout << "---" << std::endl;
 
     }
+
+//    if (fabs(pholead_pho_Cone04PhotonIso_dEta015EB_dR070EE_mvVtx-pholead_outvar)>0) cout << pholead_pho_Cone04PhotonIso_dEta015EB_dR070EE_mvVtx << " " << pholead_outvar << endl;
+//    if (fabs(photrail_pho_Cone04PhotonIso_dEta015EB_dR070EE_mvVtx-photrail_outvar)>0) cout << photrail_pho_Cone04PhotonIso_dEta015EB_dR070EE_mvVtx << " " << photrail_outvar << endl;
 
     roorho->setVal(event_rho);
     roosigma->setVal(event_sigma);
@@ -583,11 +586,11 @@ void template_production::Loop(int maxevents)
 	Double_t *dists2 = new Double_t[nclosest];
 	Double_t p1[3];
 	Double_t p2[3];
-	p1[0]=fabs(pholead_SCeta)/0.1;
+	p1[0]=pholead_SCeta/0.1;
 	//	p1[1]=event_rho/2.0*randomgen->Uniform(0,1);
 	p1[1]=event_rho/2.0;
 	p1[2]=1000*Choose_bin_pt(pholead_pt);
-	p2[0]=fabs(photrail_SCeta)/0.1;
+	p2[0]=photrail_SCeta/0.1;
 	//	p2[1]=event_rho/2.0-p1[1];
 	p2[1]=event_rho/2.0;
 	p2[2]=1000*Choose_bin_pt(photrail_pt);	  
