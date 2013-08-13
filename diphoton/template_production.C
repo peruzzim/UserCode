@@ -5,6 +5,7 @@
 using namespace std;
 
 bool do_scan_cone = false;
+bool do_event_mixing = false; // 2events
 
 void template_production::Loop(int maxevents)
 {
@@ -27,20 +28,27 @@ void template_production::Loop(int maxevents)
     Int_t matchingtree_event_run;
     Int_t matchingtree_event_lumi;
     Int_t matchingtree_event_number;
-    Int_t matchingtree_index_sigsig_1[nclosest];
-    Int_t matchingtree_index_sigsig_2[nclosest];
-    Int_t matchingtree_index_sigbkg_1[nclosest];
-    Int_t matchingtree_index_sigbkg_2[nclosest];
-    Int_t matchingtree_index_bkgsig_1[nclosest];
-    Int_t matchingtree_index_bkgsig_2[nclosest];
-    Int_t matchingtree_index_bkgbkg_1[nclosest];
-    Int_t matchingtree_index_bkgbkg_2[nclosest];
+    Int_t matchingtree_index_1event_sigsig_1[nclosestmore];
+    Int_t matchingtree_index_1event_sigsig_2[nclosestmore];
+    Int_t matchingtree_index_1event_sigbkg_1[nclosestmore];
+    Int_t matchingtree_index_1event_sigbkg_2[nclosestmore];
+    Int_t matchingtree_index_1event_bkgsig_1[nclosestmore];
+    Int_t matchingtree_index_1event_bkgsig_2[nclosestmore];
+    Int_t matchingtree_index_1event_bkgbkg_1[nclosestmore];
+    Int_t matchingtree_index_1event_bkgbkg_2[nclosestmore];
+    Int_t matchingtree_index_2events_sigsig_1[nclosestmore];
+    Int_t matchingtree_index_2events_sigsig_2[nclosestmore];
+    Int_t matchingtree_index_2events_sigbkg_1[nclosestmore];
+    Int_t matchingtree_index_2events_sigbkg_2[nclosestmore];
+    Int_t matchingtree_index_2events_bkgsig_1[nclosestmore];
+    Int_t matchingtree_index_2events_bkgsig_2[nclosestmore];
+    Int_t matchingtree_index_2events_bkgbkg_1[nclosestmore];
+    Int_t matchingtree_index_2events_bkgbkg_2[nclosestmore];
 
     if (mode=="standard_domatching"){
     
       TTree *mytree[2];
-      TFile *f = new TFile("/scratch/peruzzi/ntuples/gg_minitree_020616_data2011_newtemplates_jul28/Photon_Run2011AB_16Jan2012_v1_AOD.root");
-      //      TFile *f = new TFile("/scratch/peruzzi/ntuples/gg_minitree_020616_mc_full2011purew_jul28/allmc.root");
+      TFile *f = new TFile(inputfilename.Data());
       f->GetObject("Tree_1Drandomcone_template",mytree[0]);
       f->GetObject("Tree_1Dsideband_template",mytree[1]);
       assert(mytree[0]); assert(mytree[1]);
@@ -98,14 +106,22 @@ void template_production::Loop(int maxevents)
     matchingtree->Branch("matchingtree_event_run",&matchingtree_event_run,"matchingtree_event_run/I");
     matchingtree->Branch("matchingtree_event_lumi",&matchingtree_event_lumi,"matchingtree_event_lumi/I");
     matchingtree->Branch("matchingtree_event_number",&matchingtree_event_number,"matchingtree_event_number/I");
-    matchingtree->Branch("matchingtree_index_sigsig_1",&matchingtree_index_sigsig_1,Form("matchingtree_index_sigsig_1[%d]/I",nclosest));
-    matchingtree->Branch("matchingtree_index_sigsig_2",&matchingtree_index_sigsig_2,Form("matchingtree_index_sigsig_2[%d]/I",nclosest));
-    matchingtree->Branch("matchingtree_index_sigbkg_1",&matchingtree_index_sigbkg_1,Form("matchingtree_index_sigbkg_1[%d]/I",nclosest));
-    matchingtree->Branch("matchingtree_index_sigbkg_2",&matchingtree_index_sigbkg_2,Form("matchingtree_index_sigbkg_2[%d]/I",nclosest));
-    matchingtree->Branch("matchingtree_index_bkgsig_1",&matchingtree_index_bkgsig_1,Form("matchingtree_index_bkgsig_1[%d]/I",nclosest));
-    matchingtree->Branch("matchingtree_index_bkgsig_2",&matchingtree_index_bkgsig_2,Form("matchingtree_index_bkgsig_2[%d]/I",nclosest));
-    matchingtree->Branch("matchingtree_index_bkgbkg_1",&matchingtree_index_bkgbkg_1,Form("matchingtree_index_bkgbkg_1[%d]/I",nclosest));
-    matchingtree->Branch("matchingtree_index_bkgbkg_2",&matchingtree_index_bkgbkg_2,Form("matchingtree_index_bkgbkg_2[%d]/I",nclosest));
+    matchingtree->Branch("matchingtree_index_1event_sigsig_1",&matchingtree_index_1event_sigsig_1,Form("matchingtree_index_1event_sigsig_1[%d]/I",nclosestmore));
+    matchingtree->Branch("matchingtree_index_1event_sigsig_2",&matchingtree_index_1event_sigsig_2,Form("matchingtree_index_1event_sigsig_2[%d]/I",nclosestmore));
+    matchingtree->Branch("matchingtree_index_1event_sigbkg_1",&matchingtree_index_1event_sigbkg_1,Form("matchingtree_index_1event_sigbkg_1[%d]/I",nclosestmore));
+    matchingtree->Branch("matchingtree_index_1event_sigbkg_2",&matchingtree_index_1event_sigbkg_2,Form("matchingtree_index_1event_sigbkg_2[%d]/I",nclosestmore));
+    matchingtree->Branch("matchingtree_index_1event_bkgsig_1",&matchingtree_index_1event_bkgsig_1,Form("matchingtree_index_1event_bkgsig_1[%d]/I",nclosestmore));
+    matchingtree->Branch("matchingtree_index_1event_bkgsig_2",&matchingtree_index_1event_bkgsig_2,Form("matchingtree_index_1event_bkgsig_2[%d]/I",nclosestmore));
+    matchingtree->Branch("matchingtree_index_1event_bkgbkg_1",&matchingtree_index_1event_bkgbkg_1,Form("matchingtree_index_1event_bkgbkg_1[%d]/I",nclosestmore));
+    matchingtree->Branch("matchingtree_index_1event_bkgbkg_2",&matchingtree_index_1event_bkgbkg_2,Form("matchingtree_index_1event_bkgbkg_2[%d]/I",nclosestmore));
+    matchingtree->Branch("matchingtree_index_2events_sigsig_1",&matchingtree_index_2events_sigsig_1,Form("matchingtree_index_2events_sigsig_1[%d]/I",nclosestmore));
+    matchingtree->Branch("matchingtree_index_2events_sigsig_2",&matchingtree_index_2events_sigsig_2,Form("matchingtree_index_2events_sigsig_2[%d]/I",nclosestmore));
+    matchingtree->Branch("matchingtree_index_2events_sigbkg_1",&matchingtree_index_2events_sigbkg_1,Form("matchingtree_index_2events_sigbkg_1[%d]/I",nclosestmore));
+    matchingtree->Branch("matchingtree_index_2events_sigbkg_2",&matchingtree_index_2events_sigbkg_2,Form("matchingtree_index_2events_sigbkg_2[%d]/I",nclosestmore));
+    matchingtree->Branch("matchingtree_index_2events_bkgsig_1",&matchingtree_index_2events_bkgsig_1,Form("matchingtree_index_2events_bkgsig_1[%d]/I",nclosestmore));
+    matchingtree->Branch("matchingtree_index_2events_bkgsig_2",&matchingtree_index_2events_bkgsig_2,Form("matchingtree_index_2events_bkgsig_2[%d]/I",nclosestmore));
+    matchingtree->Branch("matchingtree_index_2events_bkgbkg_1",&matchingtree_index_2events_bkgbkg_1,Form("matchingtree_index_2events_bkgbkg_1[%d]/I",nclosestmore));
+    matchingtree->Branch("matchingtree_index_2events_bkgbkg_2",&matchingtree_index_2events_bkgbkg_2,Form("matchingtree_index_2events_bkgbkg_2[%d]/I",nclosestmore));
 
     }
 
@@ -517,14 +533,14 @@ void template_production::Loop(int maxevents)
 	  for (int l=0; l<nclosest; l++){
 	    float puen_lead = getpuenergy(reg_lead,pholead_SCeta);
 	    float puen_trail = getpuenergy(reg_trail,photrail_SCeta);
-	    phoiso_1[0][0][l]=phoiso_template_sigsig_1[l]-puen_lead;
-	    phoiso_1[0][1][l]=phoiso_template_sigbkg_1[l]-puen_lead;
-	    phoiso_1[1][0][l]=phoiso_template_bkgsig_1[l]-puen_lead;
-	    phoiso_1[1][1][l]=phoiso_template_bkgbkg_1[l]-puen_lead;
-	    phoiso_2[0][0][l]=phoiso_template_sigsig_2[l]-puen_trail;
-	    phoiso_2[0][1][l]=phoiso_template_sigbkg_2[l]-puen_trail;
-	    phoiso_2[1][0][l]=phoiso_template_bkgsig_2[l]-puen_trail;
-	    phoiso_2[1][1][l]=phoiso_template_bkgbkg_2[l]-puen_trail;
+	    phoiso_1[0][0][l]=(do_event_mixing ? phoiso_template_2events_sigsig_1[l] : phoiso_template_1event_sigsig_1[l])-puen_lead;
+	    phoiso_1[0][1][l]=(do_event_mixing ? phoiso_template_2events_sigbkg_1[l] : phoiso_template_1event_sigbkg_1[l])-puen_lead;
+	    phoiso_1[1][0][l]=(do_event_mixing ? phoiso_template_2events_bkgsig_1[l] : phoiso_template_1event_bkgsig_1[l])-puen_lead;
+	    phoiso_1[1][1][l]=(do_event_mixing ? phoiso_template_2events_bkgbkg_1[l] : phoiso_template_1event_bkgbkg_1[l])-puen_lead;
+	    phoiso_2[0][0][l]=(do_event_mixing ? phoiso_template_2events_sigsig_2[l] : phoiso_template_1event_sigsig_2[l])-puen_trail;
+	    phoiso_2[0][1][l]=(do_event_mixing ? phoiso_template_2events_sigbkg_2[l] : phoiso_template_1event_sigbkg_2[l])-puen_trail;
+	    phoiso_2[1][0][l]=(do_event_mixing ? phoiso_template_2events_bkgsig_2[l] : phoiso_template_1event_bkgsig_2[l])-puen_trail;
+	    phoiso_2[1][1][l]=(do_event_mixing ? phoiso_template_2events_bkgbkg_2[l] : phoiso_template_1event_bkgbkg_2[l])-puen_trail;
 	  }
 	  for (int n1=0; n1<2; n1++) for (int n2=0; n2<2; n2++) for (int l=0; l<nclosest; l++){
 	    if (whichnewtemplate==0 && (n1!=0 || n2!=0)) continue;
@@ -580,31 +596,24 @@ void template_production::Loop(int maxevents)
 	matchingtree_event_lumi = event_lumi;
 	matchingtree_event_number = event_number;
 
-	int *matches1 = new int[nclosest];
-	Double_t *dists1 = new Double_t[nclosest];
-	int *matches2 = new int[nclosest];
-	Double_t *dists2 = new Double_t[nclosest];
+	int *matches1 = new int[nclosestmore];
+	Double_t *dists1 = new Double_t[nclosestmore];
+	int *matches2 = new int[nclosestmore];
+	Double_t *dists2 = new Double_t[nclosestmore];
 	Double_t p1[3];
 	Double_t p2[3];
 	p1[0]=pholead_SCeta/0.1;
-	//	p1[1]=event_rho/2.0*randomgen->Uniform(0,1);
 	p1[1]=event_rho/2.0;
 	p1[2]=1000*Choose_bin_pt(pholead_pt);
 	p2[0]=photrail_SCeta/0.1;
-	//	p2[1]=event_rho/2.0-p1[1];
 	p2[1]=event_rho/2.0;
 	p2[2]=1000*Choose_bin_pt(photrail_pt);	  
 	
 	for (int n1=0; n1<2; n1++) for (int n2=0; n2<2; n2++){
-	    if (printout) std::cout << n1 << " " << n2 << std::endl;
-	    kdtree[n1]->FindNearestNeighbors(p1,nclosest,matches1,dists1);
-	    kdtree[n2]->FindNearestNeighbors(p2,nclosest,matches2,dists2);
-	    for (int l=0; l<nclosest; l++){
-	      if (printout){
-		std::cout << "-" << std::endl;
-		std::cout << matches1[l] << " " << match_pho_eta[n1].at(matches1[l]) << " " << match_evt_rho[n1].at(matches1[l]) << " " << match_pho_pt[n1].at(matches1[l]) << std::endl;
-		std::cout << matches2[l] << " " << match_pho_eta[n2].at(matches2[l]) << " " << match_evt_rho[n2].at(matches2[l]) << " " << match_pho_pt[n2].at(matches2[l]) << std::endl;
-	      }
+	    kdtree[n1]->FindNearestNeighbors(p1,nclosestmore,matches1,dists1);
+	    kdtree[n2]->FindNearestNeighbors(p2,nclosestmore,matches2,dists2);
+
+	    for (int l=0; l<nclosestmore; l++){
 
 	      if (fabs(pholead_SCeta)<1.4442) if (fabs(match_pho_eta[n1].at(matches1[l]))>1.4442) cout << "MIGRATION ERROR" << endl;
 	      if (fabs(pholead_SCeta)>1.4442) if (fabs(match_pho_eta[n1].at(matches1[l]))<1.4442) cout << "MIGRATION ERROR" << endl;
@@ -612,23 +621,56 @@ void template_production::Loop(int maxevents)
 	      if (fabs(photrail_SCeta)>1.4442) if (fabs(match_pho_eta[n2].at(matches2[l]))<1.4442) cout << "MIGRATION ERROR" << endl;
 
 	      if (n1==0 && n2==0){	      
-		matchingtree_index_sigsig_1[l] = matches1[l];
-		//		matchingtree_index_sigsig_2[l] = matches2[l];
-		matchingtree_index_sigsig_2[l] = -999;
+		matchingtree_index_1event_sigsig_1[l] = matches1[l];
+		matchingtree_index_1event_sigsig_2[l] = -999;
 	      }
 	      if (n1==0 && n2==1){	      
-		//		matchingtree_index_sigbkg_1[l] = matches1[l];
-		matchingtree_index_sigbkg_1[l] = -999;
-		matchingtree_index_sigbkg_2[l] = matches2[l];
+		matchingtree_index_1event_sigbkg_1[l] = -999;
+		matchingtree_index_1event_sigbkg_2[l] = matches2[l];
 	      }
 	      if (n1==1 && n2==0){	      
-		matchingtree_index_bkgsig_1[l] = matches1[l];
-		//		matchingtree_index_bkgsig_2[l] = matches2[l];
-		matchingtree_index_bkgsig_2[l] = -999;
+		matchingtree_index_1event_bkgsig_1[l] = matches1[l];
+		matchingtree_index_1event_bkgsig_2[l] = -999;
 	      }
 	      if (n1==1 && n2==1){	      
-		matchingtree_index_bkgbkg_1[l] = matches1[l];
-		matchingtree_index_bkgbkg_2[l] = matches2[l];
+		matchingtree_index_1event_bkgbkg_1[l] = matches1[l];
+		matchingtree_index_1event_bkgbkg_2[l] = matches2[l];
+	      }
+	    }
+	}
+
+
+
+
+       p1[1]=event_rho/2.0*randomgen->Uniform(0,1);
+       p2[1]=event_rho/2.0-p1[1];
+
+	for (int n1=0; n1<2; n1++) for (int n2=0; n2<2; n2++){
+	    kdtree[n1]->FindNearestNeighbors(p1,nclosestmore,matches1,dists1);
+	    kdtree[n2]->FindNearestNeighbors(p2,nclosestmore,matches2,dists2);
+
+	    for (int l=0; l<nclosestmore; l++){
+
+	      if (fabs(pholead_SCeta)<1.4442) if (fabs(match_pho_eta[n1].at(matches1[l]))>1.4442) cout << "MIGRATION ERROR" << endl;
+	      if (fabs(pholead_SCeta)>1.4442) if (fabs(match_pho_eta[n1].at(matches1[l]))<1.4442) cout << "MIGRATION ERROR" << endl;
+	      if (fabs(photrail_SCeta)<1.4442) if (fabs(match_pho_eta[n2].at(matches2[l]))>1.4442) cout << "MIGRATION ERROR" << endl;
+	      if (fabs(photrail_SCeta)>1.4442) if (fabs(match_pho_eta[n2].at(matches2[l]))<1.4442) cout << "MIGRATION ERROR" << endl;
+
+	      if (n1==0 && n2==0){	      
+		matchingtree_index_2events_sigsig_1[l] = matches1[l];
+		matchingtree_index_2events_sigsig_2[l] = matches2[l];
+	      }
+	      if (n1==0 && n2==1){	      
+		matchingtree_index_2events_sigbkg_1[l] = matches1[l];
+		matchingtree_index_2events_sigbkg_2[l] = matches2[l];
+	      }
+	      if (n1==1 && n2==0){	      
+		matchingtree_index_2events_bkgsig_1[l] = matches1[l];
+		matchingtree_index_2events_bkgsig_2[l] = matches2[l];
+	      }
+	      if (n1==1 && n2==1){	      
+		matchingtree_index_2events_bkgbkg_1[l] = matches1[l];
+		matchingtree_index_2events_bkgbkg_2[l] = matches2[l];
 	      }
 	    }
 	  }
@@ -745,6 +787,7 @@ void gen_templates(TString filename="input.root", TString mode="", bool isdata=1
   
   template_production *temp = new template_production(t);
   temp->Setup(isdata,mode,differentialvariable);
+  temp->inputfilename=filename;
 
   if (maxevents>0) temp->Loop(maxevents); else temp->Loop();
   std::cout << "Exited from event loop" << std::endl;

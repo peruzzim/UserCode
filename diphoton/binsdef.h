@@ -35,7 +35,9 @@ TString diffvariables_units_list(TString diffvariable){
 };
 
 
- const int nclosest = 10;
+const int nclosest = 10;
+const int nclosestmore = 20;
+
 
 const Int_t n_histobins = 96;
 const Float_t leftrange = -3;

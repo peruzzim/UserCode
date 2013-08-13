@@ -232,14 +232,22 @@ public :
    Float_t pholead_test_rotatedphotoniso[50];
    Float_t pholead_test_rotatedwithcheckphotoniso[50];
 
-   Float_t phoiso_template_sigsig_1[nclosest];
-   Float_t phoiso_template_sigbkg_1[nclosest];
-   Float_t phoiso_template_bkgsig_1[nclosest];
-   Float_t phoiso_template_bkgbkg_1[nclosest];
-   Float_t phoiso_template_sigsig_2[nclosest];
-   Float_t phoiso_template_sigbkg_2[nclosest];
-   Float_t phoiso_template_bkgsig_2[nclosest];
-   Float_t phoiso_template_bkgbkg_2[nclosest];
+   Float_t phoiso_template_1event_sigsig_1[nclosest];
+   Float_t phoiso_template_1event_sigbkg_1[nclosest];
+   Float_t phoiso_template_1event_bkgsig_1[nclosest];
+   Float_t phoiso_template_1event_bkgbkg_1[nclosest];
+   Float_t phoiso_template_1event_sigsig_2[nclosest];
+   Float_t phoiso_template_1event_sigbkg_2[nclosest];
+   Float_t phoiso_template_1event_bkgsig_2[nclosest];
+   Float_t phoiso_template_1event_bkgbkg_2[nclosest];
+   Float_t phoiso_template_2events_sigsig_1[nclosest];
+   Float_t phoiso_template_2events_sigbkg_1[nclosest];
+   Float_t phoiso_template_2events_bkgsig_1[nclosest];
+   Float_t phoiso_template_2events_bkgbkg_1[nclosest];
+   Float_t phoiso_template_2events_sigsig_2[nclosest];
+   Float_t phoiso_template_2events_sigbkg_2[nclosest];
+   Float_t phoiso_template_2events_bkgsig_2[nclosest];
+   Float_t phoiso_template_2events_bkgbkg_2[nclosest];
    
    // List of branches
    TBranch        *b_event_fileuuid;   //!
@@ -420,14 +428,22 @@ public :
    TBranch *b_pholead_test_rotatedphotoniso;
    TBranch *b_pholead_test_rotatedwithcheckphotoniso;
 
-   TBranch *b_phoiso_template_sigsig_1;
-   TBranch *b_phoiso_template_sigbkg_1;
-   TBranch *b_phoiso_template_bkgsig_1;
-   TBranch *b_phoiso_template_bkgbkg_1;
-   TBranch *b_phoiso_template_sigsig_2;
-   TBranch *b_phoiso_template_sigbkg_2;
-   TBranch *b_phoiso_template_bkgsig_2;
-   TBranch *b_phoiso_template_bkgbkg_2;
+   TBranch *b_phoiso_template_1event_sigsig_1;
+   TBranch *b_phoiso_template_1event_sigbkg_1;
+   TBranch *b_phoiso_template_1event_bkgsig_1;
+   TBranch *b_phoiso_template_1event_bkgbkg_1;
+   TBranch *b_phoiso_template_1event_sigsig_2;
+   TBranch *b_phoiso_template_1event_sigbkg_2;
+   TBranch *b_phoiso_template_1event_bkgsig_2;
+   TBranch *b_phoiso_template_1event_bkgbkg_2;
+   TBranch *b_phoiso_template_2events_sigsig_1;
+   TBranch *b_phoiso_template_2events_sigbkg_1;
+   TBranch *b_phoiso_template_2events_bkgsig_1;
+   TBranch *b_phoiso_template_2events_bkgbkg_1;
+   TBranch *b_phoiso_template_2events_sigsig_2;
+   TBranch *b_phoiso_template_2events_sigbkg_2;
+   TBranch *b_phoiso_template_2events_bkgsig_2;
+   TBranch *b_phoiso_template_2events_bkgbkg_2;
 
 
    template_production(TTree *tree=0);
@@ -455,6 +471,8 @@ public :
    static const int n_templates=n_bins;
 
    bool dosignal;
+
+   TString inputfilename;
 
   RooRealVar *roovar1;
   RooRealVar *roovar2;
@@ -956,14 +974,22 @@ void template_production::Init()
    fChain->SetBranchAddress("pholead_test_rotatedphotoniso",&pholead_test_rotatedphotoniso, &b_pholead_test_rotatedphotoniso);
    fChain->SetBranchAddress("pholead_test_rotatedwithcheckphotoniso",&pholead_test_rotatedwithcheckphotoniso, &b_pholead_test_rotatedwithcheckphotoniso);
    
-   fChain->SetBranchAddress("phoiso_template_sigsig_1",&phoiso_template_sigsig_1,&b_phoiso_template_sigsig_1);
-   fChain->SetBranchAddress("phoiso_template_sigbkg_1",&phoiso_template_sigbkg_1,&b_phoiso_template_sigbkg_1);
-   fChain->SetBranchAddress("phoiso_template_bkgsig_1",&phoiso_template_bkgsig_1,&b_phoiso_template_bkgsig_1);
-   fChain->SetBranchAddress("phoiso_template_bkgbkg_1",&phoiso_template_bkgbkg_1,&b_phoiso_template_bkgbkg_1);
-   fChain->SetBranchAddress("phoiso_template_sigsig_2",&phoiso_template_sigsig_2,&b_phoiso_template_sigsig_2);
-   fChain->SetBranchAddress("phoiso_template_sigbkg_2",&phoiso_template_sigbkg_2,&b_phoiso_template_sigbkg_2);
-   fChain->SetBranchAddress("phoiso_template_bkgsig_2",&phoiso_template_bkgsig_2,&b_phoiso_template_bkgsig_2);
-   fChain->SetBranchAddress("phoiso_template_bkgbkg_2",&phoiso_template_bkgbkg_2,&b_phoiso_template_bkgbkg_2);
+   fChain->SetBranchAddress("phoiso_template_1event_sigsig_1",&phoiso_template_1event_sigsig_1,&b_phoiso_template_1event_sigsig_1);
+   fChain->SetBranchAddress("phoiso_template_1event_sigbkg_1",&phoiso_template_1event_sigbkg_1,&b_phoiso_template_1event_sigbkg_1);
+   fChain->SetBranchAddress("phoiso_template_1event_bkgsig_1",&phoiso_template_1event_bkgsig_1,&b_phoiso_template_1event_bkgsig_1);
+   fChain->SetBranchAddress("phoiso_template_1event_bkgbkg_1",&phoiso_template_1event_bkgbkg_1,&b_phoiso_template_1event_bkgbkg_1);
+   fChain->SetBranchAddress("phoiso_template_1event_sigsig_2",&phoiso_template_1event_sigsig_2,&b_phoiso_template_1event_sigsig_2);
+   fChain->SetBranchAddress("phoiso_template_1event_sigbkg_2",&phoiso_template_1event_sigbkg_2,&b_phoiso_template_1event_sigbkg_2);
+   fChain->SetBranchAddress("phoiso_template_1event_bkgsig_2",&phoiso_template_1event_bkgsig_2,&b_phoiso_template_1event_bkgsig_2);
+   fChain->SetBranchAddress("phoiso_template_1event_bkgbkg_2",&phoiso_template_1event_bkgbkg_2,&b_phoiso_template_1event_bkgbkg_2);
+   fChain->SetBranchAddress("phoiso_template_2events_sigsig_1",&phoiso_template_2events_sigsig_1,&b_phoiso_template_2events_sigsig_1);
+   fChain->SetBranchAddress("phoiso_template_2events_sigbkg_1",&phoiso_template_2events_sigbkg_1,&b_phoiso_template_2events_sigbkg_1);
+   fChain->SetBranchAddress("phoiso_template_2events_bkgsig_1",&phoiso_template_2events_bkgsig_1,&b_phoiso_template_2events_bkgsig_1);
+   fChain->SetBranchAddress("phoiso_template_2events_bkgbkg_1",&phoiso_template_2events_bkgbkg_1,&b_phoiso_template_2events_bkgbkg_1);
+   fChain->SetBranchAddress("phoiso_template_2events_sigsig_2",&phoiso_template_2events_sigsig_2,&b_phoiso_template_2events_sigsig_2);
+   fChain->SetBranchAddress("phoiso_template_2events_sigbkg_2",&phoiso_template_2events_sigbkg_2,&b_phoiso_template_2events_sigbkg_2);
+   fChain->SetBranchAddress("phoiso_template_2events_bkgsig_2",&phoiso_template_2events_bkgsig_2,&b_phoiso_template_2events_bkgsig_2);
+   fChain->SetBranchAddress("phoiso_template_2events_bkgbkg_2",&phoiso_template_2events_bkgbkg_2,&b_phoiso_template_2events_bkgbkg_2);
 
 
    Notify();
