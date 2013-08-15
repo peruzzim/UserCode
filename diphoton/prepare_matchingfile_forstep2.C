@@ -8,7 +8,7 @@
 
 using namespace std;
 
-const int nclosest = 10;
+const int nclosest = 20;
 
 void prepare_matchingfile_forstep2(TString matching, TString data, int jobnumber=-1){
 
@@ -21,38 +21,62 @@ void prepare_matchingfile_forstep2(TString matching, TString data, int jobnumber
    Int_t           matchingtree_event_run;
    Int_t           matchingtree_event_lumi;
    Int_t           matchingtree_event_number;
-   Int_t           matchingtree_index_sigsig_1[nclosest];
-   Int_t           matchingtree_index_sigsig_2[nclosest];
-   Int_t           matchingtree_index_sigbkg_1[nclosest];
-   Int_t           matchingtree_index_sigbkg_2[nclosest];
-   Int_t           matchingtree_index_bkgsig_1[nclosest];
-   Int_t           matchingtree_index_bkgsig_2[nclosest];
-   Int_t           matchingtree_index_bkgbkg_1[nclosest];
-   Int_t           matchingtree_index_bkgbkg_2[nclosest];
+   Int_t           matchingtree_index_1event_sigsig_1[nclosest];
+   Int_t           matchingtree_index_1event_sigsig_2[nclosest];
+   Int_t           matchingtree_index_1event_sigbkg_1[nclosest];
+   Int_t           matchingtree_index_1event_sigbkg_2[nclosest];
+   Int_t           matchingtree_index_1event_bkgsig_1[nclosest];
+   Int_t           matchingtree_index_1event_bkgsig_2[nclosest];
+   Int_t           matchingtree_index_1event_bkgbkg_1[nclosest];
+   Int_t           matchingtree_index_1event_bkgbkg_2[nclosest];
+   Int_t           matchingtree_index_2events_sigsig_1[nclosest];
+   Int_t           matchingtree_index_2events_sigsig_2[nclosest];
+   Int_t           matchingtree_index_2events_sigbkg_1[nclosest];
+   Int_t           matchingtree_index_2events_sigbkg_2[nclosest];
+   Int_t           matchingtree_index_2events_bkgsig_1[nclosest];
+   Int_t           matchingtree_index_2events_bkgsig_2[nclosest];
+   Int_t           matchingtree_index_2events_bkgbkg_1[nclosest];
+   Int_t           matchingtree_index_2events_bkgbkg_2[nclosest];
    TBranch        *b_matchingtree_event_fileuuid;   //!
    TBranch        *b_matchingtree_event_run;   //!
    TBranch        *b_matchingtree_event_lumi;   //!
    TBranch        *b_matchingtree_event_number;   //!
-   TBranch        *b_matchingtree_index_sigsig_1;   //!
-   TBranch        *b_matchingtree_index_sigsig_2;   //!
-   TBranch        *b_matchingtree_index_sigbkg_1;   //!
-   TBranch        *b_matchingtree_index_sigbkg_2;   //!
-   TBranch        *b_matchingtree_index_bkgsig_1;   //!
-   TBranch        *b_matchingtree_index_bkgsig_2;   //!
-   TBranch        *b_matchingtree_index_bkgbkg_1;   //!
-   TBranch        *b_matchingtree_index_bkgbkg_2;   //!
+   TBranch        *b_matchingtree_index_1event_sigsig_1;   //!
+   TBranch        *b_matchingtree_index_1event_sigsig_2;   //!
+   TBranch        *b_matchingtree_index_1event_sigbkg_1;   //!
+   TBranch        *b_matchingtree_index_1event_sigbkg_2;   //!
+   TBranch        *b_matchingtree_index_1event_bkgsig_1;   //!
+   TBranch        *b_matchingtree_index_1event_bkgsig_2;   //!
+   TBranch        *b_matchingtree_index_1event_bkgbkg_1;   //!
+   TBranch        *b_matchingtree_index_1event_bkgbkg_2;   //!
+   TBranch        *b_matchingtree_index_2events_sigsig_1;   //!
+   TBranch        *b_matchingtree_index_2events_sigsig_2;   //!
+   TBranch        *b_matchingtree_index_2events_sigbkg_1;   //!
+   TBranch        *b_matchingtree_index_2events_sigbkg_2;   //!
+   TBranch        *b_matchingtree_index_2events_bkgsig_1;   //!
+   TBranch        *b_matchingtree_index_2events_bkgsig_2;   //!
+   TBranch        *b_matchingtree_index_2events_bkgbkg_1;   //!
+   TBranch        *b_matchingtree_index_2events_bkgbkg_2;   //!
    matchingtree->SetBranchAddress("matchingtree_event_fileuuid", &matchingtree_event_fileuuid, &b_matchingtree_event_fileuuid);
    matchingtree->SetBranchAddress("matchingtree_event_run", &matchingtree_event_run, &b_matchingtree_event_run);
    matchingtree->SetBranchAddress("matchingtree_event_lumi", &matchingtree_event_lumi, &b_matchingtree_event_lumi);
    matchingtree->SetBranchAddress("matchingtree_event_number", &matchingtree_event_number, &b_matchingtree_event_number);
-   matchingtree->SetBranchAddress("matchingtree_index_sigsig_1", matchingtree_index_sigsig_1, &b_matchingtree_index_sigsig_1);
-   matchingtree->SetBranchAddress("matchingtree_index_sigsig_2", matchingtree_index_sigsig_2, &b_matchingtree_index_sigsig_2);
-   matchingtree->SetBranchAddress("matchingtree_index_sigbkg_1", matchingtree_index_sigbkg_1, &b_matchingtree_index_sigbkg_1);
-   matchingtree->SetBranchAddress("matchingtree_index_sigbkg_2", matchingtree_index_sigbkg_2, &b_matchingtree_index_sigbkg_2);
-   matchingtree->SetBranchAddress("matchingtree_index_bkgsig_1", matchingtree_index_bkgsig_1, &b_matchingtree_index_bkgsig_1);
-   matchingtree->SetBranchAddress("matchingtree_index_bkgsig_2", matchingtree_index_bkgsig_2, &b_matchingtree_index_bkgsig_2);
-   matchingtree->SetBranchAddress("matchingtree_index_bkgbkg_1", matchingtree_index_bkgbkg_1, &b_matchingtree_index_bkgbkg_1);
-   matchingtree->SetBranchAddress("matchingtree_index_bkgbkg_2", matchingtree_index_bkgbkg_2, &b_matchingtree_index_bkgbkg_2);
+   matchingtree->SetBranchAddress("matchingtree_index_1event_sigsig_1", matchingtree_index_1event_sigsig_1, &b_matchingtree_index_1event_sigsig_1);
+   matchingtree->SetBranchAddress("matchingtree_index_1event_sigsig_2", matchingtree_index_1event_sigsig_2, &b_matchingtree_index_1event_sigsig_2);
+   matchingtree->SetBranchAddress("matchingtree_index_1event_sigbkg_1", matchingtree_index_1event_sigbkg_1, &b_matchingtree_index_1event_sigbkg_1);
+   matchingtree->SetBranchAddress("matchingtree_index_1event_sigbkg_2", matchingtree_index_1event_sigbkg_2, &b_matchingtree_index_1event_sigbkg_2);
+   matchingtree->SetBranchAddress("matchingtree_index_1event_bkgsig_1", matchingtree_index_1event_bkgsig_1, &b_matchingtree_index_1event_bkgsig_1);
+   matchingtree->SetBranchAddress("matchingtree_index_1event_bkgsig_2", matchingtree_index_1event_bkgsig_2, &b_matchingtree_index_1event_bkgsig_2);
+   matchingtree->SetBranchAddress("matchingtree_index_1event_bkgbkg_1", matchingtree_index_1event_bkgbkg_1, &b_matchingtree_index_1event_bkgbkg_1);
+   matchingtree->SetBranchAddress("matchingtree_index_1event_bkgbkg_2", matchingtree_index_1event_bkgbkg_2, &b_matchingtree_index_1event_bkgbkg_2);
+   matchingtree->SetBranchAddress("matchingtree_index_2events_sigsig_1", matchingtree_index_2events_sigsig_1, &b_matchingtree_index_2events_sigsig_1);
+   matchingtree->SetBranchAddress("matchingtree_index_2events_sigsig_2", matchingtree_index_2events_sigsig_2, &b_matchingtree_index_2events_sigsig_2);
+   matchingtree->SetBranchAddress("matchingtree_index_2events_sigbkg_1", matchingtree_index_2events_sigbkg_1, &b_matchingtree_index_2events_sigbkg_1);
+   matchingtree->SetBranchAddress("matchingtree_index_2events_sigbkg_2", matchingtree_index_2events_sigbkg_2, &b_matchingtree_index_2events_sigbkg_2);
+   matchingtree->SetBranchAddress("matchingtree_index_2events_bkgsig_1", matchingtree_index_2events_bkgsig_1, &b_matchingtree_index_2events_bkgsig_1);
+   matchingtree->SetBranchAddress("matchingtree_index_2events_bkgsig_2", matchingtree_index_2events_bkgsig_2, &b_matchingtree_index_2events_bkgsig_2);
+   matchingtree->SetBranchAddress("matchingtree_index_2events_bkgbkg_1", matchingtree_index_2events_bkgbkg_1, &b_matchingtree_index_2events_bkgbkg_1);
+   matchingtree->SetBranchAddress("matchingtree_index_2events_bkgbkg_2", matchingtree_index_2events_bkgbkg_2, &b_matchingtree_index_2events_bkgbkg_2);
 
 
    TFile *d_file = TFile::Open(data.Data(),"read");
@@ -97,8 +121,8 @@ void prepare_matchingfile_forstep2(TString matching, TString data, int jobnumber
    std::map<long, TTree*> newmatchingtree;
    std::map<long, TTree*> NewInputTree[2];
 
-   Int_t matchingtree_index_1[2][2][nclosest];
-   Int_t matchingtree_index_2[2][2][nclosest];
+   Int_t matchingtree_index_1[2][2][2][nclosest];
+   Int_t matchingtree_index_2[2][2][2][nclosest];
 
    UInt_t thisuuid=0;
    int index_uuid=0;
@@ -123,36 +147,52 @@ void prepare_matchingfile_forstep2(TString matching, TString data, int jobnumber
 	 for (int m=0; m<2; m++) NewInputTree[m].insert(std::pair<long,TTree*>(thisuuid,InputTree[m]->CloneTree(0)));
        }
        for (int l=0; l<nclosest; l++){
-	 matchingtree_index_1[0][0][l]=matchingtree_index_sigsig_1[l];
-	 matchingtree_index_1[0][1][l]=matchingtree_index_sigbkg_1[l];
-	 matchingtree_index_1[1][0][l]=matchingtree_index_bkgsig_1[l];
-	 matchingtree_index_1[1][1][l]=matchingtree_index_bkgbkg_1[l];
-	 matchingtree_index_2[0][0][l]=matchingtree_index_sigsig_2[l];
-	 matchingtree_index_2[0][1][l]=matchingtree_index_sigbkg_2[l];
-	 matchingtree_index_2[1][0][l]=matchingtree_index_bkgsig_2[l];
-	 matchingtree_index_2[1][1][l]=matchingtree_index_bkgbkg_2[l];
+	 matchingtree_index_1[0][0][0][l]=matchingtree_index_1event_sigsig_1[l];
+	 matchingtree_index_1[0][0][1][l]=matchingtree_index_1event_sigbkg_1[l];
+	 matchingtree_index_1[0][1][0][l]=matchingtree_index_1event_bkgsig_1[l];
+	 matchingtree_index_1[0][1][1][l]=matchingtree_index_1event_bkgbkg_1[l];
+	 matchingtree_index_2[0][0][0][l]=matchingtree_index_1event_sigsig_2[l];
+	 matchingtree_index_2[0][0][1][l]=matchingtree_index_1event_sigbkg_2[l];
+	 matchingtree_index_2[0][1][0][l]=matchingtree_index_1event_bkgsig_2[l];
+	 matchingtree_index_2[0][1][1][l]=matchingtree_index_1event_bkgbkg_2[l];
+	 matchingtree_index_1[1][0][0][l]=matchingtree_index_2events_sigsig_1[l];
+	 matchingtree_index_1[1][0][1][l]=matchingtree_index_2events_sigbkg_1[l];
+	 matchingtree_index_1[1][1][0][l]=matchingtree_index_2events_bkgsig_1[l];
+	 matchingtree_index_1[1][1][1][l]=matchingtree_index_2events_bkgbkg_1[l];
+	 matchingtree_index_2[1][0][0][l]=matchingtree_index_2events_sigsig_2[l];
+	 matchingtree_index_2[1][0][1][l]=matchingtree_index_2events_sigbkg_2[l];
+	 matchingtree_index_2[1][1][0][l]=matchingtree_index_2events_bkgsig_2[l];
+	 matchingtree_index_2[1][1][1][l]=matchingtree_index_2events_bkgbkg_2[l];
        }
-       for (int n1=0; n1<2; n1++) for (int n2=0; n2<2; n2++) for (int l=0; l<nclosest; l++){
-	     if (matchingtree_index_1[n1][n2][l]>0){
-	       InputTree[n1]->GetEntry(matchingtree_index_1[n1][n2][l]);
+       for (int m=0; m<2; m++) for (int n1=0; n1<2; n1++) for (int n2=0; n2<2; n2++) for (int l=0; l<nclosest; l++){
+	     if (matchingtree_index_1[m][n1][n2][l]>0){
+	       InputTree[n1]->GetEntry(matchingtree_index_1[m][n1][n2][l]);
 	       NewInputTree[n1][matchingtree_event_fileuuid]->Fill();
-	       matchingtree_index_1[n1][n2][l] = NewInputTree[n1][matchingtree_event_fileuuid]->GetEntriesFast()-1;
+	       matchingtree_index_1[m][n1][n2][l] = NewInputTree[n1][matchingtree_event_fileuuid]->GetEntriesFast()-1;
 	     }
-	     if (matchingtree_index_2[n1][n2][l]>0){
-	       InputTree[n2]->GetEntry(matchingtree_index_2[n1][n2][l]);
+	     if (matchingtree_index_2[m][n1][n2][l]>0){
+	       InputTree[n2]->GetEntry(matchingtree_index_2[m][n1][n2][l]);
 	       NewInputTree[n2][matchingtree_event_fileuuid]->Fill();
-	       matchingtree_index_2[n1][n2][l] = NewInputTree[n2][matchingtree_event_fileuuid]->GetEntriesFast()-1;
+	       matchingtree_index_2[m][n1][n2][l] = NewInputTree[n2][matchingtree_event_fileuuid]->GetEntriesFast()-1;
 	     }
        }
        for (int l=0; l<nclosest; l++){
-	 matchingtree_index_sigsig_1[l]=matchingtree_index_1[0][0][l];
-	 matchingtree_index_sigbkg_1[l]=matchingtree_index_1[0][1][l];
-	 matchingtree_index_bkgsig_1[l]=matchingtree_index_1[1][0][l];
-	 matchingtree_index_bkgbkg_1[l]=matchingtree_index_1[1][1][l];
-	 matchingtree_index_sigsig_2[l]=matchingtree_index_2[0][0][l];
-	 matchingtree_index_sigbkg_2[l]=matchingtree_index_2[0][1][l];
-	 matchingtree_index_bkgsig_2[l]=matchingtree_index_2[1][0][l];
-	 matchingtree_index_bkgbkg_2[l]=matchingtree_index_2[1][1][l];
+	 matchingtree_index_1event_sigsig_1[l]=matchingtree_index_1[0][0][0][l];
+	 matchingtree_index_1event_sigbkg_1[l]=matchingtree_index_1[0][0][1][l];
+	 matchingtree_index_1event_bkgsig_1[l]=matchingtree_index_1[0][1][0][l];
+	 matchingtree_index_1event_bkgbkg_1[l]=matchingtree_index_1[0][1][1][l];
+	 matchingtree_index_1event_sigsig_2[l]=matchingtree_index_2[0][0][0][l];
+	 matchingtree_index_1event_sigbkg_2[l]=matchingtree_index_2[0][0][1][l];
+	 matchingtree_index_1event_bkgsig_2[l]=matchingtree_index_2[0][1][0][l];
+	 matchingtree_index_1event_bkgbkg_2[l]=matchingtree_index_2[0][1][1][l];
+	 matchingtree_index_2events_sigsig_1[l]=matchingtree_index_1[1][0][0][l];
+	 matchingtree_index_2events_sigbkg_1[l]=matchingtree_index_1[1][0][1][l];
+	 matchingtree_index_2events_bkgsig_1[l]=matchingtree_index_1[1][1][0][l];
+	 matchingtree_index_2events_bkgbkg_1[l]=matchingtree_index_1[1][1][1][l];
+	 matchingtree_index_2events_sigsig_2[l]=matchingtree_index_2[1][0][0][l];
+	 matchingtree_index_2events_sigbkg_2[l]=matchingtree_index_2[1][0][1][l];
+	 matchingtree_index_2events_bkgsig_2[l]=matchingtree_index_2[1][1][0][l];
+	 matchingtree_index_2events_bkgbkg_2[l]=matchingtree_index_2[1][1][1][l];
        }
        newmatchingtree[matchingtree_event_fileuuid]->Fill();
      }
