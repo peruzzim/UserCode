@@ -82,12 +82,19 @@ void prepare_matchingfile_forstep2(TString matching, TString data, int jobnumber
    TFile *d_file = TFile::Open(data.Data(),"read");
   TTree *InputTree[2];
   InputTree[0] = (TTree*)(d_file->Get("Tree_1Drandomcone_template"));
-  InputTree[1] = (TTree*)(d_file->Get("Tree_1Dsideband_template"));
+  InputTree[1] = (TTree*)(d_file->Get("Tree_2Drandomconesideband_template"));
 
   for (int i=0; i<2; i++){
     InputTree[i]->SetBranchStatus("*",0);
     InputTree[i]->SetBranchStatus("pholead_SCeta",1);
     InputTree[i]->SetBranchStatus("pholead_SCphi",1);
+    InputTree[i]->SetBranchStatus("pholead_pt",1);
+    InputTree[i]->SetBranchStatus("photrail_SCeta",1);
+    InputTree[i]->SetBranchStatus("photrail_SCphi",1);
+    InputTree[i]->SetBranchStatus("photrail_pt",1);
+    InputTree[i]->SetBranchStatus("event_pass12whoissiglike",1);
+    InputTree[i]->SetBranchStatus("event_rho",1);
+    InputTree[i]->SetBranchStatus("event_sigma",1);
     InputTree[i]->SetBranchStatus("allphotonpfcand_count",1);
     InputTree[i]->SetBranchStatus("allphotonpfcand_pt",1);
     InputTree[i]->SetBranchStatus("allphotonpfcand_eta",1);

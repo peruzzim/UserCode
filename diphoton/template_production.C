@@ -98,7 +98,7 @@ void template_production::Loop(int maxevents)
       TTree *mytree[2];
       TFile *f = new TFile(inputfilename.Data());
       f->GetObject("Tree_1Drandomcone_template",mytree[0]);
-      f->GetObject("Tree_1Dsideband_template",mytree[1]);
+      f->GetObject("Tree_2Drandomconesideband_template",mytree[1]);
       assert(mytree[0]); assert(mytree[1]);
     
       for (int i=0; i<2; i++){
@@ -107,28 +107,46 @@ void template_production::Loop(int maxevents)
 
 	cout << mynentries << " entries found" << endl;
 
-	float pho_pt;
-	float pho_eta;
+	float pho1_pt;
+	float pho1_eta;
+	float pho2_pt;
+	float pho2_eta;
 	float evt_rho;
-	TBranch *b_pho_pt;
-	TBranch *b_pho_eta;
+	int pass12whoissiglike;
+	TBranch *b_pho1_pt;
+	TBranch *b_pho1_eta;
+	TBranch *b_pho2_pt;
+	TBranch *b_pho2_eta;
 	TBranch *b_evt_rho;
+	TBranch *b_pass12whoissiglike;
 	Double_t *array_pho_pt = new Double_t[mynentries];
 	Double_t *array_pho_eta = new Double_t[mynentries];
 	Double_t *array_evt_rho = new Double_t[mynentries];
+	Double_t *array_otherpho_eta = new Double_t[mynentries];
 	mytree[i]->SetBranchStatus("*",0);
 	mytree[i]->SetBranchStatus("pholead_pt",1);
 	mytree[i]->SetBranchStatus("pholead_SCeta",1);
+	mytree[i]->SetBranchStatus("photrail_pt",1);
+	mytree[i]->SetBranchStatus("photrail_SCeta",1);
 	mytree[i]->SetBranchStatus("event_rho",1);
-	mytree[i]->SetBranchAddress("pholead_pt",&pho_pt,&b_pho_pt);
-	mytree[i]->SetBranchAddress("pholead_SCeta",&pho_eta,&b_pho_eta);
+	mytree[i]->SetBranchStatus("event_pass12whoissiglike");
+	mytree[i]->SetBranchAddress("pholead_pt",&pho1_pt,&b_pho1_pt);
+	mytree[i]->SetBranchAddress("pholead_SCeta",&pho1_eta,&b_pho1_eta);
+	mytree[i]->SetBranchAddress("photrail_pt",&pho2_pt,&b_pho2_pt);
+	mytree[i]->SetBranchAddress("photrail_SCeta",&pho2_eta,&b_pho2_eta);
 	mytree[i]->SetBranchAddress("event_rho",&evt_rho,&b_evt_rho);
-	
+	mytree[i]->SetBranchAddress("event_pass12whoissiglike",&pass12whoissiglike, &b_pass12whoissiglike);
+
 	for (int k=0; k<mynentries; k++){
+	  if (i==0) pass12whoissiglike=1;
+	  float pho_pt = (pass12whoissiglike==1) ? pho1_pt : pho2_pt;
+	  float pho_eta = (pass12whoissiglike==1) ? pho1_eta : pho2_eta;
+	  float otherpho_eta = (pass12whoissiglike==0) ? pho1_eta : pho2_eta;
 	  mytree[i]->GetEntry(k);
-	  array_pho_eta[k] = (pho_eta+100*pho_eta/fabs(pho_eta))/0.1; 
+	  array_pho_eta[k] = (pho_eta+(fabs(pho_eta)>1.4442)*1000*pho_eta/fabs(pho_eta))/0.1; 
 	  array_evt_rho[k] = evt_rho/2.0;
 	  array_pho_pt[k] = TMath::Log(pho_pt)/0.2;
+	  array_otherpho_eta[k] = (fabs(otherpho_eta)<1.4442) ? 0 : 1000;
 	  match_pho_eta[i].push_back(pho_eta); 
 	  match_evt_rho[i].push_back(evt_rho);
 	  match_pho_pt[i].push_back(pho_pt);
@@ -136,10 +154,11 @@ void template_production::Loop(int maxevents)
 
 	cout << "arrays filled" << endl;
 
-	kdtree[i] = new TKDTreeID(mynentries,(i==0) ? 2 : 3,1);
+	kdtree[i] = new TKDTreeID(mynentries,(i==0) ? 2 : 4,1);
 	kdtree[i]->SetData(0,array_pho_eta);
 	kdtree[i]->SetData(1,array_evt_rho);
 	if (i==1) kdtree[i]->SetData(2,array_pho_pt);
+	if (i==1) kdtree[i]->SetData(3,array_otherpho_eta);
 	cout << "SetData completed" << endl;
 	kdtree[i]->Build();
 	cout << "KD-tree built" << endl;
@@ -697,14 +716,16 @@ void template_production::Loop(int maxevents)
 	Double_t *dists1 = new Double_t[nclosestmore];
 	int *matches2 = new int[nclosestmore];
 	Double_t *dists2 = new Double_t[nclosestmore];
-	Double_t p1[3];
-	Double_t p2[3];
-	p1[0]=(pholead_SCeta+100*pholead_SCeta/fabs(pholead_SCeta))/0.1;
+	Double_t p1[4];
+	Double_t p2[4];
+	p1[0]=(pholead_SCeta+(fabs(pholead_SCeta)>1.4442)*1000*pholead_SCeta/fabs(pholead_SCeta))/0.1;
 	p1[1]=event_rho/2.0;
 	p1[2]=TMath::Log(pholead_pt)/0.2;
-	p2[0]=(photrail_SCeta+100*photrail_SCeta/fabs(photrail_SCeta))/0.1;
+	p1[3]=(fabs(photrail_SCeta)<1.4442) ? 0 : 1000;
+	p2[0]=(photrail_SCeta+(fabs(photrail_SCeta)>1.4442)*1000*photrail_SCeta/fabs(photrail_SCeta))/0.1;
 	p2[1]=event_rho/2.0;
 	p2[2]=TMath::Log(photrail_pt)/0.2;
+	p2[3]=(fabs(pholead_SCeta)<1.4442) ? 0 : 1000;
 	
 	for (int n1=0; n1<2; n1++) for (int n2=0; n2<2; n2++){
 	    kdtree[n1]->FindNearestNeighbors(p1,nclosestmore,matches1,dists1);
@@ -712,10 +733,23 @@ void template_production::Loop(int maxevents)
 
 	    for (int l=0; l<nclosestmore; l++){
 
-	      if (fabs(pholead_SCeta)<1.4442) if (fabs(match_pho_eta[n1].at(matches1[l]))>1.4442) cout << "MIGRATION ERROR" << endl;
-	      if (fabs(pholead_SCeta)>1.4442) if (fabs(match_pho_eta[n1].at(matches1[l]))<1.4442) cout << "MIGRATION ERROR" << endl;
-	      if (fabs(photrail_SCeta)<1.4442) if (fabs(match_pho_eta[n2].at(matches2[l]))>1.4442) cout << "MIGRATION ERROR" << endl;
-	      if (fabs(photrail_SCeta)>1.4442) if (fabs(match_pho_eta[n2].at(matches2[l]))<1.4442) cout << "MIGRATION ERROR" << endl;
+	      bool ismigrerror = false;
+
+	      if (fabs(pholead_SCeta)<1.4442) if (fabs(match_pho_eta[n1].at(matches1[l]))>1.4442) ismigrerror = true;
+	      if (fabs(pholead_SCeta)>1.4442) if (fabs(match_pho_eta[n1].at(matches1[l]))<1.4442) ismigrerror = true;
+	      if (fabs(photrail_SCeta)<1.4442) if (fabs(match_pho_eta[n2].at(matches2[l]))>1.4442) ismigrerror = true;
+	      if (fabs(photrail_SCeta)>1.4442) if (fabs(match_pho_eta[n2].at(matches2[l]))<1.4442) ismigrerror = true;
+
+	      if (ismigrerror){
+
+		cout << "-" << endl;
+		cout << n1 << " " << n2 << " " << l << endl;
+		cout << pholead_SCeta << " " << photrail_SCeta << endl;
+		cout << matches1[l] << " " << matches2[l] << endl;
+		cout << match_pho_eta[n1].at(matches1[l]) << " " << match_pho_eta[n2].at(matches2[l]) << endl;
+		cout << "-" << endl;
+
+	      }
 
 	      if (n1==0 && n2==0){	      
 		matchingtree_index_1event_sigsig_1[l] = matches1[l];
