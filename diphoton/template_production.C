@@ -126,7 +126,7 @@ void template_production::Loop(int maxevents)
 	
 	for (int k=0; k<mynentries; k++){
 	  mytree[i]->GetEntry(k);
-	  array_pho_eta[k] = pho_eta/0.1; 
+	  array_pho_eta[k] = (pho_eta+100*pho_eta/fabs(pho_eta))/0.1; 
 	  array_evt_rho[k] = evt_rho/2.0;
 	  array_pho_pt[k] = TMath::Log(pho_pt)/0.2;
 	  match_pho_eta[i].push_back(pho_eta); 
@@ -699,10 +699,10 @@ void template_production::Loop(int maxevents)
 	Double_t *dists2 = new Double_t[nclosestmore];
 	Double_t p1[3];
 	Double_t p2[3];
-	p1[0]=pholead_SCeta/0.1;
+	p1[0]=(pholead_SCeta+100*pholead_SCeta/fabs(pholead_SCeta))/0.1;
 	p1[1]=event_rho/2.0;
 	p1[2]=TMath::Log(pholead_pt)/0.2;
-	p2[0]=photrail_SCeta/0.1;
+	p2[0]=(photrail_SCeta+100*photrail_SCeta/fabs(photrail_SCeta))/0.1;
 	p2[1]=event_rho/2.0;
 	p2[2]=TMath::Log(photrail_pt)/0.2;
 	
