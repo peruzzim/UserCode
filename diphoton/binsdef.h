@@ -134,8 +134,8 @@ float eff_areas_EE_mc[n_bins] = {5.107922e-02,8.485798e-02,1.354249e-01,1.671490
 //const int n_ptbins_forreweighting = 1;
 //Float_t ptbins_forreweighting[n_ptbins_forreweighting+1]={0,300};
 
-const int n_ptbins_forreweighting = 3;
-Float_t ptbins_forreweighting[n_ptbins_forreweighting+1]={0,40,60,999};
+const int n_ptbins_forreweighting = 4;
+Float_t ptbins_forreweighting[n_ptbins_forreweighting+1]={20,35,50,80,999};
 
 
 #endif
