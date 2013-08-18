@@ -248,6 +248,23 @@ public :
    Float_t phoiso_template_2events_sigbkg_2[nclosest];
    Float_t phoiso_template_2events_bkgsig_2[nclosest];
    Float_t phoiso_template_2events_bkgbkg_2[nclosest];
+
+   Float_t rewinfo_template_1event_sigsig_1[nclosest*6];
+   Float_t rewinfo_template_1event_sigbkg_1[nclosest*6];
+   Float_t rewinfo_template_1event_bkgsig_1[nclosest*6];
+   Float_t rewinfo_template_1event_bkgbkg_1[nclosest*6];
+   Float_t rewinfo_template_1event_sigsig_2[nclosest*6];
+   Float_t rewinfo_template_1event_sigbkg_2[nclosest*6];
+   Float_t rewinfo_template_1event_bkgsig_2[nclosest*6];
+   Float_t rewinfo_template_1event_bkgbkg_2[nclosest*6];
+   Float_t rewinfo_template_2events_sigsig_1[nclosest*6];
+   Float_t rewinfo_template_2events_sigbkg_1[nclosest*6];
+   Float_t rewinfo_template_2events_bkgsig_1[nclosest*6];
+   Float_t rewinfo_template_2events_bkgbkg_1[nclosest*6];
+   Float_t rewinfo_template_2events_sigsig_2[nclosest*6];
+   Float_t rewinfo_template_2events_sigbkg_2[nclosest*6];
+   Float_t rewinfo_template_2events_bkgsig_2[nclosest*6];
+   Float_t rewinfo_template_2events_bkgbkg_2[nclosest*6];
    
    // List of branches
    TBranch        *b_event_fileuuid;   //!
@@ -444,6 +461,23 @@ public :
    TBranch *b_phoiso_template_2events_sigbkg_2;
    TBranch *b_phoiso_template_2events_bkgsig_2;
    TBranch *b_phoiso_template_2events_bkgbkg_2;
+
+   TBranch *b_rewinfo_template_1event_sigsig_1;
+   TBranch *b_rewinfo_template_1event_sigbkg_1;
+   TBranch *b_rewinfo_template_1event_bkgsig_1;
+   TBranch *b_rewinfo_template_1event_bkgbkg_1;
+   TBranch *b_rewinfo_template_1event_sigsig_2;
+   TBranch *b_rewinfo_template_1event_sigbkg_2;
+   TBranch *b_rewinfo_template_1event_bkgsig_2;
+   TBranch *b_rewinfo_template_1event_bkgbkg_2;
+   TBranch *b_rewinfo_template_2events_sigsig_1;
+   TBranch *b_rewinfo_template_2events_sigbkg_1;
+   TBranch *b_rewinfo_template_2events_bkgsig_1;
+   TBranch *b_rewinfo_template_2events_bkgbkg_1;
+   TBranch *b_rewinfo_template_2events_sigsig_2;
+   TBranch *b_rewinfo_template_2events_sigbkg_2;
+   TBranch *b_rewinfo_template_2events_bkgsig_2;
+   TBranch *b_rewinfo_template_2events_bkgbkg_2;
 
 
    template_production(TTree *tree=0);
@@ -990,6 +1024,23 @@ void template_production::Init()
    fChain->SetBranchAddress("phoiso_template_2events_sigbkg_2",&phoiso_template_2events_sigbkg_2,&b_phoiso_template_2events_sigbkg_2);
    fChain->SetBranchAddress("phoiso_template_2events_bkgsig_2",&phoiso_template_2events_bkgsig_2,&b_phoiso_template_2events_bkgsig_2);
    fChain->SetBranchAddress("phoiso_template_2events_bkgbkg_2",&phoiso_template_2events_bkgbkg_2,&b_phoiso_template_2events_bkgbkg_2);
+
+   fChain->SetBranchAddress("rewinfo_template_1event_sigsig_1",&rewinfo_template_1event_sigsig_1,&b_rewinfo_template_1event_sigsig_1);
+   fChain->SetBranchAddress("rewinfo_template_1event_sigbkg_1",&rewinfo_template_1event_sigbkg_1,&b_rewinfo_template_1event_sigbkg_1);
+   fChain->SetBranchAddress("rewinfo_template_1event_bkgsig_1",&rewinfo_template_1event_bkgsig_1,&b_rewinfo_template_1event_bkgsig_1);
+   fChain->SetBranchAddress("rewinfo_template_1event_bkgbkg_1",&rewinfo_template_1event_bkgbkg_1,&b_rewinfo_template_1event_bkgbkg_1);
+   fChain->SetBranchAddress("rewinfo_template_1event_sigsig_2",&rewinfo_template_1event_sigsig_2,&b_rewinfo_template_1event_sigsig_2);
+   fChain->SetBranchAddress("rewinfo_template_1event_sigbkg_2",&rewinfo_template_1event_sigbkg_2,&b_rewinfo_template_1event_sigbkg_2);
+   fChain->SetBranchAddress("rewinfo_template_1event_bkgsig_2",&rewinfo_template_1event_bkgsig_2,&b_rewinfo_template_1event_bkgsig_2);
+   fChain->SetBranchAddress("rewinfo_template_1event_bkgbkg_2",&rewinfo_template_1event_bkgbkg_2,&b_rewinfo_template_1event_bkgbkg_2);
+   fChain->SetBranchAddress("rewinfo_template_2events_sigsig_1",&rewinfo_template_2events_sigsig_1,&b_rewinfo_template_2events_sigsig_1);
+   fChain->SetBranchAddress("rewinfo_template_2events_sigbkg_1",&rewinfo_template_2events_sigbkg_1,&b_rewinfo_template_2events_sigbkg_1);
+   fChain->SetBranchAddress("rewinfo_template_2events_bkgsig_1",&rewinfo_template_2events_bkgsig_1,&b_rewinfo_template_2events_bkgsig_1);
+   fChain->SetBranchAddress("rewinfo_template_2events_bkgbkg_1",&rewinfo_template_2events_bkgbkg_1,&b_rewinfo_template_2events_bkgbkg_1);
+   fChain->SetBranchAddress("rewinfo_template_2events_sigsig_2",&rewinfo_template_2events_sigsig_2,&b_rewinfo_template_2events_sigsig_2);
+   fChain->SetBranchAddress("rewinfo_template_2events_sigbkg_2",&rewinfo_template_2events_sigbkg_2,&b_rewinfo_template_2events_sigbkg_2);
+   fChain->SetBranchAddress("rewinfo_template_2events_bkgsig_2",&rewinfo_template_2events_bkgsig_2,&b_rewinfo_template_2events_bkgsig_2);
+   fChain->SetBranchAddress("rewinfo_template_2events_bkgbkg_2",&rewinfo_template_2events_bkgbkg_2,&b_rewinfo_template_2events_bkgbkg_2);
 
 
    Notify();

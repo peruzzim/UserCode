@@ -2,6 +2,8 @@
 #define template_production_cxx
 #include "template_production.h"
 
+#include <algorithm>
+
 using namespace std;
 
 bool do_scan_cone = false;
@@ -662,6 +664,8 @@ void template_production::Loop(int maxevents)
 	if (donewtemplates) {
 	  Float_t phoiso_1[2][2][nclosest];
 	  Float_t phoiso_2[2][2][nclosest];
+	  Float_t rewinfo_1[2][2][nclosest*6];
+	  Float_t rewinfo_2[2][2][nclosest*6];
 	  for (int l=0; l<nclosest; l++){
 	    float puen_lead = getpuenergy(reg_lead,pholead_SCeta);
 	    float puen_trail = getpuenergy(reg_trail,photrail_SCeta);
@@ -673,6 +677,16 @@ void template_production::Loop(int maxevents)
 	    phoiso_2[0][1][l]=(do_event_mixing ? phoiso_template_2events_sigbkg_2[l] : phoiso_template_1event_sigbkg_2[l])-puen_trail;
 	    phoiso_2[1][0][l]=(do_event_mixing ? phoiso_template_2events_bkgsig_2[l] : phoiso_template_1event_bkgsig_2[l])-puen_trail;
 	    phoiso_2[1][1][l]=(do_event_mixing ? phoiso_template_2events_bkgbkg_2[l] : phoiso_template_1event_bkgbkg_2[l])-puen_trail;
+
+	    memcpy(&(rewinfo_1[0][0][l*6]),(do_event_mixing ? &(rewinfo_template_2events_sigsig_1[l*6]) : &(rewinfo_template_1event_sigsig_1[l*6])),6*sizeof(float));
+	    memcpy(&(rewinfo_1[0][1][l*6]),(do_event_mixing ? &(rewinfo_template_2events_sigbkg_1[l*6]) : &(rewinfo_template_1event_sigbkg_1[l*6])),6*sizeof(float));
+	    memcpy(&(rewinfo_1[1][0][l*6]),(do_event_mixing ? &(rewinfo_template_2events_bkgsig_1[l*6]) : &(rewinfo_template_1event_bkgsig_1[l*6])),6*sizeof(float));
+	    memcpy(&(rewinfo_1[1][1][l*6]),(do_event_mixing ? &(rewinfo_template_2events_bkgbkg_1[l*6]) : &(rewinfo_template_1event_bkgbkg_1[l*6])),6*sizeof(float));
+	    memcpy(&(rewinfo_2[0][0][l*6]),(do_event_mixing ? &(rewinfo_template_2events_sigsig_2[l*6]) : &(rewinfo_template_1event_sigsig_2[l*6])),6*sizeof(float));
+	    memcpy(&(rewinfo_2[0][1][l*6]),(do_event_mixing ? &(rewinfo_template_2events_sigbkg_2[l*6]) : &(rewinfo_template_1event_sigbkg_2[l*6])),6*sizeof(float));
+	    memcpy(&(rewinfo_2[1][0][l*6]),(do_event_mixing ? &(rewinfo_template_2events_bkgsig_2[l*6]) : &(rewinfo_template_1event_bkgsig_2[l*6])),6*sizeof(float));
+	    memcpy(&(rewinfo_2[1][1][l*6]),(do_event_mixing ? &(rewinfo_template_2events_bkgbkg_2[l*6]) : &(rewinfo_template_1event_bkgbkg_2[l*6])),6*sizeof(float));
+
 	  }
 	  for (int n1=0; n1<2; n1++) for (int n2=0; n2<2; n2++) for (int l=0; l<nclosest; l++){
 	    if (whichnewtemplate==0 && (n1!=0 || n2!=0)) continue;
