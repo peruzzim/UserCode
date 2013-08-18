@@ -138,11 +138,11 @@ void template_production::Loop(int maxevents)
 	mytree[i]->SetBranchAddress("event_pass12whoissiglike",&pass12whoissiglike, &b_pass12whoissiglike);
 
 	for (int k=0; k<mynentries; k++){
+	  mytree[i]->GetEntry(k);
 	  if (i==0) pass12whoissiglike=1;
 	  float pho_pt = (pass12whoissiglike==1) ? pho1_pt : pho2_pt;
 	  float pho_eta = (pass12whoissiglike==1) ? pho1_eta : pho2_eta;
 	  float otherpho_eta = (pass12whoissiglike==0) ? pho1_eta : pho2_eta;
-	  mytree[i]->GetEntry(k);
 	  array_pho_eta[k] = (pho_eta+(fabs(pho_eta)>1.4442)*1000*pho_eta/fabs(pho_eta))/0.1; 
 	  array_evt_rho[k] = evt_rho/2.0;
 	  array_pho_pt[k] = TMath::Log(pho_pt)/0.2;
