@@ -8,7 +8,7 @@
 
 using namespace std;
 
-const int nclosest = 20;
+const int nclosest = 40;
 
 void prepare_matchingfile_forstep2(TString matching, TString data, int jobnumber=-1){
 
