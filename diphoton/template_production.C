@@ -348,7 +348,6 @@ void template_production::Loop(int maxevents)
     }
     else std::cout << "We have a problem here!!!" << std::endl;
 
-
 //    if (differentialvariable=="photoniso"){
 //      pholead_outvar=pholead_pho_Cone04PhotonIso_dEta015EB_dR070EE_mvVtx;
 //      photrail_outvar=photrail_pho_Cone04PhotonIso_dEta015EB_dR070EE_mvVtx;
@@ -476,16 +475,18 @@ void template_production::Loop(int maxevents)
     if (recalc_lead){
       if (pholead_outvar<-100) std::cout << "PROBLEM WITH ISOLATION CALCULATION!!!" << std::endl;
       assert (pholead_outvar>=-100);
-      if (pholead_outvar<leftrange) {/*std::cout << "Warning: fixing underflow " << pholead_outvar << std::endl;*/ pholead_outvar=leftrange+1e-5;}
-      //      if (pholead_outvar>=rightrange) continue;
-      if (pholead_outvar>=rightrange) pholead_outvar=rightrange-1e-5; // overflow in last bin 
+      //      if (pholead_outvar<leftrange) {/*std::cout << "Warning: fixing underflow " << pholead_outvar << std::endl;*/ pholead_outvar=leftrange+1e-5;}
+      if (pholead_outvar<=leftrange) continue;
+      if (pholead_outvar>=rightrange) continue;
+      //      if (pholead_outvar>=rightrange) pholead_outvar=rightrange-1e-5; // overflow in last bin 
     }
     if (recalc_trail){
       if (photrail_outvar<-100) std::cout << "PROBLEM WITH ISOLATION CALCULATION!!!" << std::endl;
       assert (photrail_outvar>=-100);
-      if (photrail_outvar<leftrange) {/*std::cout << "Warning: fixing underflow " << photrail_outvar << std::endl;*/ photrail_outvar=leftrange+1e-5;}
-      //      if (photrail_outvar>=rightrange) continue;
-      if (photrail_outvar>=rightrange) photrail_outvar=rightrange-1e-5; // overflow in last bin 
+      //      if (photrail_outvar<leftrange) {/*std::cout << "Warning: fixing underflow " << photrail_outvar << std::endl;*/ photrail_outvar=leftrange+1e-5;}
+      if (photrail_outvar<=leftrange) continue;
+      if (photrail_outvar>=rightrange) continue;
+      //      if (photrail_outvar>=rightrange) photrail_outvar=rightrange-1e-5; // overflow in last bin 
     }
 
     Float_t weight=event_luminormfactor*event_Kfactor*event_weight;
@@ -678,6 +679,7 @@ void template_production::Loop(int maxevents)
 	    phoiso_2[1][0][l]=(do_event_mixing ? phoiso_template_2events_bkgsig_2[l] : phoiso_template_1event_bkgsig_2[l])-puen_trail;
 	    phoiso_2[1][1][l]=(do_event_mixing ? phoiso_template_2events_bkgbkg_2[l] : phoiso_template_1event_bkgbkg_2[l])-puen_trail;
 
+
 	    memcpy(&(rewinfo_1[0][0][l*6]),(do_event_mixing ? &(rewinfo_template_2events_sigsig_1[l*6]) : &(rewinfo_template_1event_sigsig_1[l*6])),6*sizeof(float));
 	    memcpy(&(rewinfo_1[0][1][l*6]),(do_event_mixing ? &(rewinfo_template_2events_sigbkg_1[l*6]) : &(rewinfo_template_1event_sigbkg_1[l*6])),6*sizeof(float));
 	    memcpy(&(rewinfo_1[1][0][l*6]),(do_event_mixing ? &(rewinfo_template_2events_bkgsig_1[l*6]) : &(rewinfo_template_1event_bkgsig_1[l*6])),6*sizeof(float));
@@ -688,25 +690,122 @@ void template_production::Loop(int maxevents)
 	    memcpy(&(rewinfo_2[1][1][l*6]),(do_event_mixing ? &(rewinfo_template_2events_bkgbkg_2[l*6]) : &(rewinfo_template_1event_bkgbkg_2[l*6])),6*sizeof(float));
 
 	  }
+
+	  if (do_event_mixing) {cout << "WRONG!!!" << endl; assert(1==0);} // da implementare per il caso 2events
+
 	  for (int n1=0; n1<2; n1++) for (int n2=0; n2<2; n2++) for (int l=0; l<nclosest; l++){
 	    if (whichnewtemplate==0 && (n1!=0 || n2!=0)) continue;
 	    if (whichnewtemplate==1 && (n1+n2!=1)) continue;
 	    if (whichnewtemplate==2 && (n1!=1 || n2!=1)) continue;
-	    if (!doswap){
-	      roovar1->setVal(phoiso_1[n1][n2][l]);
-	      roovar2->setVal(phoiso_2[n1][n2][l]);
-	    }
-	    else {
-	      if (whichnewtemplate==1){
-		roovar1->setVal(phoiso_2[!n1][!n2][l]);
-		roovar2->setVal(phoiso_1[!n1][!n2][l]);
+	    float fill1=-999;
+	    float fill2=-999;
+	    float filleta1=-999;
+	    float filleta2=-999;
+	    float fillpt1=-999;
+	    float fillpt2=-999;
+	    float fillrho=-999;
+	    float fillsigma=-999;
+
+	    if (whichnewtemplate==0){
+	      if (!doswap){
+		fill1=(phoiso_1[n1][n2][l]);
+		fill2=(phoiso_2[n1][n2][l]);
+		filleta1=rewinfo_1[n1][n2][l*6+0];
+                filleta2=rewinfo_1[n1][n2][l*6+1];
+		fillpt1=rewinfo_1[n1][n2][l*6+2];
+                fillpt2=rewinfo_1[n1][n2][l*6+3];
+		fillrho=rewinfo_1[n1][n2][l*6+4];
+		fillsigma=rewinfo_1[n1][n2][l*6+5];
 	      }
 	      else {
-		roovar1->setVal(phoiso_2[n1][n2][l]);
-		roovar2->setVal(phoiso_1[n1][n2][l]);
+		fill1=(phoiso_2[n1][n2][l]);
+                fill2=(phoiso_1[n1][n2][l]);
+		filleta1=rewinfo_1[n1][n2][l*6+1];
+		filleta2=rewinfo_1[n1][n2][l*6+0];
+		fillpt1=rewinfo_1[n1][n2][l*6+3];
+		fillpt2=rewinfo_1[n1][n2][l*6+2];
+		fillrho=rewinfo_1[n1][n2][l*6+4];
+		fillsigma=rewinfo_1[n1][n2][l*6+5];
 	      }
 	    }
-	    if (roovar1->getVal()<leftrange+1e-5 || roovar2->getVal()<leftrange+1e-5) continue;
+	    else if (n1==0 && n2==1){
+	      if (!doswap){
+		fill1=(phoiso_1[n1][n2][l]);
+		fill2=(phoiso_2[n1][n2][l]);
+		filleta1=rewinfo_2[n1][n2][l*6+1];
+		filleta2=rewinfo_2[n1][n2][l*6+0];
+		fillpt1=rewinfo_2[n1][n2][l*6+3];
+		fillpt2=rewinfo_2[n1][n2][l*6+2];
+		fillrho=rewinfo_2[n1][n2][l*6+4];
+		fillsigma=rewinfo_2[n1][n2][l*6+5];
+	      }
+	      else {
+		fill1=(phoiso_2[!n1][!n2][l]);
+                fill2=(phoiso_1[!n1][!n2][l]);
+		filleta1=rewinfo_2[n1][n2][l*6+0];
+		filleta2=rewinfo_2[n1][n2][l*6+1];
+		fillpt1=rewinfo_2[n1][n2][l*6+2];
+		fillpt2=rewinfo_2[n1][n2][l*6+3];
+		fillrho=rewinfo_2[n1][n2][l*6+4];
+		fillsigma=rewinfo_2[n1][n2][l*6+5];
+	      }
+	    }
+	    else if (n1==1 && n2==0){
+	      if (!doswap){
+		fill1=(phoiso_1[n1][n2][l]);
+		fill2=(phoiso_2[n1][n2][l]);
+		filleta1=rewinfo_1[n1][n2][l*6+0];
+		filleta2=rewinfo_1[n1][n2][l*6+1];
+		fillpt1=rewinfo_1[n1][n2][l*6+2];
+		fillpt2=rewinfo_1[n1][n2][l*6+3];
+		fillrho=rewinfo_1[n1][n2][l*6+4];
+		fillsigma=rewinfo_1[n1][n2][l*6+5];
+	      }
+	      else {
+		fill1=(phoiso_2[!n1][!n2][l]);
+                fill2=(phoiso_1[!n1][!n2][l]);
+		filleta1=rewinfo_1[n1][n2][l*6+1];
+		filleta2=rewinfo_1[n1][n2][l*6+0];
+		fillpt1=rewinfo_1[n1][n2][l*6+3];
+		fillpt2=rewinfo_1[n1][n2][l*6+2];
+		fillrho=rewinfo_1[n1][n2][l*6+4];
+		fillsigma=rewinfo_1[n1][n2][l*6+5];
+	      }
+	    }
+	    else if (whichnewtemplate==2){
+	      if (!doswap){
+		fill1=(phoiso_1[n1][n2][l]);
+		fill2=(phoiso_2[n1][n2][l]);
+		filleta1=rewinfo_1[n1][n2][l*6+0];
+		filleta2=rewinfo_1[n1][n2][l*6+1]; // not perfect, e' solo uno dei 2
+		fillpt1=rewinfo_1[n1][n2][l*6+2];
+		fillpt2=rewinfo_2[n1][n2][l*6+2];
+		fillrho=(rewinfo_1[n1][n2][l*6+4]+rewinfo_2[n1][n2][l*6+4])/2;
+		fillsigma=sqrt(pow(rewinfo_1[n1][n2][l*6+5],2)+pow(rewinfo_2[n1][n2][l*6+5],2))/sqrt(2);
+	      }
+	      else {
+		fill1=(phoiso_2[n1][n2][l]);
+                fill2=(phoiso_1[n1][n2][l]);
+		filleta1=rewinfo_2[n1][n2][l*6+0];
+		filleta2=rewinfo_2[n1][n2][l*6+1]; // not perfect, e' solo uno dei 2
+		fillpt1=rewinfo_2[n1][n2][l*6+2];
+		fillpt2=rewinfo_1[n1][n2][l*6+2];
+		fillrho=(rewinfo_1[n1][n2][l*6+4]+rewinfo_2[n1][n2][l*6+4])/2;
+		fillsigma=sqrt(pow(rewinfo_1[n1][n2][l*6+5],2)+pow(rewinfo_2[n1][n2][l*6+5],2))/sqrt(2);
+	      }
+	    }
+
+
+	    if (fill1<=leftrange || fill2<=leftrange) continue;
+	    if (fill1>=rightrange || fill2>=rightrange) continue;
+	    roovar1->setVal(fill1);
+	    roovar2->setVal(fill2);
+	    rooeta1->setVal(fabs(filleta1));
+	    rooeta2->setVal(fabs(filleta2));
+	    roopt1->setVal(fillpt1);
+	    roopt2->setVal(fillpt2);
+	    roorho->setVal(fillrho);
+	    roosigma->setVal(fillsigma);
 	    if (n1==0 && n2==0) newtempl_roodset[get_name_newtempl_roodset(event_ok_for_dataset_local,*diffvariable,bin_couple,"sigsig")]->add(args2,weight);
 	    else if (n1==0 && n2==1) newtempl_roodset[get_name_newtempl_roodset(event_ok_for_dataset_local,*diffvariable,bin_couple,"sigbkg")]->add(args2,weight);
 	    else if (n1==1 && n2==0) newtempl_roodset[get_name_newtempl_roodset(event_ok_for_dataset_local,*diffvariable,bin_couple,"bkgsig")]->add(args2,weight);
