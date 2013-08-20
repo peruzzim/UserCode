@@ -160,8 +160,8 @@ void template_production::Loop(int maxevents)
 	  while (pho_phi <= -pi) pho_phi += 2*pi;
 	  float otherpho_eta = (pass12whoissiglike==0) ? pho1_eta : pho2_eta;
 	  array_pho_eta[k] = (pho_eta+(fabs(pho_eta)>1.4442)*1000*pho_eta/fabs(pho_eta))/0.1; 
-	  array_pho_phi[k] = pho_phi/0.4;
-	  array_evt_rho[k] = evt_rho/2.0;
+	  array_pho_phi[k] = pho_phi/0.8;
+	  array_evt_rho[k] = evt_rho/1.5;
 	  array_pho_pt[k] = TMath::Log(pho_pt)/0.2;
 	  array_otherpho_eta[k] = (fabs(otherpho_eta)<1.4442) ? 0 : 1000;
 	  match_pho_eta[i].push_back(pho_eta); 
@@ -858,15 +858,15 @@ void template_production::Loop(int maxevents)
 	Double_t p1[5];
 	Double_t p2[5];
 	p1[0]=(pholead_SCeta+(fabs(pholead_SCeta)>1.4442)*1000*pholead_SCeta/fabs(pholead_SCeta))/0.1;
-	p1[1]=event_rho/2.0;
+	p1[1]=event_rho/1.5;
 	p1[2]=TMath::Log(pholead_pt)/0.2;
 	p1[3]=(fabs(photrail_SCeta)<1.4442) ? 0 : 1000;
-	p1[4]=pholead_SCphi/0.4;
+	p1[4]=pholead_SCphi/0.8;
 	p2[0]=(photrail_SCeta+(fabs(photrail_SCeta)>1.4442)*1000*photrail_SCeta/fabs(photrail_SCeta))/0.1;
-	p2[1]=event_rho/2.0;
+	p2[1]=event_rho/1.5;
 	p2[2]=TMath::Log(photrail_pt)/0.2;
 	p2[3]=(fabs(pholead_SCeta)<1.4442) ? 0 : 1000;
-	p2[4]=photrail_SCphi/0.4;
+	p2[4]=photrail_SCphi/0.8;
 
 	for (int n1=0; n1<2; n1++) for (int n2=0; n2<2; n2++){
 	    kdtree[n1]->FindNearestNeighbors(p1,nclosestmore,matches1,dists1);
@@ -938,8 +938,8 @@ void template_production::Loop(int maxevents)
 
 
 
-       p1[1]=event_rho/2.0*randomgen->Uniform(0,1);
-       p2[1]=event_rho/2.0-p1[1];
+       p1[1]=event_rho/1.5*randomgen->Uniform(0,1);
+       p2[1]=event_rho/1.5-p1[1];
 
 	for (int n1=0; n1<2; n1++) for (int n2=0; n2<2; n2++){
 	    kdtree[n1]->FindNearestNeighbors(p1,nclosestmore,matches1,dists1);
