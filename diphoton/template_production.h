@@ -583,6 +583,7 @@ public :
    Int_t Choose_bin_sieie(float sieie, int region);
 
    float getpuenergy(int reg, float eta);
+   float geteffarea(int reg, float eta);
 
 };
 

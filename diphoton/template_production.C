@@ -668,16 +668,15 @@ void template_production::Loop(int maxevents)
 	  Float_t rewinfo_1[2][2][nclosest*6];
 	  Float_t rewinfo_2[2][2][nclosest*6];
 	  for (int l=0; l<nclosest; l++){
-	    float puen_lead = getpuenergy(reg_lead,pholead_SCeta);
-	    float puen_trail = getpuenergy(reg_trail,photrail_SCeta);
-	    phoiso_1[0][0][l]=(do_event_mixing ? phoiso_template_2events_sigsig_1[l] : phoiso_template_1event_sigsig_1[l])-puen_lead;
-	    phoiso_1[0][1][l]=(do_event_mixing ? phoiso_template_2events_sigbkg_1[l] : phoiso_template_1event_sigbkg_1[l])-puen_lead;
-	    phoiso_1[1][0][l]=(do_event_mixing ? phoiso_template_2events_bkgsig_1[l] : phoiso_template_1event_bkgsig_1[l])-puen_lead;
-	    phoiso_1[1][1][l]=(do_event_mixing ? phoiso_template_2events_bkgbkg_1[l] : phoiso_template_1event_bkgbkg_1[l])-puen_lead;
-	    phoiso_2[0][0][l]=(do_event_mixing ? phoiso_template_2events_sigsig_2[l] : phoiso_template_1event_sigsig_2[l])-puen_trail;
-	    phoiso_2[0][1][l]=(do_event_mixing ? phoiso_template_2events_sigbkg_2[l] : phoiso_template_1event_sigbkg_2[l])-puen_trail;
-	    phoiso_2[1][0][l]=(do_event_mixing ? phoiso_template_2events_bkgsig_2[l] : phoiso_template_1event_bkgsig_2[l])-puen_trail;
-	    phoiso_2[1][1][l]=(do_event_mixing ? phoiso_template_2events_bkgbkg_2[l] : phoiso_template_1event_bkgbkg_2[l])-puen_trail;
+
+	    phoiso_1[0][0][l]=(do_event_mixing ? phoiso_template_2events_sigsig_1[l] : phoiso_template_1event_sigsig_1[l]);
+	    phoiso_1[0][1][l]=(do_event_mixing ? phoiso_template_2events_sigbkg_1[l] : phoiso_template_1event_sigbkg_1[l]);
+	    phoiso_1[1][0][l]=(do_event_mixing ? phoiso_template_2events_bkgsig_1[l] : phoiso_template_1event_bkgsig_1[l]);
+	    phoiso_1[1][1][l]=(do_event_mixing ? phoiso_template_2events_bkgbkg_1[l] : phoiso_template_1event_bkgbkg_1[l]);
+	    phoiso_2[0][0][l]=(do_event_mixing ? phoiso_template_2events_sigsig_2[l] : phoiso_template_1event_sigsig_2[l]);
+	    phoiso_2[0][1][l]=(do_event_mixing ? phoiso_template_2events_sigbkg_2[l] : phoiso_template_1event_sigbkg_2[l]);
+	    phoiso_2[1][0][l]=(do_event_mixing ? phoiso_template_2events_bkgsig_2[l] : phoiso_template_1event_bkgsig_2[l]);
+	    phoiso_2[1][1][l]=(do_event_mixing ? phoiso_template_2events_bkgbkg_2[l] : phoiso_template_1event_bkgbkg_2[l]);
 
 
 	    memcpy(&(rewinfo_1[0][0][l*6]),(do_event_mixing ? &(rewinfo_template_2events_sigsig_1[l*6]) : &(rewinfo_template_1event_sigsig_1[l*6])),6*sizeof(float));
@@ -711,7 +710,7 @@ void template_production::Loop(int maxevents)
 		fill1=(phoiso_1[n1][n2][l]);
 		fill2=(phoiso_2[n1][n2][l]);
 		filleta1=rewinfo_1[n1][n2][l*6+0];
-                filleta2=rewinfo_1[n1][n2][l*6+1];
+                filleta2=rewinfo_1[n1][n2][l*6+0]-pholead_SCeta+photrail_SCeta;
 		fillpt1=rewinfo_1[n1][n2][l*6+2];
                 fillpt2=rewinfo_1[n1][n2][l*6+3];
 		fillrho=rewinfo_1[n1][n2][l*6+4];
@@ -720,7 +719,7 @@ void template_production::Loop(int maxevents)
 	      else {
 		fill1=(phoiso_2[n1][n2][l]);
                 fill2=(phoiso_1[n1][n2][l]);
-		filleta1=rewinfo_1[n1][n2][l*6+1];
+		filleta1=rewinfo_1[n1][n2][l*6+0]-pholead_SCeta+photrail_SCeta;
 		filleta2=rewinfo_1[n1][n2][l*6+0];
 		fillpt1=rewinfo_1[n1][n2][l*6+3];
 		fillpt2=rewinfo_1[n1][n2][l*6+2];
@@ -732,7 +731,7 @@ void template_production::Loop(int maxevents)
 	      if (!doswap){
 		fill1=(phoiso_1[n1][n2][l]);
 		fill2=(phoiso_2[n1][n2][l]);
-		filleta1=rewinfo_2[n1][n2][l*6+1];
+		filleta1=rewinfo_2[n1][n2][l*6+0]-photrail_SCeta+pholead_SCeta;
 		filleta2=rewinfo_2[n1][n2][l*6+0];
 		fillpt1=rewinfo_2[n1][n2][l*6+3];
 		fillpt2=rewinfo_2[n1][n2][l*6+2];
@@ -743,7 +742,7 @@ void template_production::Loop(int maxevents)
 		fill1=(phoiso_2[!n1][!n2][l]);
                 fill2=(phoiso_1[!n1][!n2][l]);
 		filleta1=rewinfo_2[n1][n2][l*6+0];
-		filleta2=rewinfo_2[n1][n2][l*6+1];
+		filleta2=rewinfo_2[n1][n2][l*6+0]-photrail_SCeta+pholead_SCeta;
 		fillpt1=rewinfo_2[n1][n2][l*6+2];
 		fillpt2=rewinfo_2[n1][n2][l*6+3];
 		fillrho=rewinfo_2[n1][n2][l*6+4];
@@ -755,7 +754,7 @@ void template_production::Loop(int maxevents)
 		fill1=(phoiso_1[n1][n2][l]);
 		fill2=(phoiso_2[n1][n2][l]);
 		filleta1=rewinfo_1[n1][n2][l*6+0];
-		filleta2=rewinfo_1[n1][n2][l*6+1];
+		filleta2=rewinfo_1[n1][n2][l*6+0]-pholead_SCeta+photrail_SCeta;
 		fillpt1=rewinfo_1[n1][n2][l*6+2];
 		fillpt2=rewinfo_1[n1][n2][l*6+3];
 		fillrho=rewinfo_1[n1][n2][l*6+4];
@@ -764,7 +763,7 @@ void template_production::Loop(int maxevents)
 	      else {
 		fill1=(phoiso_2[!n1][!n2][l]);
                 fill2=(phoiso_1[!n1][!n2][l]);
-		filleta1=rewinfo_1[n1][n2][l*6+1];
+		filleta1=rewinfo_1[n1][n2][l*6+0]-pholead_SCeta+photrail_SCeta;
 		filleta2=rewinfo_1[n1][n2][l*6+0];
 		fillpt1=rewinfo_1[n1][n2][l*6+3];
 		fillpt2=rewinfo_1[n1][n2][l*6+2];
@@ -777,7 +776,7 @@ void template_production::Loop(int maxevents)
 		fill1=(phoiso_1[n1][n2][l]);
 		fill2=(phoiso_2[n1][n2][l]);
 		filleta1=rewinfo_1[n1][n2][l*6+0];
-		filleta2=rewinfo_1[n1][n2][l*6+1]; // not perfect, e' solo uno dei 2
+		filleta2=rewinfo_2[n1][n2][l*6+0]; // not perfect, e' solo uno dei 2
 		fillpt1=rewinfo_1[n1][n2][l*6+2];
 		fillpt2=rewinfo_2[n1][n2][l*6+2];
 		fillrho=(rewinfo_1[n1][n2][l*6+4]+rewinfo_2[n1][n2][l*6+4])/2;
@@ -787,13 +786,24 @@ void template_production::Loop(int maxevents)
 		fill1=(phoiso_2[n1][n2][l]);
                 fill2=(phoiso_1[n1][n2][l]);
 		filleta1=rewinfo_2[n1][n2][l*6+0];
-		filleta2=rewinfo_2[n1][n2][l*6+1]; // not perfect, e' solo uno dei 2
+		filleta2=rewinfo_1[n1][n2][l*6+0]; // not perfect, e' solo uno dei 2
 		fillpt1=rewinfo_2[n1][n2][l*6+2];
 		fillpt2=rewinfo_1[n1][n2][l*6+2];
 		fillrho=(rewinfo_1[n1][n2][l*6+4]+rewinfo_2[n1][n2][l*6+4])/2;
 		fillsigma=sqrt(pow(rewinfo_1[n1][n2][l*6+5],2)+pow(rewinfo_2[n1][n2][l*6+5],2))/sqrt(2);
 	      }
 	    }
+
+	    if ((fabs(filleta1)>2.5) || (fabs(filleta1)>1.4442 && fabs(filleta1)<1.56)) continue;
+	    if ((fabs(filleta2)>2.5) || (fabs(filleta2)>1.4442 && fabs(filleta2)<1.56)) continue;
+
+	    fill1-=fillrho*geteffarea((fabs(filleta1)>1.4442),fabs(filleta1));
+	    fill2-=fillrho*geteffarea((fabs(filleta2)>1.4442),fabs(filleta2));
+
+//	    cout << n1 << n2 << l << " ";
+//	    cout << pholead_SCeta << " " << (!doswap ? filleta1 : filleta2) << " " << (!doswap ? fillpt1 : fillpt2) << " "; 
+//	    cout << photrail_SCeta << " " << (!doswap ? filleta2 : filleta1) << " " << (!doswap ? fillpt2 : fillpt1) << " "; 
+//	    cout << endl;
 
 
 	    if (fill1<=leftrange || fill2<=leftrange) continue;
@@ -1299,5 +1309,16 @@ float template_production::getpuenergy(int reg, float eta){
   else eff_area = (reg==0) ? eff_areas_EB_mc[bin] : eff_areas_EE_mc[bin];
 
   return 0.4*0.4*3.14*event_rho*eff_area;
+
+};
+
+float template_production::geteffarea(int reg, float eta){
+
+  int bin = Choose_bin_eta(fabs(eta),reg);
+  float eff_area;
+  if (isdata) eff_area = (reg==0) ? eff_areas_EB_data[bin] : eff_areas_EE_data[bin];
+  else eff_area = (reg==0) ? eff_areas_EB_mc[bin] : eff_areas_EE_mc[bin];
+
+  return 0.4*0.4*3.14*eff_area;
 
 };
