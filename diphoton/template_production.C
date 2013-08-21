@@ -741,8 +741,8 @@ void template_production::Loop(int maxevents)
                 fill2=(phoiso_1[!n1][!n2][l]);
 		filleta1 = (!do_event_mixing) ? rewinfo_1[!n1][!n2][l*6+0]-pholead_SCeta+photrail_SCeta : rewinfo_2[!n1][!n2][l*6+0];
 		filleta2 = (!do_event_mixing) ? rewinfo_1[!n1][!n2][l*6+0] : rewinfo_1[!n1][!n2][l*6+0];
-		fillpt1 = (!do_event_mixing) ? rewinfo_1[!n1][!n2][l*6+2]-pholead_pt+photrail_pt : rewinfo_2[!n1][!n2][l*6+2];
-		fillpt2 = (!do_event_mixing) ? rewinfo_1[!n1][!n2][l*6+3] : rewinfo_1[!n1][!n2][l*6+2];
+		fillpt1 = (!do_event_mixing) ? rewinfo_1[!n1][!n2][l*6+3] : rewinfo_2[!n1][!n2][l*6+2];
+		fillpt2 = (!do_event_mixing) ? rewinfo_1[!n1][!n2][l*6+2] : rewinfo_1[!n1][!n2][l*6+2];
 		fillrho = (!do_event_mixing) ? rewinfo_1[!n1][!n2][l*6+4] : rewinfo_1[!n1][!n2][l*6+4]+rewinfo_2[!n1][!n2][l*6+4];
 		fillsigma = (!do_event_mixing) ? rewinfo_1[!n1][!n2][l*6+5] : sqrt(pow(rewinfo_1[!n1][!n2][l*6+5],2)+pow(rewinfo_2[!n1][!n2][l*6+5],2));
 	      }
@@ -763,8 +763,8 @@ void template_production::Loop(int maxevents)
                 fill2=(phoiso_1[!n1][!n2][l]);
 		filleta1 = (!do_event_mixing) ? rewinfo_2[!n1][!n2][l*6+0] : rewinfo_2[!n1][!n2][l*6+0];
 		filleta2 = (!do_event_mixing) ? rewinfo_2[!n1][!n2][l*6+0]-photrail_SCeta+pholead_SCeta : rewinfo_1[!n1][!n2][l*6+0];
-		fillpt1 = (!do_event_mixing) ? rewinfo_2[!n1][!n2][l*6+3]-photrail_pt+pholead_pt : rewinfo_2[!n1][!n2][l*6+2];
-		fillpt2 = (!do_event_mixing) ? rewinfo_2[!n1][!n2][l*6+2] : rewinfo_1[!n1][!n2][l*6+2];
+		fillpt1 = (!do_event_mixing) ? rewinfo_2[!n1][!n2][l*6+2] : rewinfo_2[!n1][!n2][l*6+2];
+		fillpt2 = (!do_event_mixing) ? rewinfo_2[!n1][!n2][l*6+3] : rewinfo_1[!n1][!n2][l*6+2];
 		fillrho = (!do_event_mixing) ? rewinfo_2[!n1][!n2][l*6+4] : rewinfo_1[!n1][!n2][l*6+4]+rewinfo_2[!n1][!n2][l*6+4];
 		fillsigma = (!do_event_mixing) ? rewinfo_2[!n1][!n2][l*6+5] : sqrt(pow(rewinfo_1[!n1][!n2][l*6+5],2)+pow(rewinfo_2[!n1][!n2][l*6+5],2));
 	      }
