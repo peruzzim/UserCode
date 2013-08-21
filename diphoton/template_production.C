@@ -798,16 +798,19 @@ void template_production::Loop(int maxevents)
 	    fill1-=fillrho*geteffarea((fabs(filleta1)>1.4442),fabs(filleta1));
 	    fill2-=fillrho*geteffarea((fabs(filleta2)>1.4442),fabs(filleta2));
 
-	    //	    cout << n1 << n2 << l << " " << doswap << " " ;
+
 	    float a1 = (!doswap ? filleta1 : filleta2);
 	    float a2 = (!doswap ? fillpt1 : fillpt2);
 	    float b1 = (!doswap ? filleta2 : filleta1);
 	    float b2 = (!doswap ? fillpt2 : fillpt1);
-	    //	    cout << pholead_SCeta << " " << a1 << " " << a2 << " "; 
-	    //	    cout << photrail_SCeta << " " << b1 << " " << b2 << " "; 
-	    if (((fabs(a1)<1.4442)+(fabs(pholead_SCeta)<1.4442)==1) || ((fabs(b1)<1.4442)+(fabs(photrail_SCeta)<1.4442)==1)) cout << "<-------------------------------------------------";
-	    //	    cout << endl;
-
+	    if (((fabs(a1)<1.4442)+(fabs(pholead_SCeta)<1.4442)==1) || ((fabs(b1)<1.4442)+(fabs(photrail_SCeta)<1.4442)==1)) {
+//	      cout << "<-------------------------------------------------";
+//	      cout << n1 << n2 << l << " " << doswap << " " ;
+//	      cout << pholead_SCeta << " " << a1 << " " << a2 << " "; 
+//	      cout << photrail_SCeta << " " << b1 << " " << b2 << " "; 
+//	      cout << endl;
+	      continue;
+	    }
 
 	    if (fill1<=leftrange || fill2<=leftrange) continue;
 	    if (fill1>=rightrange || fill2>=rightrange) continue;
