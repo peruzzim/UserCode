@@ -690,8 +690,6 @@ void template_production::Loop(int maxevents)
 
 	  }
 
-	  if (do_event_mixing) {cout << "WRONG!!!" << endl; assert(1==0);} // da implementare per il caso 2events
-
 	  for (int n1=0; n1<2; n1++) for (int n2=0; n2<2; n2++) for (int l=0; l<nclosest; l++){
 	    if (whichnewtemplate==0 && (n1!=0 || n2!=0)) continue;
 	    if (whichnewtemplate==1 && (n1+n2!=1)) continue;
@@ -709,88 +707,88 @@ void template_production::Loop(int maxevents)
 	      if (!doswap){
 		fill1=(phoiso_1[n1][n2][l]);
 		fill2=(phoiso_2[n1][n2][l]);
-		filleta1=rewinfo_1[n1][n2][l*6+0];
-                filleta2=rewinfo_1[n1][n2][l*6+0]-pholead_SCeta+photrail_SCeta;
-		fillpt1=rewinfo_1[n1][n2][l*6+2];
-                fillpt2=rewinfo_1[n1][n2][l*6+3];
-		fillrho=rewinfo_1[n1][n2][l*6+4];
-		fillsigma=rewinfo_1[n1][n2][l*6+5];
+		filleta1 = (!do_event_mixing) ? rewinfo_1[n1][n2][l*6+0] : rewinfo_1[n1][n2][l*6+0];
+		filleta2 = (!do_event_mixing) ? rewinfo_1[n1][n2][l*6+0]-pholead_SCeta+photrail_SCeta : rewinfo_2[n1][n2][l*6+0];
+		fillpt1 = (!do_event_mixing) ? rewinfo_1[n1][n2][l*6+2] : rewinfo_1[n1][n2][l*6+2];
+                fillpt2 = (!do_event_mixing) ? rewinfo_1[n1][n2][l*6+3] : rewinfo_2[n1][n2][l*6+2];
+		fillrho = (!do_event_mixing) ? rewinfo_1[n1][n2][l*6+4] : rewinfo_1[n1][n2][l*6+4]+rewinfo_2[n1][n2][l*6+4];
+		fillsigma = (!do_event_mixing) ? rewinfo_1[n1][n2][l*6+5] : sqrt(pow(rewinfo_1[n1][n2][l*6+5],2)+pow(rewinfo_2[n1][n2][l*6+5],2));
 	      }
 	      else {
 		fill1=(phoiso_2[n1][n2][l]);
                 fill2=(phoiso_1[n1][n2][l]);
-		filleta1=rewinfo_1[n1][n2][l*6+0]-pholead_SCeta+photrail_SCeta;
-		filleta2=rewinfo_1[n1][n2][l*6+0];
-		fillpt1=rewinfo_1[n1][n2][l*6+3];
-		fillpt2=rewinfo_1[n1][n2][l*6+2];
-		fillrho=rewinfo_1[n1][n2][l*6+4];
-		fillsigma=rewinfo_1[n1][n2][l*6+5];
+		filleta1 = (!do_event_mixing) ? rewinfo_1[n1][n2][l*6+0]-pholead_SCeta+photrail_SCeta : rewinfo_2[n1][n2][l*6+0];
+		filleta2 = (!do_event_mixing) ? rewinfo_1[n1][n2][l*6+0] : rewinfo_1[n1][n2][l*6+0];
+		fillpt1 = (!do_event_mixing) ? rewinfo_1[n1][n2][l*6+3] : rewinfo_2[n1][n2][l*6+2];
+		fillpt2 = (!do_event_mixing) ? rewinfo_1[n1][n2][l*6+2] : rewinfo_1[n1][n2][l*6+2];
+		fillrho = (!do_event_mixing) ? rewinfo_1[n1][n2][l*6+4] : rewinfo_1[n1][n2][l*6+4]+rewinfo_2[n1][n2][l*6+4];
+		fillsigma = (!do_event_mixing) ? rewinfo_1[n1][n2][l*6+5] : sqrt(pow(rewinfo_1[n1][n2][l*6+5],2)+pow(rewinfo_2[n1][n2][l*6+5],2));
 	      }
 	    }
 	    else if (n1==0 && n2==1){
 	      if (!doswap){
 		fill1=(phoiso_1[n1][n2][l]);
 		fill2=(phoiso_2[n1][n2][l]);
-		filleta1=rewinfo_2[n1][n2][l*6+0]-photrail_SCeta+pholead_SCeta;
-		filleta2=rewinfo_2[n1][n2][l*6+0];
-		fillpt1=rewinfo_2[n1][n2][l*6+3];
-		fillpt2=rewinfo_2[n1][n2][l*6+2];
-		fillrho=rewinfo_2[n1][n2][l*6+4];
-		fillsigma=rewinfo_2[n1][n2][l*6+5];
+		filleta1 = (!do_event_mixing) ? rewinfo_2[n1][n2][l*6+0]-photrail_SCeta+pholead_SCeta : rewinfo_1[n1][n2][l*6+0];
+		filleta2 = (!do_event_mixing) ? rewinfo_2[n1][n2][l*6+0] : rewinfo_2[n1][n2][l*6+0];
+		fillpt1 = (!do_event_mixing) ? rewinfo_2[n1][n2][l*6+3] : rewinfo_1[n1][n2][l*6+2];
+		fillpt2 = (!do_event_mixing) ? rewinfo_2[n1][n2][l*6+2] : rewinfo_2[n1][n2][l*6+2];
+		fillrho = (!do_event_mixing) ? rewinfo_2[n1][n2][l*6+4] : rewinfo_1[n1][n2][l*6+4]+rewinfo_2[n1][n2][l*6+4];
+		fillsigma = (!do_event_mixing) ? rewinfo_2[n1][n2][l*6+5] : sqrt(pow(rewinfo_1[n1][n2][l*6+5],2)+pow(rewinfo_2[n1][n2][l*6+5],2));
 	      }
 	      else {
 		fill1=(phoiso_2[!n1][!n2][l]);
                 fill2=(phoiso_1[!n1][!n2][l]);
-		filleta1=rewinfo_2[n1][n2][l*6+0];
-		filleta2=rewinfo_2[n1][n2][l*6+0]-photrail_SCeta+pholead_SCeta;
-		fillpt1=rewinfo_2[n1][n2][l*6+2];
-		fillpt2=rewinfo_2[n1][n2][l*6+3];
-		fillrho=rewinfo_2[n1][n2][l*6+4];
-		fillsigma=rewinfo_2[n1][n2][l*6+5];
+		filleta1 = (!do_event_mixing) ? rewinfo_1[!n1][!n2][l*6+0]-pholead_SCeta+photrail_SCeta : rewinfo_2[!n1][!n2][l*6+0];
+		filleta2 = (!do_event_mixing) ? rewinfo_1[!n1][!n2][l*6+0] : rewinfo_1[!n1][!n2][l*6+0];
+		fillpt1 = (!do_event_mixing) ? rewinfo_1[!n1][!n2][l*6+2]-pholead_pt+photrail_pt : rewinfo_2[!n1][!n2][l*6+2];
+		fillpt2 = (!do_event_mixing) ? rewinfo_1[!n1][!n2][l*6+3] : rewinfo_1[!n1][!n2][l*6+2];
+		fillrho = (!do_event_mixing) ? rewinfo_1[!n1][!n2][l*6+4] : rewinfo_1[!n1][!n2][l*6+4]+rewinfo_2[!n1][!n2][l*6+4];
+		fillsigma = (!do_event_mixing) ? rewinfo_1[!n1][!n2][l*6+5] : sqrt(pow(rewinfo_1[!n1][!n2][l*6+5],2)+pow(rewinfo_2[!n1][!n2][l*6+5],2));
 	      }
 	    }
 	    else if (n1==1 && n2==0){
 	      if (!doswap){
 		fill1=(phoiso_1[n1][n2][l]);
 		fill2=(phoiso_2[n1][n2][l]);
-		filleta1=rewinfo_1[n1][n2][l*6+0];
-		filleta2=rewinfo_1[n1][n2][l*6+0]-pholead_SCeta+photrail_SCeta;
-		fillpt1=rewinfo_1[n1][n2][l*6+2];
-		fillpt2=rewinfo_1[n1][n2][l*6+3];
-		fillrho=rewinfo_1[n1][n2][l*6+4];
-		fillsigma=rewinfo_1[n1][n2][l*6+5];
+		filleta1 = (!do_event_mixing) ? rewinfo_1[n1][n2][l*6+0] : rewinfo_1[n1][n2][l*6+0];
+		filleta2 = (!do_event_mixing) ? rewinfo_1[n1][n2][l*6+0]-pholead_SCeta+photrail_SCeta : rewinfo_2[n1][n2][l*6+0];
+		fillpt1 = (!do_event_mixing) ? rewinfo_1[n1][n2][l*6+2] : rewinfo_1[n1][n2][l*6+2];
+		fillpt2 = (!do_event_mixing) ? rewinfo_1[n1][n2][l*6+3] : rewinfo_2[n1][n2][l*6+2];
+		fillrho = (!do_event_mixing) ? rewinfo_1[n1][n2][l*6+4] : rewinfo_1[n1][n2][l*6+4]+rewinfo_2[n1][n2][l*6+4];
+		fillsigma = (!do_event_mixing) ? rewinfo_1[n1][n2][l*6+5] : sqrt(pow(rewinfo_1[n1][n2][l*6+5],2)+pow(rewinfo_2[n1][n2][l*6+5],2));
 	      }
 	      else {
 		fill1=(phoiso_2[!n1][!n2][l]);
                 fill2=(phoiso_1[!n1][!n2][l]);
-		filleta1=rewinfo_1[n1][n2][l*6+0]-pholead_SCeta+photrail_SCeta;
-		filleta2=rewinfo_1[n1][n2][l*6+0];
-		fillpt1=rewinfo_1[n1][n2][l*6+3];
-		fillpt2=rewinfo_1[n1][n2][l*6+2];
-		fillrho=rewinfo_1[n1][n2][l*6+4];
-		fillsigma=rewinfo_1[n1][n2][l*6+5];
+		filleta1 = (!do_event_mixing) ? rewinfo_2[!n1][!n2][l*6+0] : rewinfo_2[!n1][!n2][l*6+0];
+		filleta2 = (!do_event_mixing) ? rewinfo_2[!n1][!n2][l*6+0]-photrail_SCeta+pholead_SCeta : rewinfo_1[!n1][!n2][l*6+0];
+		fillpt1 = (!do_event_mixing) ? rewinfo_2[!n1][!n2][l*6+3]-photrail_pt+pholead_pt : rewinfo_2[!n1][!n2][l*6+2];
+		fillpt2 = (!do_event_mixing) ? rewinfo_2[!n1][!n2][l*6+2] : rewinfo_1[!n1][!n2][l*6+2];
+		fillrho = (!do_event_mixing) ? rewinfo_2[!n1][!n2][l*6+4] : rewinfo_1[!n1][!n2][l*6+4]+rewinfo_2[!n1][!n2][l*6+4];
+		fillsigma = (!do_event_mixing) ? rewinfo_2[!n1][!n2][l*6+5] : sqrt(pow(rewinfo_1[!n1][!n2][l*6+5],2)+pow(rewinfo_2[!n1][!n2][l*6+5],2));
 	      }
 	    }
 	    else if (whichnewtemplate==2){
 	      if (!doswap){
 		fill1=(phoiso_1[n1][n2][l]);
 		fill2=(phoiso_2[n1][n2][l]);
-		filleta1=rewinfo_1[n1][n2][l*6+0];
-		filleta2=rewinfo_2[n1][n2][l*6+0]; // not perfect, e' solo uno dei 2
-		fillpt1=rewinfo_1[n1][n2][l*6+2];
-		fillpt2=rewinfo_2[n1][n2][l*6+2];
-		fillrho=(rewinfo_1[n1][n2][l*6+4]+rewinfo_2[n1][n2][l*6+4])/2;
-		fillsigma=sqrt(pow(rewinfo_1[n1][n2][l*6+5],2)+pow(rewinfo_2[n1][n2][l*6+5],2))/sqrt(2);
+		filleta1 = (!do_event_mixing) ? rewinfo_1[n1][n2][l*6+0] : rewinfo_1[n1][n2][l*6+0];
+		filleta2 = (!do_event_mixing) ? rewinfo_2[n1][n2][l*6+0] : rewinfo_2[n1][n2][l*6+0];
+		fillpt1 = (!do_event_mixing) ? rewinfo_1[n1][n2][l*6+2] : rewinfo_1[n1][n2][l*6+2];
+		fillpt2 = (!do_event_mixing) ? rewinfo_2[n1][n2][l*6+2] : rewinfo_2[n1][n2][l*6+2];
+		fillrho = (!do_event_mixing) ? (rewinfo_1[n1][n2][l*6+4]+rewinfo_2[n1][n2][l*6+4])/2 : rewinfo_1[n1][n2][l*6+4]+rewinfo_2[n1][n2][l*6+4];
+		fillsigma = (!do_event_mixing) ? sqrt(pow(rewinfo_1[n1][n2][l*6+5],2)+pow(rewinfo_2[n1][n2][l*6+5],2))/sqrt(2) : sqrt(pow(rewinfo_1[n1][n2][l*6+5],2)+pow(rewinfo_2[n1][n2][l*6+5],2));
 	      }
 	      else {
 		fill1=(phoiso_2[n1][n2][l]);
                 fill2=(phoiso_1[n1][n2][l]);
-		filleta1=rewinfo_2[n1][n2][l*6+0];
-		filleta2=rewinfo_1[n1][n2][l*6+0]; // not perfect, e' solo uno dei 2
-		fillpt1=rewinfo_2[n1][n2][l*6+2];
-		fillpt2=rewinfo_1[n1][n2][l*6+2];
-		fillrho=(rewinfo_1[n1][n2][l*6+4]+rewinfo_2[n1][n2][l*6+4])/2;
-		fillsigma=sqrt(pow(rewinfo_1[n1][n2][l*6+5],2)+pow(rewinfo_2[n1][n2][l*6+5],2))/sqrt(2);
+		filleta1 = (!do_event_mixing) ? rewinfo_2[n1][n2][l*6+0] : rewinfo_2[n1][n2][l*6+0];
+		filleta2 = (!do_event_mixing) ? rewinfo_1[n1][n2][l*6+0] : rewinfo_1[n1][n2][l*6+0];
+		fillpt1 = (!do_event_mixing) ? rewinfo_2[n1][n2][l*6+2] : rewinfo_2[n1][n2][l*6+2];
+		fillpt2 = (!do_event_mixing) ? rewinfo_1[n1][n2][l*6+2] : rewinfo_1[n1][n2][l*6+2];
+		fillrho = (!do_event_mixing) ? (rewinfo_1[n1][n2][l*6+4]+rewinfo_2[n1][n2][l*6+4])/2 : rewinfo_1[n1][n2][l*6+4]+rewinfo_2[n1][n2][l*6+4];
+		fillsigma = (!do_event_mixing) ? sqrt(pow(rewinfo_1[n1][n2][l*6+5],2)+pow(rewinfo_2[n1][n2][l*6+5],2))/sqrt(2) : sqrt(pow(rewinfo_1[n1][n2][l*6+5],2)+pow(rewinfo_2[n1][n2][l*6+5],2));
 	      }
 	    }
 
@@ -800,10 +798,15 @@ void template_production::Loop(int maxevents)
 	    fill1-=fillrho*geteffarea((fabs(filleta1)>1.4442),fabs(filleta1));
 	    fill2-=fillrho*geteffarea((fabs(filleta2)>1.4442),fabs(filleta2));
 
-//	    cout << n1 << n2 << l << " ";
-//	    cout << pholead_SCeta << " " << (!doswap ? filleta1 : filleta2) << " " << (!doswap ? fillpt1 : fillpt2) << " "; 
-//	    cout << photrail_SCeta << " " << (!doswap ? filleta2 : filleta1) << " " << (!doswap ? fillpt2 : fillpt1) << " "; 
-//	    cout << endl;
+	    //	    cout << n1 << n2 << l << " " << doswap << " " ;
+	    float a1 = (!doswap ? filleta1 : filleta2);
+	    float a2 = (!doswap ? fillpt1 : fillpt2);
+	    float b1 = (!doswap ? filleta2 : filleta1);
+	    float b2 = (!doswap ? fillpt2 : fillpt1);
+	    //	    cout << pholead_SCeta << " " << a1 << " " << a2 << " "; 
+	    //	    cout << photrail_SCeta << " " << b1 << " " << b2 << " "; 
+	    if (((fabs(a1)<1.4442)+(fabs(pholead_SCeta)<1.4442)==1) || ((fabs(b1)<1.4442)+(fabs(photrail_SCeta)<1.4442)==1)) cout << "<-------------------------------------------------";
+	    //	    cout << endl;
 
 
 	    if (fill1<=leftrange || fill2<=leftrange) continue;
