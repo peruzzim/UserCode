@@ -276,9 +276,9 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
     inputfilename_d     = "outphoton_allmc_standard_1p1fbothgen_fakeaxis1.root";
   }  
   else if (do_syst_string=="newtemplates") {
-    inputfilename_t2p   = "outphoton_data_sigsig_step2_1event.root";
-    inputfilename_t1p1f = "outphoton_data_sigbkg_step2_1event.root";
-    inputfilename_t2f   = "outphoton_data_bkgbkg_step2_1event.root";
+    inputfilename_t2p   = "outphoton_data_sigsig_step2_2events_ago21.root";
+    inputfilename_t1p1f = "outphoton_data_sigbkg_step2_2events_ago21.root";
+    inputfilename_t2f   = "outphoton_data_bkgbkg_step2_2events_ago21.root";
 //    inputfilename_t2p   = "outphoton_data_sigsig.root";
 //    inputfilename_t1p1f = "outphoton_data_sigbkg.root";
 //    inputfilename_t2f   = "outphoton_data_bkgbkg.root";
@@ -420,7 +420,6 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
   dataset_axis1->Print();
   dataset_axis2->Print();
   
-  if (do_syst_string!="newtemplates"){
     { // rhosigma reweighting
       reweight_rhosigma(&dataset_sigsig,dataset);
       reweight_rhosigma(&dataset_sigbkg,dataset);
@@ -443,7 +442,8 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
       reweight_eta_1d(&dataset_bkg_axis2,dataset_axis2,2);
     }
     
-    if (!(diffvariable=="invmass" && splitting=="EEEE" && bin==14)) { // pt reweighting
+    //    if (!(diffvariable=="invmass" && splitting=="EEEE" && bin==14)) { // pt reweighting
+    {
       //      reweight_pt_2d(&dataset_sigsig,dataset);
       reweight_pt_2d(&dataset_sigbkg,dataset);
       reweight_pt_2d(&dataset_bkgsig,dataset);
@@ -453,7 +453,6 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
       //      reweight_pt_1d(&dataset_sig_axis2,dataset_axis2,2);
       reweight_pt_1d(&dataset_bkg_axis2,dataset_axis2,2);
     }
-  }
 
   /*
     { // validate reweighting
@@ -850,7 +849,6 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
   }
 
   bool islowstatcat = false;
-  /*
   if (diffvariable=="costhetastar" && splitting=="EEEE" && bin==1) islowstatcat=true;
   if (diffvariable=="costhetastar" && splitting=="EEEE" && bin==5) islowstatcat=true;
   if (diffvariable=="costhetastar" && splitting=="EEEE" && bin==6) islowstatcat=true;
@@ -858,7 +856,7 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
   if (diffvariable=="diphotonpt" && splitting=="EEEE" && bin>=16) islowstatcat=true;
   if (diffvariable=="diphotonpt" && splitting=="EEEE" && bin<=4) islowstatcat=true;
   if (diffvariable=="dR" && splitting=="EBEE" && bin==6) islowstatcat=true;
-  */
+  
 
   find_adaptive_binning(dataset,&n_templatebins,templatebinsboundaries+0,1,islowstatcat ? -999 : -1);
 
@@ -1380,7 +1378,7 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
       c1_ub->SaveAs(Form("plots/fittingplot1unbinned_%s_%s_b%d.root",splitting.Data(),diffvariable.Data(),bin));
     } // c1_ub
   
-    return NULL;  
+
   
     RooFormulaVar *fsigsig = new RooFormulaVar("fsigsig","fsigsig","pp",RooArgList(*pp));
     RooFormulaVar *fsigbkg = new RooFormulaVar("fsigbkg","fsigbkg","fsig1-pp",RooArgList(*fsig1,*pp));  
