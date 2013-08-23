@@ -1,4 +1,4 @@
-bool global_doplots = true;
+bool global_doplots = false;
 bool doxcheckstemplates = false;
 bool dolightcomparisonwithstandardselsig = false;
 bool dolightcomparisonwithstandardselbkg = false;
@@ -87,6 +87,8 @@ typedef struct {
   RooAbsPdf *pdf_forgen[8];
   float fsig1_firstpass;
   float fsig2_firstpass;
+  float fsig1_firstpass_err;
+  float fsig2_firstpass_err;
   float chi2;
   int ndof;
   float probchi2;
@@ -102,7 +104,7 @@ void reweight_pt_2d(RooDataSet **dset, RooDataSet *dsetdestination);
 void reweight_pt_1d(RooDataSet **dset, RooDataSet *dsetdestination, int numvar);
 void reweight_eta_2d(RooDataSet **dset, RooDataSet *dsetdestination);
 void reweight_eta_1d(RooDataSet **dset, RooDataSet *dsetdestination, int numvar);
-void reweight_rho(RooDataSet **dset, RooDataSet *dsetdestination, RooPlot *plot);
+void reweight_rho(RooDataSet **dset, RooDataSet *dsetdestination);
 void reweight_sigma(RooDataSet **dset, RooDataSet *dsetdestination);
 void reweight_rhosigma(RooDataSet **dset, RooDataSet *dsetdestination, bool deleteold = kTRUE);
 void validate_reweighting(RooDataSet *dset, RooDataSet *dsetdestination, int numvar);
@@ -276,12 +278,21 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
     inputfilename_d     = "outphoton_allmc_standard_1p1fbothgen_fakeaxis1.root";
   }  
   else if (do_syst_string=="newtemplates") {
+    inputfilename_t2p   = "outphoton_data_sigsig_step2_1event_ago21.root";
+    inputfilename_t1p1f = "outphoton_data_sigbkg_step2_1event_ago21.root";
+    inputfilename_t2f   = "outphoton_data_bkgbkg_step2_2events_ago21.root";
+    inputfilename_d     = "outphoton_data_standard.root";
+  }  
+  else if (do_syst_string=="newtemplates_1event") {
+    inputfilename_t2p   = "outphoton_data_sigsig_step2_1event_ago21.root";
+    inputfilename_t1p1f = "outphoton_data_sigbkg_step2_1event_ago21.root";
+    inputfilename_t2f   = "outphoton_data_bkgbkg_step2_1event_ago21.root";
+    inputfilename_d     = "outphoton_data_standard.root";
+  }  
+  else if (do_syst_string=="newtemplates_2events") {
     inputfilename_t2p   = "outphoton_data_sigsig_step2_2events_ago21.root";
     inputfilename_t1p1f = "outphoton_data_sigbkg_step2_2events_ago21.root";
     inputfilename_t2f   = "outphoton_data_bkgbkg_step2_2events_ago21.root";
-//    inputfilename_t2p   = "outphoton_data_sigsig.root";
-//    inputfilename_t1p1f = "outphoton_data_sigbkg.root";
-//    inputfilename_t2f   = "outphoton_data_bkgbkg.root";
     inputfilename_d     = "outphoton_data_standard.root";
   }  
   else {
@@ -363,7 +374,7 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
   RooDataSet *dataset_bkgbkg_orig = NULL;
   RooDataSet *dataset_orig =        NULL;
 
-  if (do_syst_string!="newtemplates"){
+  if (do_syst_string!="newtemplates" && do_syst_string!="newtemplates_1event" && do_syst_string!="newtemplates_2events"){
     dir_t2p->GetObject(Form("template_roodset_%s_sigsig",splitting.Data()),dataset_sigsig_orig);
     dir_t1p1f->GetObject(Form("template_roodset_%s_sigbkg",splitting.Data()),dataset_sigbkg_orig);
     dir_t1p1f->GetObject(Form("template_roodset_%s_bkgsig",splitting.Data()),dataset_bkgsig_orig);
@@ -420,17 +431,28 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
   dataset_axis1->Print();
   dataset_axis2->Print();
   
-    { // rhosigma reweighting
+  
+  if (do_syst_string!="newtemplates_2events") { // rhosigma reweighting
       reweight_rhosigma(&dataset_sigsig,dataset);
       reweight_rhosigma(&dataset_sigbkg,dataset);
       reweight_rhosigma(&dataset_bkgsig,dataset);
-      reweight_rhosigma(&dataset_bkgbkg,dataset);
+      if (do_syst_string=="newtemplates") reweight_rho(&dataset_bkgbkg,dataset); else reweight_rhosigma(&dataset_bkgbkg,dataset);
       reweight_rhosigma(&dataset_sig_axis1,dataset_axis1);
       reweight_rhosigma(&dataset_bkg_axis1,dataset_axis1);
       reweight_rhosigma(&dataset_sig_axis2,dataset_axis2);
       reweight_rhosigma(&dataset_bkg_axis2,dataset_axis2);
-    }
-    
+  }
+  else {
+      reweight_rho(&dataset_sigsig,dataset);
+      reweight_rho(&dataset_sigbkg,dataset);
+      reweight_rho(&dataset_bkgsig,dataset);
+      reweight_rho(&dataset_bkgbkg,dataset);
+      reweight_rho(&dataset_sig_axis1,dataset_axis1);
+      reweight_rho(&dataset_bkg_axis1,dataset_axis1);
+      reweight_rho(&dataset_sig_axis2,dataset_axis2);
+      reweight_rho(&dataset_bkg_axis2,dataset_axis2);
+  } 
+
     { // eta reweighting
       reweight_eta_2d(&dataset_sigsig,dataset);
       reweight_eta_2d(&dataset_sigbkg,dataset);
@@ -453,8 +475,8 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
       //      reweight_pt_1d(&dataset_sig_axis2,dataset_axis2,2);
       reweight_pt_1d(&dataset_bkg_axis2,dataset_axis2,2);
     }
-
-  /*
+  
+    /*
     { // validate reweighting
     validate_reweighting(dataset_sigsig,dataset,1);
     validate_reweighting(dataset_sigbkg,dataset,1);
@@ -469,7 +491,7 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
     validate_reweighting(dataset_sig_axis2,dataset_axis2,2);
     validate_reweighting(dataset_bkg_axis2,dataset_axis2,2);
     }
-  */
+    */
 
 
 
@@ -1279,6 +1301,11 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
     firstpass = minuit_firstpass->save("firstpass","firstpass");
     firstpass->Print();
 
+    out->fsig1_firstpass=fsig1->getVal();
+    out->fsig2_firstpass=fsig2->getVal();
+    out->fsig1_firstpass_err=fsig1->getPropagatedError(*firstpass);
+    out->fsig2_firstpass_err=fsig2->getPropagatedError(*firstpass);
+
 
     /*
       ofstream myfile;
@@ -1466,8 +1493,6 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
     out->fp_err=fbkgsig->getPropagatedError(*secondpass);
     out->ff=fbkgbkg->getVal();
     out->ff_err=fbkgbkg->getPropagatedError(*secondpass);
-    out->fsig1_firstpass=fsig1->getVal();
-    out->fsig2_firstpass=fsig2->getVal();
 
     std::cout << "RAW YIELD " << out->pp*out->tot_events/out->eff_overflow_removal_pp << std::endl;
 
@@ -2101,11 +2126,11 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
 
   }
 
-  bool writeoutpurity = (do_syst_string==TString("") || do_syst_string==TString("doMCfulldriven") || do_syst_string==TString("newtemplates"));
+  bool writeoutpurity = (do_syst_string==TString("") || do_syst_string==TString("doMCfulldriven") || do_syst_string==TString("newtemplates") || do_syst_string==TString("newtemplates_1event") || do_syst_string==TString("newtemplates_2events"));
 
   if (writeoutpurity){
 
-    TH1F *purity[4];
+    TH1F *purity[6];
     TH1F *eventshisto;
     TH1F *redchi2;
     TH1F *probchi2;
@@ -2121,13 +2146,13 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
 
     std::cout << "Output histos created" << std::endl;
 
-    int colors[4] = {kRed, kGreen, kCyan, kBlack};
+    int colors[6] = {kRed, kGreen, kCyan, kBlack, kBlue, kMagenta};
     
-    for (int i=0; i<4; i++){
+    for (int i=0; i<6; i++){
       TString name = "purity_";
       TString title = Form("Purity - %s category",splitting.Data());
       if (do_syst_string==TString("templateshapeMCpromptdrivenEB") || do_syst_string==TString("templateshapeMCfakedrivenEB") || do_syst_string==TString("templateshapeMCpromptdrivenEE") || do_syst_string==TString("templateshapeMCfakedrivenEE") || do_syst_string==TString("templateshapeMCfulldriven") || do_syst_string==TString("subtractionZee") || do_syst_string==TString("templateshape2frag")) {name+=do_syst_string; name.Append("_");}
-      if (i==0) name.Append("sigsig"); else if (i==1) name.Append("sigbkg"); else if (i==2) name.Append("bkgsig"); else if (i==3) name.Append("bkgbkg");
+      if (i==0) name.Append("sigsig"); else if (i==1) name.Append("sigbkg"); else if (i==2) name.Append("bkgsig"); else if (i==3) name.Append("bkgbkg"); else if (i==4) name.Append("fsig1"); else if (i==5) name.Append("fsig2");
       if (bins_to_run>0) purity[i] = new TH1F(name.Data(),title.Data(),bins_to_run,binsdef);
       else purity[i] = new TH1F(name.Data(),title.Data(),n_bins,0,n_bins);
       purity[i]->SetMarkerStyle(20);
@@ -2150,6 +2175,10 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
     purity[2]->SetBinError((bin!=n_bins) ? bin+1 : 1,out->fp_err);
     purity[3]->SetBinContent((bin!=n_bins) ? bin+1 : 1,out->ff);
     purity[3]->SetBinError((bin!=n_bins) ? bin+1 : 1,out->ff_err);
+    purity[4]->SetBinContent((bin!=n_bins) ? bin+1 : 1,out->fsig1_firstpass);
+    purity[4]->SetBinError((bin!=n_bins) ? bin+1 : 1,out->fsig1_firstpass_err);
+    purity[5]->SetBinContent((bin!=n_bins) ? bin+1 : 1,out->fsig2_firstpass);
+    purity[5]->SetBinError((bin!=n_bins) ? bin+1 : 1,out->fsig2_firstpass_err);
     eventshisto->SetBinContent((bin!=n_bins) ? bin+1 : 1,out->tot_events);
     redchi2->SetBinContent((bin!=n_bins) ? bin+1 : 1, out->chi2/out->ndof);
     probchi2->SetBinContent((bin!=n_bins) ? bin+1 : 1, out->probchi2);
@@ -2164,7 +2193,7 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
     
     TFile *purityfile = new TFile(Form("plots/histo_purity_%s%s_%s_b%d.root",helper.Data(),diffvariable.Data(),splitting.Data(),bin),"recreate");
     purityfile->cd();
-    for (int i=0; i<4; i++) purity[i]->Write();
+    for (int i=0; i<6; i++) purity[i]->Write();
     eventshisto->Write();
     overflowremovaleffhisto->Write();
     redchi2->Write();
@@ -3652,7 +3681,7 @@ void reweight_sigma(RooDataSet **dset, RooDataSet *dsetdestination){
 
 };
 
-void reweight_rho(RooDataSet **dset, RooDataSet *dsetdestination, RooPlot *plot){
+void reweight_rho(RooDataSet **dset, RooDataSet *dsetdestination){
 
   TH1F *hnum = new TH1F("hnum","hnum",30,0,30);
   TH1F *hden = new TH1F("hden","hden",30,0,30);
@@ -3672,14 +3701,6 @@ void reweight_rho(RooDataSet **dset, RooDataSet *dsetdestination, RooPlot *plot)
   hnum->Divide(hden);
   TH1F *h = hnum;
 
-
-
-  RooPlot *p = plot;
-  if (plot){
-    (*dset)->plotOn(p);
-    dsetdestination->plotOn(p,MarkerColor(kBlue));
-  }
-
   RooDataSet *newdset = new RooDataSet(**dset,Form("%s_rhorew",(*dset)->GetName()));
   newdset->reset();
   for (int i=0; i<(*dset)->numEntries(); i++){
@@ -3691,8 +3712,6 @@ void reweight_rho(RooDataSet **dset, RooDataSet *dsetdestination, RooPlot *plot)
     newdset->add(args,neww);
   }
 
-
-
   newdset->SetName((*dset)->GetName());
   newdset->SetTitle((*dset)->GetTitle());
 
@@ -3701,10 +3720,7 @@ void reweight_rho(RooDataSet **dset, RooDataSet *dsetdestination, RooPlot *plot)
   RooDataSet *old_dset = *dset;
   *dset=newdset;
   std::cout << "Rho reweighted: Norm from " << old_dset->sumEntries() << " to " << newdset->sumEntries() << std::endl;
-  std::cout << "Rho moving " << old_dset->mean(*roorho) << " " << newdset->mean(*roorho)  << std::endl;
   delete old_dset;
-
-  if (plot)  (*dset)->plotOn(p,MarkerColor(kRed));
 
 };
 
