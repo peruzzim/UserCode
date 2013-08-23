@@ -1,4 +1,4 @@
-bool global_doplots = false;
+bool global_doplots = true;
 bool doxcheckstemplates = false;
 bool dolightcomparisonwithstandardselsig = false;
 bool dolightcomparisonwithstandardselbkg = false;
@@ -109,6 +109,7 @@ void reweight_sigma(RooDataSet **dset, RooDataSet *dsetdestination);
 void reweight_rhosigma(RooDataSet **dset, RooDataSet *dsetdestination, bool deleteold = kTRUE);
 void validate_reweighting(RooDataSet *dset, RooDataSet *dsetdestination, int numvar);
 void plot_datasets_axis1(std::vector<plot_dataset_struct> dsets, TString outname, TString legtitle, bool legendup=true, bool dolin=false);
+void plot_datasets_2D(std::vector<plot_dataset_struct> dsets, TString outname, TString legtitle, bool legendup, bool dolin=true);
 void plot_template_dependency_axis1(RooDataSet *dset, TString variable, float min, float max, int bins, bool dobinned=0);
 void produce_category_binning(RooDataSet **dset, bool deleteold=kTRUE);
 void randomize_dataset_statistically_binned(RooDataSet **dset);
@@ -280,7 +281,12 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
   else if (do_syst_string=="newtemplates") {
     inputfilename_t2p   = "outphoton_data_sigsig_step2_1event_ago21.root";
     inputfilename_t1p1f = "outphoton_data_sigbkg_step2_1event_ago21.root";
-    inputfilename_t2f   = "outphoton_data_bkgbkg_step2_2events_ago21.root";
+    if ( (diffvariable=="invmass" && bin<=1) \
+	 || (diffvariable=="diphotonpt" && bin>=14) \
+	 || (diffvariable=="dphi" && bin<=1) ){
+      inputfilename_t2f   = "outphoton_data_bkgbkg_step2_2events_ago21.root";
+    }
+    else inputfilename_t2f   = "outphoton_data_bkgbkg_step2_1event_ago21.root";
     inputfilename_d     = "outphoton_data_standard.root";
   }  
   else if (do_syst_string=="newtemplates_1event") {
@@ -493,8 +499,23 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
     }
     */
 
-
-
+//    plot_dataset_struct pl[4];
+//    pl[0].dset=dataset_sigsig;
+//    pl[0].legend=TString("SIGSIG");
+//    pl[0].color=kRed;
+//    pl[1].dset=dataset_sigbkg;
+//    pl[1].legend=TString("SIGBKG");
+//    pl[1].color=kGreen;
+//    pl[2].dset=dataset_bkgsig;
+//    pl[2].legend=TString("BKGSIG");
+//    pl[2].color=kCyan;
+//    pl[3].dset=dataset_bkgbkg;
+//    pl[3].legend=TString("BKGBKG");
+//    pl[3].color=kBlack;
+//    std::vector<plot_dataset_struct> plvec;
+//    for (int i=0; i<4; i++) plvec.push_back(pl[i]);
+//    plot_datasets_2D(plvec,"2Dcomp","2Dcomp",false);
+//    return NULL;
 
   RooDataSet *dset_mctrue_s = NULL;
   RooDataSet *dset_mcfrag_s = NULL;
@@ -872,9 +893,8 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
 
   bool islowstatcat = false;
   if (diffvariable=="costhetastar" && splitting=="EEEE" && bin==1) islowstatcat=true;
-  if (diffvariable=="costhetastar" && splitting=="EEEE" && bin==5) islowstatcat=true;
-  if (diffvariable=="costhetastar" && splitting=="EEEE" && bin==6) islowstatcat=true;
-  if (diffvariable=="invmass" && bin>=13) islowstatcat=true;
+  if (diffvariable=="costhetastar" && splitting=="EEEE" && bin>=4) islowstatcat=true;
+  if (diffvariable=="invmass" && bin>=12) islowstatcat=true;
   if (diffvariable=="diphotonpt" && splitting=="EEEE" && bin>=16) islowstatcat=true;
   if (diffvariable=="diphotonpt" && splitting=="EEEE" && bin<=4) islowstatcat=true;
   if (diffvariable=="dR" && splitting=="EBEE" && bin==6) islowstatcat=true;
@@ -2455,7 +2475,7 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
 
   bool skipZsubtraction = skipsystematics;
 
-  skipZsubtraction = false; // DEBUG: force Z subtraciton on
+  //  skipZsubtraction = false; // for debug
 
   if (!skipZsubtraction){
     file_standardsel_dy = new TFile("outphoton_dy_standard.root");
@@ -3835,6 +3855,81 @@ void validate_reweighting(RooDataSet *dset, RooDataSet *dsetdestination, int num
 //  }
 
 };
+
+void plot_datasets_2D(std::vector<plot_dataset_struct> dsets, TString outname, TString legtitle, bool legendup, bool dolin){
+
+  const char* varname1 = "roovar1";
+  const char* varname2 = "roovar2";
+  const int ndsets = (int)(dsets.size());
+
+  TH2F *h[100];
+
+  for (int j=0; j<ndsets; j++){
+    h[j] = new TH2F(Form("histo_%d_2D",j),Form("histo_%d_2D",j),n_histobins,leftrange,rightrange,n_histobins,leftrange,rightrange);
+    h[j]->Sumw2();
+    for (int i=0; i<(dsets[j].dset)->numEntries(); i++) h[j]->Fill((dsets[j].dset)->get(i)->getRealValue(varname1),(dsets[j].dset)->get(i)->getRealValue(varname2),(dsets[j].dset)->store()->weight(i));
+    h[j]->Scale(1.0/h[j]->Integral());
+    h[j]->SetLineWidth(2);
+    h[j]->SetLineColor(dsets[j].color);
+    h[j]->SetMarkerColor(dsets[j].color);
+    h[j]->SetTitle("");
+    //    if (legdata.leg[j].Index("data",4)!=kNPOS) h[j]->SetMarkerStyle(20);
+    h[j]->SetMarkerStyle(kFullCircle);
+    if (dsets[j].legend.Index("left",4)!=kNPOS) h[j]->SetMarkerStyle(kOpenTriangleUp);
+    if (dsets[j].legend.Index("right",5)!=kNPOS) h[j]->SetMarkerStyle(kOpenSquare);
+    h[j]->SetStats(0);
+    h[j]->GetXaxis()->SetTitle("Photon1 PFIso (GeV)");
+    h[j]->GetYaxis()->SetTitle("Photon2 PFIso (GeV)");
+    //    h[j]->GetXaxis()->SetRangeUser(0,6);
+//    for (int j1=0; j1<n_histobins; j1++){
+//      for(int j2=0; j2<n_histobins; j2++){
+//	if (h[j]->GetBinContent(j1+1,j2+1)<0.002) h[j]->SetBinContent(j1+1,j2+1,0);
+//      }
+//    }
+
+  }
+
+  TCanvas *comp = new TCanvas("shape_comparison");
+
+  float max=0;
+  for (int j=0; j<ndsets; j++){
+    float thismax = h[j]->GetBinContent(h[j]->GetMaximumBin());
+    max = (thismax>max) ? thismax : max;
+  }
+  h[0]->GetZaxis()->SetRangeUser(TMath::Max(h[0]->GetMinimum(),1e-4),max*1.05);
+
+  if (!dolin) comp->SetLogz(1);
+
+  h[0]->GetZaxis()->SetTitle("a.u.");
+  h[0]->Draw("LEGO1 0");
+  for (int j=1; j<ndsets; j++) h[j]->Draw("SAME LEGO1 0");
+  h[0]->Draw("SAME LEGO1 0");
+
+//  TLegend *leg = (legendup) ? new TLegend(0.6,0.7,0.9,0.9,legtitle.Data()) : new TLegend(0.6,0.15,0.9,0.35,legtitle.Data());
+//  leg->SetFillColor(kWhite);
+//
+//  for (int j=0; j<ndsets; j++) {
+////    if (legdata.leg[j].Index("data",4)!=kNPOS) leg->AddEntry(h[j],legdata.leg[j].Data(),"p");
+////    else leg->AddEntry(h[j],legdata.leg[j].Data(),"lp");
+//      leg->AddEntry(h[j],dsets[j].legend.Data(),"lp");
+//  }
+//  leg->Draw();
+//
+//  TLatex a;
+//  a.SetNDC();
+//  a.SetTextSize(0.03);
+//  if (legendup)  a.DrawLatex(0.63,0.6,"#splitline{CMS Preliminary}{#sqrt{s} = 7 TeV L = 5.0 fb^{-1}}");
+//  else a.DrawLatex(0.63,0.85,"#splitline{CMS Preliminary}{#sqrt{s} = 7 TeV L = 5.0 fb^{-1}}");
+//
+
+  comp->SaveAs(Form("%s.%s",outname.Data(),"root"));
+  comp->SaveAs(Form("%s.%s",outname.Data(),"pdf"));
+  comp->SaveAs(Form("%s.%s",outname.Data(),"png"));
+
+
+
+
+}
 
 void plot_datasets_axis1(std::vector<plot_dataset_struct> dsets, TString outname, TString legtitle, bool legendup, bool dolin){
 
