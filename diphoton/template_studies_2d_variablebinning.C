@@ -1,4 +1,4 @@
-bool global_doplots = true;
+bool global_doplots = false;
 bool doxcheckstemplates = false;
 bool dolightcomparisonwithstandardselsig = false;
 bool dolightcomparisonwithstandardselbkg = false;
@@ -379,24 +379,17 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
   RooDataSet *dataset_sigbkg_orig = NULL;
   RooDataSet *dataset_bkgsig_orig = NULL;
   RooDataSet *dataset_bkgbkg_orig = NULL;
-  RooDataSet *dataset_orig =        NULL;
+  RooDataSet *dataset_orig        = NULL;
 
-  if (do_syst_string!="" && do_syst_string!="newtemplates_1event" && do_syst_string!="newtemplates_2events"){
-    dir_t2p->GetObject(Form("template_roodset_%s_sigsig",splitting.Data()),dataset_sigsig_orig);
-    dir_t1p1f->GetObject(Form("template_roodset_%s_sigbkg",splitting.Data()),dataset_sigbkg_orig);
-    dir_t1p1f->GetObject(Form("template_roodset_%s_bkgsig",splitting.Data()),dataset_bkgsig_orig);
-    dir_t2f->GetObject(Form("template_roodset_%s_bkgbkg",splitting.Data()),dataset_bkgbkg_orig);
-  }
-  else {
-    dir_t2p->GetObject(Form("newtempl_roodset_%s_%s_b%d_sigsig",splitting.Data(),diffvariable.Data(),bin),dataset_sigsig_orig);
-    dir_t1p1f->GetObject(Form("newtempl_roodset_%s_%s_b%d_sigbkg",splitting.Data(),diffvariable.Data(),bin),dataset_sigbkg_orig);
-    dir_t1p1f->GetObject(Form("newtempl_roodset_%s_%s_b%d_bkgsig",splitting.Data(),diffvariable.Data(),bin),dataset_bkgsig_orig);
-    dir_t2f->GetObject(Form("newtempl_roodset_%s_%s_b%d_bkgbkg",splitting.Data(),diffvariable.Data(),bin),dataset_bkgbkg_orig);
-//    dir_t2p->GetObject(Form("template_roodset_%s_sigsig",splitting.Data()),dataset_sigsig_orig);
-//    dir_t1p1f->GetObject(Form("template_roodset_%s_sigbkg",splitting.Data()),dataset_sigbkg_orig);
-//    dir_t1p1f->GetObject(Form("template_roodset_%s_bkgsig",splitting.Data()),dataset_bkgsig_orig);
-//    dir_t2f->GetObject(Form("template_roodset_%s_bkgbkg",splitting.Data()),dataset_bkgbkg_orig);
-  }
+  dir_t2p->GetObject(Form("newtempl_roodset_%s_%s_b%d_sigsig",splitting.Data(),diffvariable.Data(),bin),dataset_sigsig_orig);
+  dir_t1p1f->GetObject(Form("newtempl_roodset_%s_%s_b%d_sigbkg",splitting.Data(),diffvariable.Data(),bin),dataset_sigbkg_orig);
+  dir_t1p1f->GetObject(Form("newtempl_roodset_%s_%s_b%d_bkgsig",splitting.Data(),diffvariable.Data(),bin),dataset_bkgsig_orig);
+  dir_t2f->GetObject(Form("newtempl_roodset_%s_%s_b%d_bkgbkg",splitting.Data(),diffvariable.Data(),bin),dataset_bkgbkg_orig);
+  if (dataset_sigsig_orig == NULL) dir_t2p->GetObject(Form("template_roodset_%s_sigsig",splitting.Data()),dataset_sigsig_orig);
+  if (dataset_sigbkg_orig == NULL) dir_t1p1f->GetObject(Form("template_roodset_%s_sigbkg",splitting.Data()),dataset_sigbkg_orig);
+  if (dataset_bkgsig_orig == NULL) dir_t1p1f->GetObject(Form("template_roodset_%s_bkgsig",splitting.Data()),dataset_bkgsig_orig);
+  if (dataset_bkgbkg_orig == NULL) dir_t2f->GetObject(Form("template_roodset_%s_bkgbkg",splitting.Data()),dataset_bkgbkg_orig);
+
   dir_d->GetObject(Form("obs_roodset_%s_%s_b%d",splitting.Data(),diffvariable.Data(),bin),dataset_orig);
   assert(dataset_sigsig_orig);
   assert(dataset_sigbkg_orig);
@@ -964,7 +957,7 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
 
 
   int times_to_run = 1;
-  const int ntoys = 10;
+  const int ntoys = 500;
 
   std::vector<fit_output*> do_syst_templatestatistics_outputvector;
   std::vector<fit_output*> do_syst_purefitbias_outputvector;
