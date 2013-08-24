@@ -276,18 +276,7 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
     inputfilename_t2p   = "outphoton_allmc_sigsig.root";
     inputfilename_t1p1f = "outphoton_allmc_sigbkg.root";
     inputfilename_t2f   = "outphoton_allmc_bkgbkg.root";
-    inputfilename_d     = "outphoton_allmc_standard_1p1fbothgen_fakeaxis1.root";
-  }  
-  else if (do_syst_string=="newtemplates") {
-    inputfilename_t2p   = "outphoton_data_sigsig_step2_1event_ago21.root";
-    inputfilename_t1p1f = "outphoton_data_sigbkg_step2_1event_ago21.root";
-    if ( (diffvariable=="invmass" && bin<=1) \
-	 || (diffvariable=="diphotonpt" && bin>=14) \
-	 || (diffvariable=="dphi" && bin<=1) ){
-      inputfilename_t2f   = "outphoton_data_bkgbkg_step2_2events_ago21.root";
-    }
-    else inputfilename_t2f   = "outphoton_data_bkgbkg_step2_1event_ago21.root";
-    inputfilename_d     = "outphoton_data_standard.root";
+    inputfilename_d     = "outphoton_allmc_standard.root";
   }  
   else if (do_syst_string=="newtemplates_1event") {
     inputfilename_t2p   = "outphoton_data_sigsig_step2_1event_ago21.root";
@@ -301,10 +290,21 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
     inputfilename_t2f   = "outphoton_data_bkgbkg_step2_2events_ago21.root";
     inputfilename_d     = "outphoton_data_standard.root";
   }  
-  else {
+  else if (do_syst_string=="oldtemplates"){
     inputfilename_t2p   = "outphoton_data_sigsig.root";
     inputfilename_t1p1f = "outphoton_data_sigbkg.root";
     inputfilename_t2f   = "outphoton_data_bkgbkg.root";
+    inputfilename_d     = "outphoton_data_standard.root";
+  }  
+  else {
+    inputfilename_t2p   = "outphoton_data_sigsig_step2_1event_ago21.root";
+    inputfilename_t1p1f = "outphoton_data_sigbkg_step2_1event_ago21.root";
+    if ( (diffvariable=="invmass" && bin<=1) \
+	 || (diffvariable=="diphotonpt" && bin>=14) \
+	 || (diffvariable=="dphi" && bin<=1) ){
+      inputfilename_t2f   = "outphoton_data_bkgbkg_step2_2events_ago21.root";
+    }
+    else inputfilename_t2f   = "outphoton_data_bkgbkg_step2_1event_ago21.root";
     inputfilename_d     = "outphoton_data_standard.root";
   }  
 
@@ -380,7 +380,7 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
   RooDataSet *dataset_bkgbkg_orig = NULL;
   RooDataSet *dataset_orig =        NULL;
 
-  if (do_syst_string!="newtemplates" && do_syst_string!="newtemplates_1event" && do_syst_string!="newtemplates_2events"){
+  if (do_syst_string!="" && do_syst_string!="newtemplates_1event" && do_syst_string!="newtemplates_2events"){
     dir_t2p->GetObject(Form("template_roodset_%s_sigsig",splitting.Data()),dataset_sigsig_orig);
     dir_t1p1f->GetObject(Form("template_roodset_%s_sigbkg",splitting.Data()),dataset_sigbkg_orig);
     dir_t1p1f->GetObject(Form("template_roodset_%s_bkgsig",splitting.Data()),dataset_bkgsig_orig);
@@ -437,18 +437,8 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
   dataset_axis1->Print();
   dataset_axis2->Print();
   
-  
-  if (do_syst_string!="newtemplates_2events") { // rhosigma reweighting
-      reweight_rhosigma(&dataset_sigsig,dataset);
-      reweight_rhosigma(&dataset_sigbkg,dataset);
-      reweight_rhosigma(&dataset_bkgsig,dataset);
-      if (do_syst_string=="newtemplates") reweight_rho(&dataset_bkgbkg,dataset); else reweight_rhosigma(&dataset_bkgbkg,dataset);
-      reweight_rhosigma(&dataset_sig_axis1,dataset_axis1);
-      reweight_rhosigma(&dataset_bkg_axis1,dataset_axis1);
-      reweight_rhosigma(&dataset_sig_axis2,dataset_axis2);
-      reweight_rhosigma(&dataset_bkg_axis2,dataset_axis2);
-  }
-  else {
+
+  if (do_syst_string=="newtemplates_2events"){
       reweight_rho(&dataset_sigsig,dataset);
       reweight_rho(&dataset_sigbkg,dataset);
       reweight_rho(&dataset_bkgsig,dataset);
@@ -457,7 +447,38 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
       reweight_rho(&dataset_bkg_axis1,dataset_axis1);
       reweight_rho(&dataset_sig_axis2,dataset_axis2);
       reweight_rho(&dataset_bkg_axis2,dataset_axis2);
-  } 
+  }
+  else if (do_syst_string=="newtemplates_1event"){
+      reweight_rhosigma(&dataset_sigsig,dataset);
+      reweight_rhosigma(&dataset_sigbkg,dataset);
+      reweight_rhosigma(&dataset_bkgsig,dataset);
+      reweight_rhosigma(&dataset_bkgbkg,dataset);
+      reweight_rhosigma(&dataset_sig_axis1,dataset_axis1);
+      reweight_rhosigma(&dataset_bkg_axis1,dataset_axis1);
+      reweight_rhosigma(&dataset_sig_axis2,dataset_axis2);
+      reweight_rhosigma(&dataset_bkg_axis2,dataset_axis2);
+  }
+  else if (do_syst_string==""){
+      reweight_rhosigma(&dataset_sigsig,dataset);
+      reweight_rhosigma(&dataset_sigbkg,dataset);
+      reweight_rhosigma(&dataset_bkgsig,dataset);
+      reweight_rho(&dataset_bkgbkg,dataset);
+      reweight_rhosigma(&dataset_sig_axis1,dataset_axis1);
+      reweight_rhosigma(&dataset_bkg_axis1,dataset_axis1);
+      reweight_rhosigma(&dataset_sig_axis2,dataset_axis2);
+      reweight_rhosigma(&dataset_bkg_axis2,dataset_axis2);
+
+  }
+  else {
+      reweight_rhosigma(&dataset_sigsig,dataset);
+      reweight_rhosigma(&dataset_sigbkg,dataset);
+      reweight_rhosigma(&dataset_bkgsig,dataset);
+      reweight_rhosigma(&dataset_bkgbkg,dataset);
+      reweight_rhosigma(&dataset_sig_axis1,dataset_axis1);
+      reweight_rhosigma(&dataset_bkg_axis1,dataset_axis1);
+      reweight_rhosigma(&dataset_sig_axis2,dataset_axis2);
+      reweight_rhosigma(&dataset_bkg_axis2,dataset_axis2);
+  }
 
     { // eta reweighting
       reweight_eta_2d(&dataset_sigsig,dataset);
@@ -2147,7 +2168,7 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
 
   }
 
-  bool writeoutpurity = (do_syst_string==TString("") || do_syst_string==TString("doMCfulldriven") || do_syst_string==TString("newtemplates") || do_syst_string==TString("newtemplates_1event") || do_syst_string==TString("newtemplates_2events"));
+  bool writeoutpurity = (do_syst_string==TString("") || do_syst_string==TString("doMCfulldriven") || do_syst_string==TString("oldtemplates") || do_syst_string==TString("newtemplates_1event") || do_syst_string==TString("newtemplates_2events"));
 
   if (writeoutpurity){
 
