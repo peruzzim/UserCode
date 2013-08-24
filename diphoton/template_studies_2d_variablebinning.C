@@ -109,16 +109,17 @@ void reweight_sigma(RooDataSet **dset, RooDataSet *dsetdestination);
 void reweight_rhosigma(RooDataSet **dset, RooDataSet *dsetdestination, bool deleteold = kTRUE);
 void validate_reweighting(RooDataSet *dset, RooDataSet *dsetdestination, int numvar);
 void plot_datasets_axis1(std::vector<plot_dataset_struct> dsets, TString outname, TString legtitle, bool legendup=true, bool dolin=false);
-void plot_datasets_2D(std::vector<plot_dataset_struct> dsets, TString outname, TString legtitle, bool legendup, bool dolin=true, bool binned=false);
+void plot_datasets_2D(std::vector<plot_dataset_struct> dsets, TString outname, bool dolin=true, bool binned=false);
 void plot_template_dependency_axis1(RooDataSet *dset, TString variable, float min, float max, int bins, bool dobinned=0);
 void produce_category_binning(RooDataSet **dset, bool deleteold=kTRUE);
-void randomize_dataset_statistically_binned(RooDataSet **dset);
+void randomize_dataset_statistically_binned(RooDataSet **dset, int whichrandomize_forcorrfactor);
 void create_histo_from_dataset_binned(RooDataSet *dset, TH1F **h1out, TH2F **h2out);
 void create_histo_from_dataset_variablebins(RooDataSet *dset, TH1F **h1out, TH2F **h2out);
 //void generate_toy_dataset_1d(RooDataSet **target, RooAbsPdf *sigpdf, RooAbsPdf *bkgpdf, float fsig1toy);
 void generate_toy_dataset_2d(RooDataSet **target, RooAbsPdf *sigsigpdf, RooAbsPdf *sigbkgpdf, RooAbsPdf *bkgsigpdf, RooAbsPdf *bkgbkgpdf, float pptoy, float pftoy, float fptoy);
 void print_mem();
 void find_adaptive_binning(RooDataSet *dset, int *n_found_bins, Double_t *array_bounds, int axis=-1, float threshold = default_threshold_adaptive_binning);
+float find_repetition_eventsintemplates(RooDataSet *dset, int axis);
 
 TH1F* AddTHInQuadrature(std::vector<TH1F*> vector, TString name);
 
@@ -458,7 +459,7 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
       reweight_rhosigma(&dataset_sig_axis2,dataset_axis2);
       reweight_rhosigma(&dataset_bkg_axis2,dataset_axis2);
   }
-  else if (do_syst_string==""){
+  else if (do_syst_string=="" || do_syst_string=="data_donotwriteoutpurity"){
       reweight_rhosigma(&dataset_sigsig,dataset);
       reweight_rhosigma(&dataset_sigbkg,dataset);
       reweight_rhosigma(&dataset_bkgsig,dataset);
@@ -957,7 +958,7 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
 //  pl[3].color=kBlack;
 //  std::vector<plot_dataset_struct> plvec;
 //  for (int i=0; i<4; i++) plvec.push_back(pl[i]);
-//  plot_datasets_2D(plvec,"2Dcomp","2Dcomp",false,true,true);
+//  plot_datasets_2D(plvec,"2Dcomp",true,true);
 //  return NULL;
 
 
@@ -1027,14 +1028,14 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
       if (do_syst_string==TString("templatestatistics")){
 
 	if (runcount==0) datafr = fit_dataset(diffvariable.Data(),splitting.Data(),bin,"data_donotwriteoutpurity");
-	randomize_dataset_statistically_binned(&dataset_sigsig);
-	randomize_dataset_statistically_binned(&dataset_sigbkg);
-	randomize_dataset_statistically_binned(&dataset_bkgsig);
-	randomize_dataset_statistically_binned(&dataset_bkgbkg);
-	randomize_dataset_statistically_binned(&dataset_sig_axis1);
-	randomize_dataset_statistically_binned(&dataset_bkg_axis1);
-	randomize_dataset_statistically_binned(&dataset_sig_axis2);
-	randomize_dataset_statistically_binned(&dataset_bkg_axis2);	
+	randomize_dataset_statistically_binned(&dataset_sigsig,-1);
+	randomize_dataset_statistically_binned(&dataset_sigbkg,2);
+	randomize_dataset_statistically_binned(&dataset_bkgsig,1);
+	randomize_dataset_statistically_binned(&dataset_bkgbkg,1);
+	randomize_dataset_statistically_binned(&dataset_sig_axis1,-1);
+	randomize_dataset_statistically_binned(&dataset_bkg_axis1,1);
+	randomize_dataset_statistically_binned(&dataset_sig_axis2,-1);
+	randomize_dataset_statistically_binned(&dataset_bkg_axis2,2);
 
       }
 	
@@ -3879,7 +3880,7 @@ void validate_reweighting(RooDataSet *dset, RooDataSet *dsetdestination, int num
 };
 
 
-void plot_datasets_2D(std::vector<plot_dataset_struct> dsets, TString outname, TString legtitle, bool legendup, bool dolin, bool binned){
+void plot_datasets_2D(std::vector<plot_dataset_struct> dsets, TString outname, bool dolin, bool binned){
 
   const char* varname1 = (!binned) ? "roovar1" : "binning_roovar1";
   const char* varname2 = (!binned) ? "roovar2" : "binning_roovar2";
@@ -4090,7 +4091,7 @@ void produce_category_binning(RooDataSet **dset, bool deleteold){
 
 };
 
-void randomize_dataset_statistically_binned(RooDataSet **dset){
+void randomize_dataset_statistically_binned(RooDataSet **dset, int whichrandomize_forcorrfactor){
 
   bool plot = false; 
 
@@ -4106,6 +4107,7 @@ void randomize_dataset_statistically_binned(RooDataSet **dset){
   else code=2;
   assert (code>0);
 
+  float corr_factor = (whichrandomize_forcorrfactor>0) ? sqrt(find_repetition_eventsintemplates(*dset,whichrandomize_forcorrfactor)) : 1;
 
   TH1F *hnum1d = new TH1F("hnum1d","hnum1d",n_templatebins,0.5,0.5+n_templatebins);
   TH1F *hden1d = NULL;
@@ -4120,7 +4122,7 @@ void randomize_dataset_statistically_binned(RooDataSet **dset){
   if (code==3){  
     for (int i=0; i<hden2d->GetNbinsX()+1; i++)
       for (int j=0; j<hden2d->GetNbinsY()+1; j++){
-	hnum2d->SetBinContent(i,j,hden2d->GetBinContent(i,j)+hden2d->GetBinError(i,j)*_random_generator->Gaus());
+	hnum2d->SetBinContent(i,j,hden2d->GetBinContent(i,j)+hden2d->GetBinError(i,j)*corr_factor*_random_generator->Gaus());
 	if (hnum2d->GetBinContent(i,j)<0) hnum2d->SetBinContent(i,j,0);
 	hnum2d->SetBinError(i,j,0);
       }
@@ -4134,7 +4136,7 @@ void randomize_dataset_statistically_binned(RooDataSet **dset){
   }
   else {
     for (int i=0; i<hden1d->GetNbinsX()+1; i++){
-      hnum1d->SetBinContent(i,hden1d->GetBinContent(i)+hden1d->GetBinError(i)*_random_generator->Gaus());
+      hnum1d->SetBinContent(i,hden1d->GetBinContent(i)+hden1d->GetBinError(i)*corr_factor*_random_generator->Gaus());
       if (hnum1d->GetBinContent(i)<0) hnum1d->SetBinContent(i,0);
       hnum1d->SetBinError(i,0);
     }
@@ -4515,5 +4517,57 @@ TH1F* AddTHInQuadrature(std::vector<TH1F*> vector, TString name){
   }
 
   return tot;
+
+};
+
+float find_repetition_eventsintemplates(RooDataSet *dset, int axis){
+
+  const char* eta_n = (axis==1) ? "rooeta1" : "rooeta2";
+  const char* pt_n = (axis==1) ? "roopt1" : "roopt2";
+
+  vector<pair<float,float> > vec;
+
+  for (int i=0; i<dset->numEntries(); i++){
+    float eta = dset->get(i)->getRealValue(eta_n);
+    float pt = dset->get(i)->getRealValue(pt_n);
+
+    vec.push_back(make_pair<float,float>(eta,pt));
+
+  }
+
+  vector<pair<long,long> > vec2;
+
+  for (int i=0; i<dset->numEntries(); i++){
+    float eta = dset->get(i)->getRealValue(eta_n);
+    float pt = dset->get(i)->getRealValue(pt_n);
+
+    const long prec = 1e5;
+    long leta = ((long)(eta*prec));
+    long lpt = ((long)(pt*prec));
+
+    vec2.push_back(make_pair<long,long>(leta,lpt));
+
+  }
+
+  long a1=vec.size();
+  cout << "Tot events " << a1 << endl;
+  sort(vec.begin(),vec.end());
+  vec.erase(unique(vec.begin(),vec.end()),vec.end());
+  long a2=vec.size();
+  cout << "Unique events " << a2 << endl;
+
+  long b1=vec2.size();
+  cout << "Tot events vec_approx " << b1 << endl;
+  sort(vec2.begin(),vec2.end());
+  vec2.erase(unique(vec2.begin(),vec2.end()),vec2.end());
+  long b2=vec2.size();
+  cout << "Unique events vec_approx " << b2 << endl;
+
+  if (a1!=b1 || a2!=b2) cout << "WARNING: approx version of find_repetition_eventsintemplates failing" << endl;
+
+  float corr_fact= float(a1)/b2;
+  cout << "Template statistics fluctuation sigma corr. factor: " << corr_fact << endl;
+
+  return corr_fact;
 
 };
