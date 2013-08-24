@@ -109,7 +109,7 @@ void reweight_sigma(RooDataSet **dset, RooDataSet *dsetdestination);
 void reweight_rhosigma(RooDataSet **dset, RooDataSet *dsetdestination, bool deleteold = kTRUE);
 void validate_reweighting(RooDataSet *dset, RooDataSet *dsetdestination, int numvar);
 void plot_datasets_axis1(std::vector<plot_dataset_struct> dsets, TString outname, TString legtitle, bool legendup=true, bool dolin=false);
-void plot_datasets_2D(std::vector<plot_dataset_struct> dsets, TString outname, TString legtitle, bool legendup, bool dolin=true);
+void plot_datasets_2D(std::vector<plot_dataset_struct> dsets, TString outname, TString legtitle, bool legendup, bool dolin=true, bool binned=false);
 void plot_template_dependency_axis1(RooDataSet *dset, TString variable, float min, float max, int bins, bool dobinned=0);
 void produce_category_binning(RooDataSet **dset, bool deleteold=kTRUE);
 void randomize_dataset_statistically_binned(RooDataSet **dset);
@@ -498,24 +498,6 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
     validate_reweighting(dataset_bkg_axis2,dataset_axis2,2);
     }
     */
-
-//    plot_dataset_struct pl[4];
-//    pl[0].dset=dataset_sigsig;
-//    pl[0].legend=TString("SIGSIG");
-//    pl[0].color=kRed;
-//    pl[1].dset=dataset_sigbkg;
-//    pl[1].legend=TString("SIGBKG");
-//    pl[1].color=kGreen;
-//    pl[2].dset=dataset_bkgsig;
-//    pl[2].legend=TString("BKGSIG");
-//    pl[2].color=kCyan;
-//    pl[3].dset=dataset_bkgbkg;
-//    pl[3].legend=TString("BKGBKG");
-//    pl[3].color=kBlack;
-//    std::vector<plot_dataset_struct> plvec;
-//    for (int i=0; i<4; i++) plvec.push_back(pl[i]);
-//    plot_datasets_2D(plvec,"2Dcomp","2Dcomp",false);
-//    return NULL;
 
   RooDataSet *dset_mctrue_s = NULL;
   RooDataSet *dset_mcfrag_s = NULL;
@@ -937,6 +919,25 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
     produce_category_binning(&dset_mcrcone_b_rv2);
   }
 
+
+  
+//  plot_dataset_struct pl[4];
+//  pl[0].dset=dataset_sigsig;
+//  pl[0].legend=TString("SIGSIG");
+//  pl[0].color=kRed;
+//  pl[1].dset=dataset_sigbkg;
+//  pl[1].legend=TString("SIGBKG");
+//  pl[1].color=kGreen;
+//  pl[2].dset=dataset_bkgsig;
+//  pl[2].legend=TString("BKGSIG");
+//  pl[2].color=kCyan;
+//  pl[3].dset=dataset_bkgbkg;
+//  pl[3].legend=TString("BKGBKG");
+//  pl[3].color=kBlack;
+//  std::vector<plot_dataset_struct> plvec;
+//  for (int i=0; i<4; i++) plvec.push_back(pl[i]);
+//  plot_datasets_2D(plvec,"2Dcomp","2Dcomp",false,true,true);
+//  return NULL;
 
 
 
@@ -3856,22 +3857,24 @@ void validate_reweighting(RooDataSet *dset, RooDataSet *dsetdestination, int num
 
 };
 
-void plot_datasets_2D(std::vector<plot_dataset_struct> dsets, TString outname, TString legtitle, bool legendup, bool dolin){
 
-  const char* varname1 = "roovar1";
-  const char* varname2 = "roovar2";
+void plot_datasets_2D(std::vector<plot_dataset_struct> dsets, TString outname, TString legtitle, bool legendup, bool dolin, bool binned){
+
+  const char* varname1 = (!binned) ? "roovar1" : "binning_roovar1";
+  const char* varname2 = (!binned) ? "roovar2" : "binning_roovar2";
   const int ndsets = (int)(dsets.size());
 
   TH2F *h[100];
 
   for (int j=0; j<ndsets; j++){
-    h[j] = new TH2F(Form("histo_%d_2D",j),Form("histo_%d_2D",j),n_histobins,leftrange,rightrange,n_histobins,leftrange,rightrange);
+    h[j] = (!binned) ? new TH2F(Form("histo_%d_2D",j),Form("histo_%d_2D",j),n_histobins,leftrange,rightrange,n_histobins,leftrange,rightrange) : new TH2F(Form("histo_%d_2D",j),Form("histo_%d_2D",j),n_templatebins,0.5,0.5+n_templatebins,n_templatebins,0.5,0.5+n_templatebins);
     h[j]->Sumw2();
     for (int i=0; i<(dsets[j].dset)->numEntries(); i++) h[j]->Fill((dsets[j].dset)->get(i)->getRealValue(varname1),(dsets[j].dset)->get(i)->getRealValue(varname2),(dsets[j].dset)->store()->weight(i));
     h[j]->Scale(1.0/h[j]->Integral());
     h[j]->SetLineWidth(2);
     h[j]->SetLineColor(dsets[j].color);
     h[j]->SetMarkerColor(dsets[j].color);
+    h[j]->SetFillColor(dsets[j].color);
     h[j]->SetTitle("");
     //    if (legdata.leg[j].Index("data",4)!=kNPOS) h[j]->SetMarkerStyle(20);
     h[j]->SetMarkerStyle(kFullCircle);
@@ -3880,56 +3883,75 @@ void plot_datasets_2D(std::vector<plot_dataset_struct> dsets, TString outname, T
     h[j]->SetStats(0);
     h[j]->GetXaxis()->SetTitle("Photon1 PFIso (GeV)");
     h[j]->GetYaxis()->SetTitle("Photon2 PFIso (GeV)");
+    h[j]->GetZaxis()->SetTitle("a.u.");
     //    h[j]->GetXaxis()->SetRangeUser(0,6);
-//    for (int j1=0; j1<n_histobins; j1++){
-//      for(int j2=0; j2<n_histobins; j2++){
-//	if (h[j]->GetBinContent(j1+1,j2+1)<0.002) h[j]->SetBinContent(j1+1,j2+1,0);
-//      }
-//    }
+    //    for (int j1=0; j1<n_histobins; j1++){
+    //      for(int j2=0; j2<n_histobins; j2++){
+    //      if (h[j]->GetBinContent(j1+1,j2+1)<0.002) h[j]->SetBinContent(j1+1,j2+1,0);
+    //      }
+    //    }
 
   }
 
-  TCanvas *comp = new TCanvas("shape_comparison");
+  //  float max=0;
+  //  for (int j=0; j<ndsets; j++){
+  //    float thismax = h[j]->GetBinContent(h[j]->GetMaximumBin());
+  //    max = (thismax>max) ? thismax : max;
+  //  }
+  //  h[0]->GetZaxis()->SetRangeUser(TMath::Max(h[0]->GetMinimum(),1e-4),max*1.05);
 
-  float max=0;
-  for (int j=0; j<ndsets; j++){
-    float thismax = h[j]->GetBinContent(h[j]->GetMaximumBin());
-    max = (thismax>max) ? thismax : max;
-  }
-  h[0]->GetZaxis()->SetRangeUser(TMath::Max(h[0]->GetMinimum(),1e-4),max*1.05);
 
+  TCanvas *comp = new TCanvas(Form("shape_comparison_%s",outname.Data()),Form("shape_comparison_%s",outname.Data()),1800,1000);
+  if (ndsets<=4) comp->Divide(2,2); else comp->Divide(ndsets);
   if (!dolin) comp->SetLogz(1);
 
-  h[0]->GetZaxis()->SetTitle("a.u.");
-  h[0]->Draw("LEGO1 0");
-  for (int j=1; j<ndsets; j++) h[j]->Draw("SAME LEGO1 0");
-  h[0]->Draw("SAME LEGO1 0");
+  for (int j=0; j<ndsets; j++){
+    comp->cd(j+1);
+    h[j]->Draw("LEGO2Z 0");
+  }
 
-//  TLegend *leg = (legendup) ? new TLegend(0.6,0.7,0.9,0.9,legtitle.Data()) : new TLegend(0.6,0.15,0.9,0.35,legtitle.Data());
-//  leg->SetFillColor(kWhite);
-//
-//  for (int j=0; j<ndsets; j++) {
-////    if (legdata.leg[j].Index("data",4)!=kNPOS) leg->AddEntry(h[j],legdata.leg[j].Data(),"p");
-////    else leg->AddEntry(h[j],legdata.leg[j].Data(),"lp");
-//      leg->AddEntry(h[j],dsets[j].legend.Data(),"lp");
-//  }
-//  leg->Draw();
-//
-//  TLatex a;
-//  a.SetNDC();
-//  a.SetTextSize(0.03);
-//  if (legendup)  a.DrawLatex(0.63,0.6,"#splitline{CMS Preliminary}{#sqrt{s} = 7 TeV L = 5.0 fb^{-1}}");
-//  else a.DrawLatex(0.63,0.85,"#splitline{CMS Preliminary}{#sqrt{s} = 7 TeV L = 5.0 fb^{-1}}");
-//
+  TCanvas *comp2 = new TCanvas(Form("shape_comparison2_%s",outname.Data()),Form("shape_comparison2_%s",outname.Data()),1000,1000);
+  if (ndsets<=4) comp2->Divide(2,2); else comp2->Divide(ndsets);
+  if (!dolin) comp2->SetLogz(1);
+
+  TF1 *diag = new TF1("diag","x",-100,100);
+  diag->SetLineWidth(1);
+  diag->SetLineStyle(kDashed);
+  diag->SetLineColor(kBlack);
+
+  for (int j=0; j<ndsets; j++){
+    comp2->cd(j+1);
+    h[j]->Draw("CONT1");
+    diag->Draw("same");
+  }
+
+  //  TLegend *leg = (legendup) ? new TLegend(0.6,0.7,0.9,0.9,legtitle.Data()) : new TLegend(0.6,0.15,0.9,0.35,legtitle.Data());
+  //  leg->SetFillColor(kWhite);
+  //
+  //  for (int j=0; j<ndsets; j++) {
+  ////    if (legdata.leg[j].Index("data",4)!=kNPOS) leg->AddEntry(h[j],legdata.leg[j].Data(),"p");
+  ////    else leg->AddEntry(h[j],legdata.leg[j].Data(),"lp");
+  //      leg->AddEntry(h[j],dsets[j].legend.Data(),"lp");
+  //  }
+  //  leg->Draw();
+  //
+  //  TLatex a;
+  //  a.SetNDC();
+  //  a.SetTextSize(0.03);
+  //  if (legendup)  a.DrawLatex(0.63,0.6,"#splitline{CMS Preliminary}{#sqrt{s} = 7 TeV L = 5.0 fb^{-1}}");
+  //  else a.DrawLatex(0.63,0.85,"#splitline{CMS Preliminary}{#sqrt{s} = 7 TeV L = 5.0 fb^{-1}}");
+  //
 
   comp->SaveAs(Form("%s.%s",outname.Data(),"root"));
   comp->SaveAs(Form("%s.%s",outname.Data(),"pdf"));
   comp->SaveAs(Form("%s.%s",outname.Data(),"png"));
-
-
-
+  comp2->SaveAs(Form("%s2.%s",outname.Data(),"root"));
+  comp2->SaveAs(Form("%s2.%s",outname.Data(),"pdf"));
+  comp2->SaveAs(Form("%s2.%s",outname.Data(),"png"));
 
 }
+
+
 
 void plot_datasets_axis1(std::vector<plot_dataset_struct> dsets, TString outname, TString legtitle, bool legendup, bool dolin){
 
