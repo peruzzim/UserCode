@@ -120,6 +120,8 @@ void generate_toy_dataset_2d(RooDataSet **target, RooAbsPdf *sigsigpdf, RooAbsPd
 void print_mem();
 void find_adaptive_binning(RooDataSet *dset, int *n_found_bins, Double_t *array_bounds, int axis=-1, float threshold = default_threshold_adaptive_binning);
 float find_repetition_eventsintemplates(RooDataSet *dset, int axis);
+bool is_2events_bin(TString diffvariable, TString splitting, int bin);
+float get_noise_systematic(TString diffvariable, TString splitting, int bin);
 
 TH1F* AddTHInQuadrature(std::vector<TH1F*> vector, TString name);
 
@@ -167,6 +169,13 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
 //  bool doplots_ub = false;
 
   TH1F::SetDefaultSumw2(kTRUE);
+
+  if (splitting=="EEEB") splitting="EBEE";  
+  TString s1; TString s2;
+  if (splitting=="EBEB") {s1="EB"; s2="EB";}
+  else if (splitting=="EEEE") {s1="EE"; s2="EE";}
+  else if (splitting=="EBEE") {s1="EB"; s2="EE";}
+  bool sym  = (s1==s2);
 
   int bins_to_run=-1; 
   float *binsdef=NULL;
@@ -300,12 +309,7 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
   else {
     inputfilename_t2p   = "outphoton_data_sigsig_step2_1event_ago21.root";
     inputfilename_t1p1f = "outphoton_data_sigbkg_step2_1event_ago21.root";
-    if ( (diffvariable=="invmass" && bin<=1) \
-	 || (diffvariable=="diphotonpt" && bin>=14) \
-	 || (diffvariable=="dphi" && bin<=1) ){
-      inputfilename_t2f   = "outphoton_data_bkgbkg_step2_2events_ago21.root";
-    }
-    else inputfilename_t2f   = "outphoton_data_bkgbkg_step2_1event_ago21.root";
+    inputfilename_t2f = (is_2events_bin(diffvariable,splitting,bin)) ? "outphoton_data_bkgbkg_step2_2events_ago21.root" : "outphoton_data_bkgbkg_step2_1event_ago21.root";
     inputfilename_d     = "outphoton_data_standard.root";
   }  
 
@@ -314,15 +318,7 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
   if ((!inputfile_t2f)   ||  (TString(inputfile_t2f->GetName())   != TString(inputfilename_t2f)  )) {inputfile_t2f = TFile::Open(inputfilename_t2f);     dir_t2f=NULL;  }
   if ((!inputfile_d)     ||  (TString(inputfile_d->GetName())     != TString(inputfilename_d)    )) {inputfile_d = TFile::Open(inputfilename_d);         dir_d=NULL;    }
 
-  if (splitting=="EEEB") splitting="EBEE";
-
   TH1::SetDefaultSumw2(kTRUE);
-  
-  TString s1; TString s2;
-  if (splitting=="EBEB") {s1="EB"; s2="EB";}
-  else if (splitting=="EEEE") {s1="EE"; s2="EE";}
-  else if (splitting=="EBEE") {s1="EB"; s2="EE";}
-  bool sym  = (s1==s2);
   
   if(!dir_t2p)   inputfile_t2p->GetObject("roofit",dir_t2p);
   if(!dir_t1p1f) inputfile_t1p1f->GetObject("roofit",dir_t1p1f);
@@ -2320,6 +2316,7 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
   TH1F *systplot_templateshapeMCpromptdrivenEE=NULL;
   TH1F *systplot_templateshapeMCfakedrivenEE=NULL;
   TH1F *systplot_templateshape2frag=NULL;
+  TH1F *systplot_noise=NULL;
   TH1F *systplot_zee=NULL;
   TH1F *systplot_tot=NULL;
   TH1F *systplot_efficiency=NULL;
@@ -2569,6 +2566,7 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
       systplot_templateshapeMCpromptdrivenEE=(TH1F*)(systplot->Clone("systplot_templateshapeMCpromptdrivenEE"));
       systplot_templateshapeMCfakedrivenEE=(TH1F*)(systplot->Clone("systplot_templateshapeMCfakedrivenEE"));
       systplot_templateshape2frag=(TH1F*)(systplot->Clone("systplot_templateshape2frag"));
+      systplot_noise=(TH1F*)(systplot->Clone("systplot_noise"));
       systplot_zee=(TH1F*)(systplot->Clone("systplot_zee"));
       systplot_tot=(TH1F*)(systplot->Clone("systplot_tot"));
       systplot_efficiency=(TH1F*)(systplot->Clone("systplot_efficiency"));
@@ -2657,8 +2655,10 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
       systplot_templateshapeMCpromptdrivenEE->SetBinContent(bin+1,shapesyst3/pp);
       systplot_templateshapeMCfakedrivenEE->SetBinContent(bin+1,shapesyst4/pp);
       systplot_templateshape2frag->SetBinContent(bin+1,shapesyst5/pp);
+      float noise = get_noise_systematic(diffvariable,splitting,bin);
+      systplot_noise->SetBinContent(bin+1,noise);
       systplot_zee->SetBinContent(bin+1,rel_error_on_purity_pp);
-      systplot_tot->SetBinContent(bin+1,sqrt(pow(pp*histo_bias_templatestatistics->GetBinContent(bin+1),2) + pow(pp_err*histo_bias_purefitbias->GetBinContent(bin+1),2) + pow(shapesyst1,2) + pow(shapesyst2,2) + pow(shapesyst3,2) + pow(shapesyst4,2) + pow(shapesyst5,2) + pow(pp*rel_error_on_purity_pp,2))/pp);
+      systplot_tot->SetBinContent(bin+1,sqrt(pow(pp*histo_bias_templatestatistics->GetBinContent(bin+1),2) + pow(pp_err*histo_bias_purefitbias->GetBinContent(bin+1),2) + pow(shapesyst1,2) + pow(shapesyst2,2) + pow(shapesyst3,2) + pow(shapesyst4,2) + pow(shapesyst5,2) + pow(pp*rel_error_on_purity_pp,2))/pp + pow(noise,2));
       systplot_efficiency->SetBinContent(bin+1,eff->GetBinError(bin+1)/eff->GetBinContent(bin+1));
       systplot_unfolding->SetBinContent(bin+1,unfoldunc->GetBinContent(bin+1));
       systplot_totfinal->SetBinContent(bin+1,sqrt(pow(systplot_tot->GetBinContent(bin+1),2)+pow(systplot_efficiency->GetBinContent(bin+1),2)+pow(systplot_unfolding->GetBinContent(bin+1),2)));
@@ -2870,6 +2870,7 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
     systplot_templateshapeMCpromptdrivenEE->Draw("same");
     systplot_templateshapeMCfakedrivenEE->Draw("same");
     systplot_templateshape2frag->Draw("same");
+    systplot_noise->Draw("same");
     systplot_purefitbias->Draw("same");
     systplot_templatestatistics->Draw("same");
     systplot_zee->Draw("same");
@@ -2881,6 +2882,7 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
     systplot_templateshapeMCpromptdrivenEE->SetLineStyle(kDotted);
     systplot_templateshapeMCfakedrivenEE->SetLineStyle(kDotted);
     systplot_templateshape2frag->SetLineColor(kOrange);
+    systplot_noise->SetLineColor(kCyan);
     systplot_purefitbias->SetLineColor(kGreen);
     systplot_templatestatistics->SetLineColor(kGray);
     systplot_zee->SetLineColor(kMagenta);
@@ -2896,6 +2898,7 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
       legsystplot->AddEntry(systplot_templateshapeMCfakedrivenEE,"Fakes template shape EE","l");
     }
     legsystplot->AddEntry(systplot_templateshape2frag,"Fragmentation description","l");
+    legsystplot->AddEntry(systplot_noise,"Additional noise in evt. mixing","l");
     legsystplot->AddEntry(systplot_templatestatistics,"Template stat. fluctuation","l");
     legsystplot->AddEntry(systplot_purefitbias,"Fit bias","l");
     legsystplot->AddEntry(systplot_zee,"Zee subtraction ","l");
@@ -2951,6 +2954,7 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
     systplot_templateshapeMCfakedrivenEE->Write();
     systplot_templateshapeMCpromptdrivenEE->Write();
     systplot_templateshape2frag->Write();
+    systplot_noise->Write();
     systplot_purefitbias->Write();
     systplot_templatestatistics->Write();
     systplot_zee->Write();
@@ -2974,6 +2978,7 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
     toadd_allcatcorrelated.push_back(systplot_templateshapeMCfakedrivenEE);
     toadd_allcatcorrelated.push_back(systplot_templateshapeMCpromptdrivenEE);
     toadd_allcatcorrelated.push_back(systplot_templateshape2frag);
+    toadd_allcatcorrelated.push_back(systplot_noise);
 
     systplot_allcatcorrelated=AddTHInQuadrature(toadd_allcatcorrelated,"systplot_allcatcorrelated");
 
@@ -3015,7 +3020,7 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
 
     const int n_cats = 3;
     const int n_syst_1catcorr = 4;
-    const int n_syst_allcatcorr = 5;
+    const int n_syst_allcatcorr = 6;
 
     TH1F *hsysts[3];
     TH1F *hsysts_1catcorrelated[3][n_syst_1catcorr];
@@ -3036,6 +3041,7 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
       fsysts[i]->GetObject("systplot_templateshapeMCpromptdrivenEE",hsysts_allcatcorrelated[i][2]);
       fsysts[i]->GetObject("systplot_templateshapeMCfakedrivenEE",hsysts_allcatcorrelated[i][3]);
       fsysts[i]->GetObject("systplot_templateshape2frag",hsysts_allcatcorrelated[i][4]);
+      fsysts[i]->GetObject("systplot_noise",hsysts_allcatcorrelated[i][5]);
     }
     for (int i=0; i<3; i++) fsysts[i]->GetObject("systplot_uncorrelated",hsysts_uncorrelated[i]);
     for (int i=0; i<3; i++) fsysts[i]->GetObject("systplot_statistic",hsysts_statistic[i]);
@@ -3364,6 +3370,7 @@ void post_process(TString diffvariable="", TString splitting="", bool skipsystem
     leg_canv3b->AddEntry(histo_allcatcorrelated_allcat[2],"Prompt template shape EE","l");
     leg_canv3b->AddEntry(histo_allcatcorrelated_allcat[3],"Fakes template shape EE","l");
     leg_canv3b->AddEntry(histo_allcatcorrelated_allcat[4],"Fragmentation description","l");
+    leg_canv3b->AddEntry(histo_allcatcorrelated_allcat[5],"Additional noise in evt. mixing","l");
     leg_canv3b->AddEntry(systplot_totfinal_inclusive,"Total syst. uncertainty","l");
     leg_canv3b->Draw();
     systplot_totfinal_inclusive->GetYaxis()->SetRangeUser(0,systplot_totfinal_inclusive->GetBinContent(systplot_totfinal_inclusive->GetMaximumBin())*1.05);
@@ -4564,3 +4571,25 @@ float find_repetition_eventsintemplates(RooDataSet *dset, int axis){
   return corr_fact;
 
 };
+
+bool is_2events_bin(TString diffvariable, TString splitting, int bin){
+
+  splitting=""; // AVOID ANNOYING WARNING AT COMPILE
+
+  if ( (diffvariable=="invmass" && bin<=1)	    \
+       || (diffvariable=="diphotonpt" && bin>=14)   \
+       || (diffvariable=="dphi" && bin<=1) ) return true;
+  else return false;
+
+}
+
+float get_noise_systematic(TString diffvariable, TString splitting, int bin){
+
+  if (!is_2events_bin(diffvariable,splitting,bin)) return 0;
+
+  if (splitting=="EBEB") return 0.03;
+  else if (splitting=="EBEE") return 0.05;
+  else if (splitting=="EEEE") return 0.05;
+  else {cout << "error" << endl; return 999;};
+
+}
