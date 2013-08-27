@@ -426,7 +426,7 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
   dataset_bkg_axis2->Print();
   dataset_axis1->Print();
   dataset_axis2->Print();
-  
+
 
   if (do_syst_string=="newtemplates_2events"){
       reweight_rho(&dataset_sigsig,dataset);
@@ -481,7 +481,6 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
       reweight_eta_1d(&dataset_bkg_axis2,dataset_axis2,2);
     }
     
-    //    if (!(diffvariable=="invmass" && splitting=="EEEE" && bin==14)) { // pt reweighting
     {
       //      reweight_pt_2d(&dataset_sigsig,dataset);
       reweight_pt_2d(&dataset_sigbkg,dataset);
@@ -492,7 +491,7 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
       //      reweight_pt_1d(&dataset_sig_axis2,dataset_axis2,2);
       reweight_pt_1d(&dataset_bkg_axis2,dataset_axis2,2);
     }
-  
+
     /*
     { // validate reweighting
     validate_reweighting(dataset_sigsig,dataset,1);
@@ -952,7 +951,7 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
   }
   if (doplots) {
   plot_dataset_struct pl;
-  pl.dset=dataset_sigsig;
+  pl.dset=dataset;
   pl.legend=TString("DATA");
   pl.color=kBlack;
   std::vector<plot_dataset_struct> plvec;
@@ -3974,7 +3973,7 @@ void plot_datasets_2D(std::vector<plot_dataset_struct> dsets, TString outname, b
 
 
   TCanvas *comp = new TCanvas(Form("shape_comparison_%s",outname.Data()),Form("shape_comparison_%s",outname.Data()),800,800);
-  if (ndsets<=4) comp->Divide(2,2); else comp->Divide(ndsets);
+  if (ndsets==1) ; else if (ndsets==2) comp->Divide(2); else if (ndsets<=4) comp->Divide(2,2); else comp->Divide(ndsets);
   if (!dolin) comp->SetLogz(1);
 
   for (int j=0; j<ndsets; j++){
@@ -3993,7 +3992,9 @@ void plot_datasets_2D(std::vector<plot_dataset_struct> dsets, TString outname, b
 
   for (int j=0; j<ndsets; j++){
     comp2->cd(j+1);
-    h[j]->Draw("CONT1");
+    TH2F *newh = (TH2F*)(h[j]->Clone("new"));
+    newh->Scale((dsets[j].dset)->sumEntries());
+    newh->Draw("COL TEXT45E");
     diag->Draw("same");
   }
 
