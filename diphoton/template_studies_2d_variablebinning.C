@@ -1,4 +1,4 @@
-bool global_doplots = false;
+bool global_doplots = true;
 bool doxcheckstemplates = false;
 bool dolightcomparisonwithstandardselsig = false;
 bool dolightcomparisonwithstandardselbkg = false;
@@ -931,26 +931,35 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
   }
 
 
-  
-//  plot_dataset_struct pl[4];
-//  pl[0].dset=dataset_sigsig;
-//  pl[0].legend=TString("SIGSIG");
-//  pl[0].color=kRed;
-//  pl[1].dset=dataset_sigbkg;
-//  pl[1].legend=TString("SIGBKG");
-//  pl[1].color=kGreen;
-//  pl[2].dset=dataset_bkgsig;
-//  pl[2].legend=TString("BKGSIG");
-//  pl[2].color=kCyan;
-//  pl[3].dset=dataset_bkgbkg;
-//  pl[3].legend=TString("BKGBKG");
-//  pl[3].color=kBlack;
-//  std::vector<plot_dataset_struct> plvec;
-//  for (int i=0; i<4; i++) plvec.push_back(pl[i]);
-//  plot_datasets_2D(plvec,"2Dcomp",true,true);
-//  return NULL;
-
-
+  {
+  plot_dataset_struct pl[4];
+  pl[0].dset=dataset_sigsig;
+  pl[0].legend=TString("SIGSIG");
+  pl[0].color=kRed;
+  pl[1].dset=dataset_sigbkg;
+  pl[1].legend=TString("SIGBKG");
+  pl[1].color=kGreen;
+  pl[2].dset=dataset_bkgsig;
+  pl[2].legend=TString("BKGSIG");
+  pl[2].color=kCyan;
+  pl[3].dset=dataset_bkgbkg;
+  pl[3].legend=TString("BKGBKG");
+  pl[3].color=kBlack;
+  std::vector<plot_dataset_struct> plvec;
+  for (int i=0; i<4; i++) plvec.push_back(pl[i]);
+  TString name = Form("2Dcomp_%s_%s_b%d",splitting.Data(),diffvariable.Data(),bin);
+  plot_datasets_2D(plvec,name.Data(),true,true);
+  }
+  {
+  plot_dataset_struct pl;
+  pl.dset=dataset_sigsig;
+  pl.legend=TString("DATA");
+  pl.color=kBlack;
+  std::vector<plot_dataset_struct> plvec;
+  plvec.push_back(pl);
+  TString name = Form("2Dcomp_data_%s_%s_b%d",splitting.Data(),diffvariable.Data(),bin);
+  plot_datasets_2D(plvec,name.Data(),true,true);
+  }
 
   int times_to_run = 1;
   const int ntoys = 500;
@@ -1718,28 +1727,6 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
 	leg->Draw();
       }
 
-      /*
-	c2->cd(1);
-	RooPlot *ppnllplot = pp->frame();
-	model_2D_uncorrelated_noextended_nll->plotOn(ppnllplot,ShiftToZero());
-	ppnllplot->Draw();
-      */
-
-      /*
-      c2->cd(3);
-      RooPlot *j1nllplot = j1->frame();
-      model_2D_uncorrelated_noextended_nll->plotOn(j1nllplot,ShiftToZero());
-      model_2axes_nll->plotOn(j1nllplot,ShiftToZero(),LineColor(kRed));    
-      j1nllplot->Draw();
-      */
-
-      /*
-      c2->cd(3);
-      RooPlot *contourplot = minuit_secondpass->contour(*pp,*j1,1,0,0,0,0,0);
-      contourplot->SetAxisRange(out->pp-0.05,out->pp+0.05,"X");
-      contourplot->SetAxisRange(j1->getVal()-0.05,j1->getVal()+0.05,"Y");
-      contourplot->Draw();
-      */
 
       TH2F *h2d;
       TH2F *h2f;
@@ -1898,6 +1885,48 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
    
 
     } // c2 binned
+
+    if (false){
+
+      TCanvas *c3 = new TCanvas("fit_internals","fit_internals",800,600);
+      c3->Divide(2);
+      
+      c3->cd(1);
+
+      RooMsgService::instance().setGlobalKillBelow(RooFit::ERROR);
+      
+      TH2 *ph2 = pp->createHistogram("pp vs j1 likelihood",*j1,"-log(L)");
+      model_2D_uncorrelated_noextended_nll->fillHistogram(ph2,RooArgList(*pp,*j1),1,0,kFALSE);
+      pp->setVal(out->pp);
+      j1->setVal(out->pf+out->pp);
+      float minrange = model_2D_uncorrelated_noextended_nll->getVal();
+      ph2->SetAxisRange(minrange,ph2->GetMaximum(),"z");
+      ph2->SetContour(50);
+      ph2->Draw("CONT4");
+
+//
+//      RooPlot *ppnllplot = pp->frame();
+//      model_2D_uncorrelated_noextended_nll->plotOn(ppnllplot,ShiftToZero());
+//      ppnllplot->Draw();
+//      
+//      c3->cd(2);
+//      RooPlot *j1nllplot = j1->frame();
+//      model_2D_uncorrelated_noextended_nll->plotOn(j1nllplot,ShiftToZero());
+//      j1nllplot->Draw();
+      
+      c3->cd(2);
+      RooPlot *contourplot = minuit_secondpass->contour(*pp,*j1);
+//      contourplot->SetAxisRange(out->pp-0.05,out->pp+0.05,"X");
+//      contourplot->SetAxisRange(j1->getVal()-0.05,j1->getVal()+0.05,"Y");
+      contourplot->Draw();
+
+      c3->SaveAs(Form("plots/fittingplot2_contours_%s_%s_b%d.png",splitting.Data(),diffvariable.Data(),bin));   
+      c3->SaveAs(Form("plots/fittingplot2_contours_%s_%s_b%d.jpg",splitting.Data(),diffvariable.Data(),bin));   
+      c3->SaveAs(Form("plots/fittingplot2_contours_%s_%s_b%d.pdf",splitting.Data(),diffvariable.Data(),bin));   
+      c3->SaveAs(Form("plots/fittingplot2_contours_%s_%s_b%d.root",splitting.Data(),diffvariable.Data(),bin));   
+      
+      
+    }
 
     delete minuit_secondpass;
     delete minuit_secondpass_constraint;
@@ -3923,7 +3952,7 @@ void plot_datasets_2D(std::vector<plot_dataset_struct> dsets, TString outname, b
   //  h[0]->GetZaxis()->SetRangeUser(TMath::Max(h[0]->GetMinimum(),1e-4),max*1.05);
 
 
-  TCanvas *comp = new TCanvas(Form("shape_comparison_%s",outname.Data()),Form("shape_comparison_%s",outname.Data()),1800,1000);
+  TCanvas *comp = new TCanvas(Form("shape_comparison_%s",outname.Data()),Form("shape_comparison_%s",outname.Data()),800,800);
   if (ndsets<=4) comp->Divide(2,2); else comp->Divide(ndsets);
   if (!dolin) comp->SetLogz(1);
 
@@ -3932,8 +3961,8 @@ void plot_datasets_2D(std::vector<plot_dataset_struct> dsets, TString outname, b
     h[j]->Draw("LEGO2Z 0");
   }
 
-  TCanvas *comp2 = new TCanvas(Form("shape_comparison2_%s",outname.Data()),Form("shape_comparison2_%s",outname.Data()),1000,1000);
-  if (ndsets<=4) comp2->Divide(2,2); else comp2->Divide(ndsets);
+  TCanvas *comp2 = new TCanvas(Form("shape_comparison2_%s",outname.Data()),Form("shape_comparison2_%s",outname.Data()),800,800);
+  if (ndsets==1) ; else if (ndsets==2) comp2->Divide(2); else if (ndsets<=4) comp2->Divide(2,2); else comp2->Divide(ndsets);
   if (!dolin) comp2->SetLogz(1);
 
   TF1 *diag = new TF1("diag","x",-100,100);
@@ -3964,12 +3993,12 @@ void plot_datasets_2D(std::vector<plot_dataset_struct> dsets, TString outname, b
   //  else a.DrawLatex(0.63,0.85,"#splitline{CMS Preliminary}{#sqrt{s} = 7 TeV L = 5.0 fb^{-1}}");
   //
 
-  comp->SaveAs(Form("%s.%s",outname.Data(),"root"));
-  comp->SaveAs(Form("%s.%s",outname.Data(),"pdf"));
-  comp->SaveAs(Form("%s.%s",outname.Data(),"png"));
-  comp2->SaveAs(Form("%s2.%s",outname.Data(),"root"));
-  comp2->SaveAs(Form("%s2.%s",outname.Data(),"pdf"));
-  comp2->SaveAs(Form("%s2.%s",outname.Data(),"png"));
+  comp->SaveAs(Form("plots/%s.%s",outname.Data(),"root"));
+  comp->SaveAs(Form("plots/%s.%s",outname.Data(),"pdf"));
+  comp->SaveAs(Form("plots/%s.%s",outname.Data(),"png"));
+  comp2->SaveAs(Form("plots/%s_2.%s",outname.Data(),"root"));
+  comp2->SaveAs(Form("plots/%s_2.%s",outname.Data(),"pdf"));
+  comp2->SaveAs(Form("plots/%s_2.%s",outname.Data(),"png"));
 
 }
 
