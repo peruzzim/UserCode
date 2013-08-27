@@ -931,7 +931,7 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
   }
 
 
-  {
+  if (doplots) {
   plot_dataset_struct pl[4];
   pl[0].dset=dataset_sigsig;
   pl[0].legend=TString("SIGSIG");
@@ -950,7 +950,7 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
   TString name = Form("2Dcomp_%s_%s_b%d",splitting.Data(),diffvariable.Data(),bin);
   plot_datasets_2D(plvec,name.Data(),true,true);
   }
-  {
+  if (doplots) {
   plot_dataset_struct pl;
   pl.dset=dataset_sigsig;
   pl.legend=TString("DATA");
@@ -1515,12 +1515,12 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
     secondpass = minuit_secondpass->save("secondpass","secondpass");
     secondpass->Print();
 
-    /*
-      myfile << "pp " << fsigsig->getVal() << " " << fsigsig->getPropagatedError(*secondpass) << std::endl; 
-      myfile << "pf " << fsigbkg->getVal() << " " << fsigbkg->getPropagatedError(*secondpass) << std::endl; 
-      myfile << "fp " << fbkgsig->getVal() << " " << fbkgsig->getPropagatedError(*secondpass) << std::endl; 
-      myfile << "ff " << fbkgbkg->getVal() << " " << fbkgbkg->getPropagatedError(*secondpass) << std::endl; 
-    */
+    
+    cout << "pp " << fsigsig->getVal() << " " << fsigsig->getPropagatedError(*secondpass) << std::endl; 
+    cout << "pf " << fsigbkg->getVal() << " " << fsigbkg->getPropagatedError(*secondpass) << std::endl; 
+    cout << "fp " << fbkgsig->getVal() << " " << fbkgsig->getPropagatedError(*secondpass) << std::endl; 
+    cout << "ff " << fbkgbkg->getVal() << " " << fbkgbkg->getPropagatedError(*secondpass) << std::endl; 
+      
 
     out->fr_pass1=firstpass;
     out->fr_pass2constraint=secondpass_constraint;
@@ -1537,7 +1537,9 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
 
     std::cout << "RAW YIELD " << out->pp*out->tot_events/out->eff_overflow_removal_pp << std::endl;
 
-    {
+    bool dochi2=false;
+
+    if (dochi2) {
       RooDataHist *dataset_dhist = new RooDataHist("dataset_dhist","dataset_dhist",RooArgList(*binning_roovar1,*binning_roovar2),*dataset);
       RooAbsReal *chi2var = model_2D_uncorrelated->createChi2(*dataset_dhist);
       float chi2 = chi2var->getVal();
