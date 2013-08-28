@@ -492,7 +492,7 @@ public :
 
    void     WriteOutput(const char* filename);
 
-   void Setup(Bool_t _isdata, TString _mode, TString _differentialvariable);
+   void Setup(Bool_t _isdata, TString _mode, TString _differentialvariable, bool _do_event_mixing);
 
    TString differentialvariable;
 
@@ -554,6 +554,7 @@ public :
    Int_t candcounter;
 
    Bool_t initialized;
+   Bool_t do_event_mixing;
 
    Bool_t isdata;
 
@@ -608,16 +609,18 @@ template_production::template_production(TTree *tree)
    do2ptemplate = false;
    do1p1ftemplate = false;
    do2ftemplate = false;
+   do_event_mixing = false;
 
    whichnewtemplate = -1;
 
 }
 
-void template_production::Setup(Bool_t _isdata, TString _mode, TString _differentialvariable){
+void template_production::Setup(Bool_t _isdata, TString _mode, TString _differentialvariable, bool _do_event_mixing){
 
   isdata=_isdata;
   mode=_mode;
   differentialvariable=_differentialvariable;
+  do_event_mixing=_do_event_mixing;
 
   Init();
 

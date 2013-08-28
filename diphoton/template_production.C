@@ -7,10 +7,11 @@
 using namespace std;
 
 bool do_scan_cone = false;
-bool do_event_mixing = false; // 2events
 
 void template_production::Loop(int maxevents)
 {
+
+  if (do_event_mixing) cout << "USING EVENT MIXING" << endl;
 
   if (fChain == 0) return;
   if (!initialized){
@@ -1038,7 +1039,7 @@ void template_production::Loop(int maxevents)
 
 #endif
 
-void gen_templates(TString filename="input.root", TString mode="", bool isdata=1, const char* outfile="out.root", TString differentialvariable="photoniso", int maxevents=-1){
+void gen_templates(TString filename="input.root", TString mode="", bool isdata=1, const char* outfile="out.root", TString differentialvariable="photoniso", int maxevents=-1,bool do_event_mixing=false ){
   
   TFile *outF = TFile::Open(outfile,"recreate");
   outF->Close();
@@ -1112,7 +1113,7 @@ void gen_templates(TString filename="input.root", TString mode="", bool isdata=1
   std::cout << "Processing selection " << treename_chosen.Data() << std::endl;
   
   template_production *temp = new template_production(t);
-  temp->Setup(isdata,mode,differentialvariable);
+  temp->Setup(isdata,mode,differentialvariable,do_event_mixing);
   temp->inputfilename=filename;
 
   if (maxevents>0) temp->Loop(maxevents); else temp->Loop();
