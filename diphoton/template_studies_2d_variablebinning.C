@@ -493,7 +493,7 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
     }
 
     /*
-    { // validate reweighting
+    if (doplots) { // validate reweighting
     validate_reweighting(dataset_sigsig,dataset,1);
     validate_reweighting(dataset_sigbkg,dataset,1);
     validate_reweighting(dataset_bkgsig,dataset,1);
