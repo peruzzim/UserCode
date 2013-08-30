@@ -1,4 +1,4 @@
-bool global_doplots = true;
+bool global_doplots = false;
 bool doxcheckstemplates = false;
 bool dolightcomparisonwithstandardselsig = false;
 bool dolightcomparisonwithstandardselbkg = false;
@@ -412,7 +412,9 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
 
 
   RooDataSet *dataset_sig_axis1 = (RooDataSet*)(dataset_sigsig->reduce(Name("dataset_sig_axis1"),SelectVars(RooArgList(*roovar1,*roopt1,*roosieie1,*rooeta1,*roorho,*roosigma))));
+  //  RooDataSet *dataset_sig_axis1 = (RooDataSet*)(dataset_sigbkg->reduce(Name("dataset_sig_axis1"),SelectVars(RooArgList(*roovar1,*roopt1,*roosieie1,*rooeta1,*roorho,*roosigma))));
   RooDataSet *dataset_bkg_axis1 = (RooDataSet*)(dataset_bkgsig->reduce(Name("dataset_bkg_axis1"),SelectVars(RooArgList(*roovar1,*roopt1,*roosieie1,*rooeta1,*roorho,*roosigma))));
+  //  RooDataSet *dataset_bkg_axis1 = (RooDataSet*)(dataset_bkgbkg->reduce(Name("dataset_bkg_axis1"),SelectVars(RooArgList(*roovar1,*roopt1,*roosieie1,*rooeta1,*roorho,*roosigma))));
   RooDataSet *dataset_sig_axis2 = (RooDataSet*)(dataset_sigsig->reduce(Name("dataset_sig_axis2"),SelectVars(RooArgList(*roovar2,*roopt2,*roosieie2,*rooeta2,*roorho,*roosigma))));
   RooDataSet *dataset_bkg_axis2 = (RooDataSet*)(dataset_sigbkg->reduce(Name("dataset_bkg_axis2"),SelectVars(RooArgList(*roovar2,*roopt2,*roosieie2,*rooeta2,*roorho,*roosigma))));
 
@@ -518,10 +520,20 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
   RooDataSet *dset_mcrcone_b = NULL;
 //  RooDataSet *dset_mctrue_noEM = NULL;
 //  RooDataSet *dset_mcrcone_noEM = NULL;
+  RooDataSet *dset_datarcone_s = NULL;
+  RooDataSet *dset_datarcone_b = NULL;
 
   if (doxcheckstemplates || dolightcomparisonwithstandardselsig || dolightcomparisonwithstandardselbkg) {
 
     if (dolightcomparisonwithstandardselsig || dolightcomparisonwithstandardselbkg) if (splitting=="EBEE") return NULL;
+
+    TFile *fdatarcone_s = new TFile("outphoton_data_rcone.root","read");
+    fdatarcone_s->GetObject(Form("roofit/roodset_signal_%s_rv1",s1.Data()),dset_datarcone_s);
+    assert(dset_datarcone_s);
+ 
+    TFile *fdatarcone_b = new TFile("outphoton_data_sieiesideband.root","read");
+    fdatarcone_b->GetObject(Form("roofit/roodset_background_%s_rv1",s1.Data()),dset_datarcone_b);
+    assert(dset_datarcone_b);
 
     TFile *fmctrue_s = new TFile("outphoton_allmc_sig.root","read");
     fmctrue_s->GetObject(Form("roofit/roodset_signal_%s_rv1",s1.Data()),dset_mctrue_s);
@@ -571,6 +583,8 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
 //    dset_mctrue_noEM = (RooDataSet*)(dset_mctrue_noEM->reduce(Name("dset_mctrue_noEM"),Cut(Form("roovar1<%f",rightrange-1e-5))));
 //    dset_mcrcone_noEM = (RooDataSet*)(dset_mcrcone_noEM->reduce(Name("dset_mcrcone_noEM"),Cut(Form("roovar1<%f",rightrange-1e-5))));
     dset_zee_s = (RooDataSet*)(dset_zee_s->reduce(Name("dset_zee_s"),Cut(Form("roovar1<%f",rightrange-1e-5))));
+    dset_datarcone_s = (RooDataSet*)(dset_datarcone_s->reduce(Name("dset_datarcone_s"),Cut(Form("roovar1<%f",rightrange-1e-5))));
+    dset_datarcone_b = (RooDataSet*)(dset_datarcone_b->reduce(Name("dset_datarcone_b"),Cut(Form("roovar1<%f",rightrange-1e-5))));
 
     std::cout << "MC datasets" << std::endl;
     dset_mctrue_s->Print();
@@ -582,22 +596,30 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
     dset_mcrcone_b->Print();
 //    dset_mctrue_noEM->Print();
 //    dset_mcrcone_noEM->Print();
+    dset_datarcone_s->Print();
+    dset_datarcone_b->Print();
 
     reweight_rhosigma(&dset_mctrue_s,dataset_axis1);
     reweight_rhosigma(&dset_mcfrag_s,dataset_axis1);
     reweight_rhosigma(&dset_mcnofrag_s,dataset_axis1);
     reweight_rhosigma(&dset_mcrcone_s,dataset_axis1);
     reweight_rhosigma(&dset_zee_s,dataset_axis1);
+    reweight_rhosigma(&dset_datarcone_s,dataset_axis1);
+    reweight_rhosigma(&dset_datarcone_b,dataset_axis1);
     reweight_eta_1d(&dset_mctrue_s,dataset_axis1,1);
     reweight_eta_1d(&dset_mcfrag_s,dataset_axis1,1);
     reweight_eta_1d(&dset_mcnofrag_s,dataset_axis1,1);
     reweight_eta_1d(&dset_mcrcone_s,dataset_axis1,1);
     reweight_eta_1d(&dset_zee_s,dataset_axis1,1);
+    reweight_eta_1d(&dset_datarcone_s,dataset_axis1,1);
+    reweight_eta_1d(&dset_datarcone_b,dataset_axis1,1);
     reweight_pt_1d(&dset_mctrue_s,dataset_axis1,1);
     reweight_pt_1d(&dset_mcfrag_s,dataset_axis1,1);
     reweight_pt_1d(&dset_mcnofrag_s,dataset_axis1,1);
     //reweight_pt_1d(&dset_mcrcone_s,dataset_axis1,1);
     reweight_pt_1d(&dset_zee_s,dataset_axis1,1);
+    //reweight_pt_1d(&dset_datarcone_s,dataset_axis1,1);
+    reweight_pt_1d(&dset_datarcone_b,dataset_axis1,1);
     reweight_rhosigma(&dset_mctrue_b,dataset_axis1);
     reweight_rhosigma(&dset_mcrcone_b,dataset_axis1);
 //    reweight_rhosigma(&dset_mctrue_noEM,dataset_axis1);
@@ -635,8 +657,20 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
     str_dataset_axis1.color = kGreen;
     plot_dataset_struct str_dataset_sig_axis1;
     str_dataset_sig_axis1.dset = dataset_sig_axis1;
-    str_dataset_sig_axis1.legend = "Rand. cone in data";
+    str_dataset_sig_axis1.legend = "New signal template with matching";
+    //    str_dataset_sig_axis1.legend = "New signal template from evt. mixing";
+    //    str_dataset_sig_axis1.legend = "Old signal template";
     str_dataset_sig_axis1.color = kBlack;
+
+    plot_dataset_struct str_dset_datarcone_s;
+    str_dset_datarcone_s.dset = dset_datarcone_s;
+    str_dset_datarcone_s.legend = "Rand. cone in data";
+    str_dset_datarcone_s.color = kGreen;
+    plot_dataset_struct str_dset_datarcone_b;
+    str_dset_datarcone_b.dset = dset_datarcone_b;
+    str_dset_datarcone_b.legend = "Sieie sideband in data";
+    str_dset_datarcone_b.color = kGreen;
+
     plot_dataset_struct str_dset_mctrue_s;
     str_dset_mctrue_s.dset = dset_mctrue_s;
     str_dset_mctrue_s.legend = "Photon Iso in MC";
@@ -657,9 +691,13 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
     str_dset_mcfrag_s.dset = dset_mcfrag_s;
     str_dset_mcfrag_s.legend = "Frag. photon Iso in MC";
     str_dset_mcfrag_s.color = kOrange;
+
     plot_dataset_struct str_dataset_bkg_axis1;
     str_dataset_bkg_axis1.dset = dataset_bkg_axis1;
-    str_dataset_bkg_axis1.legend = "Sieie sideband in data";
+    str_dataset_bkg_axis1.legend = "New background template with matching";
+    //    str_dataset_bkg_axis1.legend = "New background template from evt. mixing";
+    //    str_dataset_bkg_axis1.legend = "Old background template";
+
     str_dataset_bkg_axis1.color = kBlack;
     plot_dataset_struct str_dataset_bkg_axis1_1;
     str_dataset_bkg_axis1_1.dset = dataset_bkg_axis1_1;
@@ -724,17 +762,30 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
     vec.push_back(str_dataset_sig_axis1);
     vec.push_back(str_dset_mctrue_s);
     vec.push_back(str_dset_mcrcone_s);
-    vec.push_back(str_dset_zee_s);
-    plot_datasets_axis1(vec,Form("plots/histo_template_sig_withZ_%s_log",s1.Data()),Form("Signal template %s",s1.Data()));
-    plot_datasets_axis1(vec,Form("plots/histo_template_sig_withZ_%s_lin",s1.Data()),Form("Signal template %s",s1.Data()),true,true);
+    vec.push_back(str_dset_datarcone_s);
+    plot_datasets_axis1(vec,Form("plots/histo_template_sig_%s_log",s1.Data()),Form("Signal template %s",s1.Data()));
+    plot_datasets_axis1(vec,Form("plots/histo_template_sig_%s_lin",s1.Data()),Form("Signal template %s",s1.Data()),true,true);
     }
+    {
+    std::vector<plot_dataset_struct> vec;
+    vec.push_back(str_dataset_bkg_axis1);
+    vec.push_back(str_dset_mctrue_b);
+    vec.push_back(str_dset_mcrcone_b);
+    vec.push_back(str_dset_datarcone_b);
+    plot_datasets_axis1(vec,Form("plots/histo_template_bkg_%s_log",s1.Data()),Form("Background template %s",s1.Data()),false);
+    plot_datasets_axis1(vec,Form("plots/histo_template_bkg_%s_lin",s1.Data()),Form("Background template %s",s1.Data()),true,true);
+    }
+
+    return NULL;
+
     {
     std::vector<plot_dataset_struct> vec;
     vec.push_back(str_dataset_sig_axis1);
     vec.push_back(str_dset_mctrue_s);
     vec.push_back(str_dset_mcrcone_s);
-    plot_datasets_axis1(vec,Form("plots/histo_template_sig_%s_log",s1.Data()),Form("Signal template %s",s1.Data()));
-    plot_datasets_axis1(vec,Form("plots/histo_template_sig_%s_lin",s1.Data()),Form("Signal template %s",s1.Data()),true,true);
+    vec.push_back(str_dset_zee_s);
+    plot_datasets_axis1(vec,Form("plots/histo_template_sig_withZ_%s_log",s1.Data()),Form("Signal template %s",s1.Data()));
+    plot_datasets_axis1(vec,Form("plots/histo_template_sig_withZ_%s_lin",s1.Data()),Form("Signal template %s",s1.Data()),true,true);
     }
     {
     std::vector<plot_dataset_struct> vec;
@@ -761,14 +812,6 @@ fit_output* fit_dataset(TString diffvariable, TString splitting, int bin, const 
     plot_datasets_axis1(vec,Form("plots/histo_template_sig_%s_lin",s1.Data()),Form("Signal template %s",s1.Data()),true,true);
     }
 
-    {
-    std::vector<plot_dataset_struct> vec;
-    vec.push_back(str_dataset_bkg_axis1);
-    vec.push_back(str_dset_mctrue_b);
-    vec.push_back(str_dset_mcrcone_b);
-    plot_datasets_axis1(vec,Form("plots/histo_template_bkg_%s_log",s1.Data()),Form("Background template %s",s1.Data()),false);
-    plot_datasets_axis1(vec,Form("plots/histo_template_bkg_%s_lin",s1.Data()),Form("Background template %s",s1.Data()),true,true);
-    }
     {
     std::vector<plot_dataset_struct> vec;
     vec.push_back(str_dset_mctrue_b);
