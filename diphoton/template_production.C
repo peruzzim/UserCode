@@ -2,12 +2,16 @@
 #define template_production_cxx
 #include "template_production.h"
 
+#include <algorithm>
+
 using namespace std;
 
-bool do_scan_cone = true;
+bool do_scan_cone = false;
 
 void template_production::Loop(int maxevents)
 {
+
+  if (do_event_mixing) cout << "USING EVENT MIXING" << endl;
 
   if (fChain == 0) return;
   if (!initialized){
@@ -16,22 +20,265 @@ void template_production::Loop(int maxevents)
   }
 
 
+    TKDTreeID *kdtree[2];
+    std::vector<float> match_pho_pt[2];
+    std::vector<float> match_pho_eta[2];
+    std::vector<float> match_evt_rho[2];
+
+    TFile *matchingfile;
+    TTree *matchingtree;
+    UInt_t matchingtree_event_fileuuid;
+    Int_t matchingtree_event_run;
+    Int_t matchingtree_event_lumi;
+    Int_t matchingtree_event_number;
+    Int_t matchingtree_index_1event_sigsig_1[nclosestmore];
+    Int_t matchingtree_index_1event_sigsig_2[nclosestmore];
+    Int_t matchingtree_index_1event_sigbkg_1[nclosestmore];
+    Int_t matchingtree_index_1event_sigbkg_2[nclosestmore];
+    Int_t matchingtree_index_1event_bkgsig_1[nclosestmore];
+    Int_t matchingtree_index_1event_bkgsig_2[nclosestmore];
+    Int_t matchingtree_index_1event_bkgbkg_1[nclosestmore];
+    Int_t matchingtree_index_1event_bkgbkg_2[nclosestmore];
+    Int_t matchingtree_index_2events_sigsig_1[nclosestmore];
+    Int_t matchingtree_index_2events_sigsig_2[nclosestmore];
+    Int_t matchingtree_index_2events_sigbkg_1[nclosestmore];
+    Int_t matchingtree_index_2events_sigbkg_2[nclosestmore];
+    Int_t matchingtree_index_2events_bkgsig_1[nclosestmore];
+    Int_t matchingtree_index_2events_bkgsig_2[nclosestmore];
+    Int_t matchingtree_index_2events_bkgbkg_1[nclosestmore];
+    Int_t matchingtree_index_2events_bkgbkg_2[nclosestmore];
+    Float_t matchingtree_deta_1event_sigsig_1[nclosestmore];
+    Float_t matchingtree_deta_1event_sigsig_2[nclosestmore];
+    Float_t matchingtree_deta_1event_sigbkg_1[nclosestmore];
+    Float_t matchingtree_deta_1event_sigbkg_2[nclosestmore];
+    Float_t matchingtree_deta_1event_bkgsig_1[nclosestmore];
+    Float_t matchingtree_deta_1event_bkgsig_2[nclosestmore];
+    Float_t matchingtree_deta_1event_bkgbkg_1[nclosestmore];
+    Float_t matchingtree_deta_1event_bkgbkg_2[nclosestmore];
+    Float_t matchingtree_deta_2events_sigsig_1[nclosestmore];
+    Float_t matchingtree_deta_2events_sigsig_2[nclosestmore];
+    Float_t matchingtree_deta_2events_sigbkg_1[nclosestmore];
+    Float_t matchingtree_deta_2events_sigbkg_2[nclosestmore];
+    Float_t matchingtree_deta_2events_bkgsig_1[nclosestmore];
+    Float_t matchingtree_deta_2events_bkgsig_2[nclosestmore];
+    Float_t matchingtree_deta_2events_bkgbkg_1[nclosestmore];
+    Float_t matchingtree_deta_2events_bkgbkg_2[nclosestmore];
+    Float_t matchingtree_drho_1event_sigsig_1[nclosestmore];
+    Float_t matchingtree_drho_1event_sigsig_2[nclosestmore];
+    Float_t matchingtree_drho_1event_sigbkg_1[nclosestmore];
+    Float_t matchingtree_drho_1event_sigbkg_2[nclosestmore];
+    Float_t matchingtree_drho_1event_bkgsig_1[nclosestmore];
+    Float_t matchingtree_drho_1event_bkgsig_2[nclosestmore];
+    Float_t matchingtree_drho_1event_bkgbkg_1[nclosestmore];
+    Float_t matchingtree_drho_1event_bkgbkg_2[nclosestmore];
+    Float_t matchingtree_drho_2events_sigsig_1[nclosestmore];
+    Float_t matchingtree_drho_2events_sigsig_2[nclosestmore];
+    Float_t matchingtree_drho_2events_sigbkg_1[nclosestmore];
+    Float_t matchingtree_drho_2events_sigbkg_2[nclosestmore];
+    Float_t matchingtree_drho_2events_bkgsig_1[nclosestmore];
+    Float_t matchingtree_drho_2events_bkgsig_2[nclosestmore];
+    Float_t matchingtree_drho_2events_bkgbkg_1[nclosestmore];
+    Float_t matchingtree_drho_2events_bkgbkg_2[nclosestmore];
+    Float_t matchingtree_dpt_1event_sigsig_1[nclosestmore];
+    Float_t matchingtree_dpt_1event_sigsig_2[nclosestmore];
+    Float_t matchingtree_dpt_1event_sigbkg_1[nclosestmore];
+    Float_t matchingtree_dpt_1event_sigbkg_2[nclosestmore];
+    Float_t matchingtree_dpt_1event_bkgsig_1[nclosestmore];
+    Float_t matchingtree_dpt_1event_bkgsig_2[nclosestmore];
+    Float_t matchingtree_dpt_1event_bkgbkg_1[nclosestmore];
+    Float_t matchingtree_dpt_1event_bkgbkg_2[nclosestmore];
+    Float_t matchingtree_dpt_2events_sigsig_1[nclosestmore];
+    Float_t matchingtree_dpt_2events_sigsig_2[nclosestmore];
+    Float_t matchingtree_dpt_2events_sigbkg_1[nclosestmore];
+    Float_t matchingtree_dpt_2events_sigbkg_2[nclosestmore];
+    Float_t matchingtree_dpt_2events_bkgsig_1[nclosestmore];
+    Float_t matchingtree_dpt_2events_bkgsig_2[nclosestmore];
+    Float_t matchingtree_dpt_2events_bkgbkg_1[nclosestmore];
+    Float_t matchingtree_dpt_2events_bkgbkg_2[nclosestmore];
+
+    if (mode=="standard_domatching"){
+    
+      TTree *mytree[2];
+      TFile *f = new TFile(inputfilename.Data());
+      f->GetObject("Tree_1Drandomcone_template",mytree[0]);
+      f->GetObject("Tree_2Drandomconesideband_template",mytree[1]);
+      assert(mytree[0]); assert(mytree[1]);
+    
+      for (int i=0; i<2; i++){
+      
+	int mynentries = mytree[i]->GetEntriesFast();
+
+	cout << mynentries << " entries found" << endl;
+
+	float pho1_pt;
+	float pho1_eta;
+	float pho1_phi;
+	float pho2_pt;
+	float pho2_eta;
+	float pho2_phi;
+	float evt_rho;
+	int pass12whoissiglike;
+	TBranch *b_pho1_pt;
+	TBranch *b_pho1_eta;
+	TBranch *b_pho1_phi;
+	TBranch *b_pho2_pt;
+	TBranch *b_pho2_eta;
+	TBranch *b_pho2_phi;
+	TBranch *b_evt_rho;
+	TBranch *b_pass12whoissiglike;
+	Double_t *array_pho_pt = new Double_t[mynentries];
+	Double_t *array_pho_eta = new Double_t[mynentries];
+	Double_t *array_pho_phi = new Double_t[mynentries];
+	Double_t *array_evt_rho = new Double_t[mynentries];
+	Double_t *array_otherpho_eta = new Double_t[mynentries];
+	mytree[i]->SetBranchStatus("*",0);
+	mytree[i]->SetBranchStatus("pholead_pt",1);
+	mytree[i]->SetBranchStatus("pholead_SCeta",1);
+	mytree[i]->SetBranchStatus("pholead_SCphi",1);
+	mytree[i]->SetBranchStatus("photrail_pt",1);
+	mytree[i]->SetBranchStatus("photrail_SCeta",1);
+	mytree[i]->SetBranchStatus("photrail_SCphi",1);
+	mytree[i]->SetBranchStatus("event_rho",1);
+	mytree[i]->SetBranchStatus("event_pass12whoissiglike");
+	mytree[i]->SetBranchAddress("pholead_pt",&pho1_pt,&b_pho1_pt);
+	mytree[i]->SetBranchAddress("pholead_SCeta",&pho1_eta,&b_pho1_eta);
+	mytree[i]->SetBranchAddress("pholead_SCphi",&pho1_phi,&b_pho1_phi);
+	mytree[i]->SetBranchAddress("photrail_pt",&pho2_pt,&b_pho2_pt);
+	mytree[i]->SetBranchAddress("photrail_SCeta",&pho2_eta,&b_pho2_eta);
+	mytree[i]->SetBranchAddress("photrail_SCphi",&pho2_phi,&b_pho2_phi);
+	mytree[i]->SetBranchAddress("event_rho",&evt_rho,&b_evt_rho);
+	mytree[i]->SetBranchAddress("event_pass12whoissiglike",&pass12whoissiglike, &b_pass12whoissiglike);
+
+	for (int k=0; k<mynentries; k++){
+	  mytree[i]->GetEntry(k);
+	  if (i==0) pass12whoissiglike=1;
+	  float pho_pt = (pass12whoissiglike==1) ? pho1_pt : pho2_pt;
+	  float pho_eta = (pass12whoissiglike==1) ? pho1_eta : pho2_eta;
+	  float pho_phi = (pass12whoissiglike==1) ? pho1_phi : pho2_phi;
+	  const float pi = TMath::Pi();
+	  pho_phi+=pi/2; // match preferentially to rotated pi/2
+	  while (pho_phi > pi) pho_phi -= 2*pi;
+	  while (pho_phi <= -pi) pho_phi += 2*pi;
+	  float otherpho_eta = (pass12whoissiglike==0) ? pho1_eta : pho2_eta;
+	  array_pho_eta[k] = (pho_eta+(fabs(pho_eta)>1.4442)*1000*pho_eta/fabs(pho_eta))/0.1; 
+	  array_pho_phi[k] = pho_phi/0.8;
+	  array_evt_rho[k] = evt_rho/1.5;
+	  array_pho_pt[k] = TMath::Log(pho_pt)/0.2;
+	  array_otherpho_eta[k] = (fabs(otherpho_eta)<1.4442) ? 0 : 1000;
+	  match_pho_eta[i].push_back(pho_eta); 
+	  match_evt_rho[i].push_back(evt_rho);
+	  match_pho_pt[i].push_back(pho_pt);
+	}
+
+	cout << "arrays filled" << endl;
+
+	kdtree[i] = new TKDTreeID(mynentries,(i==0) ? 2 : 5,1);
+	kdtree[i]->SetData(0,array_pho_eta);
+	kdtree[i]->SetData(1,array_evt_rho);
+	if (i==1) kdtree[i]->SetData(2,array_pho_pt);
+	if (i==1) kdtree[i]->SetData(3,array_otherpho_eta);
+	if (i==1) kdtree[i]->SetData(4,array_pho_phi);
+	cout << "SetData completed" << endl;
+	kdtree[i]->Build();
+	cout << "KD-tree built" << endl;
+      
+      }
+
+
+    matchingfile = new TFile("matchingfile.root","recreate");
+    matchingfile->cd();
+    matchingtree = new TTree("matchingtree","matchingtree");
+    matchingtree->Branch("matchingtree_event_fileuuid",&matchingtree_event_fileuuid,"matchingtree_event_fileuuid/i");
+    matchingtree->Branch("matchingtree_event_run",&matchingtree_event_run,"matchingtree_event_run/I");
+    matchingtree->Branch("matchingtree_event_lumi",&matchingtree_event_lumi,"matchingtree_event_lumi/I");
+    matchingtree->Branch("matchingtree_event_number",&matchingtree_event_number,"matchingtree_event_number/I");
+    matchingtree->Branch("matchingtree_index_1event_sigsig_1",&matchingtree_index_1event_sigsig_1,Form("matchingtree_index_1event_sigsig_1[%d]/I",nclosestmore));
+    matchingtree->Branch("matchingtree_index_1event_sigsig_2",&matchingtree_index_1event_sigsig_2,Form("matchingtree_index_1event_sigsig_2[%d]/I",nclosestmore));
+    matchingtree->Branch("matchingtree_index_1event_sigbkg_1",&matchingtree_index_1event_sigbkg_1,Form("matchingtree_index_1event_sigbkg_1[%d]/I",nclosestmore));
+    matchingtree->Branch("matchingtree_index_1event_sigbkg_2",&matchingtree_index_1event_sigbkg_2,Form("matchingtree_index_1event_sigbkg_2[%d]/I",nclosestmore));
+    matchingtree->Branch("matchingtree_index_1event_bkgsig_1",&matchingtree_index_1event_bkgsig_1,Form("matchingtree_index_1event_bkgsig_1[%d]/I",nclosestmore));
+    matchingtree->Branch("matchingtree_index_1event_bkgsig_2",&matchingtree_index_1event_bkgsig_2,Form("matchingtree_index_1event_bkgsig_2[%d]/I",nclosestmore));
+    matchingtree->Branch("matchingtree_index_1event_bkgbkg_1",&matchingtree_index_1event_bkgbkg_1,Form("matchingtree_index_1event_bkgbkg_1[%d]/I",nclosestmore));
+    matchingtree->Branch("matchingtree_index_1event_bkgbkg_2",&matchingtree_index_1event_bkgbkg_2,Form("matchingtree_index_1event_bkgbkg_2[%d]/I",nclosestmore));
+    matchingtree->Branch("matchingtree_index_2events_sigsig_1",&matchingtree_index_2events_sigsig_1,Form("matchingtree_index_2events_sigsig_1[%d]/I",nclosestmore));
+    matchingtree->Branch("matchingtree_index_2events_sigsig_2",&matchingtree_index_2events_sigsig_2,Form("matchingtree_index_2events_sigsig_2[%d]/I",nclosestmore));
+    matchingtree->Branch("matchingtree_index_2events_sigbkg_1",&matchingtree_index_2events_sigbkg_1,Form("matchingtree_index_2events_sigbkg_1[%d]/I",nclosestmore));
+    matchingtree->Branch("matchingtree_index_2events_sigbkg_2",&matchingtree_index_2events_sigbkg_2,Form("matchingtree_index_2events_sigbkg_2[%d]/I",nclosestmore));
+    matchingtree->Branch("matchingtree_index_2events_bkgsig_1",&matchingtree_index_2events_bkgsig_1,Form("matchingtree_index_2events_bkgsig_1[%d]/I",nclosestmore));
+    matchingtree->Branch("matchingtree_index_2events_bkgsig_2",&matchingtree_index_2events_bkgsig_2,Form("matchingtree_index_2events_bkgsig_2[%d]/I",nclosestmore));
+    matchingtree->Branch("matchingtree_index_2events_bkgbkg_1",&matchingtree_index_2events_bkgbkg_1,Form("matchingtree_index_2events_bkgbkg_1[%d]/I",nclosestmore));
+    matchingtree->Branch("matchingtree_index_2events_bkgbkg_2",&matchingtree_index_2events_bkgbkg_2,Form("matchingtree_index_2events_bkgbkg_2[%d]/I",nclosestmore));
+
+    matchingtree->Branch("matchingtree_deta_1event_sigsig_1",&matchingtree_deta_1event_sigsig_1,Form("matchingtree_deta_1event_sigsig_1[%d]/F",nclosestmore));
+    matchingtree->Branch("matchingtree_deta_1event_sigsig_2",&matchingtree_deta_1event_sigsig_2,Form("matchingtree_deta_1event_sigsig_2[%d]/F",nclosestmore));
+    matchingtree->Branch("matchingtree_deta_1event_sigbkg_1",&matchingtree_deta_1event_sigbkg_1,Form("matchingtree_deta_1event_sigbkg_1[%d]/F",nclosestmore));
+    matchingtree->Branch("matchingtree_deta_1event_sigbkg_2",&matchingtree_deta_1event_sigbkg_2,Form("matchingtree_deta_1event_sigbkg_2[%d]/F",nclosestmore));
+    matchingtree->Branch("matchingtree_deta_1event_bkgsig_1",&matchingtree_deta_1event_bkgsig_1,Form("matchingtree_deta_1event_bkgsig_1[%d]/F",nclosestmore));
+    matchingtree->Branch("matchingtree_deta_1event_bkgsig_2",&matchingtree_deta_1event_bkgsig_2,Form("matchingtree_deta_1event_bkgsig_2[%d]/F",nclosestmore));
+    matchingtree->Branch("matchingtree_deta_1event_bkgbkg_1",&matchingtree_deta_1event_bkgbkg_1,Form("matchingtree_deta_1event_bkgbkg_1[%d]/F",nclosestmore));
+    matchingtree->Branch("matchingtree_deta_1event_bkgbkg_2",&matchingtree_deta_1event_bkgbkg_2,Form("matchingtree_deta_1event_bkgbkg_2[%d]/F",nclosestmore));
+    matchingtree->Branch("matchingtree_deta_2events_sigsig_1",&matchingtree_deta_2events_sigsig_1,Form("matchingtree_deta_2events_sigsig_1[%d]/F",nclosestmore));
+    matchingtree->Branch("matchingtree_deta_2events_sigsig_2",&matchingtree_deta_2events_sigsig_2,Form("matchingtree_deta_2events_sigsig_2[%d]/F",nclosestmore));
+    matchingtree->Branch("matchingtree_deta_2events_sigbkg_1",&matchingtree_deta_2events_sigbkg_1,Form("matchingtree_deta_2events_sigbkg_1[%d]/F",nclosestmore));
+    matchingtree->Branch("matchingtree_deta_2events_sigbkg_2",&matchingtree_deta_2events_sigbkg_2,Form("matchingtree_deta_2events_sigbkg_2[%d]/F",nclosestmore));
+    matchingtree->Branch("matchingtree_deta_2events_bkgsig_1",&matchingtree_deta_2events_bkgsig_1,Form("matchingtree_deta_2events_bkgsig_1[%d]/F",nclosestmore));
+    matchingtree->Branch("matchingtree_deta_2events_bkgsig_2",&matchingtree_deta_2events_bkgsig_2,Form("matchingtree_deta_2events_bkgsig_2[%d]/F",nclosestmore));
+    matchingtree->Branch("matchingtree_deta_2events_bkgbkg_1",&matchingtree_deta_2events_bkgbkg_1,Form("matchingtree_deta_2events_bkgbkg_1[%d]/F",nclosestmore));
+    matchingtree->Branch("matchingtree_deta_2events_bkgbkg_2",&matchingtree_deta_2events_bkgbkg_2,Form("matchingtree_deta_2events_bkgbkg_2[%d]/F",nclosestmore));
+    matchingtree->Branch("matchingtree_drho_1event_sigsig_1",&matchingtree_drho_1event_sigsig_1,Form("matchingtree_drho_1event_sigsig_1[%d]/F",nclosestmore));
+    matchingtree->Branch("matchingtree_drho_1event_sigsig_2",&matchingtree_drho_1event_sigsig_2,Form("matchingtree_drho_1event_sigsig_2[%d]/F",nclosestmore));
+    matchingtree->Branch("matchingtree_drho_1event_sigbkg_1",&matchingtree_drho_1event_sigbkg_1,Form("matchingtree_drho_1event_sigbkg_1[%d]/F",nclosestmore));
+    matchingtree->Branch("matchingtree_drho_1event_sigbkg_2",&matchingtree_drho_1event_sigbkg_2,Form("matchingtree_drho_1event_sigbkg_2[%d]/F",nclosestmore));
+    matchingtree->Branch("matchingtree_drho_1event_bkgsig_1",&matchingtree_drho_1event_bkgsig_1,Form("matchingtree_drho_1event_bkgsig_1[%d]/F",nclosestmore));
+    matchingtree->Branch("matchingtree_drho_1event_bkgsig_2",&matchingtree_drho_1event_bkgsig_2,Form("matchingtree_drho_1event_bkgsig_2[%d]/F",nclosestmore));
+    matchingtree->Branch("matchingtree_drho_1event_bkgbkg_1",&matchingtree_drho_1event_bkgbkg_1,Form("matchingtree_drho_1event_bkgbkg_1[%d]/F",nclosestmore));
+    matchingtree->Branch("matchingtree_drho_1event_bkgbkg_2",&matchingtree_drho_1event_bkgbkg_2,Form("matchingtree_drho_1event_bkgbkg_2[%d]/F",nclosestmore));
+    matchingtree->Branch("matchingtree_drho_2events_sigsig_1",&matchingtree_drho_2events_sigsig_1,Form("matchingtree_drho_2events_sigsig_1[%d]/F",nclosestmore));
+    matchingtree->Branch("matchingtree_drho_2events_sigsig_2",&matchingtree_drho_2events_sigsig_2,Form("matchingtree_drho_2events_sigsig_2[%d]/F",nclosestmore));
+    matchingtree->Branch("matchingtree_drho_2events_sigbkg_1",&matchingtree_drho_2events_sigbkg_1,Form("matchingtree_drho_2events_sigbkg_1[%d]/F",nclosestmore));
+    matchingtree->Branch("matchingtree_drho_2events_sigbkg_2",&matchingtree_drho_2events_sigbkg_2,Form("matchingtree_drho_2events_sigbkg_2[%d]/F",nclosestmore));
+    matchingtree->Branch("matchingtree_drho_2events_bkgsig_1",&matchingtree_drho_2events_bkgsig_1,Form("matchingtree_drho_2events_bkgsig_1[%d]/F",nclosestmore));
+    matchingtree->Branch("matchingtree_drho_2events_bkgsig_2",&matchingtree_drho_2events_bkgsig_2,Form("matchingtree_drho_2events_bkgsig_2[%d]/F",nclosestmore));
+    matchingtree->Branch("matchingtree_drho_2events_bkgbkg_1",&matchingtree_drho_2events_bkgbkg_1,Form("matchingtree_drho_2events_bkgbkg_1[%d]/F",nclosestmore));
+    matchingtree->Branch("matchingtree_drho_2events_bkgbkg_2",&matchingtree_drho_2events_bkgbkg_2,Form("matchingtree_drho_2events_bkgbkg_2[%d]/F",nclosestmore));
+    matchingtree->Branch("matchingtree_dpt_1event_sigsig_1",&matchingtree_dpt_1event_sigsig_1,Form("matchingtree_dpt_1event_sigsig_1[%d]/F",nclosestmore));
+    matchingtree->Branch("matchingtree_dpt_1event_sigsig_2",&matchingtree_dpt_1event_sigsig_2,Form("matchingtree_dpt_1event_sigsig_2[%d]/F",nclosestmore));
+    matchingtree->Branch("matchingtree_dpt_1event_sigbkg_1",&matchingtree_dpt_1event_sigbkg_1,Form("matchingtree_dpt_1event_sigbkg_1[%d]/F",nclosestmore));
+    matchingtree->Branch("matchingtree_dpt_1event_sigbkg_2",&matchingtree_dpt_1event_sigbkg_2,Form("matchingtree_dpt_1event_sigbkg_2[%d]/F",nclosestmore));
+    matchingtree->Branch("matchingtree_dpt_1event_bkgsig_1",&matchingtree_dpt_1event_bkgsig_1,Form("matchingtree_dpt_1event_bkgsig_1[%d]/F",nclosestmore));
+    matchingtree->Branch("matchingtree_dpt_1event_bkgsig_2",&matchingtree_dpt_1event_bkgsig_2,Form("matchingtree_dpt_1event_bkgsig_2[%d]/F",nclosestmore));
+    matchingtree->Branch("matchingtree_dpt_1event_bkgbkg_1",&matchingtree_dpt_1event_bkgbkg_1,Form("matchingtree_dpt_1event_bkgbkg_1[%d]/F",nclosestmore));
+    matchingtree->Branch("matchingtree_dpt_1event_bkgbkg_2",&matchingtree_dpt_1event_bkgbkg_2,Form("matchingtree_dpt_1event_bkgbkg_2[%d]/F",nclosestmore));
+    matchingtree->Branch("matchingtree_dpt_2events_sigsig_1",&matchingtree_dpt_2events_sigsig_1,Form("matchingtree_dpt_2events_sigsig_1[%d]/F",nclosestmore));
+    matchingtree->Branch("matchingtree_dpt_2events_sigsig_2",&matchingtree_dpt_2events_sigsig_2,Form("matchingtree_dpt_2events_sigsig_2[%d]/F",nclosestmore));
+    matchingtree->Branch("matchingtree_dpt_2events_sigbkg_1",&matchingtree_dpt_2events_sigbkg_1,Form("matchingtree_dpt_2events_sigbkg_1[%d]/F",nclosestmore));
+    matchingtree->Branch("matchingtree_dpt_2events_sigbkg_2",&matchingtree_dpt_2events_sigbkg_2,Form("matchingtree_dpt_2events_sigbkg_2[%d]/F",nclosestmore));
+    matchingtree->Branch("matchingtree_dpt_2events_bkgsig_1",&matchingtree_dpt_2events_bkgsig_1,Form("matchingtree_dpt_2events_bkgsig_1[%d]/F",nclosestmore));
+    matchingtree->Branch("matchingtree_dpt_2events_bkgsig_2",&matchingtree_dpt_2events_bkgsig_2,Form("matchingtree_dpt_2events_bkgsig_2[%d]/F",nclosestmore));
+    matchingtree->Branch("matchingtree_dpt_2events_bkgbkg_1",&matchingtree_dpt_2events_bkgbkg_1,Form("matchingtree_dpt_2events_bkgbkg_1[%d]/F",nclosestmore));
+    matchingtree->Branch("matchingtree_dpt_2events_bkgbkg_2",&matchingtree_dpt_2events_bkgbkg_2,Form("matchingtree_dpt_2events_bkgbkg_2[%d]/F",nclosestmore));
+
+    }
+
+
   Long64_t nentries = fChain->GetEntriesFast();
   int limit_entries = maxevents;
   //int limit_entries = 1e+4;
   //int limit_entries = -1;
-
+  const float thr = float(limit_entries)/float(nentries);
 
   Long64_t nbytes = 0, nb = 0;
   for (Long64_t jentry=0; jentry<nentries;jentry++) {
-    Long64_t ientry = LoadTree(jentry);
-    if (ientry < 0) break;
-    nb = fChain->GetEntry(jentry);   nbytes += nb;
+
     if (jentry%100000==0) std::cout << "Processing entry " << jentry << std::endl;
 
     if (limit_entries>0){
-      if (randomgen->Uniform(0,1) > float(limit_entries)/float(nentries)) continue;
+      if (randomgen->Uniform(0,1) > thr) continue;
     }
+
+    Long64_t ientry = LoadTree(jentry);
+    if (ientry < 0) break;
+    nb = fChain->GetEntry(jentry);   nbytes += nb;
 
     //    if (event_nRecVtx>5) continue;
 
@@ -69,6 +316,10 @@ void template_production::Loop(int maxevents)
 
     if (mode=="cutPFchargediso_signal" || mode=="cutPFchargediso_background" || mode=="cutPFchargediso_randomcone" || mode=="cutPFchargediso_sieiesideband") if (pholead_pho_Cone04ChargedHadronIso_dR02_dz02_dxy01>0.1) continue;
 
+
+
+
+
     Int_t event_ok_for_dataset=-1;
 
     Int_t reg_lead;
@@ -97,7 +348,6 @@ void template_production::Loop(int maxevents)
       reg_trail=0;
     }
     else std::cout << "We have a problem here!!!" << std::endl;
-
 
 //    if (differentialvariable=="photoniso"){
 //      pholead_outvar=pholead_pho_Cone04PhotonIso_dEta015EB_dR070EE_mvVtx;
@@ -212,6 +462,9 @@ void template_production::Loop(int maxevents)
 
     }
 
+//    if (fabs(pholead_pho_Cone04PhotonIso_dEta015EB_dR070EE_mvVtx-pholead_outvar)>0) cout << pholead_pho_Cone04PhotonIso_dEta015EB_dR070EE_mvVtx << " " << pholead_outvar << endl;
+//    if (fabs(photrail_pho_Cone04PhotonIso_dEta015EB_dR070EE_mvVtx-photrail_outvar)>0) cout << photrail_pho_Cone04PhotonIso_dEta015EB_dR070EE_mvVtx << " " << photrail_outvar << endl;
+
     roorho->setVal(event_rho);
     roosigma->setVal(event_sigma);
 
@@ -223,16 +476,18 @@ void template_production::Loop(int maxevents)
     if (recalc_lead){
       if (pholead_outvar<-100) std::cout << "PROBLEM WITH ISOLATION CALCULATION!!!" << std::endl;
       assert (pholead_outvar>=-100);
-      if (pholead_outvar<leftrange) {/*std::cout << "Warning: fixing underflow " << pholead_outvar << std::endl;*/ pholead_outvar=leftrange+1e-5;}
-      //      if (pholead_outvar>=rightrange) continue;
-      if (pholead_outvar>=rightrange) pholead_outvar=rightrange-1e-5; // overflow in last bin 
+      //      if (pholead_outvar<leftrange) {/*std::cout << "Warning: fixing underflow " << pholead_outvar << std::endl;*/ pholead_outvar=leftrange+1e-5;}
+      if (pholead_outvar<=leftrange) continue;
+      if (pholead_outvar>=rightrange) continue;
+      //      if (pholead_outvar>=rightrange) pholead_outvar=rightrange-1e-5; // overflow in last bin 
     }
     if (recalc_trail){
       if (photrail_outvar<-100) std::cout << "PROBLEM WITH ISOLATION CALCULATION!!!" << std::endl;
       assert (photrail_outvar>=-100);
-      if (photrail_outvar<leftrange) {/*std::cout << "Warning: fixing underflow " << photrail_outvar << std::endl;*/ photrail_outvar=leftrange+1e-5;}
-      //      if (photrail_outvar>=rightrange) continue;
-      if (photrail_outvar>=rightrange) photrail_outvar=rightrange-1e-5; // overflow in last bin 
+      //      if (photrail_outvar<leftrange) {/*std::cout << "Warning: fixing underflow " << photrail_outvar << std::endl;*/ photrail_outvar=leftrange+1e-5;}
+      if (photrail_outvar<=leftrange) continue;
+      if (photrail_outvar>=rightrange) continue;
+      //      if (photrail_outvar>=rightrange) photrail_outvar=rightrange-1e-5; // overflow in last bin 
     }
 
     Float_t weight=event_luminormfactor*event_Kfactor*event_weight;
@@ -326,21 +581,60 @@ void template_production::Loop(int maxevents)
 	RooArgSet args(*roovar1,*roovar2,*roopt1,*roopt2,*roosieie1,*roosieie2,*rooeta1,*rooeta2);
 	args.add(RooArgSet(*roorho,*roosigma));
 	FillDiffVariables(); // WARNING: WORKS ONLY IF DIFF VARIABLES ARE NOT SENSITIVE TO SWAPPING 1 WITH 2
-	args.add(*rooargset_diffvariables);
 	template2d_roodset[get_name_template2d_roodset(event_ok_for_dataset_local,sigorbkg)]->add(args,weight);
 
     } // end if do2dtemplate
 
     if (dodistribution && event_ok_for_dataset>-1){
 
-      for (std::vector<TString>::const_iterator diffvariable = diffvariables_list.begin(); diffvariable!=diffvariables_list.end(); diffvariable++){
+	 int event_ok_for_dataset_local = event_ok_for_dataset;
 
-	Int_t bin_couple = -999;
-	
-	float value_diffvariable;
-	int event_ok_for_dataset_local = event_ok_for_dataset;
+	 FillDiffVariables(); // WARNING: WORKS ONLY IF DIFF VARIABLES ARE NOT SENSITIVE TO SWAPPING 1 WITH 2
 
-	FillDiffVariables(); // WARNING: WORKS ONLY IF DIFF VARIABLES ARE NOT SENSITIVE TO SWAPPING 1 WITH 2
+	 float in1=pholead_outvar;
+	 float in2=photrail_outvar;
+	 float ptin1=pholead_pt;
+	 float ptin2=photrail_pt;
+	 float sieiein1=pholead_sieie;
+	 float sieiein2=photrail_sieie;
+	 float etain1=fabs(pholead_SCeta);
+	 float etain2=fabs(photrail_SCeta);
+
+	 bool doswap=false;
+
+	 if ((event_ok_for_dataset_local==0 || event_ok_for_dataset_local==2) && (randomgen->Uniform()>0.5)) doswap=true;
+
+	 if (event_ok_for_dataset_local==4) doswap=true;
+
+	 if (event_ok_for_dataset_local==3 || event_ok_for_dataset_local==4) event_ok_for_dataset_local=1;
+
+	 if (doswap){
+	   float temp;
+	   temp=in1; in1=in2; in2=temp;
+	   temp=ptin1; ptin1=ptin2; ptin2=temp;
+	   temp=sieiein1; sieiein1=sieiein2; sieiein2=temp;
+	   temp=etain1; etain1=etain2; etain2=temp;
+	 }
+
+	 roovar1->setVal(in1);
+	 roovar2->setVal(in2);
+	 roopt1->setVal(ptin1);
+	 roopt2->setVal(ptin2);
+	 roosieie1->setVal(sieiein1);
+	 roosieie2->setVal(sieiein2);
+	 rooeta1->setVal(etain1);
+	 rooeta2->setVal(etain2);
+	 rooweight->setVal(weight);
+	 RooArgSet args(*roovar1,*roovar2,*roopt1,*roopt2,*roosieie1,*roosieie2,*rooeta1,*rooeta2);
+	 args.add(RooArgSet(*roorho,*roosigma));
+	 args.add(*rooargset_diffvariables);
+	 RooArgSet args2(*roovar1,*roovar2,*roopt1,*roopt2,*roosieie1,*roosieie2,*rooeta1,*rooeta2);
+	 args2.add(RooArgSet(*roorho,*roosigma));
+
+       for (std::vector<TString>::const_iterator diffvariable = diffvariables_list.begin(); diffvariable!=diffvariables_list.end(); diffvariable++){
+
+	 Int_t bin_couple = -999;
+	 float value_diffvariable;
 
 	if (*diffvariable==TString("invmass")) {
 	  value_diffvariable=roovar_invmass->getVal();
@@ -367,45 +661,174 @@ void template_production::Loop(int maxevents)
       
 	if (bin_couple<0) continue;
 	
-	float in1=pholead_outvar;
-	float in2=photrail_outvar;
-	float ptin1=pholead_pt;
-	float ptin2=photrail_pt;
-	float sieiein1=pholead_sieie;
-	float sieiein2=photrail_sieie;
-	float etain1=fabs(pholead_SCeta);
-	float etain2=fabs(photrail_SCeta);
-
-	bool doswap=false;
-
-
-	if ((event_ok_for_dataset_local==0 || event_ok_for_dataset_local==2) && (randomgen->Uniform()>0.5)) doswap=true;
-	
-	if (event_ok_for_dataset_local==4) doswap=true;
-
-	if (event_ok_for_dataset_local==3 || event_ok_for_dataset_local==4) event_ok_for_dataset_local=1;
-
-	if (doswap){
-	  float temp;
-	  temp=in1; in1=in2; in2=temp;
-	  temp=ptin1; ptin1=ptin2; ptin2=temp;
-	  temp=sieiein1; sieiein1=sieiein2; sieiein2=temp;
-	  temp=etain1; etain1=etain2; etain2=temp;
-	}
-      
-	roovar1->setVal(in1);
-	roovar2->setVal(in2);
-	roopt1->setVal(ptin1);
-	roopt2->setVal(ptin2);
-	roosieie1->setVal(sieiein1);
-	roosieie2->setVal(sieiein2);
-	rooeta1->setVal(etain1);
-	rooeta2->setVal(etain2);
-	rooweight->setVal(weight);
-	RooArgSet args(*roovar1,*roovar2,*roopt1,*roopt2,*roosieie1,*roosieie2,*rooeta1,*rooeta2);
-	args.add(RooArgSet(*roorho,*roosigma));
-	args.add(*rooargset_diffvariables);
 	obs_roodset[get_name_obs_roodset(event_ok_for_dataset_local,*diffvariable,bin_couple)]->add(args,weight);
+
+	if (donewtemplates) {
+	  Float_t phoiso_1[2][2][nclosest];
+	  Float_t phoiso_2[2][2][nclosest];
+	  Float_t rewinfo_1[2][2][nclosest*6];
+	  Float_t rewinfo_2[2][2][nclosest*6];
+	  for (int l=0; l<nclosest; l++){
+
+	    phoiso_1[0][0][l]=(do_event_mixing ? phoiso_template_2events_sigsig_1[l] : phoiso_template_1event_sigsig_1[l]);
+	    phoiso_1[0][1][l]=(do_event_mixing ? phoiso_template_2events_sigbkg_1[l] : phoiso_template_1event_sigbkg_1[l]);
+	    phoiso_1[1][0][l]=(do_event_mixing ? phoiso_template_2events_bkgsig_1[l] : phoiso_template_1event_bkgsig_1[l]);
+	    phoiso_1[1][1][l]=(do_event_mixing ? phoiso_template_2events_bkgbkg_1[l] : phoiso_template_1event_bkgbkg_1[l]);
+	    phoiso_2[0][0][l]=(do_event_mixing ? phoiso_template_2events_sigsig_2[l] : phoiso_template_1event_sigsig_2[l]);
+	    phoiso_2[0][1][l]=(do_event_mixing ? phoiso_template_2events_sigbkg_2[l] : phoiso_template_1event_sigbkg_2[l]);
+	    phoiso_2[1][0][l]=(do_event_mixing ? phoiso_template_2events_bkgsig_2[l] : phoiso_template_1event_bkgsig_2[l]);
+	    phoiso_2[1][1][l]=(do_event_mixing ? phoiso_template_2events_bkgbkg_2[l] : phoiso_template_1event_bkgbkg_2[l]);
+
+
+	    memcpy(&(rewinfo_1[0][0][l*6]),(do_event_mixing ? &(rewinfo_template_2events_sigsig_1[l*6]) : &(rewinfo_template_1event_sigsig_1[l*6])),6*sizeof(float));
+	    memcpy(&(rewinfo_1[0][1][l*6]),(do_event_mixing ? &(rewinfo_template_2events_sigbkg_1[l*6]) : &(rewinfo_template_1event_sigbkg_1[l*6])),6*sizeof(float));
+	    memcpy(&(rewinfo_1[1][0][l*6]),(do_event_mixing ? &(rewinfo_template_2events_bkgsig_1[l*6]) : &(rewinfo_template_1event_bkgsig_1[l*6])),6*sizeof(float));
+	    memcpy(&(rewinfo_1[1][1][l*6]),(do_event_mixing ? &(rewinfo_template_2events_bkgbkg_1[l*6]) : &(rewinfo_template_1event_bkgbkg_1[l*6])),6*sizeof(float));
+	    memcpy(&(rewinfo_2[0][0][l*6]),(do_event_mixing ? &(rewinfo_template_2events_sigsig_2[l*6]) : &(rewinfo_template_1event_sigsig_2[l*6])),6*sizeof(float));
+	    memcpy(&(rewinfo_2[0][1][l*6]),(do_event_mixing ? &(rewinfo_template_2events_sigbkg_2[l*6]) : &(rewinfo_template_1event_sigbkg_2[l*6])),6*sizeof(float));
+	    memcpy(&(rewinfo_2[1][0][l*6]),(do_event_mixing ? &(rewinfo_template_2events_bkgsig_2[l*6]) : &(rewinfo_template_1event_bkgsig_2[l*6])),6*sizeof(float));
+	    memcpy(&(rewinfo_2[1][1][l*6]),(do_event_mixing ? &(rewinfo_template_2events_bkgbkg_2[l*6]) : &(rewinfo_template_1event_bkgbkg_2[l*6])),6*sizeof(float));
+
+	  }
+
+	  for (int n1=0; n1<2; n1++) for (int n2=0; n2<2; n2++) for (int l=0; l<nclosest; l++){
+	    if (whichnewtemplate==0 && (n1!=0 || n2!=0)) continue;
+	    if (whichnewtemplate==1 && (n1+n2!=1)) continue;
+	    if (whichnewtemplate==2 && (n1!=1 || n2!=1)) continue;
+	    float fill1=-999;
+	    float fill2=-999;
+	    float filleta1=-999;
+	    float filleta2=-999;
+	    float fillpt1=-999;
+	    float fillpt2=-999;
+	    float fillrho=-999;
+	    float fillsigma=-999;
+
+	    if (whichnewtemplate==0){
+	      if (!doswap){
+		fill1=(phoiso_1[n1][n2][l]);
+		fill2=(phoiso_2[n1][n2][l]);
+		filleta1 = (!do_event_mixing) ? rewinfo_1[n1][n2][l*6+0] : rewinfo_1[n1][n2][l*6+0];
+		filleta2 = (!do_event_mixing) ? rewinfo_1[n1][n2][l*6+0]-pholead_SCeta+photrail_SCeta : rewinfo_2[n1][n2][l*6+0];
+		fillpt1 = (!do_event_mixing) ? rewinfo_1[n1][n2][l*6+2] : rewinfo_1[n1][n2][l*6+2];
+                fillpt2 = (!do_event_mixing) ? rewinfo_1[n1][n2][l*6+3] : rewinfo_2[n1][n2][l*6+2];
+		fillrho = (!do_event_mixing) ? rewinfo_1[n1][n2][l*6+4] : rewinfo_1[n1][n2][l*6+4]+rewinfo_2[n1][n2][l*6+4];
+		fillsigma = (!do_event_mixing) ? rewinfo_1[n1][n2][l*6+5] : sqrt(pow(rewinfo_1[n1][n2][l*6+5],2)+pow(rewinfo_2[n1][n2][l*6+5],2));
+	      }
+	      else {
+		fill1=(phoiso_2[n1][n2][l]);
+                fill2=(phoiso_1[n1][n2][l]);
+		filleta1 = (!do_event_mixing) ? rewinfo_1[n1][n2][l*6+0]-pholead_SCeta+photrail_SCeta : rewinfo_2[n1][n2][l*6+0];
+		filleta2 = (!do_event_mixing) ? rewinfo_1[n1][n2][l*6+0] : rewinfo_1[n1][n2][l*6+0];
+		fillpt1 = (!do_event_mixing) ? rewinfo_1[n1][n2][l*6+3] : rewinfo_2[n1][n2][l*6+2];
+		fillpt2 = (!do_event_mixing) ? rewinfo_1[n1][n2][l*6+2] : rewinfo_1[n1][n2][l*6+2];
+		fillrho = (!do_event_mixing) ? rewinfo_1[n1][n2][l*6+4] : rewinfo_1[n1][n2][l*6+4]+rewinfo_2[n1][n2][l*6+4];
+		fillsigma = (!do_event_mixing) ? rewinfo_1[n1][n2][l*6+5] : sqrt(pow(rewinfo_1[n1][n2][l*6+5],2)+pow(rewinfo_2[n1][n2][l*6+5],2));
+	      }
+	    }
+	    else if (n1==0 && n2==1){
+	      if (!doswap){
+		fill1=(phoiso_1[n1][n2][l]);
+		fill2=(phoiso_2[n1][n2][l]);
+		filleta1 = (!do_event_mixing) ? rewinfo_2[n1][n2][l*6+0]-photrail_SCeta+pholead_SCeta : rewinfo_1[n1][n2][l*6+0];
+		filleta2 = (!do_event_mixing) ? rewinfo_2[n1][n2][l*6+0] : rewinfo_2[n1][n2][l*6+0];
+		fillpt1 = (!do_event_mixing) ? rewinfo_2[n1][n2][l*6+3] : rewinfo_1[n1][n2][l*6+2];
+		fillpt2 = (!do_event_mixing) ? rewinfo_2[n1][n2][l*6+2] : rewinfo_2[n1][n2][l*6+2];
+		fillrho = (!do_event_mixing) ? rewinfo_2[n1][n2][l*6+4] : rewinfo_1[n1][n2][l*6+4]+rewinfo_2[n1][n2][l*6+4];
+		fillsigma = (!do_event_mixing) ? rewinfo_2[n1][n2][l*6+5] : sqrt(pow(rewinfo_1[n1][n2][l*6+5],2)+pow(rewinfo_2[n1][n2][l*6+5],2));
+	      }
+	      else {
+		fill1=(phoiso_2[!n1][!n2][l]);
+                fill2=(phoiso_1[!n1][!n2][l]);
+		filleta1 = (!do_event_mixing) ? rewinfo_1[!n1][!n2][l*6+0]-pholead_SCeta+photrail_SCeta : rewinfo_2[!n1][!n2][l*6+0];
+		filleta2 = (!do_event_mixing) ? rewinfo_1[!n1][!n2][l*6+0] : rewinfo_1[!n1][!n2][l*6+0];
+		fillpt1 = (!do_event_mixing) ? rewinfo_1[!n1][!n2][l*6+3] : rewinfo_2[!n1][!n2][l*6+2];
+		fillpt2 = (!do_event_mixing) ? rewinfo_1[!n1][!n2][l*6+2] : rewinfo_1[!n1][!n2][l*6+2];
+		fillrho = (!do_event_mixing) ? rewinfo_1[!n1][!n2][l*6+4] : rewinfo_1[!n1][!n2][l*6+4]+rewinfo_2[!n1][!n2][l*6+4];
+		fillsigma = (!do_event_mixing) ? rewinfo_1[!n1][!n2][l*6+5] : sqrt(pow(rewinfo_1[!n1][!n2][l*6+5],2)+pow(rewinfo_2[!n1][!n2][l*6+5],2));
+	      }
+	    }
+	    else if (n1==1 && n2==0){
+	      if (!doswap){
+		fill1=(phoiso_1[n1][n2][l]);
+		fill2=(phoiso_2[n1][n2][l]);
+		filleta1 = (!do_event_mixing) ? rewinfo_1[n1][n2][l*6+0] : rewinfo_1[n1][n2][l*6+0];
+		filleta2 = (!do_event_mixing) ? rewinfo_1[n1][n2][l*6+0]-pholead_SCeta+photrail_SCeta : rewinfo_2[n1][n2][l*6+0];
+		fillpt1 = (!do_event_mixing) ? rewinfo_1[n1][n2][l*6+2] : rewinfo_1[n1][n2][l*6+2];
+		fillpt2 = (!do_event_mixing) ? rewinfo_1[n1][n2][l*6+3] : rewinfo_2[n1][n2][l*6+2];
+		fillrho = (!do_event_mixing) ? rewinfo_1[n1][n2][l*6+4] : rewinfo_1[n1][n2][l*6+4]+rewinfo_2[n1][n2][l*6+4];
+		fillsigma = (!do_event_mixing) ? rewinfo_1[n1][n2][l*6+5] : sqrt(pow(rewinfo_1[n1][n2][l*6+5],2)+pow(rewinfo_2[n1][n2][l*6+5],2));
+	      }
+	      else {
+		fill1=(phoiso_2[!n1][!n2][l]);
+                fill2=(phoiso_1[!n1][!n2][l]);
+		filleta1 = (!do_event_mixing) ? rewinfo_2[!n1][!n2][l*6+0] : rewinfo_2[!n1][!n2][l*6+0];
+		filleta2 = (!do_event_mixing) ? rewinfo_2[!n1][!n2][l*6+0]-photrail_SCeta+pholead_SCeta : rewinfo_1[!n1][!n2][l*6+0];
+		fillpt1 = (!do_event_mixing) ? rewinfo_2[!n1][!n2][l*6+2] : rewinfo_2[!n1][!n2][l*6+2];
+		fillpt2 = (!do_event_mixing) ? rewinfo_2[!n1][!n2][l*6+3] : rewinfo_1[!n1][!n2][l*6+2];
+		fillrho = (!do_event_mixing) ? rewinfo_2[!n1][!n2][l*6+4] : rewinfo_1[!n1][!n2][l*6+4]+rewinfo_2[!n1][!n2][l*6+4];
+		fillsigma = (!do_event_mixing) ? rewinfo_2[!n1][!n2][l*6+5] : sqrt(pow(rewinfo_1[!n1][!n2][l*6+5],2)+pow(rewinfo_2[!n1][!n2][l*6+5],2));
+	      }
+	    }
+	    else if (whichnewtemplate==2){
+	      if (!doswap){
+		fill1=(phoiso_1[n1][n2][l]);
+		fill2=(phoiso_2[n1][n2][l]);
+		filleta1 = (!do_event_mixing) ? rewinfo_1[n1][n2][l*6+0] : rewinfo_1[n1][n2][l*6+0];
+		filleta2 = (!do_event_mixing) ? rewinfo_2[n1][n2][l*6+0] : rewinfo_2[n1][n2][l*6+0];
+		fillpt1 = (!do_event_mixing) ? rewinfo_1[n1][n2][l*6+2] : rewinfo_1[n1][n2][l*6+2];
+		fillpt2 = (!do_event_mixing) ? rewinfo_2[n1][n2][l*6+2] : rewinfo_2[n1][n2][l*6+2];
+		fillrho = (!do_event_mixing) ? (rewinfo_1[n1][n2][l*6+4]+rewinfo_2[n1][n2][l*6+4])/2 : rewinfo_1[n1][n2][l*6+4]+rewinfo_2[n1][n2][l*6+4];
+		fillsigma = (!do_event_mixing) ? sqrt(pow(rewinfo_1[n1][n2][l*6+5],2)+pow(rewinfo_2[n1][n2][l*6+5],2))/sqrt(2) : sqrt(pow(rewinfo_1[n1][n2][l*6+5],2)+pow(rewinfo_2[n1][n2][l*6+5],2));
+	      }
+	      else {
+		fill1=(phoiso_2[n1][n2][l]);
+                fill2=(phoiso_1[n1][n2][l]);
+		filleta1 = (!do_event_mixing) ? rewinfo_2[n1][n2][l*6+0] : rewinfo_2[n1][n2][l*6+0];
+		filleta2 = (!do_event_mixing) ? rewinfo_1[n1][n2][l*6+0] : rewinfo_1[n1][n2][l*6+0];
+		fillpt1 = (!do_event_mixing) ? rewinfo_2[n1][n2][l*6+2] : rewinfo_2[n1][n2][l*6+2];
+		fillpt2 = (!do_event_mixing) ? rewinfo_1[n1][n2][l*6+2] : rewinfo_1[n1][n2][l*6+2];
+		fillrho = (!do_event_mixing) ? (rewinfo_1[n1][n2][l*6+4]+rewinfo_2[n1][n2][l*6+4])/2 : rewinfo_1[n1][n2][l*6+4]+rewinfo_2[n1][n2][l*6+4];
+		fillsigma = (!do_event_mixing) ? sqrt(pow(rewinfo_1[n1][n2][l*6+5],2)+pow(rewinfo_2[n1][n2][l*6+5],2))/sqrt(2) : sqrt(pow(rewinfo_1[n1][n2][l*6+5],2)+pow(rewinfo_2[n1][n2][l*6+5],2));
+	      }
+	    }
+
+	    if ((fabs(filleta1)>2.5) || (fabs(filleta1)>1.4442 && fabs(filleta1)<1.56)) continue;
+	    if ((fabs(filleta2)>2.5) || (fabs(filleta2)>1.4442 && fabs(filleta2)<1.56)) continue;
+
+	    fill1-=fillrho*geteffarea((fabs(filleta1)>1.4442),fabs(filleta1));
+	    fill2-=fillrho*geteffarea((fabs(filleta2)>1.4442),fabs(filleta2));
+
+
+	    float a1 = (!doswap ? filleta1 : filleta2);
+	    float a2 = (!doswap ? fillpt1 : fillpt2);
+	    float b1 = (!doswap ? filleta2 : filleta1);
+	    float b2 = (!doswap ? fillpt2 : fillpt1);
+	    if (((fabs(a1)<1.4442)+(fabs(pholead_SCeta)<1.4442)==1) || ((fabs(b1)<1.4442)+(fabs(photrail_SCeta)<1.4442)==1)) {
+//	      cout << "<-------------------------------------------------";
+//	      cout << n1 << n2 << l << " " << doswap << " " ;
+//	      cout << pholead_SCeta << " " << a1 << " " << a2 << " "; 
+//	      cout << photrail_SCeta << " " << b1 << " " << b2 << " "; 
+//	      cout << endl;
+	      continue;
+	    }
+
+	    if (fill1<=leftrange || fill2<=leftrange) continue;
+	    if (fill1>=rightrange || fill2>=rightrange) continue;
+	    roovar1->setVal(fill1);
+	    roovar2->setVal(fill2);
+	    rooeta1->setVal(fabs(filleta1));
+	    rooeta2->setVal(fabs(filleta2));
+	    roopt1->setVal(fillpt1);
+	    roopt2->setVal(fillpt2);
+	    roorho->setVal(fillrho);
+	    roosigma->setVal(fillsigma);
+	    if (n1==0 && n2==0) newtempl_roodset[get_name_newtempl_roodset(event_ok_for_dataset_local,*diffvariable,bin_couple,"sigsig")]->add(args2,weight);
+	    else if (n1==0 && n2==1) newtempl_roodset[get_name_newtempl_roodset(event_ok_for_dataset_local,*diffvariable,bin_couple,"sigbkg")]->add(args2,weight);
+	    else if (n1==1 && n2==0) newtempl_roodset[get_name_newtempl_roodset(event_ok_for_dataset_local,*diffvariable,bin_couple,"bkgsig")]->add(args2,weight);
+	    else if (n1==1 && n2==1) newtempl_roodset[get_name_newtempl_roodset(event_ok_for_dataset_local,*diffvariable,bin_couple,"bkgbkg")]->add(args2,weight);
+	  }
+	}
 
 	if (!isdata){
 	  int isppevent = 0;
@@ -415,9 +838,181 @@ void template_production::Loop(int maxevents)
 	  else true_purity_isnotppevent[get_name_true_purity_isnotpp(event_ok_for_dataset_local,*diffvariable)]->Fill(value_diffvariable,weight);
 	}
 
+       }
 
+
+
+       if (mode=="standard_domatching") { 
+
+	const bool printout = false;
+
+	if (printout){
+	  std::cout << "MATCHING" << std::endl;
+	  std::cout << pholead_SCeta << " " << event_rho << " " << pholead_pt << std::endl;
+	  std::cout << photrail_SCeta << " " << event_rho << " " << photrail_pt << std::endl;
+	  std::cout << "---" << std::endl;
+	}
+
+	matchingtree_event_fileuuid = event_fileuuid;
+	matchingtree_event_run = event_run;
+	matchingtree_event_lumi = event_lumi;
+	matchingtree_event_number = event_number;
+
+	int *matches1 = new int[nclosestmore];
+	Double_t *dists1 = new Double_t[nclosestmore];
+	int *matches2 = new int[nclosestmore];
+	Double_t *dists2 = new Double_t[nclosestmore];
+	Double_t p1[5];
+	Double_t p2[5];
+	p1[0]=(pholead_SCeta+(fabs(pholead_SCeta)>1.4442)*1000*pholead_SCeta/fabs(pholead_SCeta))/0.1;
+	p1[1]=event_rho/1.5;
+	p1[2]=TMath::Log(pholead_pt)/0.2;
+	p1[3]=(fabs(photrail_SCeta)<1.4442) ? 0 : 1000;
+	p1[4]=pholead_SCphi/0.8;
+	p2[0]=(photrail_SCeta+(fabs(photrail_SCeta)>1.4442)*1000*photrail_SCeta/fabs(photrail_SCeta))/0.1;
+	p2[1]=event_rho/1.5;
+	p2[2]=TMath::Log(photrail_pt)/0.2;
+	p2[3]=(fabs(pholead_SCeta)<1.4442) ? 0 : 1000;
+	p2[4]=photrail_SCphi/0.8;
+
+	for (int n1=0; n1<2; n1++) for (int n2=0; n2<2; n2++){
+	    kdtree[n1]->FindNearestNeighbors(p1,nclosestmore,matches1,dists1);
+	    kdtree[n2]->FindNearestNeighbors(p2,nclosestmore,matches2,dists2);
+
+	    for (int l=0; l<nclosestmore; l++){
+
+	      bool ismigrerror = false;
+
+	      if (fabs(pholead_SCeta)<1.4442) if (fabs(match_pho_eta[n1].at(matches1[l]))>1.4442) ismigrerror = true;
+	      if (fabs(pholead_SCeta)>1.4442) if (fabs(match_pho_eta[n1].at(matches1[l]))<1.4442) ismigrerror = true;
+	      if (fabs(photrail_SCeta)<1.4442) if (fabs(match_pho_eta[n2].at(matches2[l]))>1.4442) ismigrerror = true;
+	      if (fabs(photrail_SCeta)>1.4442) if (fabs(match_pho_eta[n2].at(matches2[l]))<1.4442) ismigrerror = true;
+
+	      if (ismigrerror){
+
+		cout << "-" << endl;
+		cout << n1 << " " << n2 << " " << l << endl;
+		cout << pholead_SCeta << " " << photrail_SCeta << endl;
+		cout << matches1[l] << " " << matches2[l] << endl;
+		cout << match_pho_eta[n1].at(matches1[l]) << " " << match_pho_eta[n2].at(matches2[l]) << endl;
+		cout << "-" << endl;
+
+	      }
+
+	      if (n1==0 && n2==0){	      
+		matchingtree_index_1event_sigsig_1[l] = matches1[l];
+		matchingtree_index_1event_sigsig_2[l] = -999;
+		matchingtree_deta_1event_sigsig_1[l] = match_pho_eta[n1].at(matches1[l])-pholead_SCeta;
+		matchingtree_deta_1event_sigsig_2[l] = -999;
+		matchingtree_drho_1event_sigsig_1[l] = (match_evt_rho[n1].at(matches1[l])-event_rho)/event_sigma;
+		matchingtree_drho_1event_sigsig_2[l] = -999;
+		matchingtree_dpt_1event_sigsig_1[l] = -999;
+		matchingtree_dpt_1event_sigsig_2[l] = -999;
+	      }
+	      if (n1==0 && n2==1){	      
+		matchingtree_index_1event_sigbkg_1[l] = -999;
+		matchingtree_index_1event_sigbkg_2[l] = matches2[l];
+		matchingtree_deta_1event_sigbkg_1[l] = -999;
+		matchingtree_deta_1event_sigbkg_2[l] = match_pho_eta[n2].at(matches2[l])-photrail_SCeta;
+		matchingtree_drho_1event_sigbkg_1[l] = -999;
+		matchingtree_drho_1event_sigbkg_2[l] = (match_evt_rho[n2].at(matches2[l])-event_rho)/event_sigma;
+		matchingtree_dpt_1event_sigbkg_1[l] = -999;
+		matchingtree_dpt_1event_sigbkg_2[l] = match_pho_pt[n2].at(matches2[l])/photrail_pt;
+	      }
+	      if (n1==1 && n2==0){	      
+		matchingtree_index_1event_bkgsig_1[l] = matches1[l];
+		matchingtree_index_1event_bkgsig_2[l] = -999;
+		matchingtree_deta_1event_bkgsig_1[l] = match_pho_eta[n1].at(matches1[l])-pholead_SCeta;
+		matchingtree_deta_1event_bkgsig_2[l] = -999;
+		matchingtree_drho_1event_bkgsig_1[l] = (match_evt_rho[n1].at(matches1[l])-event_rho)/event_sigma;
+		matchingtree_drho_1event_bkgsig_2[l] = -999;
+		matchingtree_dpt_1event_bkgsig_1[l] = match_pho_pt[n1].at(matches1[l])/pholead_pt;
+		matchingtree_dpt_1event_bkgsig_2[l] = -999;
+	      }
+	      if (n1==1 && n2==1){	      
+		matchingtree_index_1event_bkgbkg_1[l] = matches1[l];
+		matchingtree_index_1event_bkgbkg_2[l] = matches2[l];
+		matchingtree_deta_1event_bkgbkg_1[l] = match_pho_eta[n1].at(matches1[l])-pholead_SCeta;
+		matchingtree_deta_1event_bkgbkg_2[l] = match_pho_eta[n2].at(matches2[l])-photrail_SCeta;
+		matchingtree_drho_1event_bkgbkg_1[l] = (match_evt_rho[n1].at(matches1[l])-event_rho)/event_sigma;
+		matchingtree_drho_1event_bkgbkg_2[l] = (match_evt_rho[n2].at(matches2[l])-event_rho)/event_sigma;
+		matchingtree_dpt_1event_bkgbkg_1[l] = match_pho_pt[n1].at(matches1[l])/pholead_pt;
+		matchingtree_dpt_1event_bkgbkg_2[l] = match_pho_pt[n2].at(matches2[l])/photrail_pt;
+	      }
+	    }
+	}
+
+
+
+
+       p1[1]=event_rho/1.5*randomgen->Uniform(0,1);
+       p2[1]=event_rho/1.5-p1[1];
+
+	for (int n1=0; n1<2; n1++) for (int n2=0; n2<2; n2++){
+	    kdtree[n1]->FindNearestNeighbors(p1,nclosestmore,matches1,dists1);
+	    kdtree[n2]->FindNearestNeighbors(p2,nclosestmore,matches2,dists2);
+
+	    for (int l=0; l<nclosestmore; l++){
+
+	      if (fabs(pholead_SCeta)<1.4442) if (fabs(match_pho_eta[n1].at(matches1[l]))>1.4442) cout << "MIGRATION ERROR" << endl;
+	      if (fabs(pholead_SCeta)>1.4442) if (fabs(match_pho_eta[n1].at(matches1[l]))<1.4442) cout << "MIGRATION ERROR" << endl;
+	      if (fabs(photrail_SCeta)<1.4442) if (fabs(match_pho_eta[n2].at(matches2[l]))>1.4442) cout << "MIGRATION ERROR" << endl;
+	      if (fabs(photrail_SCeta)>1.4442) if (fabs(match_pho_eta[n2].at(matches2[l]))<1.4442) cout << "MIGRATION ERROR" << endl;
+
+	      if (n1==0 && n2==0){	      
+		matchingtree_index_2events_sigsig_1[l] = matches1[l];
+		matchingtree_index_2events_sigsig_2[l] = matches2[l];
+		matchingtree_deta_2events_sigsig_1[l] = match_pho_eta[n1].at(matches1[l])-pholead_SCeta;
+		matchingtree_deta_2events_sigsig_2[l] = match_pho_eta[n2].at(matches2[l])-photrail_SCeta;
+		matchingtree_drho_2events_sigsig_1[l] = (match_evt_rho[n1].at(matches1[l])+match_evt_rho[n2].at(matches2[l])-event_rho)/event_sigma;
+		matchingtree_drho_2events_sigsig_2[l] = (match_evt_rho[n1].at(matches1[l])+match_evt_rho[n2].at(matches2[l])-event_rho)/event_sigma;
+		matchingtree_dpt_2events_sigsig_1[l] = -999;
+		matchingtree_dpt_2events_sigsig_2[l] = -999;
+	      }
+	      if (n1==0 && n2==1){	      
+		matchingtree_index_2events_sigbkg_1[l] = matches1[l];
+		matchingtree_index_2events_sigbkg_2[l] = matches2[l];
+		matchingtree_deta_2events_sigbkg_1[l] = match_pho_eta[n1].at(matches1[l])-pholead_SCeta;
+		matchingtree_deta_2events_sigbkg_2[l] = match_pho_eta[n2].at(matches2[l])-photrail_SCeta;
+		matchingtree_drho_2events_sigbkg_1[l] = (match_evt_rho[n1].at(matches1[l])+match_evt_rho[n2].at(matches2[l])-event_rho)/event_sigma;
+		matchingtree_drho_2events_sigbkg_2[l] = (match_evt_rho[n1].at(matches1[l])+match_evt_rho[n2].at(matches2[l])-event_rho)/event_sigma;
+		matchingtree_dpt_2events_sigbkg_1[l] = -999;
+		matchingtree_dpt_2events_sigbkg_2[l] = match_pho_pt[n2].at(matches2[l])/photrail_pt;
+	      }
+	      if (n1==1 && n2==0){	      
+		matchingtree_index_2events_bkgsig_1[l] = matches1[l];
+		matchingtree_index_2events_bkgsig_2[l] = matches2[l];
+		matchingtree_deta_2events_bkgsig_1[l] = match_pho_eta[n1].at(matches1[l])-pholead_SCeta;
+		matchingtree_deta_2events_bkgsig_2[l] = match_pho_eta[n2].at(matches2[l])-photrail_SCeta;
+		matchingtree_drho_2events_bkgsig_1[l] = (match_evt_rho[n1].at(matches1[l])+match_evt_rho[n2].at(matches2[l])-event_rho)/event_sigma;
+		matchingtree_drho_2events_bkgsig_2[l] = (match_evt_rho[n1].at(matches1[l])+match_evt_rho[n2].at(matches2[l])-event_rho)/event_sigma;
+		matchingtree_dpt_2events_bkgsig_1[l] = match_pho_pt[n1].at(matches1[l])/pholead_pt;
+		matchingtree_dpt_2events_bkgsig_2[l] = -999;
+	      }
+	      if (n1==1 && n2==1){	      
+		matchingtree_index_2events_bkgbkg_1[l] = matches1[l];
+		matchingtree_index_2events_bkgbkg_2[l] = matches2[l];
+		matchingtree_deta_2events_bkgbkg_1[l] = match_pho_eta[n1].at(matches1[l])-pholead_SCeta;
+		matchingtree_deta_2events_bkgbkg_2[l] = match_pho_eta[n2].at(matches2[l])-photrail_SCeta;
+		matchingtree_drho_2events_bkgbkg_1[l] = (match_evt_rho[n1].at(matches1[l])+match_evt_rho[n2].at(matches2[l])-event_rho)/event_sigma;
+		matchingtree_drho_2events_bkgbkg_2[l] = (match_evt_rho[n1].at(matches1[l])+match_evt_rho[n2].at(matches2[l])-event_rho)/event_sigma;
+		matchingtree_dpt_2events_bkgbkg_1[l] = match_pho_pt[n1].at(matches1[l])/pholead_pt;
+		matchingtree_dpt_2events_bkgbkg_2[l] = match_pho_pt[n2].at(matches2[l])/photrail_pt;
+	      }
+	    }
+	  }
+
+	matchingtree->Fill();
+	delete[] matches1;
+	delete[] dists1;
+	delete[] matches2;
+	delete[] dists2;
       }
-      
+     
+
+
+
+ 
     } // end if dodistribution
     
 
@@ -426,6 +1021,11 @@ void template_production::Loop(int maxevents)
   } // end event loop
   std::cout << "Event loop finished" << std::endl;
 
+  if (mode=="standard_domatching"){
+    matchingfile->cd();
+    matchingtree->Write();
+    matchingfile->Close();
+  }
 
 //  if (invmass_vector.size()>0){
 //    std::sort(invmass_vector.begin(),invmass_vector.end());
@@ -439,7 +1039,7 @@ void template_production::Loop(int maxevents)
 
 #endif
 
-void gen_templates(TString filename="input.root", TString mode="", bool isdata=1, const char* outfile="out.root", TString differentialvariable="photoniso", int maxevents=-1){
+void gen_templates(TString filename="input.root", TString mode="", bool isdata=1, const char* outfile="out.root", TString differentialvariable="photoniso", int maxevents=-1,bool do_event_mixing=false ){
   
   TFile *outF = TFile::Open(outfile,"recreate");
   outF->Close();
@@ -473,6 +1073,10 @@ void gen_templates(TString filename="input.root", TString mode="", bool isdata=1
 
   TString treename_chosen="";
   if (mode=="standard") treename_chosen=treename[0];
+  if (mode=="standard_domatching") treename_chosen=treename[0];
+  if (mode=="standard_newtemplates_sigsig") treename_chosen=treename[0];
+  if (mode=="standard_newtemplates_sigbkg") treename_chosen=treename[0];
+  if (mode=="standard_newtemplates_bkgbkg") treename_chosen=treename[0];
   if (mode=="standard_2frag") treename_chosen=treename[0];
   if (mode=="standard_2pgen") treename_chosen=treename[13];
   if (mode=="standard_1p1fbothgen") treename_chosen=treename[14];
@@ -509,7 +1113,8 @@ void gen_templates(TString filename="input.root", TString mode="", bool isdata=1
   std::cout << "Processing selection " << treename_chosen.Data() << std::endl;
   
   template_production *temp = new template_production(t);
-  temp->Setup(isdata,mode,differentialvariable);
+  temp->Setup(isdata,mode,differentialvariable,do_event_mixing);
+  temp->inputfilename=filename;
 
   if (maxevents>0) temp->Loop(maxevents); else temp->Loop();
   std::cout << "Exited from event loop" << std::endl;
@@ -711,5 +1316,16 @@ float template_production::getpuenergy(int reg, float eta){
   else eff_area = (reg==0) ? eff_areas_EB_mc[bin] : eff_areas_EE_mc[bin];
 
   return 0.4*0.4*3.14*event_rho*eff_area;
+
+};
+
+float template_production::geteffarea(int reg, float eta){
+
+  int bin = Choose_bin_eta(fabs(eta),reg);
+  float eff_area;
+  if (isdata) eff_area = (reg==0) ? eff_areas_EB_data[bin] : eff_areas_EE_data[bin];
+  else eff_area = (reg==0) ? eff_areas_EB_mc[bin] : eff_areas_EE_mc[bin];
+
+  return 0.4*0.4*3.14*eff_area;
 
 };

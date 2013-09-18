@@ -39,6 +39,7 @@
 #include "RooWorkspace.h"
 #include <vector>
 #include <algorithm> 
+#include "TKDTree.h"
 
 using namespace std;
 using namespace RooFit;
@@ -53,6 +54,10 @@ public :
 //   vector<float> diphotonpt_vector;
 
    // Declaration of leaf types
+   UInt_t          event_fileuuid;
+   Int_t           event_run;
+   Int_t           event_lumi;
+   Int_t           event_number;
    Float_t         event_luminormfactor;
    Float_t         event_Kfactor;
    Float_t         event_weight;
@@ -226,8 +231,46 @@ public :
 
    Float_t pholead_test_rotatedphotoniso[50];
    Float_t pholead_test_rotatedwithcheckphotoniso[50];
+
+   Float_t phoiso_template_1event_sigsig_1[nclosest];
+   Float_t phoiso_template_1event_sigbkg_1[nclosest];
+   Float_t phoiso_template_1event_bkgsig_1[nclosest];
+   Float_t phoiso_template_1event_bkgbkg_1[nclosest];
+   Float_t phoiso_template_1event_sigsig_2[nclosest];
+   Float_t phoiso_template_1event_sigbkg_2[nclosest];
+   Float_t phoiso_template_1event_bkgsig_2[nclosest];
+   Float_t phoiso_template_1event_bkgbkg_2[nclosest];
+   Float_t phoiso_template_2events_sigsig_1[nclosest];
+   Float_t phoiso_template_2events_sigbkg_1[nclosest];
+   Float_t phoiso_template_2events_bkgsig_1[nclosest];
+   Float_t phoiso_template_2events_bkgbkg_1[nclosest];
+   Float_t phoiso_template_2events_sigsig_2[nclosest];
+   Float_t phoiso_template_2events_sigbkg_2[nclosest];
+   Float_t phoiso_template_2events_bkgsig_2[nclosest];
+   Float_t phoiso_template_2events_bkgbkg_2[nclosest];
+
+   Float_t rewinfo_template_1event_sigsig_1[nclosest*6];
+   Float_t rewinfo_template_1event_sigbkg_1[nclosest*6];
+   Float_t rewinfo_template_1event_bkgsig_1[nclosest*6];
+   Float_t rewinfo_template_1event_bkgbkg_1[nclosest*6];
+   Float_t rewinfo_template_1event_sigsig_2[nclosest*6];
+   Float_t rewinfo_template_1event_sigbkg_2[nclosest*6];
+   Float_t rewinfo_template_1event_bkgsig_2[nclosest*6];
+   Float_t rewinfo_template_1event_bkgbkg_2[nclosest*6];
+   Float_t rewinfo_template_2events_sigsig_1[nclosest*6];
+   Float_t rewinfo_template_2events_sigbkg_1[nclosest*6];
+   Float_t rewinfo_template_2events_bkgsig_1[nclosest*6];
+   Float_t rewinfo_template_2events_bkgbkg_1[nclosest*6];
+   Float_t rewinfo_template_2events_sigsig_2[nclosest*6];
+   Float_t rewinfo_template_2events_sigbkg_2[nclosest*6];
+   Float_t rewinfo_template_2events_bkgsig_2[nclosest*6];
+   Float_t rewinfo_template_2events_bkgbkg_2[nclosest*6];
    
    // List of branches
+   TBranch        *b_event_fileuuid;   //!
+   TBranch        *b_event_run;   //!
+   TBranch        *b_event_lumi;   //!
+   TBranch        *b_event_number;   //!
    TBranch        *b_event_luminormfactor;   //!
    TBranch        *b_event_Kfactor;   //!
    TBranch        *b_event_weight;   //!
@@ -402,6 +445,41 @@ public :
    TBranch *b_pholead_test_rotatedphotoniso;
    TBranch *b_pholead_test_rotatedwithcheckphotoniso;
 
+   TBranch *b_phoiso_template_1event_sigsig_1;
+   TBranch *b_phoiso_template_1event_sigbkg_1;
+   TBranch *b_phoiso_template_1event_bkgsig_1;
+   TBranch *b_phoiso_template_1event_bkgbkg_1;
+   TBranch *b_phoiso_template_1event_sigsig_2;
+   TBranch *b_phoiso_template_1event_sigbkg_2;
+   TBranch *b_phoiso_template_1event_bkgsig_2;
+   TBranch *b_phoiso_template_1event_bkgbkg_2;
+   TBranch *b_phoiso_template_2events_sigsig_1;
+   TBranch *b_phoiso_template_2events_sigbkg_1;
+   TBranch *b_phoiso_template_2events_bkgsig_1;
+   TBranch *b_phoiso_template_2events_bkgbkg_1;
+   TBranch *b_phoiso_template_2events_sigsig_2;
+   TBranch *b_phoiso_template_2events_sigbkg_2;
+   TBranch *b_phoiso_template_2events_bkgsig_2;
+   TBranch *b_phoiso_template_2events_bkgbkg_2;
+
+   TBranch *b_rewinfo_template_1event_sigsig_1;
+   TBranch *b_rewinfo_template_1event_sigbkg_1;
+   TBranch *b_rewinfo_template_1event_bkgsig_1;
+   TBranch *b_rewinfo_template_1event_bkgbkg_1;
+   TBranch *b_rewinfo_template_1event_sigsig_2;
+   TBranch *b_rewinfo_template_1event_sigbkg_2;
+   TBranch *b_rewinfo_template_1event_bkgsig_2;
+   TBranch *b_rewinfo_template_1event_bkgbkg_2;
+   TBranch *b_rewinfo_template_2events_sigsig_1;
+   TBranch *b_rewinfo_template_2events_sigbkg_1;
+   TBranch *b_rewinfo_template_2events_bkgsig_1;
+   TBranch *b_rewinfo_template_2events_bkgbkg_1;
+   TBranch *b_rewinfo_template_2events_sigsig_2;
+   TBranch *b_rewinfo_template_2events_sigbkg_2;
+   TBranch *b_rewinfo_template_2events_bkgsig_2;
+   TBranch *b_rewinfo_template_2events_bkgbkg_2;
+
+
    template_production(TTree *tree=0);
    virtual ~template_production();
    /* virtual Int_t    Cut(Long64_t entry); */
@@ -414,7 +492,7 @@ public :
 
    void     WriteOutput(const char* filename);
 
-   void Setup(Bool_t _isdata, TString _mode, TString _differentialvariable);
+   void Setup(Bool_t _isdata, TString _mode, TString _differentialvariable, bool _do_event_mixing);
 
    TString differentialvariable;
 
@@ -427,6 +505,8 @@ public :
    static const int n_templates=n_bins;
 
    bool dosignal;
+
+   TString inputfilename;
 
   RooRealVar *roovar1;
   RooRealVar *roovar2;
@@ -455,6 +535,7 @@ public :
   TH1F *scan_conewithcheck_histos[2][50];
 
    std::map<TString, RooDataSet*> obs_roodset;
+   std::map<TString, RooDataSet*> newtempl_roodset;
    std::map<TString, RooDataSet*> template2d_roodset;
 
    std::map<TString, TProfile*> true_purity;
@@ -462,6 +543,7 @@ public :
    std::map<TString, TH1F*> true_purity_isnotppevent;
 
    TString get_name_obs_roodset(int region, TString diffvariable, int bin);
+   TString get_name_newtempl_roodset(int region, TString diffvariable, int bin, TString sigbkg);
    TString get_name_true_purity(int region, TString diffvariable);
    TString get_name_true_purity_ispp(int region, TString diffvariable);
    TString get_name_true_purity_isnotpp(int region, TString diffvariable);
@@ -472,6 +554,7 @@ public :
    Int_t candcounter;
 
    Bool_t initialized;
+   Bool_t do_event_mixing;
 
    Bool_t isdata;
 
@@ -482,10 +565,13 @@ public :
    Bool_t dosignaltemplate;
    Bool_t dobackgroundtemplate;
    Bool_t dodistribution;
+   Bool_t donewtemplates;
    Bool_t do2dtemplate;
    Bool_t do2ptemplate;
    Bool_t do1p1ftemplate;
    Bool_t do2ftemplate;
+
+   int whichnewtemplate;
 
    Int_t Choose_bin_invmass(float invmass, int region);
    Int_t Choose_bin_diphotonpt(float diphotonpt, int region);
@@ -493,11 +579,12 @@ public :
    Int_t Choose_bin_dphi(float dphi, int region);
    Int_t Choose_bin_dR(float dR, int region);
 
-   Int_t Choose_bin_pt(float pt, int region);
+   Int_t Choose_bin_pt(float pt);
    Int_t Choose_bin_eta(float eta, int region);
    Int_t Choose_bin_sieie(float sieie, int region);
 
    float getpuenergy(int reg, float eta);
+   float geteffarea(int reg, float eta);
 
 };
 
@@ -517,23 +604,32 @@ template_production::template_production(TTree *tree)
    dosignaltemplate=false;
    dobackgroundtemplate=false;
    dodistribution=false;
+   donewtemplates=false;
    do2dtemplate = false;
    do2ptemplate = false;
    do1p1ftemplate = false;
    do2ftemplate = false;
+   do_event_mixing = false;
+
+   whichnewtemplate = -1;
 
 }
 
-void template_production::Setup(Bool_t _isdata, TString _mode, TString _differentialvariable){
+void template_production::Setup(Bool_t _isdata, TString _mode, TString _differentialvariable, bool _do_event_mixing){
 
   isdata=_isdata;
   mode=_mode;
   differentialvariable=_differentialvariable;
+  do_event_mixing=_do_event_mixing;
 
   Init();
 
   if (mode=="standard" || mode=="preselection_diphoton" || mode=="standard_2frag" || mode=="standard_pixelrev") dodistribution=true;
   if (mode=="standard_2pgen" || mode=="standard_1p1fbothgen" || mode=="standard_2fgen") dodistribution=true;
+  if (mode=="standard_domatching") dodistribution=true;
+  if (mode=="standard_newtemplates_sigsig") {dodistribution=true; donewtemplates=true; whichnewtemplate=0;}
+  if (mode=="standard_newtemplates_sigbkg") {dodistribution=true; donewtemplates=true; whichnewtemplate=1;}
+  if (mode=="standard_newtemplates_bkgbkg") {dodistribution=true; donewtemplates=true; whichnewtemplate=2;}
   if (mode=="signal" || mode=="fragmentation" || mode=="nofragmentation" || mode=="signal_2frag" || mode=="randomcone" || mode=="cutPFchargediso_signal" || mode=="cutPFchargediso_randomcone") dosignaltemplate=true;
   if (mode=="background" || mode=="sieiesideband" || mode=="cutPFchargediso_background" || mode=="cutPFchargediso_sieiesideband") dobackgroundtemplate=true;
   if (mode=="sigsig" || mode=="2pgen" || mode=="zmumu" || mode=="zee" || mode=="2pgen_2frag") do2ptemplate=true; 
@@ -606,6 +702,13 @@ void template_production::Setup(Bool_t _isdata, TString _mode, TString _differen
 	args.add(RooArgSet(*roorho,*roosigma,*rooweight));
 	args.add(*rooargset_diffvariables);
 	obs_roodset[t2] = new RooDataSet(t2.Data(),t2.Data(),args,WeightVar(*rooweight));
+	TString type_array[4] = {"sigsig","sigbkg","bkgsig","bkgbkg"};
+	for (int l=0; l<4; l++){
+	  TString t3 = get_name_newtempl_roodset(i,diffvariable->Data(),j,type_array[l]);
+	  RooArgSet args2(*roovar1,*roovar2,*roopt1,*roosieie1,*rooeta1,*roopt2,*roosieie2,*rooeta2);
+	  args2.add(RooArgSet(*roorho,*roosigma,*rooweight));
+	  newtempl_roodset[t3] = new RooDataSet(t3.Data(),t3.Data(),args2,WeightVar(*rooweight));
+	}
       }
 
       int bins_to_run=-1; 
@@ -676,7 +779,6 @@ void template_production::Setup(Bool_t _isdata, TString _mode, TString _differen
       TString t2 = get_name_template2d_roodset(i,tobuild[j]);
       RooArgSet args(*roovar1,*roovar2,*roopt1,*roosieie1,*rooeta1,*roopt2,*roosieie2,*rooeta2);
       args.add(RooArgSet(*roorho,*roosigma,*rooweight));
-      args.add(*rooargset_diffvariables);
       template2d_roodset[t2]= new RooDataSet(t2.Data(),t2.Data(),args,WeightVar(*rooweight));
     }
   
@@ -732,6 +834,10 @@ void template_production::Init()
    fCurrent = -1;
    fChain->SetMakeClass(1);
 
+   fChain->SetBranchAddress("event_fileuuid", &event_fileuuid, &b_event_fileuuid);
+   fChain->SetBranchAddress("event_run", &event_run, &b_event_run);
+   fChain->SetBranchAddress("event_lumi", &event_lumi, &b_event_lumi);
+   fChain->SetBranchAddress("event_number", &event_number, &b_event_number);
    fChain->SetBranchAddress("event_luminormfactor", &event_luminormfactor, &b_event_luminormfactor);
    fChain->SetBranchAddress("event_Kfactor", &event_Kfactor, &b_event_Kfactor);
    fChain->SetBranchAddress("event_weight", &event_weight, &b_event_weight);
@@ -905,6 +1011,41 @@ void template_production::Init()
 
    fChain->SetBranchAddress("pholead_test_rotatedphotoniso",&pholead_test_rotatedphotoniso, &b_pholead_test_rotatedphotoniso);
    fChain->SetBranchAddress("pholead_test_rotatedwithcheckphotoniso",&pholead_test_rotatedwithcheckphotoniso, &b_pholead_test_rotatedwithcheckphotoniso);
+   
+   fChain->SetBranchAddress("phoiso_template_1event_sigsig_1",&phoiso_template_1event_sigsig_1,&b_phoiso_template_1event_sigsig_1);
+   fChain->SetBranchAddress("phoiso_template_1event_sigbkg_1",&phoiso_template_1event_sigbkg_1,&b_phoiso_template_1event_sigbkg_1);
+   fChain->SetBranchAddress("phoiso_template_1event_bkgsig_1",&phoiso_template_1event_bkgsig_1,&b_phoiso_template_1event_bkgsig_1);
+   fChain->SetBranchAddress("phoiso_template_1event_bkgbkg_1",&phoiso_template_1event_bkgbkg_1,&b_phoiso_template_1event_bkgbkg_1);
+   fChain->SetBranchAddress("phoiso_template_1event_sigsig_2",&phoiso_template_1event_sigsig_2,&b_phoiso_template_1event_sigsig_2);
+   fChain->SetBranchAddress("phoiso_template_1event_sigbkg_2",&phoiso_template_1event_sigbkg_2,&b_phoiso_template_1event_sigbkg_2);
+   fChain->SetBranchAddress("phoiso_template_1event_bkgsig_2",&phoiso_template_1event_bkgsig_2,&b_phoiso_template_1event_bkgsig_2);
+   fChain->SetBranchAddress("phoiso_template_1event_bkgbkg_2",&phoiso_template_1event_bkgbkg_2,&b_phoiso_template_1event_bkgbkg_2);
+   fChain->SetBranchAddress("phoiso_template_2events_sigsig_1",&phoiso_template_2events_sigsig_1,&b_phoiso_template_2events_sigsig_1);
+   fChain->SetBranchAddress("phoiso_template_2events_sigbkg_1",&phoiso_template_2events_sigbkg_1,&b_phoiso_template_2events_sigbkg_1);
+   fChain->SetBranchAddress("phoiso_template_2events_bkgsig_1",&phoiso_template_2events_bkgsig_1,&b_phoiso_template_2events_bkgsig_1);
+   fChain->SetBranchAddress("phoiso_template_2events_bkgbkg_1",&phoiso_template_2events_bkgbkg_1,&b_phoiso_template_2events_bkgbkg_1);
+   fChain->SetBranchAddress("phoiso_template_2events_sigsig_2",&phoiso_template_2events_sigsig_2,&b_phoiso_template_2events_sigsig_2);
+   fChain->SetBranchAddress("phoiso_template_2events_sigbkg_2",&phoiso_template_2events_sigbkg_2,&b_phoiso_template_2events_sigbkg_2);
+   fChain->SetBranchAddress("phoiso_template_2events_bkgsig_2",&phoiso_template_2events_bkgsig_2,&b_phoiso_template_2events_bkgsig_2);
+   fChain->SetBranchAddress("phoiso_template_2events_bkgbkg_2",&phoiso_template_2events_bkgbkg_2,&b_phoiso_template_2events_bkgbkg_2);
+
+   fChain->SetBranchAddress("rewinfo_template_1event_sigsig_1",&rewinfo_template_1event_sigsig_1,&b_rewinfo_template_1event_sigsig_1);
+   fChain->SetBranchAddress("rewinfo_template_1event_sigbkg_1",&rewinfo_template_1event_sigbkg_1,&b_rewinfo_template_1event_sigbkg_1);
+   fChain->SetBranchAddress("rewinfo_template_1event_bkgsig_1",&rewinfo_template_1event_bkgsig_1,&b_rewinfo_template_1event_bkgsig_1);
+   fChain->SetBranchAddress("rewinfo_template_1event_bkgbkg_1",&rewinfo_template_1event_bkgbkg_1,&b_rewinfo_template_1event_bkgbkg_1);
+   fChain->SetBranchAddress("rewinfo_template_1event_sigsig_2",&rewinfo_template_1event_sigsig_2,&b_rewinfo_template_1event_sigsig_2);
+   fChain->SetBranchAddress("rewinfo_template_1event_sigbkg_2",&rewinfo_template_1event_sigbkg_2,&b_rewinfo_template_1event_sigbkg_2);
+   fChain->SetBranchAddress("rewinfo_template_1event_bkgsig_2",&rewinfo_template_1event_bkgsig_2,&b_rewinfo_template_1event_bkgsig_2);
+   fChain->SetBranchAddress("rewinfo_template_1event_bkgbkg_2",&rewinfo_template_1event_bkgbkg_2,&b_rewinfo_template_1event_bkgbkg_2);
+   fChain->SetBranchAddress("rewinfo_template_2events_sigsig_1",&rewinfo_template_2events_sigsig_1,&b_rewinfo_template_2events_sigsig_1);
+   fChain->SetBranchAddress("rewinfo_template_2events_sigbkg_1",&rewinfo_template_2events_sigbkg_1,&b_rewinfo_template_2events_sigbkg_1);
+   fChain->SetBranchAddress("rewinfo_template_2events_bkgsig_1",&rewinfo_template_2events_bkgsig_1,&b_rewinfo_template_2events_bkgsig_1);
+   fChain->SetBranchAddress("rewinfo_template_2events_bkgbkg_1",&rewinfo_template_2events_bkgbkg_1,&b_rewinfo_template_2events_bkgbkg_1);
+   fChain->SetBranchAddress("rewinfo_template_2events_sigsig_2",&rewinfo_template_2events_sigsig_2,&b_rewinfo_template_2events_sigsig_2);
+   fChain->SetBranchAddress("rewinfo_template_2events_sigbkg_2",&rewinfo_template_2events_sigbkg_2,&b_rewinfo_template_2events_sigbkg_2);
+   fChain->SetBranchAddress("rewinfo_template_2events_bkgsig_2",&rewinfo_template_2events_bkgsig_2,&b_rewinfo_template_2events_bkgsig_2);
+   fChain->SetBranchAddress("rewinfo_template_2events_bkgbkg_2",&rewinfo_template_2events_bkgbkg_2,&b_rewinfo_template_2events_bkgbkg_2);
+
 
    Notify();
 }
@@ -981,10 +1122,15 @@ void template_production::WriteOutput(const char* filename){
       for (int i=0; i<3; i++)
 	for (int j=0; j<n_templates; j++) {
 	  obs_roodset[get_name_obs_roodset(i,*diffvariable,n_templates)]->append(*(obs_roodset[get_name_obs_roodset(i,*diffvariable,j)]));
+	  TString type_array[4] = {"sigsig","sigbkg","bkgsig","bkgbkg"};
+	  for (int l=0; l<4; l++){
+	    newtempl_roodset[get_name_newtempl_roodset(i,*diffvariable,n_templates,type_array[l])]->append(*(newtempl_roodset[get_name_newtempl_roodset(i,*diffvariable,j,type_array[l])]));
+	  }
 	}
     }
 
     for (std::map<TString, RooDataSet*>::const_iterator it = obs_roodset.begin(); it!=obs_roodset.end(); it++) (it->second)->Write();
+    for (std::map<TString, RooDataSet*>::const_iterator it = newtempl_roodset.begin(); it!=newtempl_roodset.end(); it++) (it->second)->Write();
 
     out->mkdir("purity");
     out->cd("purity");
@@ -998,34 +1144,34 @@ void template_production::WriteOutput(const char* filename){
   out->mkdir("plots");
   out->cd("plots");
 
-  {
-
-    RooArgList toplot;
-    toplot.add(*rooargset_diffvariables);
-    toplot.add(RooArgSet(*roovar1,*roovar2,*roopt1,*roosieie1,*rooeta1,*roopt2,*roosieie2,*rooeta2));
-    toplot.add(RooArgSet(*roorho,*roosigma));
-    
-    for (int k=0; k<toplot.getSize(); k++){
-      
+  {  
       if (do2dtemplate){
-	for (std::map<TString, RooDataSet*>::const_iterator it = template2d_roodset.begin(); it!=template2d_roodset.end(); it++) {
-	  RooRealVar *thisvar = (RooRealVar*)(toplot.at(k));
+	RooArgList toplot;
+	toplot.add(RooArgSet(*roovar1,*roovar2,*roopt1,*roosieie1,*rooeta1,*roopt2,*roosieie2,*rooeta2));
+	toplot.add(RooArgSet(*roorho,*roosigma));
+	for (int k=0; k<toplot.getSize(); k++){
+	  for (std::map<TString, RooDataSet*>::const_iterator it = template2d_roodset.begin(); it!=template2d_roodset.end(); it++) {
+	    RooRealVar *thisvar = (RooRealVar*)(toplot.at(k));
 	  RooPlot *thisplot = thisvar->frame(Name(Form("%s_%s",thisvar->GetName(),(it->second)->GetName())));
 	  (it->second)->plotOn(thisplot);
 	  thisplot->Write();
+	  }
 	}
       }
-      if (dodistribution){
-	for (std::map<TString, RooDataSet*>::const_iterator it = obs_roodset.begin(); it!=obs_roodset.end(); it++) {
-	  RooRealVar *thisvar = (RooRealVar*)(toplot.at(k));
-	  RooPlot *thisplot = thisvar->frame(Name(Form("%s_%s",thisvar->GetName(),(it->second)->GetName())));
-	  (it->second)->plotOn(thisplot);
-	  thisplot->Write();
-	}
+      if (dodistribution && mode=="standard"){
+	RooArgList toplot;
+	toplot.add(*rooargset_diffvariables);
+	toplot.add(RooArgSet(*roovar1,*roovar2,*roopt1,*roosieie1,*rooeta1,*roopt2,*roosieie2,*rooeta2));
+	toplot.add(RooArgSet(*roorho,*roosigma));
+	for (int k=0; k<toplot.getSize(); k++){
+	  for (std::map<TString, RooDataSet*>::const_iterator it = obs_roodset.begin(); it!=obs_roodset.end(); it++) {
+	    RooRealVar *thisvar = (RooRealVar*)(toplot.at(k));
+	    RooPlot *thisplot = thisvar->frame(Name(Form("%s_%s",thisvar->GetName(),(it->second)->GetName())));
+	    (it->second)->plotOn(thisplot);
+	    thisplot->Write();
+	  }
+	} 
       }
-
-    }
-
   }
 
   if (dosignaltemplate || dobackgroundtemplate){
@@ -1078,6 +1224,14 @@ TString template_production::get_name_obs_roodset(int region, TString diffvariab
   TString reg;
   if (region==0) reg="EBEB"; else if (region==1) reg="EBEE"; else if (region==2) reg="EEEE"; else if (region==3) reg="EEEB";
   TString t=Form("%s_%s_%s_b%d",name_signal.Data(),reg.Data(),diffvariable.Data(),bin);
+  return t;
+};
+
+TString template_production::get_name_newtempl_roodset(int region, TString diffvariable, int bin, TString sigbkg){
+  TString name_signal="newtempl_roodset";
+  TString reg;
+  if (region==0) reg="EBEB"; else if (region==1) reg="EBEE"; else if (region==2) reg="EEEE"; else if (region==3) reg="EEEB";
+  TString t=Form("%s_%s_%s_b%d_%s",name_signal.Data(),reg.Data(),diffvariable.Data(),bin,sigbkg.Data());
   return t;
 };
 
@@ -1264,15 +1418,14 @@ Int_t template_production::Choose_bin_dR(float dR, int region){
 };
 
 
-Int_t template_production::Choose_bin_pt(float pt, int region){
+Int_t template_production::Choose_bin_pt(float pt){
 
   int index;
 
   float *cuts=NULL;
 
-  if (region==0) {cuts=binsdef_single_gamma_EB; index=n_templates_EB;}
-  if (region==1) {cuts=binsdef_single_gamma_EE; index=n_templates_EE;}
-
+  cuts=binsdef_single_gamma_pt; index=n_templates_pt;
+  
   assert (cuts!=NULL);
   assert (index!=0);
 
@@ -1299,8 +1452,8 @@ Int_t template_production::Choose_bin_eta(float eta, int region){
 
   float *cuts=NULL;
 
-  if (region==0) {cuts=binsdef_single_gamma_EB_eta; index=n_templates_EB;}
-  if (region==1) {cuts=binsdef_single_gamma_EE_eta; index=n_templates_EE;}
+  if (region==0) {cuts=binsdef_single_gamma_EB_eta; index=n_templates_EB_eta;}
+  if (region==1) {cuts=binsdef_single_gamma_EE_eta; index=n_templates_EE_eta;}
 
   assert (cuts!=NULL);
   assert (index!=0);
