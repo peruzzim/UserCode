@@ -314,7 +314,7 @@ void template_production::Loop(int maxevents)
     if (mode=="fragmentation") if (pholead_PhoMCmatchexitcode!=1) continue;
     if (mode=="nofragmentation") if (pholead_PhoMCmatchexitcode!=2) continue;
 
-    if (mode=="cutPFchargediso_signal" || mode=="cutPFchargediso_background" || mode=="cutPFchargediso_randomcone" || mode=="cutPFchargediso_sieiesideband") if (pholead_pho_Cone04ChargedHadronIso_dR02_dz02_dxy01>0.1) continue;
+    if (mode=="cutPFchargediso_signal" || mode=="cutPFchargediso_background" || mode=="cutPFchargediso_randomcone" || mode=="cutPFchargediso_sieiesideband") if (pholead_PhoSCRemovalPFIsoCharged>0.1) continue;
 
 
 
@@ -322,8 +322,8 @@ void template_production::Loop(int maxevents)
 
     Int_t event_ok_for_dataset=-1;
 
-    Int_t reg_lead;
-    Int_t reg_trail;
+    Int_t reg_lead=-1;
+    Int_t reg_trail=-1;
 
     // dataset 0:EBEB 3/4->1:EBEE 2:EEEE
 
@@ -349,31 +349,31 @@ void template_production::Loop(int maxevents)
     }
     else std::cout << "We have a problem here!!!" << std::endl;
 
-//    if (differentialvariable=="photoniso"){
-//      pholead_outvar=pholead_pho_Cone04PhotonIso_dEta015EB_dR070EE_mvVtx;
-//      photrail_outvar=photrail_pho_Cone04PhotonIso_dEta015EB_dR070EE_mvVtx;
-//      candcounter=pholead_Npfcandphotonincone;
-//    }
+    if (differentialvariable=="photoniso"){
+      pholead_outvar=pholead_PhoSCRemovalPFIsoPhoton;
+      photrail_outvar=photrail_PhoSCRemovalPFIsoPhoton;
+      candcounter=pholead_Npfcandphotonincone;
+    }
 //    else if (differentialvariable=="combiso"){
-//      pholead_outvar=pholead_pho_Cone04PFCombinedIso;
-//      photrail_outvar=photrail_pho_Cone04PFCombinedIso;
+//      pholead_outvar=pholead_PhoSCRemovalPFIsoCombined;
+//      photrail_outvar=photrail_PhoSCRemovalPFIsoCombined;
 //      candcounter=pholead_Npfcandphotonincone+pholead_Npfcandchargedincone+pholead_Npfcandneutralincone;
 //    }
 //    else if (differentialvariable=="chargediso"){
-//      pholead_outvar=pholead_pho_Cone04ChargedHadronIso_dR02_dz02_dxy01;
-//      photrail_outvar=photrail_pho_Cone04ChargedHadronIso_dR02_dz02_dxy01;
+//      pholead_outvar=pholead_PhoSCRemovalPFIsoCharged;
+//      photrail_outvar=photrail_PhoSCRemovalPFIsoCharged;
 //      candcounter=pholead_Npfcandchargedincone;
 //    }
 //    else if (differentialvariable=="neutraliso"){
-//      pholead_outvar=pholead_pho_Cone04NeutralHadronIso_mvVtx;
-//      photrail_outvar=photrail_pho_Cone04NeutralHadronIso_mvVtx;
+//      pholead_outvar=pholead_PhoSCRemovalPFIsoNeutral;
+//      photrail_outvar=photrail_PhoSCRemovalPFIsoNeutral;
 //      candcounter=pholead_Npfcandneutralincone;
 //    }
 
 
-    pholead_outvar = -999;
-    photrail_outvar = -999;
-    candcounter = -999;
+//    pholead_outvar = -999;
+//    photrail_outvar = -999;
+//    candcounter = -999;
 
     bool recalc_lead = false;
     bool recalc_trail = false;
@@ -384,86 +384,86 @@ void template_production::Loop(int maxevents)
 
 
 
-    if (recalc_lead){
-      float et_recalc = 0;
-      float e_recalc = 0;
-      int number_recalc = 0;
+//    if (recalc_lead){
+//      float et_recalc = 0;
+//      float e_recalc = 0;
+//      int number_recalc = 0;
+//
+//      bool printout=false;
+//
+//      if (printout) std::cout << "---" << std::endl;
+//
+//      for (int i=0; i<pholead_Npfcandphotonincone; i++) {
+//
+//	float et=pholead_photonpfcandets[i];
+//	float e=pholead_photonpfcandenergies[i];
+//	float deta=pholead_photonpfcanddetas[i];
+//	float dphi=pholead_photonpfcanddphis[i];
+//	float dR=sqrt(deta*deta+dphi*dphi);
+//	float eta=fabs(TMath::ACosH(e/et));
+//	if (printout) {
+//	  std::cout << et << " " << e << " " << deta << " " << dphi << " " << dR << " " << eta << std::endl;
+//	}
+//	if (eta>1.4442 && eta<1.56) continue;
+//	if (eta>2.5) continue;
+//
+//#include "cleaning.cc"
+//
+//	if (fabs(pholead_SCeta)<1.4442 && eta>1.4442) continue;
+//	if (fabs(pholead_SCeta)>1.56 && eta<1.56) continue;
+//	et_recalc+=et;
+//	e_recalc+=e;
+//	number_recalc++;
+//
+//      }
+//
+//      pholead_outvar=et_recalc;
+//
+//      if (printout) std::cout << "---" << std::endl;
+//
+//    }
+//
+//    if (recalc_trail){
+//      float et_recalc = 0;
+//      float e_recalc = 0;
+//      int number_recalc = 0;
+//
+//      bool printout=false;
+//
+//      if (printout) std::cout << "---" << std::endl;
+//
+//      for (int i=0; i<photrail_Npfcandphotonincone; i++) {
+//
+//	float et=photrail_photonpfcandets[i];
+//	float e=photrail_photonpfcandenergies[i];
+//	float deta=photrail_photonpfcanddetas[i];
+//	float dphi=photrail_photonpfcanddphis[i];
+//	float dR=sqrt(deta*deta+dphi*dphi);
+//	float eta=fabs(TMath::ACosH(e/et));
+//	if (printout) {
+//	  std::cout << et << " " << e << " " << deta << " " << dphi << " " << dR << " " << eta << std::endl;
+//	}
+//	if (eta>1.4442 && eta<1.56) continue;
+//	if (eta>2.5) continue;
+//
+//#include "cleaning.cc"
+//
+//	if (fabs(photrail_SCeta)<1.4442 && eta>1.4442) continue;
+//	if (fabs(photrail_SCeta)>1.56 && eta<1.56) continue;
+//	et_recalc+=et;
+//	e_recalc+=e;
+//	number_recalc++;
+//
+//      }
+//
+//      photrail_outvar=et_recalc;
+//
+//      if (printout) std::cout << "---" << std::endl;
+//
+//    }
 
-      bool printout=false;
-
-      if (printout) std::cout << "---" << std::endl;
-
-      for (int i=0; i<pholead_Npfcandphotonincone; i++) {
-
-	float et=pholead_photonpfcandets[i];
-	float e=pholead_photonpfcandenergies[i];
-	float deta=pholead_photonpfcanddetas[i];
-	float dphi=pholead_photonpfcanddphis[i];
-	float dR=sqrt(deta*deta+dphi*dphi);
-	float eta=fabs(TMath::ACosH(e/et));
-	if (printout) {
-	  std::cout << et << " " << e << " " << deta << " " << dphi << " " << dR << " " << eta << std::endl;
-	}
-	if (eta>1.4442 && eta<1.56) continue;
-	if (eta>2.5) continue;
-
-#include "cleaning.cc"
-
-	if (fabs(pholead_SCeta)<1.4442 && eta>1.4442) continue;
-	if (fabs(pholead_SCeta)>1.56 && eta<1.56) continue;
-	et_recalc+=et;
-	e_recalc+=e;
-	number_recalc++;
-
-      }
-
-      pholead_outvar=et_recalc;
-
-      if (printout) std::cout << "---" << std::endl;
-
-    }
-
-    if (recalc_trail){
-      float et_recalc = 0;
-      float e_recalc = 0;
-      int number_recalc = 0;
-
-      bool printout=false;
-
-      if (printout) std::cout << "---" << std::endl;
-
-      for (int i=0; i<photrail_Npfcandphotonincone; i++) {
-
-	float et=photrail_photonpfcandets[i];
-	float e=photrail_photonpfcandenergies[i];
-	float deta=photrail_photonpfcanddetas[i];
-	float dphi=photrail_photonpfcanddphis[i];
-	float dR=sqrt(deta*deta+dphi*dphi);
-	float eta=fabs(TMath::ACosH(e/et));
-	if (printout) {
-	  std::cout << et << " " << e << " " << deta << " " << dphi << " " << dR << " " << eta << std::endl;
-	}
-	if (eta>1.4442 && eta<1.56) continue;
-	if (eta>2.5) continue;
-
-#include "cleaning.cc"
-
-	if (fabs(photrail_SCeta)<1.4442 && eta>1.4442) continue;
-	if (fabs(photrail_SCeta)>1.56 && eta<1.56) continue;
-	et_recalc+=et;
-	e_recalc+=e;
-	number_recalc++;
-
-      }
-
-      photrail_outvar=et_recalc;
-
-      if (printout) std::cout << "---" << std::endl;
-
-    }
-
-//    if (fabs(pholead_pho_Cone04PhotonIso_dEta015EB_dR070EE_mvVtx-pholead_outvar)>0) cout << pholead_pho_Cone04PhotonIso_dEta015EB_dR070EE_mvVtx << " " << pholead_outvar << endl;
-//    if (fabs(photrail_pho_Cone04PhotonIso_dEta015EB_dR070EE_mvVtx-photrail_outvar)>0) cout << photrail_pho_Cone04PhotonIso_dEta015EB_dR070EE_mvVtx << " " << photrail_outvar << endl;
+//    if (fabs(pholead_PhoSCRemovalPFIsoPhoton-pholead_outvar)>0) cout << pholead_PhoSCRemovalPFIsoPhoton << " " << pholead_outvar << endl;
+//    if (fabs(photrail_PhoSCRemovalPFIsoPhoton-photrail_outvar)>0) cout << photrail_PhoSCRemovalPFIsoPhoton << " " << photrail_outvar << endl;
 
     roorho->setVal(event_rho);
     roosigma->setVal(event_sigma);
@@ -1261,13 +1261,13 @@ std::vector<std::vector<TProfile*> > template_production::GetPUScaling(bool doEB
       assert (pholead_outvar>-100);
     }
     else if (diffvar=="combiso"){
-      pholead_outvar=pholead_phoiso+pholead_pho_Cone04ChargedHadronIso_dR02_dz02_dxy01+pholead_pho_Cone04NeutralHadronIso_mvVtx;
+      pholead_outvar=pholead_phoiso+pholead_PhoSCRemovalPFIsoCharged+pholead_PhoSCRemovalPFIsoNeutral;
     }
     else if (diffvar=="chargediso"){
-      pholead_outvar=pholead_pho_Cone04ChargedHadronIso_dR02_dz02_dxy01;
+      pholead_outvar=pholead_PhoSCRemovalPFIsoCharged;
     }
     else if (diffvar=="neutraliso"){
-      pholead_outvar=pholead_pho_Cone04NeutralHadronIso_mvVtx;
+      pholead_outvar=pholead_PhoSCRemovalPFIsoNeutral;
     }
 
     if (pholead_pt<25) continue;
